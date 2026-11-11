@@ -2,7 +2,9 @@
 // Runs only in /output.
 
 import { clamp } from '../shared/util.js';
+import { AudioInput } from './audio.js';
 import { LocalCamera } from './camera.js';
+import { MidiInput } from './midi.js';
 import { ACTIONS } from '../shared/actions.js';
 import { TRIGGER_COUNT } from '../shared/protocol.js';
 import { InputManager } from './inputs.js';
@@ -29,6 +31,8 @@ export class Engine {
     this.mod = new Modulation(store);
     this.sensors = new PhoneSensors(this.mod);
     this.resolve = this.mod.resolve;
+    this.midi = new MidiInput(this.mod, (source) => this.bus.send('midi-learned', { source }));
+    this.audio = new AudioInput(this.mod);
     this.lastSourcesAt = 0;
     this.maskFit = [1, 1, 0, 0];
     this.lost = false;
@@ -80,6 +84,9 @@ export class Engine {
     store.subscribe((op) => this.onOp(op));
     store.onEvent((name) => {
       if (name === 'glitch') this.glitchStart = performance.now();
+    });
+    bus.on('midi', (m) => {
+      if (m.cmd === 'learn') this.midi.learning = !!m.on;
     });
     bus.on('file', (m) => {
       if (m.file) this.inputs.feeds.file.setBlob(m.file);
@@ -150,6 +157,8 @@ export class Engine {
           this.housekeeping();
         } else if (op.key === 'net') {
           this.link.refresh();
+        } else if (op.key === 'midi' || op.key === 'audio') {
+          this.housekeeping();
         } else if (op.key === 'globals' && 'renderScale' in op.patch) {
           this.applySize();
         }
@@ -164,6 +173,12 @@ export class Engine {
     const input = this.store.state.input;
     // Once opened the camera stays warm so switching back to it is instant.
     if (input.kind === 'camera' || this.camera.stream) this.camera.ensure(input.cameraId);
+
+    const { midi, audio } = this.store.state;
+    if (midi.enabled) this.midi.enable();
+    else if (this.midi.state !== 'off') this.midi.disable();
+    if (audio.enabled) this.audio.enable(audio.deviceId);
+    else if (this.audio.state !== 'off') this.audio.disable();
   }
 
   onPhoneMessage(_msg) {}
@@ -193,6 +208,7 @@ export class Engine {
     const dt = Math.min(0.1, (now - (this.prevFrameAt ?? now)) / 1000);
     this.prevFrameAt = now;
     this.sensors.frame(dt, now);
+    this.audio.frame(dt, now, this.store.state.audio);
     this.mod.frame(dt);
     if (now - this.lastSourcesAt >= SOURCES_INTERVAL_MS) {
       this.lastSourcesAt = now;
@@ -290,6 +306,8 @@ export class Engine {
       latency: this.latency,
       phone: this.link.status(now),
       sensors: this.sensors.status(now),
+      midi: this.midi.status(),
+      audio: this.audio.status(),
       camera: this.camera.status(),
       at: Date.now(),
       renderFps: this.renderFps,

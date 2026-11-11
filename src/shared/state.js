@@ -75,6 +75,8 @@ export function defaultState() {
     v: 1,
     input: { kind: 'pattern', cameraId: '', fit: 'cover', mirror: false },
     net: { room: randomRoom(), signal: '' },
+    midi: { enabled: false },
+    audio: { enabled: false, deviceId: '', gain: 1, sensitivity: 1.6 },
     globals: {
       blackout: false,
       freeze: false,
@@ -175,6 +177,8 @@ export function sanitizeState(raw) {
     ...base,
     input: { ...base.input, ...pick(raw.input, base.input) },
     net: { ...base.net, ...pick(raw.net, base.net) },
+    midi: { ...base.midi, ...pick(raw.midi, base.midi) },
+    audio: { ...base.audio, ...pick(raw.audio, base.audio) },
     globals: { ...base.globals, ...pick(raw.globals, base.globals) },
     presetIndex: Number.isInteger(raw.presetIndex) ? raw.presetIndex : -1,
     actions: sanitizeActions(raw.actions, base.actions),

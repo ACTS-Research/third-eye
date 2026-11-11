@@ -45,7 +45,7 @@ export function mountModPanel(root, ui) {
     store.setScene(scene);
   }
 
-  function addMapping(source) {
+  function addMapping(source, overrides) {
     const chain = store.state.chain;
     if (!chain.length) {
       mapNote.textContent = 'Add an effect first.';
@@ -55,7 +55,7 @@ export function mountModPanel(root, ui) {
     const touched = ui.lastTouched && store.findEffect(ui.lastTouched.uid) ? ui.lastTouched : null;
     const fx = touched?.uid ?? chain[0].uid;
     const key = touched?.key ?? Object.keys(EFFECT_BY_ID[chain[0].type].params)[0];
-    const mapping = makeMapping(source ?? 'pad.x', fx, key);
+    const mapping = makeMapping(source ?? 'pad.x', fx, key, overrides);
     openMapping = mapping.id;
     mutateScene((scene) => scene.mappings.push(mapping));
     return mapping;

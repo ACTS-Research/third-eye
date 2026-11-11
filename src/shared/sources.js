@@ -25,6 +25,11 @@ export const SOURCES = [
   def('lfo.2', 'LFO 2', 'LFO', true),
   def('lfo.3', 'LFO 3', 'LFO', true),
   def('lfo.4', 'LFO 4', 'LFO', true),
+  def('audio.level', 'Level', 'Audio'),
+  def('audio.bass', 'Bass', 'Audio'),
+  def('audio.mid', 'Mid', 'Audio'),
+  def('audio.high', 'High', 'Audio'),
+  def('audio.beat', 'Beat', 'Audio'),
 ];
 
 export const SOURCE_BY_ID = Object.fromEntries(SOURCES.map((s) => [s.id, s]));

@@ -10,7 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:smoke": "node tests/smoke.mjs",
-    "test": "node tests/smoke.mjs && node tests/phone.mjs && node tests/modulation.mjs"
+    "test": "node tests/smoke.mjs && node tests/phone.mjs && node tests/modulation.mjs && node tests/midi-audio.mjs"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "^1.2.2",

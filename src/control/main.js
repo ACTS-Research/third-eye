@@ -9,6 +9,7 @@ import { Store } from '../shared/store.js';
 import { readJSON, writeJSON } from '../shared/util.js';
 import { mountChain } from './chain.js';
 import { mountInputPanel } from './input-panel.js';
+import { mountIoPanel } from './io-panel.js';
 import { mountModPanel } from './mod-panel.js';
 import { mountOutputPanel } from './output-panel.js';
 import { mountPhonePanel } from './phone-panel.js';
@@ -57,6 +58,7 @@ mountChain(middle, ui);
 mountPhonePanel(right, ui);
 mountPresetsPanel(right, ui);
 mountModPanel(right, ui);
+mountIoPanel(right, ui);
 mountShortcuts(right, ui);
 
 installKeys(store);

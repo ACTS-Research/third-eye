@@ -88,7 +88,13 @@ export class Modulation {
     // Shape and smooth every mapping once; resolveInto() just reads the result.
     for (const m of state.mappings) {
       if (!m.enabled) continue;
-      let v = this.values.get(m.source) ?? 0;
+      // A source that has not reported yet (a MIDI knob not touched since
+      // loading) must not yank its parameter to zero.
+      if (!this.values.has(m.source)) {
+        this.smoothed.delete(m.id);
+        continue;
+      }
+      let v = this.values.get(m.source);
       if (m.invert) v = this.bipolar.get(m.source) ? -v : 1 - v;
       v += m.offset;
       const prev = this.smoothed.get(m.id);
@@ -127,7 +133,8 @@ export class Modulation {
       if (!spec) continue;
       const { min, max } = m.key === 'mix' ? MIX_RANGE : paramRange(spec);
       const range = max - min;
-      const s = this.smoothed.get(m.id) ?? 0;
+      const s = this.smoothed.get(m.id);
+      if (s === undefined) continue;
       if (m.mode === 'set') {
         const unit = clamp(this.bipolar.get(m.source) ? s * 0.5 + 0.5 : s, 0, 1);
         v[m.key] = m.amount >= 0 ? min + unit * m.amount * range : max + unit * m.amount * range;
