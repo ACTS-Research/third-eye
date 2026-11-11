@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Third Eye Cam — Output</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+      canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+      body.idle { cursor: none; }
+      #hint {
+        position: fixed; left: 50%; bottom: 8vh; transform: translateX(-50%);
+        font: 500 15px/1.4 system-ui, sans-serif; color: #fff; background: rgba(0, 0, 0, 0.6);
+        padding: 10px 18px; border-radius: 999px; pointer-events: none;
+        transition: opacity 0.6s; white-space: nowrap;
+      }
+      #hint.hidden { opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <canvas id="stage"></canvas>
+    <div id="hint">Click or press F for fullscreen</div>
+    <script type="module" src="../src/output/main.js"></script>
+  </body>
+</html>

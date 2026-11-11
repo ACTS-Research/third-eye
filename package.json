@@ -1,0 +1,26 @@
+{
+  "name": "third-eye-cam",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Live video instrument: iPhone camera over WebRTC into a WebGL2 effects chain on a second display.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:https": "HTTPS=1 vite --host",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test:smoke": "node tests/smoke.mjs"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^1.2.2",
+    "peerjs": "^1.5.5",
+    "qrcode-generator": "^2.0.4",
+    "tweakpane": "^4.0.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "peer": "^1.0.2",
+    "playwright": "1.63.0",
+    "vite": "^6.4.6"
+  }
+}
