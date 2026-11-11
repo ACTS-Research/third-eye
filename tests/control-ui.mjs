@@ -40,6 +40,26 @@ try {
   await control.keyboard.press('e');
   check('and returns to perform', await control.locator('#view-perform').isVisible());
 
+  console.log('pairing details from the top bar');
+  // The sandbox cannot reach the public pairing server: the same situation
+  // as a network that blocks it.
+  check('an unreachable pairing server is reported as such', await settle(async () => (await control.locator('#pills .pill').nth(2).textContent()).includes('unreachable'), 'unreachable', 25000), await control.locator('#pills .pill').nth(2).textContent());
+  await control.locator('#pills .pill').nth(2).click();
+  check('clicking the phone status opens the QR code and room code below it', await control.locator('#pairing-pop').isVisible() && (await control.locator('.pop-code').textContent()).length === 5 && (await control.evaluate(() => {
+    const c = document.querySelector('#pairing-pop canvas');
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let dark = 0;
+    for (let i = 0; i < d.length; i += 4) if (d[i] < 128) dark++;
+    return dark > 1000;
+  })));
+  check('it says what is wrong and what to try', (await control.locator('#pairing-pop').textContent()).includes('Personal Hotspot'));
+  if (process.env.SHOTS) await control.screenshot({ path: `${process.env.SHOTS}/pairing-pop.png` });
+  await control.keyboard.press('Escape');
+  check('Esc closes it', await control.locator('#pairing-pop').isHidden());
+  await control.locator('#pills .pill').nth(1).click();
+  check('the input status opens it too', await control.locator('#pairing-pop').isVisible());
+  await control.click('#pairing-pop >> text=Close');
+
   console.log('palettes');
   const ink = () => control.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ink').trim());
   const red = await ink();

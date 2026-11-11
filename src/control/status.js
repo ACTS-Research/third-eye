@@ -8,7 +8,19 @@ export function mountStatus(root, ui) {
   const alerts = document.getElementById('alerts');
   const outPill = el('span', { class: 'pill' });
   const inPill = el('span', { class: 'pill' });
+  // Clicking the input or phone status opens the pairing details below it.
+  const pairing = (pill) => {
+    pill.tabIndex = 0;
+    pill.setAttribute('role', 'button');
+    pill.title = 'Show the QR code and connection details';
+    pill.addEventListener('click', () => ui.togglePairing?.(pill));
+    pill.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') ui.togglePairing?.(pill);
+    });
+  };
   const phonePill = el('span', { class: 'pill' });
+  pairing(inPill);
+  pairing(phonePill);
   pills.append(outPill, inPill, phonePill);
 
   const rows = {};
@@ -100,7 +112,7 @@ export function mountStatus(root, ui) {
       phoneText = 'not responding';
     } else if (p.signal !== 'open') {
       phoneLevel = p.signal === 'connecting' ? 'warn' : 'bad';
-      phoneText = p.signal === 'connecting' ? 'signaling…' : 'signaling down';
+      phoneText = p.signal === 'connecting' ? 'connecting…' : 'pairing server unreachable';
     }
     setPill(phonePill, phoneLevel, `Phone: ${phoneText}`);
     rows.phone.textContent = phoneText;

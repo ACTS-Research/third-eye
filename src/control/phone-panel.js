@@ -35,6 +35,45 @@ export function mountPhonePanel(root, ui) {
   const warn = el('div', { class: 'small', style: 'font-weight:700' });
   const state = el('div', { id: 'phone-state', class: 'small dim' });
 
+  // The same pairing details as a pop-over under the top bar: click the
+  // phone or input status there and they appear without leaving the screen.
+  const popQr = el('canvas', { width: 320, height: 320 });
+  const popCode = el('div', { class: 'pop-code' });
+  const popState = el('div', { class: 'small' });
+  const popLink = el('div', { class: 'small dim', style: 'word-break:break-all' });
+  const pop = el('div', { id: 'pairing-pop', hidden: true, role: 'dialog', 'aria-label': 'Pair the phone' }, [
+    popQr,
+    el('div', { class: 'grow' }, [
+      el('div', { class: 'caps dim', text: 'Room code' }),
+      popCode,
+      popState,
+      popLink,
+      el('div', { class: 'row', style: 'margin-top:8px' }, [
+        el('button', { text: 'Pairing settings', onclick: () => { hidePop(); ui.setView('setup'); } }),
+        el('button', { text: 'Close', onclick: () => hidePop() }),
+      ]),
+    ]),
+  ]);
+  document.body.append(pop);
+  let anchor = null;
+  const hidePop = () => {
+    pop.hidden = true;
+  };
+  ui.togglePairing = (from) => {
+    if (!pop.hidden && anchor === from) return hidePop();
+    anchor = from;
+    const r = from.getBoundingClientRect();
+    pop.style.top = `${r.bottom + 10}px`;
+    pop.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - 470))}px`;
+    pop.hidden = false;
+  };
+  document.addEventListener('pointerdown', (e) => {
+    if (!pop.hidden && !pop.contains(e.target) && !e.target.closest?.('.pill')) hidePop();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') hidePop();
+  });
+
   const signal = el('input', {
     type: 'text',
     class: 'grow',
@@ -70,6 +109,10 @@ export function mountPhonePanel(root, ui) {
     const url = link_.href;
     qr.width = 320;
     drawQr(qr, url);
+    popQr.width = 320;
+    drawQr(popQr, url);
+    popCode.textContent = net.room;
+    popLink.textContent = url;
     code.textContent = net.room;
     link.textContent = url;
     link.href = url;
@@ -92,15 +135,15 @@ export function mountPhonePanel(root, ui) {
 
   ui.onStatus((status) => {
     const p = status?.phone;
-    if (!p) {
-      state.textContent = 'Open the output window to accept the phone.';
-      return;
-    }
-    if (p.signal === 'error') state.textContent = p.error;
-    else if (p.phone === 'connected') state.textContent = 'Phone paired.';
-    else if (p.signal === 'open') state.textContent = 'Ready — scan the code with the iPhone camera.';
-    else if (p.signal === 'disconnected') state.textContent = `Signaling server unreachable${p.error ? ` (${p.error})` : ''} — retrying. A phone that is already paired keeps working.`;
-    else state.textContent = 'Connecting to the signaling server…';
+    let text;
+    if (!p) text = 'Open the output window first: it is what the phone connects to.';
+    else if (p.signal === 'error') text = p.error;
+    else if (p.phone === 'connected') text = p.media === 'connected' ? 'Phone paired and streaming.' : 'Phone paired.';
+    else if (p.signal === 'open') text = 'Ready. Scan the code with the iPhone camera.';
+    else if (p.signal === 'disconnected') text = `Cannot reach the pairing server${p.error ? ` (${p.error})` : ''}; retrying. This network may be blocking it: public and guest Wi-Fi often do. Try the iPhone's Personal Hotspot. A phone that is already paired keeps working.`;
+    else text = 'Connecting to the pairing server…';
+    state.textContent = text;
+    popState.textContent = text;
   });
 
   root.append(

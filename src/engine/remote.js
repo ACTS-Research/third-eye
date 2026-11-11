@@ -12,6 +12,7 @@ import { preferCodec } from '../shared/sdp.js';
 
 const TICK_MS = 1000;
 const PHONE_TIMEOUT_MS = 4000;
+const CONNECT_TIMEOUT_MS = 8000;
 
 export class PhoneLink {
   constructor(feed, getNet, onMessage) {
@@ -44,8 +45,10 @@ export class PhoneLink {
     this.destroy();
     const net = this.getNet();
     this.key = `${net.room}|${net.signal}`;
-    this.signal = 'connecting';
-    this.error = '';
+    // After a failed attempt keep saying "unreachable" while retrying, rather
+    // than flipping back to "connecting" every few seconds.
+    this.signal = this.failures ? 'disconnected' : 'connecting';
+    if (!this.failures) this.error = '';
     this.openedAt = performance.now();
 
     let peer;
@@ -61,9 +64,13 @@ export class PhoneLink {
       if (peer !== this.peer) return;
       this.signal = 'open';
       this.error = '';
+      this.failures = 0;
     });
     peer.on('disconnected', () => {
-      if (peer === this.peer) this.signal = 'disconnected';
+      if (peer === this.peer) {
+        this.signal = 'disconnected';
+        this.failures = (this.failures ?? 0) + 1;
+      }
     });
     peer.on('error', (err) => {
       if (peer !== this.peer) return;
@@ -162,6 +169,14 @@ export class PhoneLink {
     const peer = this.peer;
     if (!peer || peer.destroyed) {
       if (now - this.openedAt > 3000) this.open();
+      return;
+    }
+    // Some networks swallow the connection without refusing it: no error ever
+    // arrives. Give up on the attempt, say so, and start a fresh one.
+    if (!peer.open && !peer.disconnected && now - this.openedAt > CONNECT_TIMEOUT_MS) {
+      this.failures = (this.failures ?? 0) + 1;
+      this.error = 'no answer';
+      this.open();
       return;
     }
     if (peer.disconnected && now - this.lastReconnectAt > 3000) {
