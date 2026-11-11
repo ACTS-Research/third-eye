@@ -3,6 +3,7 @@
 // its modulation); everything else is session-level.
 
 import { EFFECT_BY_ID, defaultParams, paramRange } from '../effects/index.js';
+import { normalizeRoom, randomRoom } from './net.js';
 import { clamp, uid } from './util.js';
 
 export const INPUT_KINDS = ['phone', 'camera', 'pattern', 'file'];
@@ -34,6 +35,7 @@ export function defaultState() {
   return {
     v: 1,
     input: { kind: 'pattern', cameraId: '', fit: 'cover', mirror: false },
+    net: { room: randomRoom(), signal: '' },
     globals: {
       blackout: false,
       freeze: false,
@@ -92,11 +94,14 @@ export function sanitizeState(raw) {
   const state = {
     ...base,
     input: { ...base.input, ...pick(raw.input, base.input) },
+    net: { ...base.net, ...pick(raw.net, base.net) },
     globals: { ...base.globals, ...pick(raw.globals, base.globals) },
     presetIndex: Number.isInteger(raw.presetIndex) ? raw.presetIndex : -1,
     ...(Array.isArray(raw.chain) ? sanitizeScene(raw) : defaultScene()),
   };
   if (!INPUT_KINDS.includes(state.input.kind)) state.input.kind = 'pattern';
+  state.net.room = normalizeRoom(state.net.room);
+  if (state.net.room.length < 4) state.net.room = base.net.room;
   return state;
 }
 

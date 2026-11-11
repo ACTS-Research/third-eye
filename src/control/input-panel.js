@@ -46,6 +46,40 @@ export function mountInputPanel(root, ui) {
     picker,
   ]);
 
+  // Local cameras. Permission is asked here, on the operator's screen, so
+  // /output can open the chosen device without ever showing a prompt.
+  const camera = el('select', {
+    class: 'grow',
+    onchange: () => store.merge('input', { cameraId: camera.value }),
+  });
+  const findCameras = el('button', { text: 'Find cameras', onclick: () => listCameras(true) });
+  const cameraNote = el('div', { class: 'dim small' });
+
+  async function listCameras(prompt) {
+    if (!navigator.mediaDevices?.enumerateDevices) {
+      cameraNote.textContent = 'Cameras need HTTPS or localhost.';
+      return;
+    }
+    try {
+      if (prompt) {
+        const probe = await navigator.mediaDevices.getUserMedia({ video: true });
+        for (const track of probe.getTracks()) track.stop();
+      }
+      const devices = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
+      const named = devices.filter((d) => d.label);
+      camera.replaceChildren(el('option', { value: '', text: 'Default camera' }));
+      for (const d of named) camera.append(el('option', { value: d.deviceId, text: d.label }));
+      const wanted = store.state.input.cameraId;
+      camera.value = named.some((d) => d.deviceId === wanted) ? wanted : '';
+      cameraNote.textContent = named.length
+        ? ''
+        : 'Click "Find cameras" to list them (Continuity Camera shows up as the iPhone\'s name).';
+    } catch (err) {
+      cameraNote.textContent = err.name === 'NotAllowedError' ? 'Camera access was denied in the browser.' : `Camera error: ${err.message}`;
+    }
+  }
+  navigator.mediaDevices?.addEventListener?.('devicechange', () => listCameras(false));
+
   // The file lives in memory only: hand it over again if /output reloads.
   bus.on('hello', () => {
     if (file) bus.send('file', { file });
@@ -56,6 +90,7 @@ export function mountInputPanel(root, ui) {
     for (const kind of INPUT_KINDS) kindButtons[kind].classList.toggle('on', input.kind === kind);
     fit.value = input.fit;
     mirror.classList.toggle('on', input.mirror);
+    if ([...camera.options].some((o) => o.value === input.cameraId)) camera.value = input.cameraId;
   };
   store.subscribe(sync);
 
@@ -63,9 +98,12 @@ export function mountInputPanel(root, ui) {
     el('h2', { text: 'Input' }),
     seg,
     el('div', { class: 'row' }, [fit, mirror]),
+    el('div', { class: 'row' }, [camera, findCameras]),
+    cameraNote,
     fileRow,
   ]);
   root.append(panel);
+  listCameras(false);
   sync();
   return panel;
 }

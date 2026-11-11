@@ -15,14 +15,24 @@ export class VideoFeed {
     this.fresh = false;
     this.frames = 0;
     this.lastFrameAt = 0;
-    this.meta = null;
     this.active = false;
+    // When true, new frames are ignored and the last uploaded one is held.
+    this.gated = false;
+    // Capture (or receive) -> display delay, accumulated between status reads.
+    this.delaySum = 0;
+    this.delayCount = 0;
+    this.delayFromCapture = false;
 
     const onFrame = (_now, meta) => {
       this.fresh = true;
       this.frames++;
       this.lastFrameAt = performance.now();
-      this.meta = meta;
+      const from = meta.captureTime ?? meta.receiveTime;
+      if (from && meta.expectedDisplayTime) {
+        this.delaySum += meta.expectedDisplayTime - from;
+        this.delayCount++;
+        this.delayFromCapture = meta.captureTime !== undefined;
+      }
       v.requestVideoFrameCallback(onFrame);
     };
     v.requestVideoFrameCallback(onFrame);
@@ -62,6 +72,15 @@ export class VideoFeed {
   get ready() {
     return this.video.readyState >= 2 && this.video.videoWidth > 0;
   }
+
+  // Average delay since the last call, or null when no frames arrived.
+  takeDelay() {
+    if (!this.delayCount) return null;
+    const ms = this.delaySum / this.delayCount;
+    this.delaySum = 0;
+    this.delayCount = 0;
+    return { ms, fromCapture: this.delayFromCapture };
+  }
 }
 
 export class InputManager {
@@ -96,7 +115,7 @@ export class InputManager {
   // texture changed.
   update() {
     const feed = this.feed;
-    if (!feed || !feed.ready) return false;
+    if (!feed || !feed.ready || feed.gated) return false;
     if (!feed.fresh && !this.force) return false;
     const gl = this.gl;
     const v = feed.video;

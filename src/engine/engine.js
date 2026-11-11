@@ -2,8 +2,10 @@
 // Runs only in /output.
 
 import { clamp } from '../shared/util.js';
+import { LocalCamera } from './camera.js';
 import { InputManager } from './inputs.js';
 import { Pipeline } from './pipeline.js';
+import { PhoneLink } from './remote.js';
 
 const MAX_EDGE = 4096;
 const GLITCH_MS = 450;
@@ -42,6 +44,11 @@ export class Engine {
     };
 
     this.initGL();
+
+    this.camera = new LocalCamera(this.inputs.feeds.camera);
+    this.link = new PhoneLink(this.inputs.feeds.phone, () => this.store.state.net, (msg) => this.onPhoneMessage(msg));
+    this.latency = null;
+    setInterval(() => this.housekeeping(), 1000);
 
     canvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault();
@@ -126,11 +133,16 @@ export class Engine {
         this.inputs.setKind(state.input.kind);
         this.pipeline.srcDirty = true;
         this.applySize();
+        this.link.refresh();
+        this.housekeeping();
         break;
       case 'merge':
         if (op.key === 'input') {
           this.inputs.setKind(state.input.kind);
           this.pipeline.srcDirty = true;
+          this.housekeeping();
+        } else if (op.key === 'net') {
+          this.link.refresh();
         } else if (op.key === 'globals' && 'renderScale' in op.patch) {
           this.applySize();
         }
@@ -139,6 +151,15 @@ export class Engine {
         break;
     }
   }
+
+  // Slow chores that must keep running even if rendering is paused.
+  housekeeping() {
+    const input = this.store.state.input;
+    // Once opened the camera stays warm so switching back to it is instant.
+    if (input.kind === 'camera' || this.camera.stream) this.camera.ensure(input.cameraId);
+  }
+
+  onPhoneMessage(_msg) {}
 
   start() {
     const tick = (now) => {
@@ -152,12 +173,16 @@ export class Engine {
     if (this.lastFrameAt) this.worstFrameMs = Math.max(this.worstFrameMs, now - this.lastFrameAt);
     this.lastFrameAt = now;
 
+    this.inputs.feeds.phone.gated = this.link.hold;
     if (!this.lost) {
       const state = this.store.state;
       const g = state.globals;
       const wantPreview = g.preview && now - this.lastPreviewAt >= PREVIEW_INTERVAL_MS;
       if (wantPreview) this.lastPreviewAt = now;
       try {
+        // Collect the previous preview before a new one can be started.
+        const preview = this.pipeline.pollPreview();
+        if (preview) this.bus.send('preview', preview);
         this.pipeline.render({
           now,
           time: (now - this.t0) / 1000,
@@ -174,8 +199,6 @@ export class Engine {
           canvasHeight: this.canvas.height,
           wantPreview,
         });
-        const preview = this.pipeline.pollPreview();
-        if (preview) this.bus.send('preview', preview);
       } catch (err) {
         // Never let one bad frame stop the show.
         if (!this.renderErrorLogged) console.error('[engine] render failed', err);
@@ -192,7 +215,9 @@ export class Engine {
     const feed = inputs.feed;
     if (inputs.kind === 'pattern') return { kind: 'pattern', state: 'live', width: this.canvas.width, height: this.canvas.height };
     let state = 'no-signal';
-    if (feed.lastFrameAt && now - feed.lastFrameAt < STALL_MS) state = 'live';
+    if (feed.gated && inputs.hasFrame) state = 'paused';
+    else if (feed.lastFrameAt && now - feed.lastFrameAt < STALL_MS) state = 'live';
+    else if (inputs.kind === 'phone' && this.link.phoneInfo?.controllerOnly && this.link.conn?.open) state = 'paused';
     else if (inputs.hasFrame && feed.lastFrameAt) state = 'stalled';
     return { kind: inputs.kind, state, width: feed.video.videoWidth, height: feed.video.videoHeight };
   }
@@ -210,12 +235,34 @@ export class Engine {
       this.lastInputFrames = 0;
     }
     this.lastStatusAt = now;
+    this.updateLatency();
     this.bus.send('status', { status: this.collectStatus(now) });
     this.worstFrameMs = 0;
   }
 
+  // Approximate glass-to-glass delay of the active live input. With a capture
+  // timestamp (local cameras; WebRTC once sender reports arrive) it is
+  // measured; otherwise it is receive->display plus an allowance for the
+  // phone's capture, encode and half the network round trip.
+  updateLatency() {
+    const feed = this.inputs.feed;
+    const delay = feed?.takeDelay();
+    if (!delay || this.inputs.kind === 'file') {
+      this.latency = null;
+      return;
+    }
+    const frameMs = 1000 / Math.max(this.renderFps, 1);
+    let ms = delay.ms + frameMs;
+    if (!delay.fromCapture) ms += 45 + (this.link.stats.rttMs ?? 0) / 2;
+    const prev = this.latency?.ms;
+    this.latency = { ms: prev ? prev * 0.6 + ms * 0.4 : ms, measured: delay.fromCapture };
+  }
+
   collectStatus(now) {
     return {
+      latency: this.latency,
+      phone: this.link.status(now),
+      camera: this.camera.status(),
       at: Date.now(),
       renderFps: this.renderFps,
       worstFrameMs: this.worstFrameMs,

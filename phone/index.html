@@ -2,11 +2,41 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#0c0d10" />
     <title>Third Eye Cam — Phone</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="join">
+      <h1>Third Eye Cam</h1>
+      <p>Point the iPhone camera at the QR code on the Mac, or type the room code.</p>
+      <label>Room code
+        <input id="room-input" type="text" inputmode="latin" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="8" placeholder="•••••" />
+      </label>
+      <label class="check"><input id="controller-only" type="checkbox" /> Controller only (no camera)</label>
+      <button id="start">START</button>
+      <div id="join-error"></div>
+      <p>Keep this page open and in front during the show. iOS stops the camera when Safari goes to the background.</p>
+    </div>
+
+    <div id="live" hidden>
+      <div id="bar"><span id="dot"></span><span id="state">Starting…</span><span class="room" id="room-label"></span></div>
+      <div id="note"></div>
+      <div id="side">
+        <div id="stage"><video id="self" playsinline muted autoplay></video></div>
+        <div id="tools"></div>
+        <div id="adjust"></div>
+      </div>
+      <div id="perform"></div>
+    </div>
+
+    <div id="warning" hidden>
+      <strong>Camera was interrupted</strong>
+      <span id="warning-text"></span>
+      <button id="warning-ok">OK, I'm back</button>
+    </div>
+
     <script type="module" src="../src/phone/main.js"></script>
   </body>
 </html>

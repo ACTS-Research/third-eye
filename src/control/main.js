@@ -9,6 +9,7 @@ import { Store } from '../shared/store.js';
 import { mountChain } from './chain.js';
 import { mountInputPanel } from './input-panel.js';
 import { mountOutputPanel } from './output-panel.js';
+import { mountPhonePanel } from './phone-panel.js';
 import { mountPreview } from './preview.js';
 import { mountShortcuts } from './shortcuts.js';
 import { mountStatus } from './status.js';
@@ -50,6 +51,7 @@ mountOutputPanel(left, ui);
 mountInputPanel(left, ui);
 mountStatus(left, ui);
 mountChain(middle, ui);
+mountPhonePanel(right, ui);
 mountShortcuts(right, ui);
 
 installKeys(store);

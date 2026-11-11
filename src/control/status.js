@@ -1,14 +1,15 @@
 import { INPUT_LABELS } from '../shared/state.js';
 import { el } from '../shared/util.js';
 
-const INPUT_STATE_TEXT = { live: 'live', stalled: 'STALLED — holding last frame', 'no-signal': 'no signal' };
+const INPUT_STATE_TEXT = { live: 'live', stalled: 'STALLED — holding last frame', 'no-signal': 'no signal', paused: 'phone camera off — holding last frame' };
 
 export function mountStatus(root, ui) {
   const pills = document.getElementById('pills');
   const alerts = document.getElementById('alerts');
   const outPill = el('span', { class: 'pill' });
   const inPill = el('span', { class: 'pill' });
-  pills.append(outPill, inPill);
+  const phonePill = el('span', { class: 'pill' });
+  pills.append(outPill, inPill, phonePill);
 
   const rows = {};
   const list = el('dl', { class: 'stats' });
@@ -20,6 +21,10 @@ export function mountStatus(root, ui) {
   row('size', 'Output size');
   row('input', 'Input');
   row('inputFps', 'Incoming');
+  row('latency', 'Latency');
+  row('phone', 'Phone');
+  row('link', 'Link');
+  row('stream', 'Stream');
 
   // Other modules add their own rows / pills / alerts through these.
   ui.statusRow = row;
@@ -55,8 +60,9 @@ export function mountStatus(root, ui) {
     if (!status) {
       setPill(outPill, 'bad', 'Output closed');
       setPill(inPill, '', 'Input —');
+      setPill(phonePill, '', 'Phone —');
       for (const key of Object.keys(rows)) rows[key].textContent = '—';
-      ui.setAlert('input', null);
+      for (const key of ['input', 'gl', 'phone']) ui.setAlert(key, null);
       return;
     }
     const fps = status.renderFps;
@@ -72,6 +78,38 @@ export function mountStatus(root, ui) {
 
     ui.setAlert('input', input.state === 'stalled' ? `${label} stalled — output is holding the last frame` : null, 'bad');
     ui.setAlert('gl', status.contextLost ? 'Output lost its graphics context — recovering' : null, 'bad');
+
+    const lat = status.latency;
+    rows.latency.textContent = lat ? `${lat.measured ? '' : '≈ '}${lat.ms.toFixed(0)} ms` : '—';
+
+    const p = status.phone;
+    const info = p.info;
+    let phoneText = 'not paired';
+    let phoneLevel = 'warn';
+    if (p.phone === 'connected') {
+      phoneLevel = 'good';
+      phoneText = info?.controllerOnly ? 'controller only' : p.media === 'connected' ? 'streaming' : 'paired, no video yet';
+      if (info?.hidden) {
+        phoneLevel = 'bad';
+        phoneText = 'PAGE IN BACKGROUND';
+      }
+    } else if (p.phone === 'silent') {
+      phoneLevel = 'bad';
+      phoneText = 'not responding';
+    } else if (p.signal !== 'open') {
+      phoneLevel = p.signal === 'connecting' ? 'warn' : 'bad';
+      phoneText = p.signal === 'connecting' ? 'signaling…' : 'signaling down';
+    }
+    setPill(phonePill, phoneLevel, `Phone: ${phoneText}`);
+    rows.phone.textContent = phoneText;
+    rows.link.textContent = p.media === 'connected' ? [p.route, p.rttMs !== undefined ? `${p.rttMs.toFixed(0)} ms rtt` : ''].filter(Boolean).join(' · ') : '—';
+    rows.stream.textContent =
+      p.media === 'connected' && p.kbps !== undefined
+        ? [p.codec, `${(p.kbps / 1000).toFixed(1)} Mbps`, p.jitterBufferMs !== undefined ? `buffer ${p.jitterBufferMs.toFixed(0)} ms` : ''].filter(Boolean).join(' · ')
+        : '—';
+    ui.setAlert('phone', info?.hidden ? 'Phone: Safari is in the background — the camera is paused until it returns' : p.phone === 'silent' ? 'Phone stopped responding — it will reconnect by itself when it can' : null, 'bad');
+    ui.setAlert('camera', input.kind === 'camera' && status.camera.state === 'error' ? `Local camera: ${status.camera.error}` : null);
+    ui.setAlert('relay', p.route === 'relayed' ? 'Phone video is being relayed, not direct — expect extra latency' : null);
   }
 
   ui.onStatus(update);

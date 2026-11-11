@@ -228,3 +228,12 @@ button.on kbd { color: #141600; border-color: rgba(0, 0, 0, 0.3); background: rg
   main { grid-template-columns: 1fr; }
   .col { overflow: visible; }
 }
+
+/* Pairing ------------------------------------------------------------- */
+.pair { display: flex; gap: 12px; align-items: center; }
+#qr { width: 132px; height: 132px; border-radius: 6px; image-rendering: pixelated; flex-shrink: 0; }
+#room-code { font: 800 30px ui-monospace, monospace; letter-spacing: 0.18em; color: var(--accent); }
+#phone-link { color: var(--dim); word-break: break-all; }
+details { margin-top: 8px; }
+details summary { cursor: pointer; }
+details .row:first-of-type { margin-top: 6px; }
