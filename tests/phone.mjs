@@ -25,7 +25,7 @@ try {
   await control.goto(`${site.url}/control/`);
   await control.evaluate((sig) => window.thirdEye.store.merge('net', { signal: sig }), peerServer.signalUrl);
 
-  const output = await context.newPage();
+  let output = await context.newPage();
   await output.setViewportSize({ width: 1280, height: 720 });
   watch(output, 'output', errors);
   await output.goto(`${site.url}/output/`);
@@ -171,8 +171,18 @@ try {
   await sleep(4000);
   check('and keeps saying so while it retries', await second.evaluate(() => window.thirdEye.engine.link.status(performance.now()).signal === 'error'));
   check('the first output keeps the phone', await output.evaluate(() => window.thirdEye.engine.link.status(performance.now()).phone === 'connected'));
-  await second.close();
-  await sleep(1500);
+
+  // "Restart output": every output window goes, one new one opens and gets
+  // the room. The first output here was opened by hand, so it cannot close
+  // itself and is blanked instead.
+  await control.evaluate(() => window.thirdEye.ui.setView('setup'));
+  const [fresh] = await Promise.all([context.waitForEvent('page'), control.click('#restart-output')]);
+  watch(fresh, 'output3', errors);
+  check('old output windows are closed or blanked', await waitFor(() => second.isClosed() || second.url() === 'about:blank', { label: 'second gone' }).then(() => true, () => false) && (await waitFor(() => output.isClosed() || output.url() === 'about:blank', { label: 'first gone' }).then(() => true, () => false)));
+  check('one new output opens and takes the room', await waitFor(() => fresh.evaluate(() => window.thirdEye?.engine.link.status(performance.now()).signal === 'open'), { label: 'fresh registered', timeout: 30000 }).then(() => true, () => false));
+  s = await waitStatus(control, (st) => st.phone.media === 'connected' && st.input.state === 'live', 'phone on the new output', 40000);
+  check('the phone finds the new output by itself', true);
+  output = fresh;
 
   console.log('local camera');
   await control.evaluate(() => window.thirdEye.ui.setView('setup'));

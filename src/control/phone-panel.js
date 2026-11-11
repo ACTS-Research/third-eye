@@ -48,7 +48,8 @@ export function mountPhonePanel(root, ui) {
       popCode,
       popState,
       popLink,
-      el('div', { class: 'row', style: 'margin-top:8px' }, [
+      el('div', { class: 'row wrap', style: 'margin-top:8px' }, [
+        el('button', { text: 'Restart output', title: 'Close every output window in this browser and open a new one', onclick: () => ui.restartOutput?.() }),
         el('button', { text: 'New room code', title: 'The phone must scan again', onclick: () => store.merge('net', { room: randomRoom() }) }),
         el('button', { text: 'Pairing settings', onclick: () => { hidePop(); ui.setView('setup'); } }),
         el('button', { text: 'Close', onclick: () => hidePop() }),

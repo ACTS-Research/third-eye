@@ -81,7 +81,7 @@ export class PhoneLink {
       if (err.type === 'unavailable-id') {
         this.taken = true;
         this.signal = 'error';
-        this.error = 'This room code is held by another output window. The phone is talking to that one, not this one. Close every other tab or window showing the output (check other Chrome windows and other computers), or make a new code and scan again.';
+        this.error = 'This room code is held by another output window. The phone is talking to that one, not this one. Use Restart output to close them all and open a fresh one. If the other one is on a different computer, make a new room code and scan again.';
       } else if (err.type !== 'peer-unavailable') {
         this.error = err.type ?? String(err);
       }
@@ -104,6 +104,12 @@ export class PhoneLink {
     } catch {
       /* already gone */
     }
+  }
+
+  // Stops for good: releases the room code and never reconnects.
+  shutdown() {
+    this.stopped = true;
+    this.destroy();
   }
 
   // Called when the room code or signaling server changes.
@@ -178,6 +184,7 @@ export class PhoneLink {
   }
 
   tick() {
+    if (this.stopped) return;
     const now = performance.now();
     const peer = this.peer;
     if (!peer || peer.destroyed) {

@@ -59,6 +59,13 @@ canvas.addEventListener('click', () => {
 });
 bus.on('output', (m) => {
   if (m.cmd === 'reload') location.reload();
+  if (m.cmd === 'close') {
+    // Let go of the room code at once, then go away. A window the user
+    // opened by hand cannot close itself, so it is blanked instead.
+    engine.link.shutdown();
+    window.close();
+    setTimeout(() => location.replace('about:blank'), 150);
+  }
 });
 
 // The hint is the only UI: it fades by itself and never shows in fullscreen.

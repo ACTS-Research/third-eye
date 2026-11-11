@@ -89,6 +89,14 @@ export function mountOutputPanel(root, ui) {
 
   ui.openOutput = open;
 
+  // Closes every output window in this browser (stray tabs included) and
+  // opens one fresh one. The cure for "which window has the phone?".
+  function restart() {
+    bus.send('output', { cmd: 'close' });
+    setTimeout(open, 500);
+  }
+  ui.restartOutput = restart;
+
   const sync = () => {
     const g = store.state.globals;
     scale.value = String(g.renderScale);
@@ -104,6 +112,7 @@ export function mountOutputPanel(root, ui) {
     el('div', { class: 'panel' }, [
       el('h2', {}, ['Output', el('button', { class: 'icon', text: '↻', title: 'Reload the output window', onclick: () => bus.send('output', { cmd: 'reload' }) })]),
       el('div', { class: 'row' }, [openBtn]),
+      el('div', { class: 'row' }, [el('button', { class: 'grow', id: 'restart-output', text: 'Close all output windows and open a new one', onclick: restart })]),
       el('div', { class: 'row' }, [select, detect]),
       el('div', { class: 'row' }, [scale, previewBtn]),
       hint,
