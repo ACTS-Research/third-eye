@@ -44,25 +44,23 @@ try {
   check('beat detector fires on the beeps', await settle(async () => (await status()).audio.beats >= 2, 'beats', 12000), `${(await status()).audio.beats} beats`);
   check('beat pulse decays between hits', await settle(async () => (await source('audio.beat')) < 0.2, 'beat decay'));
   check('audio meters appear on control', await control.evaluate(() => !!document.querySelector('.meter[title="audio.level"]')));
+  // Polled from here rather than timed inside the page: headless Chromium
+  // gives a background page too few frames for a fixed window to be fair.
+  const peak = async (ms) => {
+    let top = 0;
+    const until = Date.now() + ms;
+    while (Date.now() < until) {
+      top = Math.max(top, await source('audio.level'));
+      await new Promise((r) => setTimeout(r, 60));
+    }
+    return top;
+  };
   await control.evaluate(() => window.thirdEye.store.merge('audio', { gain: 0.2 }));
-  const quiet = await output.evaluate(async () => {
-    let peak = 0;
-    for (let i = 0; i < 40; i++) {
-      await new Promise((r) => setTimeout(r, 50));
-      peak = Math.max(peak, window.thirdEye.engine.mod.get('audio.level'));
-    }
-    return peak;
-  });
+  await new Promise((r) => setTimeout(r, 500));
+  const quiet = await peak(3000);
   await control.evaluate(() => window.thirdEye.store.merge('audio', { gain: 4 }));
-  const loud = await output.evaluate(async () => {
-    let peak = 0;
-    for (let i = 0; i < 40; i++) {
-      await new Promise((r) => setTimeout(r, 50));
-      peak = Math.max(peak, window.thirdEye.engine.mod.get('audio.level'));
-    }
-    return peak;
-  });
-  check('gain scales the level', loud > quiet * 2, `peak ${quiet.toFixed(3)} at 0.2x, ${loud.toFixed(3)} at 4x`);
+  const loudEnough = await settle(async () => (await source('audio.level')) > Math.max(0.9, quiet * 2), 'louder', 12000);
+  check('gain scales the level', loudEnough && quiet < 0.5, `peak ${quiet.toFixed(3)} at 0.2x, reaches ${(await peak(1500)).toFixed(3)} at 4x`);
   await control.click('text=Audio on');
   check('disabling audio releases the microphone', await settle(async () => (await status()).audio.state === 'off' && (await output.evaluate(() => window.thirdEye.engine.audio.stream === null)), 'audio off'));
 

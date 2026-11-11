@@ -34,6 +34,8 @@ export default defineConfig({
   // Relative base so the same build works at any path (GitHub Pages project
   // sites live under /<repo>/).
   base: './',
+  // Stamped into both Mac pages so /control can tell when /output is older.
+  define: { __BUILD__: JSON.stringify(new Date().toISOString().slice(0, 16)) },
   plugins: [serviceWorker(), ...(https ? [basicSsl()] : [])],
   server: { host: https },
   // The vision worker is an ES module in dev and in the build alike.

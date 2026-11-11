@@ -164,7 +164,7 @@ document.addEventListener('click', (e) => {
 });
 
 // Offline reload: say on the setup screen whether it is in place.
-enableOffline().then((state) => {
+enableOffline(() => ui.setAlert?.('update', 'A newer version of the app has been downloaded. Reload this page, then use Restart output (Setup → Output).')).then((state) => {
   ui.offline = state;
   if (ui.statusRows?.offline) ui.statusRows.offline.textContent = state === 'ready' ? 'ready: pages reload without internet' : state;
 });

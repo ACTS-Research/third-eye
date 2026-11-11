@@ -163,14 +163,24 @@ try {
   const second = await context.newPage();
   watch(second, 'output2', errors);
   await second.goto(`${site.url}/output/`);
-  const taken = await waitFor(() => second.evaluate(() => {
-    const st = window.thirdEye?.engine.link.status(performance.now());
-    return st?.signal === 'error' && st.error.includes('another output window') ? st : null;
-  }), { label: 'room in use', timeout: 20000 }).catch(() => null);
-  check('a second output window reports that the room code is held elsewhere', !!taken);
-  await sleep(4000);
-  check('and keeps saying so while it retries', await second.evaluate(() => window.thirdEye.engine.link.status(performance.now()).signal === 'error'));
+  check('a second output window in the same browser stands by instead of starting', await waitFor(() => second.evaluate(() => window.thirdEye?.standby === true && !document.getElementById('standby').hidden), { label: 'standby', timeout: 10000 }).then(() => true, () => false));
+  await sleep(1500);
   check('the first output keeps the phone', await output.evaluate(() => window.thirdEye.engine.link.status(performance.now()).phone === 'connected'));
+
+  // The room held from somewhere this browser cannot see (another computer,
+  // or a stale registration): a separate browser context plays that part.
+  const other = await browser.newContext();
+  const stranger = await other.newPage();
+  await stranger.goto(`${site.url}/output/`);
+  await waitFor(() => stranger.evaluate(() => !!window.thirdEye?.store), { label: 'stranger up' });
+  await stranger.evaluate(({ room, signal }) => window.thirdEye.store.merge('net', { room, signal }), { room, signal: peerServer.signalUrl });
+  const moved = await waitFor(() => stranger.evaluate((taken) => {
+    const st = window.thirdEye.engine.link.status(performance.now());
+    return window.thirdEye.store.state.net.room !== taken && st.signal === 'open' ? st.notice : null;
+  }, room), { label: 'new room', timeout: 40000 }).catch(() => null);
+  check('an output that finds its room taken elsewhere moves to a new code and says so', !!moved && moved.includes(room), moved ?? 'still stuck');
+  check('the output that had the room is untouched', await output.evaluate(() => window.thirdEye.engine.link.status(performance.now()).phone === 'connected'));
+  await other.close();
 
   // "Restart output": every output window goes, one new one opens and gets
   // the room. The first output here was opened by hand, so it cannot close
@@ -178,7 +188,7 @@ try {
   await control.evaluate(() => window.thirdEye.ui.setView('setup'));
   const [fresh] = await Promise.all([context.waitForEvent('page'), control.click('#restart-output')]);
   watch(fresh, 'output3', errors);
-  check('old output windows are closed or blanked', await waitFor(() => second.isClosed() || second.url() === 'about:blank', { label: 'second gone' }).then(() => true, () => false) && (await waitFor(() => output.isClosed() || output.url() === 'about:blank', { label: 'first gone' }).then(() => true, () => false)));
+  check('old output windows are closed or blanked, the idle one included', await waitFor(() => second.isClosed() || second.url() === 'about:blank', { label: 'second gone' }).then(() => true, () => false) && (await waitFor(() => output.isClosed() || output.url() === 'about:blank', { label: 'first gone' }).then(() => true, () => false)));
   check('one new output opens and takes the room', await waitFor(() => fresh.evaluate(() => window.thirdEye?.engine.link.status(performance.now()).signal === 'open'), { label: 'fresh registered', timeout: 30000 }).then(() => true, () => false));
   s = await waitStatus(control, (st) => st.phone.media === 'connected' && st.input.state === 'live', 'phone on the new output', 40000);
   check('the phone finds the new output by itself', true);

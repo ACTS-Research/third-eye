@@ -80,8 +80,17 @@ export class PhoneLink {
       if (peer !== this.peer) return;
       if (err.type === 'unavailable-id') {
         this.taken = true;
+        this.takenCount = (this.takenCount ?? 0) + 1;
+        // No other output in this browser holds it (that one would have made
+        // this window stand by), so it is a stale registration or another
+        // computer. Waiting rarely helps: move to a fresh code.
+        if (this.takenCount >= 3) {
+          this.takenCount = 0;
+          this.onRoomTaken?.();
+          return;
+        }
         this.signal = 'error';
-        this.error = 'This room code is held by another output window. The phone is talking to that one, not this one. Use Restart output to close them all and open a fresh one. If the other one is on a different computer, make a new room code and scan again.';
+        this.error = 'This room code is held by another output window. The phone is talking to that one, not this one. Checking again; if it stays taken a new room code is made automatically.';
       } else if (err.type !== 'peer-unavailable') {
         this.error = err.type ?? String(err);
       }
@@ -117,6 +126,7 @@ export class PhoneLink {
     const net = this.getNet();
     if (this.key !== `${net.room}|${net.signal}`) {
       this.taken = false;
+      this.takenCount = 0;
       this.failures = 0;
       this.open();
     }
@@ -277,6 +287,7 @@ export class PhoneLink {
     return {
       signal: this.signal,
       error: this.error,
+      notice: this.notice ?? '',
       phone: alive ? 'connected' : dataOpen ? 'silent' : 'none',
       media: mediaState,
       info: alive ? this.phoneInfo : null,

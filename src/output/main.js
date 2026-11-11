@@ -12,6 +12,28 @@ const canvas = document.getElementById('stage');
 const hint = document.getElementById('hint');
 
 const bus = createBus();
+
+// Only one output window per browser may run: two would fight over the room
+// code and the phone would end up talking to the wrong one. If one is already
+// running, this window stands by instead of starting.
+const alreadyRunning = await new Promise((resolve) => {
+  bus.on('output-pong', () => resolve(true));
+  bus.send('output-ping');
+  setTimeout(() => resolve(false), 400);
+});
+if (alreadyRunning) {
+  document.getElementById('standby').hidden = false;
+  hint.hidden = true;
+  bus.on('output', (m) => {
+    if (m.cmd !== 'close') return;
+    window.close();
+    setTimeout(() => location.replace('about:blank'), 150);
+  });
+  window.thirdEye = { standby: true };
+  await new Promise(() => {}); // nothing below runs in a standby window
+}
+bus.on('output-ping', () => bus.send('output-pong'));
+
 const store = new Store(bus);
 const engine = new Engine(canvas, store, bus);
 engine.start();

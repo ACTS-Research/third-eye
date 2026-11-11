@@ -76,9 +76,10 @@ export function mountStatus(root, ui) {
       setPill(inPill, '', 'Input —');
       setPill(phonePill, '', 'Phone —');
       for (const key of Object.keys(rows)) if (key !== 'offline') rows[key].textContent = '—';
-      for (const key of ['input', 'gl', 'phone']) ui.setAlert(key, null);
+      for (const key of ['input', 'gl', 'phone', 'build', 'room']) ui.setAlert(key, null);
       return;
     }
+    const p0 = status.phone;
     const fps = status.renderFps;
     setPill(outPill, fps > 50 ? 'good' : fps > 24 ? 'warn' : 'bad', `Output ${fps.toFixed(0)} fps`);
     rows.render.textContent = `${fps.toFixed(1)} fps · worst ${status.worstFrameMs.toFixed(0)} ms`;
@@ -91,6 +92,8 @@ export function mountStatus(root, ui) {
     rows.inputFps.textContent = `${input.fps.toFixed(1)} fps`;
 
     ui.setAlert('input', input.state === 'stalled' ? `${label} stalled — output is holding the last frame` : null, 'bad');
+    ui.setAlert('build', status.build !== __BUILD__ ? 'The output window is running a different version of the app than this page. Reload this page, then use Restart output (Setup → Output).' : null);
+    ui.setAlert('room', p0.notice || null);
     ui.setAlert('gl', status.contextLost ? 'Output lost its graphics context — recovering' : null, 'bad');
 
     const lat = status.latency;

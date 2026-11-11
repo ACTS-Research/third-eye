@@ -7,6 +7,7 @@ import { LocalCamera } from './camera.js';
 import { MidiInput } from './midi.js';
 import { describeAction } from '../shared/actions.js';
 import { macroUnit, resolveMacros } from '../shared/macros.js';
+import { randomRoom } from '../shared/net.js';
 import { TRIGGER_COUNT } from '../shared/protocol.js';
 import { InputManager } from './inputs.js';
 import { LatencyProbe } from './latency-probe.js';
@@ -68,6 +69,11 @@ export class Engine {
       this.link.send({ t: 'config', codec: this.store.state.net.codec });
     };
     this.link.getCodec = () => this.store.state.net.codec;
+    this.link.onRoomTaken = () => {
+      const old = this.store.state.net.room;
+      this.link.notice = `Room code ${old} was in use somewhere else, so a new one was made. Scan the QR code again.`;
+      this.store.merge('net', { room: randomRoom() });
+    };
     this.latency = null;
     setInterval(() => this.housekeeping(), 1000);
 
@@ -352,6 +358,7 @@ export class Engine {
 
   collectStatus(now) {
     return {
+      build: __BUILD__,
       latency: this.latency,
       phone: this.link.status(now),
       sensors: this.sensors.status(now),
