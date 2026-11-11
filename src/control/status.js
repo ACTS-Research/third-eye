@@ -26,6 +26,7 @@ export function mountStatus(root, ui) {
   row('link', 'Link');
   row('stream', 'Stream');
   row('sensors', 'Sensors');
+  row('offline', 'Offline');
 
   // Other modules add their own rows / pills / alerts through these.
   ui.statusRow = row;
@@ -62,7 +63,7 @@ export function mountStatus(root, ui) {
       setPill(outPill, 'bad', 'Output closed');
       setPill(inPill, '', 'Input —');
       setPill(phonePill, '', 'Phone —');
-      for (const key of Object.keys(rows)) rows[key].textContent = '—';
+      for (const key of Object.keys(rows)) if (key !== 'offline') rows[key].textContent = '—';
       for (const key of ['input', 'gl', 'phone']) ui.setAlert(key, null);
       return;
     }

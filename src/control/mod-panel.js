@@ -5,7 +5,7 @@ import { Pane } from 'tweakpane';
 import { ACTIONS, TOGGLE_ACTIONS, describeAction } from '../shared/actions.js';
 import { MACRO_COUNT } from '../shared/macros.js';
 import { EFFECT_BY_ID } from '../effects/index.js';
-import { LFO_SHAPES, SOURCES, describeSource, sourceLabel } from '../shared/sources.js';
+import { LFO_SHAPES, LFO_SYNC, SOURCES, describeSource, sourceLabel } from '../shared/sources.js';
 import { INPUT_KINDS, makeActionBinding, makeMapping, sceneOf } from '../shared/state.js';
 import { el } from '../shared/util.js';
 
@@ -156,9 +156,10 @@ export function mountModPanel(roots, ui) {
     lfoPane?.dispose();
     lfoPane = new Pane({ container: lfoHost });
     store.state.lfos.forEach((lfo, i) => {
-      const model = { shape: lfo.shape, rate: lfo.rate };
+      const model = { shape: lfo.shape, rate: lfo.rate, sync: lfo.sync ?? 0 };
       const folder = lfoPane.addFolder({ title: `LFO ${i + 1}`, expanded: i === 0 });
       folder.addBinding(model, 'shape', { options: LFO_SHAPES }).on('change', (ev) => store.patchItem('lfos', lfo.id, { shape: ev.value }));
+      folder.addBinding(model, 'sync', { label: 'tempo sync', options: LFO_SYNC }).on('change', (ev) => store.patchItem('lfos', lfo.id, { sync: ev.value }));
       folder.addBinding(model, 'rate', { label: 'rate Hz', min: 0.01, max: 10, step: 0.01 }).on('change', (ev) => store.patchItem('lfos', lfo.id, { rate: ev.value }));
     });
   }

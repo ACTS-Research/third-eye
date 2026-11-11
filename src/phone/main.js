@@ -8,6 +8,7 @@ import { el, readJSON, writeJSON } from '../shared/util.js';
 import { CameraControls } from './camera-controls.js';
 import { SENSOR_HZ } from '../shared/protocol.js';
 import { HostLink } from './link.js';
+import { enableOffline } from '../shared/offline.js';
 import { Sensors } from './sensors.js';
 
 const $ = (id) => document.getElementById(id);
@@ -359,3 +360,5 @@ $('warning-ok').addEventListener('click', () => {
 // Stop double-tap zoom and rubber-banding while performing.
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 document.addEventListener('dblclick', (e) => e.preventDefault());
+
+enableOffline();

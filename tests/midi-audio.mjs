@@ -31,6 +31,9 @@ try {
   const source = (id) => output.evaluate((key) => window.thirdEye.engine.mod.get(key), id);
   const settle = (fn, label, timeout = 8000) => waitFor(fn, { label, timeout }).then(() => true, () => false);
   const midi = (bytes) => output.evaluate((b) => window.__midiInput.onmidimessage({ data: new Uint8Array(b) }), bytes);
+  // Headless Chromium starves background pages of frames; where a step needs
+  // the engine to have looked at the last message, wait for two frames.
+  const frames = () => output.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 
   console.log('audio');
   await control.evaluate(() => window.thirdEye.ui.setView('setup'));
@@ -74,7 +77,9 @@ try {
   await midi([0x92, 36, 127]);
   check('note on becomes a gate on its channel', (await source('midi.note.3.36')) === 1);
   await midi([0x82, 36, 0]);
-  check('note off closes the gate', (await source('midi.note.3.36')) === 0);
+  check('a release is held until a frame has seen the press', (await source('midi.note.3.36')) === 1);
+  await frames();
+  check('note off then closes the gate', (await source('midi.note.3.36')) === 0);
   check('MIDI sources get meters on control', await settle(() => control.evaluate(() => !!document.querySelector('.meter[title="midi.cc.1.74"]')), 'midi meter'));
 
   // MIDI map mode: every mappable control is outlined; click one, then
@@ -111,13 +116,16 @@ try {
   check('pad is bound to blackout', await settle(() => output.evaluate(() => window.thirdEye.store.state.actions.some((b) => b.source === 'midi.note.10.40' && b.action === 'blackout')), 'binding'));
   check('the control shows what is mapped to it', await settle(() => control.evaluate(() => document.querySelector('.big.blackout').dataset.midiLabel === 'Ch 10 note 40'), 'label'), await control.evaluate(() => document.querySelector('.big.blackout').dataset.midiLabel ?? ''));
   await midi([0x89, 40, 0]);
-  await new Promise((r) => setTimeout(r, 300));
+  await frames();
+  // A tap far shorter than a frame: press and release back to back.
   await midi([0x99, 40, 100]);
-  check('MIDI pad fires blackout', await settle(() => output.evaluate(() => window.thirdEye.store.state.globals.blackout === true), 'blackout'));
   await midi([0x89, 40, 0]);
+  check('a very quick pad tap still fires blackout', await settle(() => output.evaluate(() => window.thirdEye.store.state.globals.blackout === true), 'blackout'));
+  await frames();
   await midi([0x99, 40, 100]);
-  await settle(() => output.evaluate(() => window.thirdEye.store.state.globals.blackout === false), 'blackout off');
   await midi([0x89, 40, 0]);
+  check('and a second tap releases it', await settle(() => output.evaluate(() => window.thirdEye.store.state.globals.blackout === false), 'blackout off'));
+  await frames();
 
   // A preset tile.
   await control.locator('.tile .load').nth(2).click();
@@ -126,7 +134,7 @@ try {
   await midi([0x99, 41, 100]);
   await settle(() => output.evaluate(() => window.thirdEye.store.state.actions.some((b) => b.action === 'preset:2')), 'preset binding');
   await midi([0x89, 41, 0]);
-  await new Promise((r) => setTimeout(r, 300));
+  await frames();
   await midi([0x99, 41, 100]);
   check('MIDI pad loads its preset', await settle(() => output.evaluate(() => window.thirdEye.store.state.presetIndex === 2), 'preset loaded'));
   await midi([0x89, 41, 0]);
@@ -137,6 +145,7 @@ try {
   await armed();
   await midi([0xb0, 22, 64]);
   await settle(() => output.evaluate(() => window.thirdEye.store.state.actions.some((b) => b.action === 'macro:0' && b.source === 'midi.cc.1.22')), 'fader binding');
+  await settle(() => output.evaluate(() => window.thirdEye.engine.mod.faderSeen.size > 0), 'engine saw the binding');
   await midi([0xb0, 22, 127]);
   check('MIDI knob drives fader 1 to the top', await settle(() => control.evaluate(() => parseFloat(document.querySelector('.fader .fill').style.height) > 99), 'fader max'), await control.evaluate(() => `${document.querySelector('.fader .name').textContent} = ${document.querySelector('.fader .val').textContent}`));
   await midi([0xb0, 22, 0]);

@@ -172,6 +172,12 @@ Recommended, in order:
 (pairing then cannot work at all), sit behind captive portals, and get
 congested the moment the audience arrives.
 
+After one visit online, both Mac pages and the phone page reload with no
+internet at all: the site is stored in the browser (**Setup → Status →
+Offline** says `ready`). MediaPipe models are the exception; each is stored
+the first time its feature is switched on, so turn on the ones you plan to use
+once before the show.
+
 Once the phone is paired and the pages are loaded, the internet can go away:
 the stream continues without the signaling server. The server is needed again
 only to *re*-pair after the peer-to-peer link itself has broken, so load
@@ -197,6 +203,7 @@ They work in both `/control` and `/output` (not while typing in a text field).
 | `2` | Input: local camera |
 | `3` | Input: test pattern |
 | `4` | Input: video file |
+| `T` | Tap tempo |
 | `I` | Cycle to the next input |
 | `E` | Edit screen on / off (in the control window) |
 | `M` | MIDI map mode on / off (in the control window); `Esc` also leaves it |
@@ -257,7 +264,8 @@ resolution if the GPU is struggling.
 | --- | --- |
 | Phone | roll, pitch, yaw, tilt left/right, tilt forward/back, spin rate ×3, motion, shake |
 | Touch | pad X, pad Y, pad touched, triggers 1–4 |
-| LFO | four oscillators: sine, triangle, ramp, square, random steps, drift |
+| LFO | four oscillators: sine, triangle, ramp, square, random steps, drift; free-running or locked to the tempo |
+| Tempo | beat pulse, beat ramp, bar ramp |
 | Audio | level, bass, mid, high, beat |
 | MIDI | every CC and note, created the first time it is seen |
 | Face / Hand / Gesture / Pose / Segment | see [vision](#midi-audio-and-vision) |
@@ -296,6 +304,14 @@ factory presets is installed on first run. **Setup → Preset library** exports
 every preset to one JSON file and imports such files (added at the end;
 unknown effects are dropped and out-of-range values clamped). Presets live in
 the browser's local storage; export them to keep a copy.
+
+**Tempo.** Tap `T` (or the **Tap** button, or a MIDI pad mapped to it) in
+time, at least twice; the last eight taps are averaged, and the button blinks
+on the beat. A single tap just moves the downbeat. The BPM can also be typed
+next to the button. Each LFO has a **tempo sync** setting on the Edit screen
+(from a quarter of a beat to four bars); the Tempo sources can be mapped like
+any other, and the beat pulse works as a trigger. The tempo is global, not
+per preset.
 
 **Faders.** The perform screen shows up to eight faders for the live preset.
 By default they are the first parameters of its chain; on the Edit screen,
@@ -359,6 +375,7 @@ file.
 | Signaling server unreachable | A paired phone keeps streaming. Both sides keep retrying the server quietly |
 | `/control` reloaded or closed | `/output` unaffected |
 | `/output` reloaded | Restores the last state; the phone reconnects by itself |
+| Internet drops, then a page is reloaded | The page loads from the browser's stored copy. Pairing a phone again still needs the signaling server |
 | Local camera unplugged | Last frame held; reopened automatically when it returns |
 | Graphics context lost | Pipeline is rebuilt in place; the phone link stays up |
 | Everything is on fire | `B` |
@@ -471,6 +488,7 @@ npm test
 | --- | --- |
 | `tests/smoke.mjs` | Pipeline, control ↔ output sync, keys, resize, reloads, lost GL context |
 | `tests/control-ui.mjs` | The three screens, palettes, perform faders, preset editing, fades, reordering, the pop-out output |
+| `tests/offline.mjs` | Reloading every page with the server gone; tap tempo and tempo-synced LFOs |
 | `tests/phone.mjs` | Real WebRTC against a local PeerServer: pairing, live video, hold on stall, every reconnect path, local camera |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |

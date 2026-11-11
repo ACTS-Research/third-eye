@@ -4,7 +4,7 @@
 
 import { EFFECT_BY_ID, defaultParams, paramRange } from '../effects/index.js';
 import { normalizeRoom, randomRoom } from './net.js';
-import { LFO_COUNT, LFO_SHAPES } from './sources.js';
+import { LFO_COUNT, LFO_SHAPES, LFO_SYNC } from './sources.js';
 import { clamp, uid } from './util.js';
 
 export const INPUT_KINDS = ['phone', 'camera', 'pattern', 'file'];
@@ -45,7 +45,7 @@ export function makeMapping(source, fx, key, overrides = {}) {
 
 export function defaultLfos() {
   const rates = [0.1, 0.25, 0.5, 1];
-  return Array.from({ length: LFO_COUNT }, (_, i) => ({ id: `lfo.${i + 1}`, shape: 'sine', rate: rates[i] ?? 1 }));
+  return Array.from({ length: LFO_COUNT }, (_, i) => ({ id: `lfo.${i + 1}`, shape: 'sine', rate: rates[i] ?? 1, sync: 0 }));
 }
 
 // Fires an action when a source rises through 0.5.
@@ -77,6 +77,7 @@ export function defaultState() {
     v: 1,
     input: { kind: 'pattern', cameraId: '', fit: 'cover', mirror: false },
     net: { room: randomRoom(), signal: '' },
+    tempo: { bpm: 120 },
     midi: { enabled: false },
     audio: { enabled: false, deviceId: '', gain: 1, sensitivity: 1.6 },
     // MediaPipe features, all off by default: each costs GPU and CPU time.
@@ -153,6 +154,7 @@ export function sanitizeScene(scene) {
   (Array.isArray(scene?.lfos) ? scene.lfos : []).slice(0, LFO_COUNT).forEach((raw, i) => {
     if (shapes.includes(raw?.shape)) lfos[i].shape = raw.shape;
     lfos[i].rate = num(raw?.rate, lfos[i].rate, 0.01, 20);
+    if (Object.values(LFO_SYNC).includes(raw?.sync)) lfos[i].sync = raw.sync;
   });
 
   // Pinned macros: keep slot positions, drop ones whose target is gone.
@@ -190,6 +192,7 @@ export function sanitizeState(raw) {
     ...base,
     input: { ...base.input, ...pick(raw.input, base.input) },
     net: { ...base.net, ...pick(raw.net, base.net) },
+    tempo: { ...base.tempo, ...pick(raw.tempo, base.tempo) },
     midi: { ...base.midi, ...pick(raw.midi, base.midi) },
     audio: { ...base.audio, ...pick(raw.audio, base.audio) },
     vision: { ...base.vision, ...pick(raw.vision, base.vision) },
@@ -199,6 +202,7 @@ export function sanitizeState(raw) {
     ...(Array.isArray(raw.chain) ? sanitizeScene(raw) : defaultScene()),
   };
   if (!INPUT_KINDS.includes(state.input.kind)) state.input.kind = 'pattern';
+  state.tempo.bpm = clamp(Number(state.tempo.bpm) || 120, 30, 300);
   state.net.room = normalizeRoom(state.net.room);
   if (state.net.room.length < 4) state.net.room = base.net.room;
   return state;

@@ -10,6 +10,7 @@ export const ACTIONS = {
   bypassAll: 'Bypass all effects',
   inputNext: 'Next input',
   glitch: 'Glitch burst',
+  tap: 'Tap tempo',
   presetNext: 'Next preset',
   presetPrev: 'Previous preset',
 };
@@ -53,6 +54,9 @@ export function runAction(store, name, arg) {
     }
     case 'glitch':
       store.emit('glitch');
+      break;
+    case 'tap':
+      store.emit('tap', { at: Date.now() });
       break;
     case 'preset':
       applyPreset(store, Number(arg) || 0);

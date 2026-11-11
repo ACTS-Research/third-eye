@@ -40,7 +40,9 @@ export class Modulation {
     this.dirty = true;
     this.lfoState = [];
     this.gates = new Map(); // action binding id -> was above threshold
-    this.faderSeen = new Map(); // "macro:N" binding id -> last source value applied
+    this.faderSeen = new Map();
+    this.pressed = new Set(); // gates that went high since the last frame
+    this.released = new Map(); // their releases, applied after that frame // "macro:N" binding id -> last source value applied
 
     store.subscribe((op) => {
       if (op.op === 'scene' || op.op === 'replace' || (op.op === 'item' && op.list === 'mappings')) this.dirty = true;
@@ -60,6 +62,21 @@ export class Modulation {
     return this.values.get(id) ?? 0;
   }
 
+  // For on/off sources that can change faster than frames are drawn (a MIDI
+  // pad tapped quickly): a press is held until one frame has seen it, so the
+  // release cannot erase it first.
+  gate(id, value) {
+    if (value > 0.5) {
+      this.pressed.add(id);
+      this.released.delete(id);
+      this.set(id, value);
+    } else if (this.pressed.has(id)) {
+      this.released.set(id, value);
+    } else {
+      this.set(id, value);
+    }
+  }
+
   rebuild() {
     this.byEffect.clear();
     const live = new Set();
@@ -73,16 +90,28 @@ export class Modulation {
     this.dirty = false;
   }
 
-  frame(dt) {
+  // `beats` is the tempo position; LFOs with a sync length lock to it.
+  frame(dt, beats = 0) {
     const state = this.store.state;
     if (this.dirty) this.rebuild();
 
     // LFOs
     state.lfos.forEach((lfo, i) => {
       const st = (this.lfoState[i] ??= { phase: 0, hold: Math.random() * 2 - 1, from: 0 });
-      st.phase += dt * lfo.rate;
-      if (st.phase >= 1) {
-        st.phase %= 1;
+      let wrapped = false;
+      if (lfo.sync > 0) {
+        // One cycle every `sync` beats, in phase with the downbeat.
+        const pos = beats / lfo.sync;
+        const cycle = Math.floor(pos);
+        wrapped = st.cycle !== undefined && cycle !== st.cycle;
+        st.cycle = cycle;
+        st.phase = pos - cycle;
+      } else {
+        st.phase += dt * lfo.rate;
+        wrapped = st.phase >= 1;
+        if (wrapped) st.phase %= 1;
+      }
+      if (wrapped) {
         st.from = st.hold;
         st.hold = Math.random() * 2 - 1;
       }
@@ -143,6 +172,14 @@ export class Modulation {
         runAction(this.store, b.action);
       }
     }
+    this.settleGates();
+  }
+
+  // Called by frame() last: let go of gates that were released mid-frame.
+  settleGates() {
+    for (const [id, value] of this.released) this.set(id, value);
+    this.released.clear();
+    this.pressed.clear();
   }
 
   // Fills inst.values with base value + modulation for every parameter.

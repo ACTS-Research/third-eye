@@ -2,6 +2,7 @@
 // all status goes to /control over the bus.
 
 import { createBus } from '../shared/bus.js';
+import { enableOffline } from '../shared/offline.js';
 import { installKeys } from '../shared/keys.js';
 import { Store } from '../shared/store.js';
 import { readJSON } from '../shared/util.js';
@@ -80,3 +81,5 @@ window.addEventListener('mousemove', () => {
   clearTimeout(idleTimer);
   idleTimer = setTimeout(() => document.body.classList.add('idle'), 1500);
 });
+
+enableOffline();

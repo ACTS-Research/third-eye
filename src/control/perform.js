@@ -37,7 +37,25 @@ export function mountPerform(root, ui) {
     inputs.append(inputButtons[kind]);
   });
   const inputName = el('span');
-  const panic = el('aside', { class: 'panic', 'aria-label': 'Panic controls and inputs' }, [blackout, freeze, bypass, glitch, inputs, inputName]);
+
+  // Tap tempo: the button blinks on the beat; the field takes a typed BPM.
+  const bpm = el('input', {
+    type: 'number',
+    min: '30',
+    max: '300',
+    step: '0.1',
+    id: 'bpm',
+    'aria-label': 'Tempo in beats per minute',
+    onchange: () => {
+      const v = Number(bpm.value);
+      if (Number.isFinite(v)) store.merge('tempo', { bpm: Math.min(300, Math.max(30, v)) });
+    },
+  });
+  const tap = el('button', { class: 'tap', 'data-midi': 'tap', title: 'Tap in time, at least twice. One tap alone moves the downbeat.', onclick: () => runAction(store, 'tap') }, [el('span', { text: 'T' }), el('b', { text: 'Tap' })]);
+  const tempo = el('div', { class: 'tempo' }, [tap, bpm, el('label', { for: 'bpm', text: 'BPM' })]);
+  bus.on('sources', (m) => tap.classList.toggle('beat', (m.values['tempo.beat'] ?? 0) > 0.4));
+
+  const panic = el('aside', { class: 'panic', 'aria-label': 'Panic controls and inputs' }, [blackout, freeze, bypass, glitch, tempo, inputs, inputName]);
 
   // ----------------------------------------------------------- monitor ---
   const canvas = el('canvas', { id: 'preview', width: 480, height: 270 });
@@ -236,6 +254,7 @@ export function mountPerform(root, ui) {
     bypass.classList.toggle('on', globals.bypassAll);
     for (const kind of INPUT_KINDS) inputButtons[kind].setAttribute('aria-pressed', String(input.kind === kind));
     inputName.textContent = `Input: ${INPUT_LABELS[input.kind]}`;
+    if (document.activeElement !== bpm) bpm.value = String(store.state.tempo.bpm);
     syncMonitor();
   }
 

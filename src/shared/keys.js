@@ -11,6 +11,7 @@ export const KEYMAP = [
   { keys: ['g'], label: 'G', action: 'glitch', help: 'Glitch burst' },
   { keys: [']', 'ArrowRight'], label: '] or →', action: 'presetNext', help: 'Next preset (crossfade)' },
   { keys: ['[', 'ArrowLeft'], label: '[ or ←', action: 'presetPrev', help: 'Previous preset (crossfade)' },
+  { keys: ['t'], label: 'T', action: 'tap', help: 'Tap tempo' },
   { keys: ['i'], label: 'I', action: 'inputNext', help: 'Next input' },
   ...INPUT_KINDS.map((kind, i) => ({
     keys: [String(i + 1)],

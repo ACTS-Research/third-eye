@@ -87,6 +87,11 @@ main { flex: 1; min-height: 0; }
 .big.blackout { flex: 2; min-height: 110px; background: var(--ink); color: var(--on-ink); }
 .big.blackout b { font-size: 44px; font-weight: 800; line-height: 0.9; }
 .big.blackout.on { animation: blink 0.7s steps(2) infinite; }
+.tempo { display: grid; grid-template-columns: minmax(0, 1fr) 64px auto; gap: 6px; align-items: center; }
+.tap { position: relative; display: flex; justify-content: space-between; align-items: baseline; padding: 8px 10px; border: 2px solid var(--ink); }
+.tap b { font: 700 24px/1 var(--display); }
+.tap.beat { background: var(--ink); color: var(--on-ink); }
+.tempo input { padding: 6px 4px; text-align: right; }
 .inputs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .inputs button { padding: 9px 0; position: relative; }
 

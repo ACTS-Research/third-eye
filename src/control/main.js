@@ -9,6 +9,7 @@ import { PALETTES, applyPalette, restorePalette } from '../shared/palette.js';
 import './control.css';
 import { createBus } from '../shared/bus.js';
 import { installKeys } from '../shared/keys.js';
+import { enableOffline } from '../shared/offline.js';
 import { applyPreset } from '../shared/presets.js';
 import { Store } from '../shared/store.js';
 import { el, readJSON, writeJSON } from '../shared/util.js';
@@ -158,6 +159,12 @@ document.addEventListener('click', (e) => {
   if (panel.classList.contains('collapsed')) folded.add(panel.id);
   else folded.delete(panel.id);
   writeJSON(FOLD_KEY, [...folded]);
+});
+
+// Offline reload: say on the setup screen whether it is in place.
+enableOffline().then((state) => {
+  ui.offline = state;
+  if (ui.statusRows?.offline) ui.statusRows.offline.textContent = state === 'ready' ? 'ready: pages reload without internet' : state;
 });
 
 window.thirdEye = { store, bus, ui };

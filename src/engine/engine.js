@@ -13,6 +13,7 @@ import { Modulation } from './modulation.js';
 import { PhoneSensors } from './phone-sensors.js';
 import { Pipeline } from './pipeline.js';
 import { PhoneLink } from './remote.js';
+import { Tempo } from './tempo.js';
 import { Vision } from './vision.js';
 
 const MAX_EDGE = 4096;
@@ -37,6 +38,7 @@ export class Engine {
     this.midi = new MidiInput(this.mod, (source) => this.bus.send('midi-learned', { source }));
     this.audio = new AudioInput(this.mod);
     this.vision = new Vision(this.mod);
+    this.tempo = new Tempo(this.mod, store);
     this.lastSourcesAt = 0;
     this.maskFit = [1, 1, 0, 0];
     this.lost = false;
@@ -86,8 +88,9 @@ export class Engine {
     }).observe(canvas, { box: 'content-box' });
 
     store.subscribe((op) => this.onOp(op));
-    store.onEvent((name) => {
+    store.onEvent((name, data) => {
       if (name === 'glitch') this.glitchStart = performance.now();
+      else if (name === 'tap') this.tempo.tap(data?.at ?? Date.now());
     });
     // /control announces itself; without it nobody is looking at the preview
     // or the meters, so the readback and the broadcasts are skipped.
@@ -231,7 +234,7 @@ export class Engine {
     this.prevFrameAt = now;
     this.sensors.frame(dt, now);
     this.audio.frame(dt, now, this.store.state.audio);
-    this.mod.frame(dt);
+    this.mod.frame(dt, this.tempo.frame(now));
     const watched = now - this.controlSeenAt < CONTROL_TIMEOUT_MS;
     if (watched && now - this.lastSourcesAt >= SOURCES_INTERVAL_MS) {
       this.lastSourcesAt = now;

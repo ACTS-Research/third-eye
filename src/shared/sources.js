@@ -28,6 +28,9 @@ export const SOURCES = [
   def('lfo.2', 'LFO 2', 'LFO', true),
   def('lfo.3', 'LFO 3', 'LFO', true),
   def('lfo.4', 'LFO 4', 'LFO', true),
+  def('tempo.beat', 'Beat pulse', 'Tempo'),
+  def('tempo.phase', 'Beat ramp', 'Tempo'),
+  def('tempo.bar', 'Bar ramp', 'Tempo'),
   def('audio.level', 'Level', 'Audio'),
   def('audio.bass', 'Bass', 'Audio'),
   def('audio.mid', 'Mid', 'Audio'),
@@ -101,3 +104,5 @@ export function sourceLabel(id) {
 
 export const LFO_SHAPES = { Sine: 'sine', Triangle: 'triangle', 'Ramp up': 'saw', Square: 'square', 'Random steps': 'random', Drift: 'drift' };
 export const LFO_COUNT = 4;
+// Length of one LFO cycle in beats when locked to the tempo; 0 = free-running.
+export const LFO_SYNC = { 'Free (rate in Hz)': 0, '4 bars': 16, '2 bars': 8, '1 bar': 4, '2 beats': 2, '1 beat': 1, '1/2 beat': 0.5, '1/4 beat': 0.25 };

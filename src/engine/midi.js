@@ -68,7 +68,8 @@ export class MidiInput {
     } else {
       return;
     }
-    this.mod.set(id, value);
+    if (type === 0xb0) this.mod.set(id, value);
+    else this.mod.gate(id, value);
     this.messages++;
     this.last = `${id.replace('midi.', '').replaceAll('.', ' ')} = ${value.toFixed(2)}`;
     this.lastAt = performance.now();
