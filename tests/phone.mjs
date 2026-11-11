@@ -157,6 +157,23 @@ try {
   await waitStatus(control, (st) => st.phone.signal === 'open', 'signaling back', 30000);
   check('host re-registers when signaling returns', true);
 
+  console.log('two output windows');
+  // A second /output on the same room must be told plainly why it is idle,
+  // and must not disturb the first one.
+  const second = await context.newPage();
+  watch(second, 'output2', errors);
+  await second.goto(`${site.url}/output/`);
+  const taken = await waitFor(() => second.evaluate(() => {
+    const st = window.thirdEye?.engine.link.status(performance.now());
+    return st?.signal === 'error' && st.error.includes('another output window') ? st : null;
+  }), { label: 'room in use', timeout: 20000 }).catch(() => null);
+  check('a second output window reports that the room code is held elsewhere', !!taken);
+  await sleep(4000);
+  check('and keeps saying so while it retries', await second.evaluate(() => window.thirdEye.engine.link.status(performance.now()).signal === 'error'));
+  check('the first output keeps the phone', await output.evaluate(() => window.thirdEye.engine.link.status(performance.now()).phone === 'connected'));
+  await second.close();
+  await sleep(1500);
+
   console.log('local camera');
   await control.evaluate(() => window.thirdEye.ui.setView('setup'));
   await control.click('text=Find cameras');

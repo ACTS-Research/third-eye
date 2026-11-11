@@ -49,6 +49,7 @@ export function mountPhonePanel(root, ui) {
       popState,
       popLink,
       el('div', { class: 'row', style: 'margin-top:8px' }, [
+        el('button', { text: 'New room code', title: 'The phone must scan again', onclick: () => store.merge('net', { room: randomRoom() }) }),
         el('button', { text: 'Pairing settings', onclick: () => { hidePop(); ui.setView('setup'); } }),
         el('button', { text: 'Close', onclick: () => hidePop() }),
       ]),
@@ -64,7 +65,7 @@ export function mountPhonePanel(root, ui) {
     anchor = from;
     const r = from.getBoundingClientRect();
     pop.style.top = `${r.bottom + 10}px`;
-    pop.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - 470))}px`;
+    pop.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - 550))}px`;
     pop.hidden = false;
   };
   document.addEventListener('pointerdown', (e) => {

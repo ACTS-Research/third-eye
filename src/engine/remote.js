@@ -12,7 +12,7 @@ import { preferCodec } from '../shared/sdp.js';
 
 const TICK_MS = 1000;
 const PHONE_TIMEOUT_MS = 4000;
-const CONNECT_TIMEOUT_MS = 8000;
+const CONNECT_TIMEOUT_MS = 15000;
 
 export class PhoneLink {
   constructor(feed, getNet, onMessage) {
@@ -47,8 +47,11 @@ export class PhoneLink {
     this.key = `${net.room}|${net.signal}`;
     // After a failed attempt keep saying "unreachable" while retrying, rather
     // than flipping back to "connecting" every few seconds.
-    this.signal = this.failures ? 'disconnected' : 'connecting';
-    if (!this.failures) this.error = '';
+    // A taken room code stays reported as exactly that while retrying.
+    if (!this.taken) {
+      this.signal = this.failures ? 'disconnected' : 'connecting';
+      if (!this.failures) this.error = '';
+    }
     this.openedAt = performance.now();
 
     let peer;
@@ -65,9 +68,10 @@ export class PhoneLink {
       this.signal = 'open';
       this.error = '';
       this.failures = 0;
+      this.taken = false;
     });
     peer.on('disconnected', () => {
-      if (peer === this.peer) {
+      if (peer === this.peer && !this.taken) {
         this.signal = 'disconnected';
         this.failures = (this.failures ?? 0) + 1;
       }
@@ -75,14 +79,19 @@ export class PhoneLink {
     peer.on('error', (err) => {
       if (peer !== this.peer) return;
       if (err.type === 'unavailable-id') {
+        this.taken = true;
         this.signal = 'error';
-        this.error = 'Room code already in use — is another output window open?';
+        this.error = 'This room code is held by another output window. The phone is talking to that one, not this one. Close every other tab or window showing the output (check other Chrome windows and other computers), or make a new code and scan again.';
       } else if (err.type !== 'peer-unavailable') {
         this.error = err.type ?? String(err);
       }
     });
-    peer.on('call', (call) => this.acceptCall(call));
-    peer.on('connection', (conn) => this.acceptData(conn));
+    peer.on('call', (call) => {
+      if (peer === this.peer) this.acceptCall(call);
+    });
+    peer.on('connection', (conn) => {
+      if (peer === this.peer) this.acceptData(conn);
+    });
   }
 
   destroy() {
@@ -100,7 +109,11 @@ export class PhoneLink {
   // Called when the room code or signaling server changes.
   refresh() {
     const net = this.getNet();
-    if (this.key !== `${net.room}|${net.signal}`) this.open();
+    if (this.key !== `${net.room}|${net.signal}`) {
+      this.taken = false;
+      this.failures = 0;
+      this.open();
+    }
   }
 
   acceptCall(call) {

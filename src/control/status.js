@@ -110,6 +110,9 @@ export function mountStatus(root, ui) {
     } else if (p.phone === 'silent') {
       phoneLevel = 'bad';
       phoneText = 'not responding';
+    } else if (p.signal === 'error') {
+      phoneLevel = 'bad';
+      phoneText = 'room code in use elsewhere';
     } else if (p.signal !== 'open') {
       phoneLevel = p.signal === 'connecting' ? 'warn' : 'bad';
       phoneText = p.signal === 'connecting' ? 'connecting…' : 'pairing server unreachable';
