@@ -1,10 +1,16 @@
 // Shared helpers for the headless smoke tests.
 
+import { execFileSync } from 'node:child_process';
+import { join } from 'node:path';
 import { chromium } from 'playwright';
 import { build, preview } from 'vite';
 
 export async function startSite({ port = 4173 } = {}) {
-  if (!process.env.SKIP_BUILD) await build({ logLevel: 'warn' });
+  if (!process.env.SKIP_BUILD) {
+    // Same preparation `npm run build` does: MediaPipe runtime and models.
+    execFileSync('node', [join(import.meta.dirname, '../scripts/fetch-models.mjs')], { stdio: 'inherit' });
+    await build({ logLevel: 'warn' });
+  }
   const server = await preview({ preview: { port, strictPort: true }, logLevel: 'warn' });
   return { url: `http://localhost:${port}`, close: () => server.close() };
 }

@@ -76,9 +76,11 @@ export class PhoneSensors {
       const roll = wrapPi(Math.atan2(ux, uy) - f[P.SCREEN] * DEG);
       const pitch = Math.asin(clamp(uz, -1, 1));
       const yaw = wrapPi(f[P.ALPHA] * DEG);
-      this.target[0] = roll;
-      this.target[1] = pitch;
-      this.target[2] = yaw;
+      if (Number.isFinite(roll + pitch + yaw)) {
+        this.target[0] = roll;
+        this.target[1] = pitch;
+        this.target[2] = yaw;
+      }
       mod.set('phone.roll', roll / Math.PI);
       mod.set('phone.pitch', pitch / (Math.PI / 2));
       mod.set('phone.yaw', yaw / Math.PI);

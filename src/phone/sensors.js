@@ -63,7 +63,8 @@ export class Sensors {
     const p = this.packet;
     p[P.SEQ] = this.seq++;
     p[P.FLAGS] = this.flags;
-    p[P.SCREEN] = screen.orientation?.angle ?? Number(window.orientation) ?? 0;
+    const angle = Number(screen.orientation?.angle ?? window.orientation);
+    p[P.SCREEN] = Number.isFinite(angle) ? angle : 0;
     return p;
   }
 

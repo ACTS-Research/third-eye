@@ -13,6 +13,9 @@ export default defineConfig({
   server: { host: https },
   // The vision worker is an ES module in dev and in the build alike.
   worker: { format: 'es' },
+  // Pre-bundle up front so the dev server never reloads a page mid-session
+  // because it "discovered" a dependency late.
+  optimizeDeps: { include: ['tweakpane', 'peerjs', 'qrcode-generator', '@mediapipe/tasks-vision'] },
   build: {
     target: 'es2022',
     rollupOptions: {

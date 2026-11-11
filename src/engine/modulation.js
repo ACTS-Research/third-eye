@@ -48,6 +48,8 @@ export class Modulation {
   }
 
   set(id, value) {
+    // One bad reading must never reach a shader as NaN.
+    if (!Number.isFinite(value)) return;
     if (!this.values.has(id)) this.bipolar.set(id, describeSource(id).bipolar);
     this.values.set(id, value);
   }
