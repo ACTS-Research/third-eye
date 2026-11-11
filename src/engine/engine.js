@@ -12,6 +12,7 @@ import { Modulation } from './modulation.js';
 import { PhoneSensors } from './phone-sensors.js';
 import { Pipeline } from './pipeline.js';
 import { PhoneLink } from './remote.js';
+import { Vision } from './vision.js';
 
 const MAX_EDGE = 4096;
 const GLITCH_MS = 450;
@@ -19,6 +20,7 @@ const STALL_MS = 1000;
 const PREVIEW_INTERVAL_MS = 100;
 const STATUS_INTERVAL_MS = 500;
 const SOURCES_INTERVAL_MS = 66;
+const CONTROL_TIMEOUT_MS = 3000;
 
 export class Engine {
   constructor(canvas, store, bus) {
@@ -33,6 +35,7 @@ export class Engine {
     this.resolve = this.mod.resolve;
     this.midi = new MidiInput(this.mod, (source) => this.bus.send('midi-learned', { source }));
     this.audio = new AudioInput(this.mod);
+    this.vision = new Vision(this.mod);
     this.lastSourcesAt = 0;
     this.maskFit = [1, 1, 0, 0];
     this.lost = false;
@@ -85,6 +88,12 @@ export class Engine {
     store.onEvent((name) => {
       if (name === 'glitch') this.glitchStart = performance.now();
     });
+    // /control announces itself; without it nobody is looking at the preview
+    // or the meters, so the readback and the broadcasts are skipped.
+    this.controlSeenAt = -1e9;
+    bus.on('control-alive', () => {
+      this.controlSeenAt = performance.now();
+    });
     bus.on('midi', (m) => {
       if (m.cmd === 'learn') this.midi.learning = !!m.on;
     });
@@ -107,6 +116,7 @@ export class Engine {
     if (!gl) throw new Error('WebGL2 is not available');
     this.gl = gl;
     this.inputs.initGL(gl);
+    this.vision.initGL(gl);
     this.pipeline = new Pipeline(gl, this.inputs);
     this.inputs.setKind(this.store.state.input.kind);
     this.applySize();
@@ -157,7 +167,7 @@ export class Engine {
           this.housekeeping();
         } else if (op.key === 'net') {
           this.link.refresh();
-        } else if (op.key === 'midi' || op.key === 'audio') {
+        } else if (op.key === 'midi' || op.key === 'audio' || op.key === 'vision') {
           this.housekeeping();
         } else if (op.key === 'globals' && 'renderScale' in op.patch) {
           this.applySize();
@@ -179,6 +189,7 @@ export class Engine {
     else if (this.midi.state !== 'off') this.midi.disable();
     if (audio.enabled) this.audio.enable(audio.deviceId);
     else if (this.audio.state !== 'off') this.audio.disable();
+    this.vision.configure(this.store.state.vision);
   }
 
   onPhoneMessage(_msg) {}
@@ -210,16 +221,26 @@ export class Engine {
     this.sensors.frame(dt, now);
     this.audio.frame(dt, now, this.store.state.audio);
     this.mod.frame(dt);
-    if (now - this.lastSourcesAt >= SOURCES_INTERVAL_MS) {
+    const watched = now - this.controlSeenAt < CONTROL_TIMEOUT_MS;
+    if (watched && now - this.lastSourcesAt >= SOURCES_INTERVAL_MS) {
       this.lastSourcesAt = now;
       this.bus.send('sources', { values: this.mod.snapshot() });
     }
 
     this.inputs.feeds.phone.gated = this.link.hold;
+    this.vision.frame(now, this.inputs.feed?.video ?? null);
     if (!this.lost) {
       const state = this.store.state;
       const g = state.globals;
-      const wantPreview = g.preview && now - this.lastPreviewAt >= PREVIEW_INTERVAL_MS;
+      // The mask lives in input-frame space: effects need the same fit the
+      // source stage applied to line it up with the picture.
+      const maskTex = this.vision.maskTexture(now);
+      const [fitX, fitY] = this.pipeline.fitScale(state.input.fit);
+      this.maskFit[0] = fitX;
+      this.maskFit[1] = fitY;
+      this.maskFit[2] = state.input.mirror ? 1 : 0;
+      this.maskFit[3] = maskTex ? 1 : 0;
+      const wantPreview = watched && g.preview && now - this.lastPreviewAt >= PREVIEW_INTERVAL_MS;
       if (wantPreview) this.lastPreviewAt = now;
       try {
         // Collect the previous preview before a new one can be started.
@@ -229,7 +250,7 @@ export class Engine {
           now,
           time: (now - this.t0) / 1000,
           phone: this.sensors.angles,
-          maskTex: null,
+          maskTex,
           maskFit: this.maskFit,
           glitch: clamp(1 - (now - this.glitchStart) / GLITCH_MS, 0, 1),
           master: g.blackout ? 0 : 1,
@@ -278,6 +299,7 @@ export class Engine {
     }
     this.lastStatusAt = now;
     this.sensors.takeRate(dt);
+    this.vision.takeRate(dt);
     this.updateLatency();
     this.bus.send('status', { status: this.collectStatus(now) });
     this.worstFrameMs = 0;
@@ -308,6 +330,7 @@ export class Engine {
       sensors: this.sensors.status(now),
       midi: this.midi.status(),
       audio: this.audio.status(),
+      vision: this.vision.status(),
       camera: this.camera.status(),
       at: Date.now(),
       renderFps: this.renderFps,

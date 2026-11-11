@@ -34,6 +34,9 @@ try {
   const b = await outputStats(output);
   check('output is not black', a.mean > 10, `mean ${a.mean.toFixed(1)}`);
   check('output is animating', a.hash !== b.hash);
+  check('output knows a control page is watching', await (async () => {
+    return output.evaluate(() => performance.now() - window.thirdEye.engine.controlSeenAt < 3000);
+  })());
   check('preview reaches control', await control.evaluate(() => {
     const c = document.getElementById('preview');
     const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
@@ -90,6 +93,39 @@ try {
   await sleep(200);
   check('key in output reaches control', await control.evaluate(() => document.querySelector('.transport .danger').classList.contains('on')));
   await output.keyboard.press('b');
+
+  console.log('video file input');
+  // Record a short clip in the page, then load it through the file picker.
+  const clip = await control.evaluate(async () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 320;
+    canvas.height = 240;
+    const ctx = canvas.getContext('2d');
+    let n = 0;
+    const timer = setInterval(() => {
+      ctx.fillStyle = `hsl(${(n += 20) % 360} 90% 50%)`;
+      ctx.fillRect(0, 0, 320, 240);
+    }, 40);
+    const recorder = new MediaRecorder(canvas.captureStream(25), { mimeType: 'video/webm' });
+    const chunks = [];
+    recorder.ondataavailable = (e) => chunks.push(e.data);
+    const done = new Promise((r) => (recorder.onstop = r));
+    recorder.start();
+    await new Promise((r) => setTimeout(r, 1500));
+    recorder.stop();
+    await done;
+    clearInterval(timer);
+    const bytes = new Uint8Array(await new Blob(chunks).arrayBuffer());
+    return Array.from(bytes);
+  });
+  await control.setInputFiles('#input-panel input[type=file]', { name: 'clip.webm', mimeType: 'video/webm', buffer: Buffer.from(clip) });
+  const fileLive = await waitFor(() => control.evaluate(() => {
+    const st = window.thirdEye.ui.status;
+    return st?.input.kind === 'file' && st.input.state === 'live' && st.input.width === 320 ? st : null;
+  }), { label: 'video file live', timeout: 8000 }).catch(() => null);
+  check('local video file plays through the pipeline', !!fileLive, fileLive ? `${fileLive.input.width}x${fileLive.input.height}` : 'not live');
+  check('file name shown on control', (await control.locator('#input-panel').textContent()).includes('clip.webm'));
+  await control.keyboard.press('3');
 
   console.log('resilience');
   await output.setViewportSize({ width: 960, height: 540 });

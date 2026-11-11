@@ -2,6 +2,9 @@
 // these: a number that is either unipolar (0..1) or bipolar (-1..1).
 
 const def = (id, label, group, bipolar = false) => ({ id, label, group, bipolar });
+// Vision sources only exist while their feature runs: they get a meter when
+// they first report, and a mapping to one is inert until then.
+const lazy = (id, label, group, bipolar = false) => ({ id, label, group, bipolar, lazy: true });
 
 export const SOURCES = [
   def('phone.roll', 'Roll', 'Phone', true),
@@ -30,6 +33,52 @@ export const SOURCES = [
   def('audio.mid', 'Mid', 'Audio'),
   def('audio.high', 'High', 'Audio'),
   def('audio.beat', 'Beat', 'Audio'),
+
+  lazy('face.present', 'Face seen', 'Face'),
+  lazy('face.x', 'Position X', 'Face'),
+  lazy('face.y', 'Position Y', 'Face'),
+  lazy('face.size', 'Size (closeness)', 'Face'),
+  lazy('face.yaw', 'Turn left/right', 'Face', true),
+  lazy('face.pitch', 'Nod up/down', 'Face', true),
+  lazy('face.roll', 'Head tilt', 'Face', true),
+  lazy('face.jawOpen', 'Mouth open', 'Face'),
+  lazy('face.smile', 'Smile', 'Face'),
+  lazy('face.pucker', 'Pucker', 'Face'),
+  lazy('face.browUp', 'Brows up', 'Face'),
+  lazy('face.browDown', 'Brows down', 'Face'),
+  lazy('face.blinkLeft', 'Blink left', 'Face'),
+  lazy('face.blinkRight', 'Blink right', 'Face'),
+  lazy('face.eyeWide', 'Eyes wide', 'Face'),
+  lazy('face.cheekPuff', 'Cheek puff', 'Face'),
+
+  lazy('hand.present', 'Hand seen', 'Hand'),
+  lazy('hand.x', 'Position X', 'Hand'),
+  lazy('hand.y', 'Position Y', 'Hand'),
+  lazy('hand.pinch', 'Pinch', 'Hand'),
+  lazy('hand.open', 'Openness', 'Hand'),
+  lazy('hand.roll', 'Rotation', 'Hand', true),
+  lazy('hand.distance', 'Two-hand distance', 'Hand'),
+
+  lazy('gesture.fist', 'Fist', 'Gesture'),
+  lazy('gesture.palm', 'Open palm', 'Gesture'),
+  lazy('gesture.point', 'Pointing up', 'Gesture'),
+  lazy('gesture.thumbUp', 'Thumb up', 'Gesture'),
+  lazy('gesture.thumbDown', 'Thumb down', 'Gesture'),
+  lazy('gesture.victory', 'Victory', 'Gesture'),
+  lazy('gesture.love', 'I-love-you', 'Gesture'),
+
+  lazy('pose.present', 'Body seen', 'Pose'),
+  lazy('pose.x', 'Position X', 'Pose'),
+  lazy('pose.y', 'Position Y', 'Pose'),
+  lazy('pose.size', 'Size (closeness)', 'Pose'),
+  lazy('pose.lean', 'Shoulder lean', 'Pose', true),
+  lazy('pose.leftHandX', 'Left hand X', 'Pose'),
+  lazy('pose.leftHandY', 'Left hand height', 'Pose'),
+  lazy('pose.rightHandX', 'Right hand X', 'Pose'),
+  lazy('pose.rightHandY', 'Right hand height', 'Pose'),
+  lazy('pose.armSpan', 'Arm span', 'Pose'),
+
+  lazy('seg.coverage', 'Person coverage', 'Segment'),
 ];
 
 export const SOURCE_BY_ID = Object.fromEntries(SOURCES.map((s) => [s.id, s]));

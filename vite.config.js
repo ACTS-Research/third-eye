@@ -11,6 +11,8 @@ export default defineConfig({
   base: './',
   plugins: https ? [basicSsl()] : [],
   server: { host: https },
+  // The vision worker is an ES module in dev and in the build alike.
+  worker: { format: 'es' },
   build: {
     target: 'es2022',
     rollupOptions: {

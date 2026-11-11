@@ -17,6 +17,7 @@ import { mountPresetsPanel } from './presets-panel.js';
 import { mountPreview } from './preview.js';
 import { mountShortcuts } from './shortcuts.js';
 import { mountStatus } from './status.js';
+import { mountVisionPanel } from './vision-panel.js';
 
 const bus = createBus();
 const store = new Store(bus);
@@ -41,8 +42,12 @@ bus.on('status', (m) => {
   ui.statusAt = performance.now();
   for (const fn of ui.statusListeners) fn(ui.status);
 });
+// Tell /output someone is watching, so it sends the preview and the meters.
+bus.send('control-alive');
+bus.on('hello', () => bus.send('control-alive'));
 // Keep panels ticking so they notice when /output goes away.
 setInterval(() => {
+  bus.send('control-alive');
   if (!ui.outputAlive) for (const fn of ui.statusListeners) fn(null);
 }, 1000);
 
@@ -59,6 +64,7 @@ mountPhonePanel(right, ui);
 mountPresetsPanel(right, ui);
 mountModPanel(right, ui);
 mountIoPanel(right, ui);
+mountVisionPanel(right, ui);
 mountShortcuts(right, ui);
 
 installKeys(store);

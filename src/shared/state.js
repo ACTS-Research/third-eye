@@ -77,6 +77,8 @@ export function defaultState() {
     net: { room: randomRoom(), signal: '' },
     midi: { enabled: false },
     audio: { enabled: false, deviceId: '', gain: 1, sensitivity: 1.6 },
+    // MediaPipe features, all off by default: each costs GPU and CPU time.
+    vision: { face: false, hands: false, gesture: false, pose: false, segment: false, delegate: 'GPU' },
     globals: {
       blackout: false,
       freeze: false,
@@ -179,6 +181,7 @@ export function sanitizeState(raw) {
     net: { ...base.net, ...pick(raw.net, base.net) },
     midi: { ...base.midi, ...pick(raw.midi, base.midi) },
     audio: { ...base.audio, ...pick(raw.audio, base.audio) },
+    vision: { ...base.vision, ...pick(raw.vision, base.vision) },
     globals: { ...base.globals, ...pick(raw.globals, base.globals) },
     presetIndex: Number.isInteger(raw.presetIndex) ? raw.presetIndex : -1,
     actions: sanitizeActions(raw.actions, base.actions),

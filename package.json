@@ -5,12 +5,16 @@
   "description": "Live video instrument: iPhone camera over WebRTC into a WebGL2 effects chain on a second display.",
   "type": "module",
   "scripts": {
+    "assets": "node scripts/fetch-models.mjs",
+    "predev": "node scripts/fetch-models.mjs",
     "dev": "vite",
+    "predev:https": "node scripts/fetch-models.mjs",
     "dev:https": "HTTPS=1 vite --host",
+    "prebuild": "node scripts/fetch-models.mjs --strict",
     "build": "vite build",
     "preview": "vite preview",
-    "test:smoke": "node tests/smoke.mjs",
-    "test": "node tests/smoke.mjs && node tests/phone.mjs && node tests/modulation.mjs && node tests/midi-audio.mjs"
+    "test": "node tests/smoke.mjs && node tests/phone.mjs && node tests/modulation.mjs && node tests/midi-audio.mjs && node tests/vision.mjs",
+    "test:smoke": "node tests/smoke.mjs"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "^1.2.2",

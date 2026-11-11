@@ -32,7 +32,7 @@ function lfoValue(shape, phase, state) {
 export class Modulation {
   constructor(store) {
     this.store = store;
-    this.values = new Map(SOURCES.map((s) => [s.id, 0]));
+    this.values = new Map(SOURCES.filter((s) => !s.lazy).map((s) => [s.id, 0]));
     this.bipolar = new Map(SOURCES.map((s) => [s.id, s.bipolar]));
     this.smoothed = new Map(); // mapping id -> shaped, smoothed source value
     this.byEffect = new Map(); // effect uid -> mappings targeting it

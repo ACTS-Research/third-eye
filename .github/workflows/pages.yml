@@ -21,6 +21,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # The MediaPipe models (about 42 MB) are downloaded and checksummed by
+      # the prebuild step; cache them so most builds never hit the network.
+      - uses: actions/cache@v4
+        with:
+          path: public/models
+          key: mediapipe-models-${{ hashFiles('scripts/fetch-models.mjs') }}
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:

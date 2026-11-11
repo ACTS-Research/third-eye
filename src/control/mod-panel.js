@@ -165,17 +165,21 @@ export function mountModPanel(root, ui) {
     after.after(el('div', { class: 'meter', title: id }, [el('span', { text: s.label }), bar]));
     meterBars.set(id, { fill, bipolar: s.bipolar });
   }
-  for (const s of SOURCES) addMeter(s.id);
+  for (const s of SOURCES) if (!s.lazy) addMeter(s.id);
 
   bus.on('sources', (m) => {
     let grew = false;
     for (const [id, value] of Object.entries(m.values)) {
       let meter = meterBars.get(id);
       if (!meter) {
-        dynamic.add(id);
+        // New at run time: a MIDI control (joins the source lists) or a
+        // vision source whose feature was just switched on.
+        if (!SOURCES_INDEX[id]) {
+          dynamic.add(id);
+          grew = true;
+        }
         addMeter(id);
         meter = meterBars.get(id);
-        grew = true;
       }
       if (meter.bipolar) {
         const v = Math.max(-1, Math.min(1, value));

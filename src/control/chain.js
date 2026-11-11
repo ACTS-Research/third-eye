@@ -71,7 +71,13 @@ export function mountChain(root, ui) {
     body.classList.toggle('collapsed', collapsed.has(item.uid));
 
     const pane = new Pane({ container: body });
-    const model = { mix: item.mix };
+    const model = { mix: item.mix, target: item.target };
+    // Needs Segmentation (Vision panel) to be on for anything but Everything.
+    pane
+      .addBinding(model, 'target', { label: 'apply to', options: { Everything: 'all', 'Person only': 'person', 'Background only': 'background' } })
+      .on('change', (ev) => {
+        if (!guard) store.patchItem('chain', item.uid, { target: ev.value });
+      });
     pane.addBinding(model, 'mix', { label: 'wet / dry', min: 0, max: 1, step: 0.01 }).on('change', (ev) => {
       if (guard) return;
       ui.lastTouched = { uid: item.uid, key: 'mix' };
@@ -110,6 +116,7 @@ export function mountChain(root, ui) {
   function refresh(card, item) {
     guard = true;
     card.model.mix = item.mix;
+    card.model.target = item.target;
     for (const [key, spec] of Object.entries(card.def.params)) {
       card.model[key] = spec.type === 'bool' ? item.params[key] > 0.5 : item.params[key];
     }
