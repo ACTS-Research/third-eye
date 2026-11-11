@@ -8,6 +8,7 @@
 
 import { Peer } from 'peerjs';
 import { hostPeerId, peerOptions } from '../shared/net.js';
+import { preferCodec } from '../shared/sdp.js';
 
 const TICK_MS = 1000;
 const PHONE_TIMEOUT_MS = 4000;
@@ -119,7 +120,7 @@ export class PhoneLink {
       if (this.call === call) this.call = null;
     });
     call.on('error', (err) => console.warn('[phone] media error', err));
-    call.answer();
+    call.answer(undefined, { sdpTransform: (sdp) => preferCodec(sdp, this.getCodec?.()) });
   }
 
   acceptData(conn) {
@@ -222,6 +223,7 @@ export class PhoneLink {
       stats.freezes = inbound.freezeCount;
       stats.codec = byId.get(inbound.codecId)?.mimeType?.replace('video/', '') ?? '';
       stats.decoder = inbound.decoderImplementation ?? '';
+      stats.hardware = inbound.powerEfficientDecoder;
     }
     if (pair) {
       stats.rttMs = (pair.currentRoundTripTime ?? 0) * 1000;

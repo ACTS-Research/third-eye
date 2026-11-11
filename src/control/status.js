@@ -107,7 +107,7 @@ export function mountStatus(root, ui) {
     rows.link.textContent = p.media === 'connected' ? [p.route, p.rttMs !== undefined ? `${p.rttMs.toFixed(0)} ms rtt` : ''].filter(Boolean).join(' · ') : '—';
     rows.stream.textContent =
       p.media === 'connected' && p.kbps !== undefined
-        ? [p.codec, `${(p.kbps / 1000).toFixed(1)} Mbps`, p.jitterBufferMs !== undefined ? `buffer ${p.jitterBufferMs.toFixed(0)} ms` : ''].filter(Boolean).join(' · ')
+        ? [p.codec, p.hardware === true ? 'hardware' : p.hardware === false ? 'software' : '', `${(p.kbps / 1000).toFixed(1)} Mbps`, p.jitterBufferMs !== undefined ? `buffer ${p.jitterBufferMs.toFixed(0)} ms` : ''].filter(Boolean).join(' · ')
         : '—';
     const sn = status.sensors;
     rows.sensors.textContent = sn?.live ? `${sn.hz.toFixed(0)} Hz${sn.orientation ? '' : ' · no orientation'}${sn.motion ? '' : ' · no motion'}` : '—';
@@ -116,7 +116,19 @@ export function mountStatus(root, ui) {
     ui.setAlert('relay', p.route === 'relayed' ? 'Phone video is being relayed, not direct — expect extra latency' : null);
   }
 
+  // Real glass-to-glass measurement: flash the output, time the phone seeing it.
+  const testNote = el('div', { class: 'dim small', id: 'latency-note', text: 'Point the phone at the projected output so it fills most of the frame, then measure. The output flashes black and white for about ten seconds.' });
+  const testButton = el('button', { id: 'latency-test', text: 'Measure real latency', onclick: () => ui.store.emit('latency-test') });
+  ui.onStatus((status) => {
+    const t = status?.latencyTest;
+    testButton.disabled = !status || t?.state === 'running';
+    if (!t || t.state === 'idle') return;
+    if (t.state === 'running') testNote.textContent = 'Measuring… the output is flashing.';
+    else if (t.state === 'done') testNote.textContent = `Measured ${t.ms.toFixed(0)} ms from the output lighting up to the Mac seeing it (${t.message}). That is the whole loop: projector, camera, phone, network, Mac.`;
+    else testNote.textContent = t.message;
+  });
+
   ui.onStatus(update);
-  root.append(el('div', { class: 'panel' }, [el('h2', { text: 'Status' }), list]));
+  root.append(el('div', { class: 'panel' }, [el('h2', { text: 'Status' }), list, el('div', { class: 'row', style: 'margin-top:10px' }, [testButton]), testNote]));
   update(null);
 }

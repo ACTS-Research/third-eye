@@ -31,6 +31,7 @@ uniform sampler2D uB;       // scene being faded out
 uniform float uFade;        // 0 = all B, 1 = all A
 uniform float uGlitch;      // 0..1 burst envelope
 uniform float uMaster;      // 0 = black
+uniform float uFlash;       // 1 = solid white (latency test)
 uniform float uTime;
 uniform vec2 uResolution;
 
@@ -61,7 +62,7 @@ void main() {
   } else {
     col = scene(uv);
   }
-  outColor = vec4(col * uMaster, 1.0);
+  outColor = vec4(mix(col * uMaster, vec3(1.0), uFlash), 1.0);
 }
 `;
 

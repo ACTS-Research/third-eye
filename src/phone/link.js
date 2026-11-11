@@ -4,6 +4,7 @@
 import { Peer } from 'peerjs';
 import { hostPeerId, peerOptions } from '../shared/net.js';
 import { SENSOR_CHANNEL } from '../shared/protocol.js';
+import { DEFAULT_CODEC, preferCodec } from '../shared/sdp.js';
 
 const TICK_MS = 1000;
 const RETRY_MS = 2500;
@@ -24,6 +25,7 @@ export class HostLink {
     this.conn = null;
     this.call = null;
     this.sensorChannel = null;
+    this.codec = DEFAULT_CODEC;
     this.stream = null;
     this.quality = null;
     this.signal = 'connecting';
@@ -145,6 +147,17 @@ export class HostLink {
     }
   }
 
+  // The Mac chooses the video codec; a change restarts the call with it.
+  setCodec(codec) {
+    if (!codec || codec === this.codec) return;
+    this.codec = codec;
+    if (this.call) {
+      this.dropCall();
+      this.callTriedAt = -1e9;
+      this.tick();
+    }
+  }
+
   sendSensors(packet) {
     const ch = this.sensorChannel;
     // Skip rather than queue when the channel is backed up.
@@ -199,6 +212,7 @@ export class HostLink {
     conn.on('data', (msg) => {
       if (conn !== this.conn || !msg) return;
       if (msg.t === 'pong') this.rttMs = performance.now() - msg.ts;
+      else if (msg.t === 'config') this.setCodec(msg.codec);
       else this.onMessage?.(msg);
     });
     conn.on('close', () => {
@@ -211,7 +225,7 @@ export class HostLink {
   callMedia() {
     this.callTriedAt = performance.now();
     this.dropCall();
-    const call = this.peer.call(this.hostId, this.stream);
+    const call = this.peer.call(this.hostId, this.stream, { sdpTransform: (sdp) => preferCodec(sdp, this.codec) });
     if (!call) return;
     this.call = call;
     const pc = call.peerConnection;

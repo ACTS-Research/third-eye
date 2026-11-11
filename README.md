@@ -34,6 +34,8 @@ fails, and every failure is reported on the operator's screen only.
 - [MIDI, audio and vision](#midi-audio-and-vision)
 - [What happens when things go wrong](#what-happens-when-things-go-wrong)
 - [Writing your own shader](#writing-your-own-shader)
+- [Recording](#recording)
+- [Latency](#latency)
 - [Sending the output to other software](#sending-the-output-to-other-software-syphon-ndi)
 - [Deploying to GitHub Pages](#deploying-to-github-pages)
 - [Self-hosting the signaling server](#self-hosting-the-signaling-server)
@@ -203,6 +205,7 @@ They work in both `/control` and `/output` (not while typing in a text field).
 | `2` | Input: local camera |
 | `3` | Input: test pattern |
 | `4` | Input: video file |
+| `R` | Record the output on / off |
 | `T` | Tap tempo |
 | `I` | Cycle to the next input |
 | `E` | Edit screen on / off (in the control window) |
@@ -427,6 +430,47 @@ modulated.
 A shader that fails to compile is reported in the output window's console
 and that effect is skipped; the rest of the chain keeps running.
 
+## Recording
+
+**REC** in the top bar (or `R`, or a MIDI pad mapped to it) records exactly
+what the output shows, at the output's size, with the audio input if that is
+switched on. The button shows elapsed time and file size while it runs.
+
+Recordings are written inside the browser's own storage as they are made, so
+nothing is held in memory and nothing needs choosing mid-show. Afterwards,
+**Setup → Recordings** lists them: **Save to disk** downloads a file,
+**Delete** frees the space. They stay there across reloads until you do one
+or the other.
+
+Two formats: **WebM** (the default) reaches the file every second, so a crash
+loses at most the last second; **MP4** opens in more players but Chrome writes
+it in large pieces, so more is at risk if the browser dies. WebM plays in
+Chrome and VLC, not in QuickTime.
+
+Recording costs GPU and CPU. Check that **Output** in the top bar still reads
+60 fps while it runs; if not, lower **Setup → Output** resolution.
+
+## Latency
+
+Three things to tune, all under **Setup**:
+
+- **Codec** (Phone panel). H.264 is preferred by default because the iPhone
+  encodes it and the Mac decodes it in hardware; VP8, VP9 and the browser's
+  own choice are there to compare. Changing it restarts the phone's video for
+  a moment. **Status → Stream** shows the codec actually in use and, when
+  Chrome reports it, whether decoding is in hardware.
+- **Quality** (on the phone). 720p · 60 halves the time between frames
+  compared with 720p · 30, at a higher bitrate.
+- **Network.** See [Show networking](#show-networking); a cable beats Wi-Fi.
+
+To see what a change really did, use **Status → Measure real latency**. Point
+the phone at the projected output so it fills most of the frame and click it:
+the output goes black and flashes white five times, and the Mac times how
+long each flash takes to come back through the camera. The result is the
+whole loop the audience sees (projector, camera, phone, network, Mac), which
+the **Latency** line above it can only estimate. Run it before the show, not
+during: it takes over the output for about ten seconds.
+
 ## Sending the output to other software (Syphon, NDI)
 
 A web page cannot publish a Syphon or NDI source: browsers have no access to
@@ -490,6 +534,7 @@ npm test
 | `tests/control-ui.mjs` | The three screens, palettes, perform faders, preset editing, fades, reordering, the pop-out output |
 | `tests/offline.mjs` | Reloading every page with the server gone; tap tempo and tempo-synced LFOs |
 | `tests/phone.mjs` | Real WebRTC against a local PeerServer: pairing, live video, hold on stall, every reconnect path, local camera |
+| `tests/record-latency.mjs` | Recording to WebM and MP4, saving and deleting; the latency measurement; switching codec |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |

@@ -4,6 +4,7 @@
 
 import { EFFECT_BY_ID, defaultParams, paramRange } from '../effects/index.js';
 import { normalizeRoom, randomRoom } from './net.js';
+import { CODECS, DEFAULT_CODEC } from './sdp.js';
 import { LFO_COUNT, LFO_SHAPES, LFO_SYNC } from './sources.js';
 import { clamp, uid } from './util.js';
 
@@ -76,7 +77,7 @@ export function defaultState() {
   return {
     v: 1,
     input: { kind: 'pattern', cameraId: '', fit: 'cover', mirror: false },
-    net: { room: randomRoom(), signal: '' },
+    net: { room: randomRoom(), signal: '', codec: DEFAULT_CODEC },
     tempo: { bpm: 120 },
     midi: { enabled: false },
     audio: { enabled: false, deviceId: '', gain: 1, sensitivity: 1.6 },
@@ -89,6 +90,7 @@ export function defaultState() {
       renderScale: 1,
       fadeTime: 2,
       preview: true,
+      recFormat: 'webm',
     },
     presetIndex: -1,
     actions: defaultActions(),
@@ -202,6 +204,7 @@ export function sanitizeState(raw) {
     ...(Array.isArray(raw.chain) ? sanitizeScene(raw) : defaultScene()),
   };
   if (!INPUT_KINDS.includes(state.input.kind)) state.input.kind = 'pattern';
+  if (!CODECS[state.net.codec]) state.net.codec = DEFAULT_CODEC;
   state.tempo.bpm = clamp(Number(state.tempo.bpm) || 120, 30, 300);
   state.net.room = normalizeRoom(state.net.room);
   if (state.net.room.length < 4) state.net.room = base.net.room;

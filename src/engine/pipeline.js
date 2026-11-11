@@ -246,6 +246,22 @@ export class Pipeline {
     }
   }
 
+  // Mean brightness (0..1) of the newest input frame, or null when the input
+  // is not video. Reads back a 16x9 copy, so only use it while measuring.
+  inputBrightness() {
+    const gl = this.gl;
+    if (this.inputs.kind === 'pattern' || !this.inputs.hasFrame) return null;
+    this.probe ??= new Target(gl, 16, 9);
+    this.probePixels ??= new Uint8Array(16 * 9 * 4);
+    this.probe.bind();
+    this.copyProgram.use().tex('uTex', 0, this.inputs.tex);
+    drawFullscreen(gl);
+    gl.readPixels(0, 0, 16, 9, gl.RGBA, gl.UNSIGNED_BYTE, this.probePixels);
+    let sum = 0;
+    for (let i = 0; i < this.probePixels.length; i += 4) sum += this.probePixels[i] * 0.2126 + this.probePixels[i + 1] * 0.7152 + this.probePixels[i + 2] * 0.0722;
+    return sum / (16 * 9 * 255);
+  }
+
   programFor(def) {
     let program = this.programs.get(def.id);
     if (!program) {
@@ -338,7 +354,7 @@ export class Pipeline {
     const p = this.finalProgram.use();
     p.tex('uA', 0, outA).tex('uB', 1, outB);
     p.f('uFade', fadeT * fadeT * (3 - 2 * fadeT));
-    p.f('uGlitch', ctx.glitch).f('uMaster', ctx.master).f('uTime', ctx.time);
+    p.f('uGlitch', ctx.glitch).f('uMaster', ctx.master).f('uTime', ctx.time).f('uFlash', ctx.flash ?? 0);
     p.v2('uResolution', this.width, this.height);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, ctx.canvasWidth, ctx.canvasHeight);

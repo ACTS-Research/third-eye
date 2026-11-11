@@ -24,6 +24,7 @@ import { mountOutputPanel } from './output-panel.js';
 import { mountPerform } from './perform.js';
 import { mountPhonePanel } from './phone-panel.js';
 import { createPresetModel } from './preset-model.js';
+import { mountRecordPanel } from './record-panel.js';
 import { mountShortcuts } from './shortcuts.js';
 import { mountStatus } from './status.js';
 import { mountVisionPanel } from './vision-panel.js';
@@ -106,6 +107,7 @@ mountEdit(views.edit, ui);
 mountChain(ui.editCols.chain, ui);
 mountModPanel({ edit: ui.editCols.side, setup: setupC }, ui);
 mountLibraryPanel(setupC, ui);
+mountRecordPanel(setupC, ui);
 mountShortcuts(setupC, ui);
 ui.refreshSlots();
 

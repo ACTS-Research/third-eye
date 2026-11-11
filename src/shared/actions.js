@@ -11,6 +11,7 @@ export const ACTIONS = {
   inputNext: 'Next input',
   glitch: 'Glitch burst',
   tap: 'Tap tempo',
+  record: 'Record on / off',
   presetNext: 'Next preset',
   presetPrev: 'Previous preset',
 };
@@ -54,6 +55,9 @@ export function runAction(store, name, arg) {
     }
     case 'glitch':
       store.emit('glitch');
+      break;
+    case 'record':
+      store.emit('record');
       break;
     case 'tap':
       store.emit('tap', { at: Date.now() });

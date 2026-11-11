@@ -13,7 +13,7 @@
     "prebuild": "node scripts/fetch-models.mjs --strict",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node tests/smoke.mjs && node tests/control-ui.mjs && node tests/offline.mjs && node tests/phone.mjs && node tests/modulation.mjs && node tests/midi-audio.mjs && node tests/vision.mjs",
+    "test": "node tests/smoke.mjs && node tests/control-ui.mjs && node tests/offline.mjs && node tests/phone.mjs && node tests/record-latency.mjs && node tests/modulation.mjs && node tests/midi-audio.mjs && node tests/vision.mjs",
     "test:smoke": "node tests/smoke.mjs"
   },
   "dependencies": {

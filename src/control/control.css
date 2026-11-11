@@ -59,6 +59,10 @@ kbd { font: inherit; opacity: 0.8; }
 .pill.warn { border-bottom: 1px dashed var(--ink); }
 .pill.bad { background: var(--ink); color: var(--on-ink); padding: 2px 8px; font-weight: 700; animation: blink 0.8s steps(2) infinite; }
 #views { display: flex; gap: 6px; margin-left: auto; }
+#rec { position: relative; font-variant-numeric: tabular-nums; }
+#rec.on { animation: blink 1.2s steps(2) infinite; }
+.recording { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
+.recording .grow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #palette { display: flex; gap: 4px; }
 #palette button { width: 18px; height: 18px; padding: 0; border-radius: 50%; border: 1px solid var(--line); }
 #palette button[aria-pressed='true'] { outline: 2px solid var(--ink); outline-offset: 2px; }

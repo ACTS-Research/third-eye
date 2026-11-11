@@ -9,6 +9,8 @@ import { describeAction } from '../shared/actions.js';
 import { macroUnit, resolveMacros } from '../shared/macros.js';
 import { TRIGGER_COUNT } from '../shared/protocol.js';
 import { InputManager } from './inputs.js';
+import { LatencyProbe } from './latency-probe.js';
+import { Recorder } from './recorder.js';
 import { Modulation } from './modulation.js';
 import { PhoneSensors } from './phone-sensors.js';
 import { Pipeline } from './pipeline.js';
@@ -39,6 +41,8 @@ export class Engine {
     this.audio = new AudioInput(this.mod);
     this.vision = new Vision(this.mod);
     this.tempo = new Tempo(this.mod, store);
+    this.recorder = new Recorder(canvas, () => this.audio.stream);
+    this.probe = new LatencyProbe(() => (this.lost ? null : this.pipeline.inputBrightness()));
     this.lastSourcesAt = 0;
     this.maskFit = [1, 1, 0, 0];
     this.lost = false;
@@ -59,7 +63,11 @@ export class Engine {
     this.camera = new LocalCamera(this.inputs.feeds.camera);
     this.link = new PhoneLink(this.inputs.feeds.phone, () => this.store.state.net, (msg) => this.onPhoneMessage(msg));
     this.link.onData = (conn) => this.sensors.attach(conn);
-    this.link.onOpenData = () => this.sendTriggerLabels();
+    this.link.onOpenData = () => {
+      this.sendTriggerLabels();
+      this.link.send({ t: 'config', codec: this.store.state.net.codec });
+    };
+    this.link.getCodec = () => this.store.state.net.codec;
     this.latency = null;
     setInterval(() => this.housekeeping(), 1000);
 
@@ -91,6 +99,8 @@ export class Engine {
     store.onEvent((name, data) => {
       if (name === 'glitch') this.glitchStart = performance.now();
       else if (name === 'tap') this.tempo.tap(data?.at ?? Date.now());
+      else if (name === 'record') this.recorder.toggle(this.store.state.globals.recFormat);
+      else if (name === 'latency-test') this.probe.start();
     });
     // /control announces itself; without it nobody is looking at the preview
     // or the meters, so the readback and the broadcasts are skipped.
@@ -171,6 +181,7 @@ export class Engine {
           this.housekeeping();
         } else if (op.key === 'net') {
           this.link.refresh();
+          if ('codec' in op.patch) this.link.send({ t: 'config', codec: state.net.codec });
         } else if (op.key === 'midi' || op.key === 'audio' || op.key === 'vision') {
           this.housekeeping();
         } else if (op.key === 'globals' && 'renderScale' in op.patch) {
@@ -254,6 +265,7 @@ export class Engine {
       this.maskFit[1] = fitY;
       this.maskFit[2] = state.input.mirror ? 1 : 0;
       this.maskFit[3] = maskTex ? 1 : 0;
+      const flash = this.probe.frame(now, 1000 / Math.max(this.renderFps, 30));
       const wantPreview = watched && g.preview && now - this.lastPreviewAt >= PREVIEW_INTERVAL_MS;
       if (wantPreview) this.lastPreviewAt = now;
       try {
@@ -267,7 +279,8 @@ export class Engine {
           maskTex,
           maskFit: this.maskFit,
           glitch: clamp(1 - (now - this.glitchStart) / GLITCH_MS, 0, 1),
-          master: g.blackout ? 0 : 1,
+          master: g.blackout || flash === 'black' ? 0 : 1,
+          flash: flash === 'white' ? 1 : 0,
           bypassAll: g.bypassAll,
           frozen: g.freeze,
           input: state.input,
@@ -345,6 +358,8 @@ export class Engine {
       midi: this.midi.status(),
       audio: this.audio.status(),
       vision: this.vision.status(),
+      recording: this.recorder.status(),
+      latencyTest: this.probe.status(),
       camera: this.camera.status(),
       at: Date.now(),
       renderFps: this.renderFps,

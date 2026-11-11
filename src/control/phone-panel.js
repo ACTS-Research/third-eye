@@ -3,6 +3,7 @@
 import qrcode from 'qrcode-generator';
 import { normalizeRoom, phoneUrl, randomRoom } from '../shared/net.js';
 import { currentPalette } from '../shared/palette.js';
+import { CODECS } from '../shared/sdp.js';
 import { el } from '../shared/util.js';
 
 function drawQr(canvas, text) {
@@ -53,8 +54,16 @@ export function mountPhonePanel(root, ui) {
     },
   });
 
+  const codec = el('select', {
+    id: 'codec',
+    class: 'grow',
+    'aria-label': 'Video codec',
+    onchange: () => store.merge('net', { codec: codec.value }),
+  }, Object.entries(CODECS).map(([value, text]) => el('option', { value, text })));
+
   const sync = () => {
     const net = store.state.net;
+    codec.value = net.codec;
     // The phone opens in the same colours as this page.
     const link_ = new URL(phoneUrl(net));
     if (currentPalette() !== 'darkroom') link_.searchParams.set('pal', currentPalette());
@@ -106,6 +115,8 @@ export function mountPhonePanel(root, ui) {
         ]),
       ]),
       warn,
+      el('div', { class: 'row' }, [el('span', { class: 'caps', text: 'Codec' }), codec]),
+      el('div', { class: 'dim small', text: 'Changing it restarts the phone\'s video for a moment. Status below shows which codec is in use and whether it decodes in hardware.' }),
       el('details', {}, [
         el('summary', { class: 'dim small', text: 'Link and signaling' }),
         el('div', { class: 'row' }, [link]),
