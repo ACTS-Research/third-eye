@@ -103,6 +103,7 @@ try {
   console.log('mappings');
   await setChain(['feedback']);
   // Touch a parameter, then add a mapping: it should target that parameter.
+  await control.evaluate(() => window.thirdEye.ui.setView('edit'));
   const slider = control.locator('.fx').first().locator('.tp-sldv_t').nth(1);
   const box = await slider.boundingBox();
   await control.mouse.click(box.x + box.width * 0.5, box.y + box.height / 2);
@@ -130,7 +131,9 @@ try {
   check('source meters update on control', await control.evaluate(() => [...document.querySelectorAll('.meter .bar i')].some((i) => parseFloat(i.style.width) > 0)));
 
   console.log('triggers and presets');
-  const presetCount = await control.locator('.preset-list button').count();
+  await control.evaluate(() => window.thirdEye.ui.setView('perform'));
+  const tileCount = () => control.locator('.tile:not(.new)').count();
+  const presetCount = await tileCount();
   check('factory presets listed', presetCount >= 8, `${presetCount} presets`);
   const trig = (n) => phone.locator('.trig').nth(n - 1).boundingBox();
   const t4 = await trig(4);
@@ -141,7 +144,7 @@ try {
   check('crossfade runs two chains at once', await settle(() => state(() => !!window.thirdEye.engine.pipeline.prev && window.thirdEye.store.state.presetIndex === 1), 'crossfade'));
   check('crossfade finishes and frees the old chain', await settle(() => state(() => window.thirdEye.engine.pipeline.prev === null), 'fade done', 8000));
   check('preset brought its mappings', await state(() => window.thirdEye.store.state.mappings.length === 3 && window.thirdEye.store.state.chain[0].type === 'feedback'));
-  check('control highlights the active preset', (await control.locator('.preset-list button.on').textContent()).includes('Tunnel'));
+  check('control highlights the active preset', (await control.locator('.tile.on .name').textContent()).includes('Tunnel'));
 
   const t2 = await trig(2);
   await phone.mouse.move(t2.x + t2.width / 2, t2.y + t2.height / 2);
@@ -152,18 +155,21 @@ try {
 
   await control.keyboard.press(']');
   check('] key loads the next preset', await settle(() => state(() => window.thirdEye.store.state.presetIndex === 2), 'key preset'));
-  await control.fill('#presets-panel input[type=text]', 'My look');
-  await control.click('text=Save new');
-  check('saving adds a preset', await settle(async () => (await control.locator('.preset-list button').count()) === presetCount + 1, 'saved'));
-  check('saved preset is in localStorage', await control.evaluate(() => JSON.parse(localStorage.getItem('thirdeye.presets.v1')).at(-1).name === 'My look'));
+  await control.click('text=Save as new preset');
+  check('saving opens the new preset for editing', await settle(() => control.evaluate(() => window.thirdEye.ui.view === 'edit'), 'edit view'));
+  await control.fill('.edit-head input[type=text]', 'My look');
+  check('saving adds a preset', await settle(async () => (await tileCount()) === presetCount + 1, 'saved'));
+  check('saved preset is in localStorage', await settle(() => control.evaluate(() => JSON.parse(localStorage.getItem('thirdeye.presets.v1')).at(-1).name === 'My look'), 'stored'));
 
-  const [download] = await Promise.all([control.waitForEvent('download'), control.click('#presets-panel >> text=Export')]);
+  await control.evaluate(() => window.thirdEye.ui.setView('setup'));
+  const [download] = await Promise.all([control.waitForEvent('download'), control.click('#library-panel >> text=Export presets')]);
   const exported = JSON.parse(await (await import('node:fs/promises')).readFile(await download.path(), 'utf8'));
   check('export produces a preset file', exported.format === 'third-eye-cam-presets' && exported.presets.length === presetCount + 1);
   exported.presets = [{ name: 'Imported', scene: { chain: [{ type: 'thermal', params: { contrast: 99 } }, { type: 'nope' }], mappings: [{ source: 'pad.x', fx: 'missing', key: 'zoom' }] } }];
-  await control.setInputFiles('#presets-panel input[type=file]', { name: 'p.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(exported)) });
-  check('import adds presets', await settle(async () => (await control.locator('.preset-list button').count()) === presetCount + 2, 'imported'));
-  await control.locator('.preset-list button').last().click();
+  await control.setInputFiles('#library-panel input[type=file]', { name: 'p.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(exported)) });
+  check('import adds presets', await settle(async () => (await tileCount()) === presetCount + 2, 'imported'));
+  await control.evaluate(() => window.thirdEye.ui.setView('perform'));
+  await control.locator('.tile:not(.new) .load').last().click();
   check('imported preset is sanitised (unknown effect dropped, value clamped)', await settle(() => state(() => {
     const s = window.thirdEye.store.state;
     return s.chain.length === 1 && s.chain[0].type === 'thermal' && s.chain[0].params.contrast === 4 && s.mappings.length === 0;

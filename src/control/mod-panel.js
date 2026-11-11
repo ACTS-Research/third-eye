@@ -2,13 +2,16 @@
 // bindings and the LFOs.
 
 import { Pane } from 'tweakpane';
-import { ACTIONS, TOGGLE_ACTIONS } from '../shared/actions.js';
+import { ACTIONS, TOGGLE_ACTIONS, describeAction } from '../shared/actions.js';
+import { MACRO_COUNT } from '../shared/macros.js';
 import { EFFECT_BY_ID } from '../effects/index.js';
 import { LFO_SHAPES, SOURCES, describeSource, sourceLabel } from '../shared/sources.js';
-import { makeActionBinding, makeMapping, sceneOf } from '../shared/state.js';
+import { INPUT_KINDS, makeActionBinding, makeMapping, sceneOf } from '../shared/state.js';
 import { el } from '../shared/util.js';
 
-export function mountModPanel(root, ui) {
+// roots: { edit, setup } — mappings and LFOs belong to a preset (edit
+// screen); triggers and the full source list are global (setup screen).
+export function mountModPanel(roots, ui) {
   const { store, bus } = ui;
   // Sources seen at run time (MIDI controls) join the static catalog.
   const dynamic = new Set();
@@ -23,6 +26,19 @@ export function mountModPanel(root, ui) {
       out[`${i + 1} ${def.name} · wet / dry`] = `${item.uid}:mix`;
       for (const key of Object.keys(def.params)) out[`${i + 1} ${def.name} · ${def.params[key].label ?? key}`] = `${item.uid}:${key}`;
     });
+    return out;
+  }
+
+  ui.targetOptions = targetOptions;
+
+  // Everything a trigger (phone button, gesture, MIDI pad or knob) can drive.
+  function actionOptions() {
+    const out = { ...ACTIONS };
+    for (const kind of INPUT_KINDS) out[`input:${kind}`] = describeAction(`input:${kind}`);
+    (ui.presets?.list ?? []).forEach((p, i) => {
+      out[`preset:${i}`] = `Preset ${i + 1}: ${p.name}`;
+    });
+    for (let i = 0; i < MACRO_COUNT; i++) out[`macro:${i}`] = `Fader ${i + 1} (continuous)`;
     return out;
   }
 
@@ -114,7 +130,8 @@ export function mountModPanel(root, ui) {
       const src = el('select', { onchange: () => update({ source: src.value }) }, Object.entries(sources).map(([label, id]) => el('option', { value: id, text: label })));
       if (![...src.options].some((o) => o.value === b.source)) src.append(el('option', { value: b.source, text: sourceLabel(b.source) }));
       src.value = b.source;
-      const act = el('select', { onchange: () => update({ action: act.value }) }, Object.entries(ACTIONS).map(([id, label]) => el('option', { value: id, text: label })));
+      const act = el('select', { onchange: () => update({ action: act.value }) }, Object.entries(actionOptions()).map(([id, label]) => el('option', { value: id, text: label })));
+      if (![...act.options].some((o) => o.value === b.action)) act.append(el('option', { value: b.action, text: describeAction(b.action) }));
       act.value = b.action;
       const hold = el('input', { type: 'checkbox', checked: b.momentary, onchange: () => update({ momentary: hold.checked }) });
       const holdLabel = el('label', { title: 'On only while the trigger is held' }, [hold, 'hold']);
@@ -209,21 +226,25 @@ export function mountModPanel(root, ui) {
     }
   });
 
-  root.append(
+  roots.edit.append(
     el('div', { class: 'panel', id: 'mappings-panel' }, [
       el('h2', { text: 'Modulation' }),
       mapHost,
       mapNote,
       el('div', { class: 'row' }, [el('button', { class: 'primary', text: 'Add mapping', onclick: () => addMapping() })]),
     ]),
+    el('div', { class: 'panel', id: 'lfo-panel' }, [el('h2', { text: 'LFOs' }), lfoHost]),
+  );
+  roots.setup.append(
     el('div', { class: 'panel', id: 'actions-panel' }, [
-      el('h2', { text: 'Triggers' }),
+      el('h2', { text: 'Triggers and MIDI controls' }),
       actionList,
       el('div', { class: 'row' }, [el('button', { text: 'Add trigger', onclick: () => setActions([...store.state.actions, makeActionBinding('phone.shake', 'glitch')]) })]),
+      el('div', { class: 'dim small', text: 'Phone buttons, gestures, beats and MIDI controls all live here. The quickest way to add a MIDI control is MIDI map, top right.' }),
     ]),
-    el('div', { class: 'panel', id: 'lfo-panel' }, [el('h2', { text: 'LFOs' }), lfoHost]),
     el('div', { class: 'panel', id: 'sources-panel' }, [el('h2', { text: 'Sources' }), meters]),
   );
+  ui.presets?.onChange(buildActions);
   buildMappings();
   buildActions();
   buildLfos();

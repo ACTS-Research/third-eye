@@ -1,14 +1,12 @@
+/* Colours and fonts come from shared/theme.css (same palettes as /control). */
 :root {
-  color-scheme: dark;
-  --bg: #0c0d10;
-  --panel: #1b1d24;
-  --line: #2c2f3a;
-  --text: #f1f2f6;
-  --dim: #9a9daa;
-  --accent: #d6ff3f;
+  --panel: var(--wash);
+  --text: var(--ink);
+  --dim: var(--soft);
+  --accent: var(--ink);
   --bad: #ff3b4e;
-  --warn: #ffb020;
-  --good: #3fe08a;
+  --warn: var(--ink);
+  --good: var(--ink);
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -18,7 +16,7 @@ html, body {
   height: 100%;
   background: var(--bg);
   color: var(--text);
-  font: 16px/1.4 system-ui, -apple-system, sans-serif;
+  font: 14px/1.4 var(--mono);
   overscroll-behavior: none;
   -webkit-user-select: none;
   user-select: none;
@@ -32,10 +30,10 @@ button, select, input {
   color: var(--text);
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 2px;
 }
-button { padding: 12px 14px; font-weight: 600; touch-action: manipulation; }
-button.on { background: var(--accent); border-color: var(--accent); color: #141600; }
+button { padding: 12px 14px; font-weight: 700; touch-action: manipulation; text-transform: uppercase; letter-spacing: 0.06em; }
+button.on { background: var(--accent); border-color: var(--accent); color: var(--on-ink); }
 select { padding: 12px 10px; }
 
 /* Join screen --------------------------------------------------------- */
@@ -49,11 +47,11 @@ select { padding: 12px 10px; }
   max-width: 480px;
   margin: 0 auto;
 }
-#join h1 { margin: 0; font-size: 26px; letter-spacing: 0.06em; text-transform: uppercase; }
+#join h1 { margin: 0; font: 800 44px/0.95 var(--display); letter-spacing: 0.08em; text-transform: uppercase; }
 #join p { margin: 0; color: var(--dim); }
 #join label { display: flex; flex-direction: column; gap: 6px; color: var(--dim); font-size: 14px; }
 #room-input {
-  font: 700 34px ui-monospace, monospace;
+  font: 700 34px var(--mono);
   letter-spacing: 0.3em;
   text-align: center;
   text-transform: uppercase;
@@ -62,18 +60,16 @@ select { padding: 12px 10px; }
   user-select: text;
 }
 #start {
-  font-size: 30px;
-  font-weight: 800;
+  font: 800 64px/1 var(--display);
   letter-spacing: 0.08em;
   padding: 34px 20px;
-  border-radius: 20px;
   background: var(--accent);
   border-color: var(--accent);
-  color: #141600;
+  color: var(--on-ink);
 }
 #start:disabled { opacity: 0.5; }
 .check { flex-direction: row !important; align-items: center; gap: 12px !important; font-size: 16px !important; color: var(--text) !important; }
-.check input { width: 26px; height: 26px; accent-color: var(--accent); }
+.check input { width: 26px; height: 26px; accent-color: var(--ink); }
 #join-error { color: var(--bad); font-weight: 600; min-height: 1.4em; }
 
 /* Live screen --------------------------------------------------------- */
@@ -91,11 +87,15 @@ select { padding: 12px 10px; }
   font-weight: 700;
   border-bottom: 1px solid var(--line);
 }
-#dot { width: 14px; height: 14px; border-radius: 50%; background: var(--warn); flex-shrink: 0; }
-#bar.good #dot { background: var(--good); }
-#bar.bad #dot { background: var(--bad); animation: blink 0.8s infinite; }
+/* One ink: state is shape, not hue. Hollow = connecting, solid = live,
+   inverted and blinking = trouble. */
+#dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--ink); flex-shrink: 0; }
+#bar.good #dot { background: var(--ink); }
+#bar.bad { background: var(--ink); color: var(--on-ink); animation: blink 0.8s steps(2) infinite; }
+#bar.bad #dot { border-color: var(--on-ink); }
+#bar.bad .room { color: var(--on-ink); }
 #state { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#bar .room { font: 700 14px ui-monospace, monospace; color: var(--dim); letter-spacing: 0.15em; }
+#bar .room { font: 700 14px var(--mono); color: var(--dim); letter-spacing: 0.15em; }
 #note { padding: 4px 12px; color: var(--warn); font-size: 13px; }
 #note:empty { display: none; }
 
@@ -108,7 +108,7 @@ select { padding: 12px 10px; }
 #adjust { padding: 0 12px; display: flex; flex-direction: column; gap: 6px; }
 #adjust:empty { display: none; }
 #adjust label { display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 10px; font-size: 13px; color: var(--dim); }
-#adjust input[type='range'] { width: 100%; accent-color: var(--accent); height: 30px; }
+#adjust input[type='range'] { width: 100%; accent-color: var(--ink); height: 30px; }
 #adjust .locks { display: flex; gap: 8px; }
 #adjust .locks button { flex: 1; padding: 8px; font-size: 13px; }
 
@@ -132,9 +132,9 @@ select { padding: 12px 10px; }
 }
 #warning strong { font-size: 34px; line-height: 1.1; font-weight: 900; text-transform: uppercase; }
 #warning span { font-size: 17px; }
+#warning strong { font-family: var(--display); }
 #warning button { background: #fff; color: #000; border: 0; font-size: 20px; padding: 18px 30px; }
 @keyframes flash { from { background: var(--bad); } to { background: #7a0010; } }
-@keyframes blink { 50% { opacity: 0.3; } }
 
 @media (orientation: landscape) {
   #live { flex-direction: row; flex-wrap: wrap; align-content: flex-start; }
@@ -149,7 +149,7 @@ select { padding: 12px 10px; }
   position: relative;
   flex: 1;
   min-height: 120px;
-  border-radius: 16px;
+  border-radius: 2px;
   border: 2px solid var(--line);
   background:
     linear-gradient(var(--line) 1px, transparent 1px) 0 50% / 100% 50%,
@@ -164,13 +164,13 @@ select { padding: 12px 10px; }
   position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px;
   border-radius: 50%; border: 3px solid var(--dim); pointer-events: none;
 }
-.pad.down .pad-dot { border-color: var(--accent); background: rgba(214, 255, 63, 0.3); }
+.pad.down .pad-dot { border-color: var(--ink); background: var(--line); }
 
 .triggers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; flex: 0 0 auto; }
 .trig {
-  height: 84px; padding: 4px; font-size: 14px; font-weight: 800; line-height: 1.15;
-  border-radius: 16px; touch-action: none; text-transform: uppercase; overflow: hidden;
+  height: 92px; padding: 4px; font: 700 22px/1 var(--display); letter-spacing: 0.02em;
+  border: 2px solid var(--ink); touch-action: none; text-transform: uppercase; overflow: hidden;
 }
-.trig.down { background: var(--accent); border-color: var(--accent); color: #141600; transform: scale(0.97); }
+.trig.down { background: var(--ink); color: var(--on-ink); }
 
-#motion-ask { margin: 6px 10px 0; background: var(--warn); border-color: var(--warn); color: #1a1200; }
+#motion-ask { margin: 6px 10px 0; background: var(--ink); border-color: var(--ink); color: var(--on-ink); }

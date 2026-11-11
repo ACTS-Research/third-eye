@@ -7,14 +7,22 @@
   </head>
   <body>
     <header id="top">
-      <h1>Third Eye Cam</h1>
+      <span class="wordmark">Third Eye Cam</span>
       <div id="pills"></div>
-      <div id="alerts"></div>
+      <nav id="views" aria-label="Screen">
+        <button data-view="perform">Perform</button>
+        <button data-view="edit">Edit</button>
+        <button data-view="setup">Setup</button>
+      </nav>
+      <button id="midi-map-toggle" title="Assign MIDI controls to anything outlined (M)">MIDI map</button>
+      <div id="palette" role="group" aria-label="Colour palette"></div>
     </header>
+    <div id="map-hint" hidden></div>
+    <div id="alerts"></div>
     <main>
-      <section class="col" id="col-left"></section>
-      <section class="col" id="col-chain"></section>
-      <section class="col" id="col-right"></section>
+      <section id="view-perform" class="view" aria-label="Perform"></section>
+      <section id="view-edit" class="view" aria-label="Edit preset" hidden></section>
+      <section id="view-setup" class="view" aria-label="Setup" hidden></section>
     </main>
     <script type="module" src="../src/control/main.js"></script>
   </body>

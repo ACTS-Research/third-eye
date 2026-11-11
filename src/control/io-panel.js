@@ -1,73 +1,33 @@
 // MIDI and audio inputs. Permission prompts are raised here, on the
 // operator's screen; /output then opens the devices without prompting.
 
-import { EFFECT_BY_ID } from '../effects/index.js';
-import { sourceLabel } from '../shared/sources.js';
-import { makeActionBinding } from '../shared/state.js';
 import { el } from '../shared/util.js';
 
 export function mountIoPanel(root, ui) {
   const { store, bus } = ui;
 
   // ---------------------------------------------------------------- MIDI --
-  let learnMode = null; // 'param' | 'trigger' | null
-  const midiToggle = el('button', { text: 'Enable MIDI', onclick: toggleMidi });
-  const learnParam = el('button', { text: 'Learn → parameter', onclick: () => setLearn(learnMode === 'param' ? null : 'param') });
-  const learnTrigger = el('button', { text: 'Learn → trigger', onclick: () => setLearn(learnMode === 'trigger' ? null : 'trigger') });
+  const midiToggle = el('button', { text: 'Enable MIDI', onclick: () => (store.state.midi.enabled ? store.merge('midi', { enabled: false }) : enableMidi()) });
   const midiNote = el('div', { class: 'dim small', id: 'midi-note' });
 
-  async function toggleMidi() {
-    if (store.state.midi.enabled) {
-      setLearn(null);
-      store.merge('midi', { enabled: false });
-      return;
-    }
+  // Asks for MIDI access on this page (so the prompt is never on the
+  // projector), then lets /output open the devices. Resolves true on success.
+  async function enableMidi() {
+    if (store.state.midi.enabled) return true;
     if (!navigator.requestMIDIAccess) {
-      midiNote.textContent = 'This browser has no Web MIDI.';
-      return;
+      midiNote.textContent = 'This browser has no Web MIDI. Use Chrome.';
+      return false;
     }
     try {
       await navigator.requestMIDIAccess({ sysex: false });
       store.merge('midi', { enabled: true });
+      return true;
     } catch {
       midiNote.textContent = 'MIDI access was denied in the browser.';
+      return false;
     }
   }
-
-  function touchedLabel() {
-    const t = ui.lastTouched;
-    const i = t ? store.state.chain.findIndex((it) => it.uid === t.uid) : -1;
-    if (i < 0) return null;
-    return `${i + 1} ${EFFECT_BY_ID[store.state.chain[i].type].name} · ${t.key === 'mix' ? 'wet / dry' : t.key}`;
-  }
-
-  function setLearn(mode) {
-    learnMode = mode;
-    bus.send('midi', { cmd: 'learn', on: !!mode });
-    learnParam.classList.toggle('on', mode === 'param');
-    learnTrigger.classList.toggle('on', mode === 'trigger');
-    if (mode === 'param') {
-      const target = touchedLabel();
-      midiNote.textContent = target ? `Move a knob or fader to control: ${target}` : 'Touch a parameter slider first, then move a knob or fader.';
-    } else if (mode === 'trigger') {
-      midiNote.textContent = 'Press a pad or key to add it as a trigger.';
-    }
-  }
-
-  bus.on('midi-learned', (m) => {
-    if (!learnMode) return;
-    if (learnMode === 'param') {
-      // The control takes over the parameter's whole range.
-      const mapping = ui.addMapping?.(m.source, { mode: 'set', amount: 1, smooth: 0.03 });
-      midiNote.textContent = mapping ? `${sourceLabel(m.source)} now controls ${touchedLabel() ?? 'the first parameter'}.` : 'Add an effect first.';
-    } else {
-      store.dispatch({ op: 'set', key: 'actions', value: [...store.state.actions, makeActionBinding(m.source, 'glitch')] });
-      midiNote.textContent = `${sourceLabel(m.source)} added under Triggers — pick its action there.`;
-    }
-    learnMode = null;
-    learnParam.classList.remove('on');
-    learnTrigger.classList.remove('on');
-  });
+  ui.enableMidi = enableMidi;
 
   // --------------------------------------------------------------- audio --
   const audioToggle = el('button', { text: 'Enable audio', onclick: toggleAudio });
@@ -109,8 +69,6 @@ export function mountIoPanel(root, ui) {
     const { midi, audio } = store.state;
     midiToggle.classList.toggle('on', midi.enabled);
     midiToggle.textContent = midi.enabled ? 'MIDI on' : 'Enable MIDI';
-    learnParam.disabled = !midi.enabled;
-    learnTrigger.disabled = !midi.enabled;
     audioToggle.classList.toggle('on', audio.enabled);
     audioToggle.textContent = audio.enabled ? 'Audio on' : 'Enable audio';
     gain.value = String(audio.gain);
@@ -124,12 +82,12 @@ export function mountIoPanel(root, ui) {
   ui.onStatus((status) => {
     if (!status) return;
     const m = status.midi;
-    if (!learnMode && store.state.midi.enabled) {
+    if (store.state.midi.enabled) {
       if (m.state === 'ready') midiNote.textContent = m.inputs.length ? `${m.inputs.join(', ')}${m.last ? ` — last: ${m.last}` : ''}` : 'No MIDI device connected. Plug one in; it is picked up automatically.';
       else if (m.state === 'denied') midiNote.textContent = `MIDI unavailable in the output window: ${m.error}`;
       else if (m.state === 'unsupported') midiNote.textContent = 'This browser has no Web MIDI.';
-    } else if (!store.state.midi.enabled && !learnMode) {
-      midiNote.textContent = '';
+    } else {
+      midiNote.textContent = 'To assign knobs, faders and pads, use MIDI map at the top right.';
     }
     const a = status.audio;
     if (!store.state.audio.enabled) audioNote.textContent = '';
@@ -142,7 +100,7 @@ export function mountIoPanel(root, ui) {
   root.append(
     el('div', { class: 'panel', id: 'io-panel' }, [
       el('h2', { text: 'MIDI and audio' }),
-      el('div', { class: 'row wrap' }, [midiToggle, learnParam, learnTrigger]),
+      el('div', { class: 'row wrap' }, [midiToggle]),
       midiNote,
       el('div', { class: 'row', style: 'margin-top:10px' }, [audioToggle, device]),
       el('div', { class: 'row' }, [el('span', { class: 'dim small', style: 'width:92px', text: 'Input gain' }), gain]),

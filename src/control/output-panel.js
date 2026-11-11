@@ -22,8 +22,8 @@ export function mountOutputPanel(root, ui) {
     el('option', { value: '0.5', text: '50%' }),
   ]);
   const previewBtn = el('button', {
-    text: 'Preview',
-    title: 'Send a small preview of the output to this page',
+    text: 'Monitor',
+    title: 'Show a small copy of the output on this page',
     onclick: () => store.merge('globals', { preview: !store.state.globals.preview }),
   });
 
@@ -87,6 +87,8 @@ export function mountOutputPanel(root, ui) {
     if (!win) hint.textContent = 'The browser blocked the output window. Allow pop-ups for this site and try again.';
   }
 
+  ui.openOutput = open;
+
   const sync = () => {
     const g = store.state.globals;
     scale.value = String(g.renderScale);
@@ -94,7 +96,7 @@ export function mountOutputPanel(root, ui) {
   };
   store.subscribe(sync);
   ui.onStatus((status) => {
-    openBtn.textContent = status ? (status.fullscreen ? 'Output is fullscreen' : 'Output open — click it or press F for fullscreen') : 'Open output window';
+    openBtn.textContent = status ? (status.fullscreen ? 'Output is fullscreen' : 'Output is open: click it or press F for fullscreen') : 'Open output window';
     openBtn.classList.toggle('primary', !status);
   });
 

@@ -9,8 +9,9 @@ import { FOOTER, HEADER } from '../effects/common.glsl.js';
 import { Program, Target, createTexture, drawFullscreen } from './gl.js';
 import { COPY_FRAG, FINAL_FRAG, PATTERN_FRAG, SOURCE_FRAG } from './shaders.js';
 
-const PREVIEW_W = 256;
-const PREVIEW_H = 144;
+// Monitor image sent to /control (read back asynchronously, ~10 per second).
+const PREVIEW_W = 480;
+const PREVIEW_H = 270;
 const MASK_MODES = { all: 0, person: 1, background: 2 };
 
 function effectSource(def) {

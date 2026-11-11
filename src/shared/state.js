@@ -67,6 +67,8 @@ export function defaultScene() {
     chain: [makeEffect('feedback'), makeEffect('rgbshift')],
     mappings: [],
     lfos: defaultLfos(),
+    // Parameters pinned to the perform screen's faders: [{ fx, key } | null].
+    macros: [],
   };
 }
 
@@ -153,7 +155,16 @@ export function sanitizeScene(scene) {
     lfos[i].rate = num(raw?.rate, lfos[i].rate, 0.01, 20);
   });
 
-  return { chain, mappings, lfos };
+  // Pinned macros: keep slot positions, drop ones whose target is gone.
+  const macros = (Array.isArray(scene?.macros) ? scene.macros : []).slice(0, 8).map((slot) => {
+    const target = slot && chain.find((it) => it.uid === slot.fx);
+    if (!target) return null;
+    if (slot.key !== 'mix' && !(slot.key in EFFECT_BY_ID[target.type].params)) return null;
+    return { fx: slot.fx, key: slot.key };
+  });
+  while (macros.length && !macros.at(-1)) macros.pop();
+
+  return { chain, mappings, lfos, macros };
 }
 
 function num(value, fallback, min, max) {
@@ -162,7 +173,7 @@ function num(value, fallback, min, max) {
 }
 
 export function sceneOf(state) {
-  return structuredClone({ chain: state.chain, mappings: state.mappings, lfos: state.lfos });
+  return structuredClone({ chain: state.chain, mappings: state.mappings, lfos: state.lfos, macros: state.macros ?? [] });
 }
 
 export function sanitizeActions(list, fallback) {

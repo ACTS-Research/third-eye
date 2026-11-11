@@ -158,6 +158,7 @@ try {
   check('host re-registers when signaling returns', true);
 
   console.log('local camera');
+  await control.evaluate(() => window.thirdEye.ui.setView('setup'));
   await control.click('text=Find cameras');
   await control.keyboard.press('2');
   s = await waitStatus(control, (st) => st.input.kind === 'camera' && st.input.state === 'live', 'local camera live');

@@ -2,6 +2,7 @@
 
 import qrcode from 'qrcode-generator';
 import { normalizeRoom, phoneUrl, randomRoom } from '../shared/net.js';
+import { currentPalette } from '../shared/palette.js';
 import { el } from '../shared/util.js';
 
 function drawQr(canvas, text) {
@@ -30,7 +31,7 @@ export function mountPhonePanel(root, ui) {
   const qr = el('canvas', { id: 'qr', width: 320, height: 320 });
   const code = el('div', { id: 'room-code' });
   const link = el('a', { id: 'phone-link', class: 'small', target: '_blank', rel: 'noopener' });
-  const warn = el('div', { class: 'small', style: 'color:var(--warn)' });
+  const warn = el('div', { class: 'small', style: 'font-weight:700' });
   const state = el('div', { id: 'phone-state', class: 'small dim' });
 
   const signal = el('input', {
@@ -54,7 +55,10 @@ export function mountPhonePanel(root, ui) {
 
   const sync = () => {
     const net = store.state.net;
-    const url = phoneUrl(net);
+    // The phone opens in the same colours as this page.
+    const link_ = new URL(phoneUrl(net));
+    if (currentPalette() !== 'darkroom') link_.searchParams.set('pal', currentPalette());
+    const url = link_.href;
     qr.width = 320;
     drawQr(qr, url);
     code.textContent = net.room;
@@ -74,6 +78,8 @@ export function mountPhonePanel(root, ui) {
   store.subscribe((op) => {
     if (op.op === 'replace' || (op.op === 'merge' && op.key === 'net')) sync();
   });
+
+  ui.onPalette?.(sync);
 
   ui.onStatus((status) => {
     const p = status?.phone;

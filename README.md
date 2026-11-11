@@ -34,6 +34,7 @@ fails, and every failure is reported on the operator's screen only.
 - [MIDI, audio and vision](#midi-audio-and-vision)
 - [What happens when things go wrong](#what-happens-when-things-go-wrong)
 - [Writing your own shader](#writing-your-own-shader)
+- [Sending the output to other software](#sending-the-output-to-other-software-syphon-ndi)
 - [Deploying to GitHub Pages](#deploying-to-github-pages)
 - [Self-hosting the signaling server](#self-hosting-the-signaling-server)
 - [Tests](#tests)
@@ -81,13 +82,27 @@ npm run preview
 
 ## Running a show
 
-1. On the Mac open `/control` in Chrome.
-2. Connect the projector. In **Output**, click **Find displays**, allow the
-   prompt, pick the projector, then **Open output window**. It opens on that
-   display; click it once (or press `F`) to go fullscreen. Without the
+`/control` has three screens, switched at the top right:
+
+| Screen | For |
+| --- | --- |
+| **Perform** | The show: panic buttons, input select, a monitor of the output, eight faders for the live preset, and the preset strip |
+| **Edit** | One preset: its name, fade-in time, effects chain, pinned faders and modulation |
+| **Setup** | Everything done once beforehand: output window, inputs, pairing, MIDI, audio, vision, triggers, preset files |
+
+1. On the Mac open `/control` in Chrome and click **Open output window**. The
+   picture is rendered in that separate window, which is the one that goes to
+   the projector.
+2. Connect the projector. Under **Setup → Output**, click **Find displays**,
+   allow the prompt and pick the projector; the output window then opens on
+   it. Click the window once (or press `F`) to go fullscreen. Without the
    permission, drag the window to the projector yourself and press `F`.
 3. Pair the phone ([below](#pairing-the-phone)) and press `1` to select it.
-4. Build a chain under **Effects chain**, or load a preset.
+4. Click a preset on the strip, or **Edit** one.
+
+The coloured dots at the top right change the interface palette (red, amber,
+bone, lime, ice, magenta). All are a single ink on black so the laptop does
+not light the stage; the phone opens in the same palette.
 
 The output window shows only the picture. A small "click for fullscreen" hint
 appears while it is windowed and fades after four seconds; nothing is ever
@@ -103,7 +118,7 @@ minimised or completely covered.
 
 ## Pairing the phone
 
-1. With the output window open, the **Phone** panel on `/control` shows a QR
+1. With the output window open, **Setup → Phone** on `/control` shows a QR
    code and a five-character room code.
 2. Point the iPhone's camera app at the QR code and open the link in Safari,
    or open `/phone` by hand and type the room code.
@@ -183,6 +198,8 @@ They work in both `/control` and `/output` (not while typing in a text field).
 | `3` | Input: test pattern |
 | `4` | Input: video file |
 | `I` | Cycle to the next input |
+| `E` | Edit screen on / off (in the control window) |
+| `M` | MIDI map mode on / off (in the control window); `Esc` also leaves it |
 | `F` | Fullscreen on / off (in the output window) |
 
 ## Inputs
@@ -191,6 +208,9 @@ All four feed the same pipeline and can be switched live. While a newly
 selected input has no frame yet, the previous picture stays up.
 
 - **iPhone** — the WebRTC stream. Primary input.
+Inputs are selected with the `1`–`4` buttons on the perform screen and
+configured under **Setup → Input**.
+
 - **Local camera** — any camera Chrome can see. Click **Find cameras** once
   to grant permission and list them. An iPhone used through Continuity Camera
   appears here under its own name: a cable-free backup that needs no pairing.
@@ -202,7 +222,8 @@ selected input has no frame yet, the previous picture stays up.
 
 ## Effects
 
-The chain is an ordered list. Each effect can be added, removed, moved,
+The chain belongs to a preset and is edited on the **Edit** screen. It is an
+ordered list. Each effect can be added, removed, moved,
 bypassed, and blended with its input (**wet / dry**). Click an effect's name
 to fold its card.
 
@@ -222,10 +243,10 @@ to fold its card.
 | Contrast / Brightness | Plus saturation, gamma, invert |
 
 **Apply to** (on every effect) limits it to the person or to the background.
-That needs **Segmentation** switched on in the Vision panel.
+That needs **Segmentation** switched on under Setup → Vision.
 
 The picture is rendered at the output window's pixel size and follows resizes
-and display scaling. **Output → Full res / 75% / 50%** lowers the internal
+and display scaling. **Setup → Output → Full res / 75% / 50%** lowers the internal
 resolution if the GPU is struggling.
 
 ## Modulation, triggers and presets
@@ -241,9 +262,10 @@ resolution if the GPU is struggling.
 | MIDI | every CC and note, created the first time it is seen |
 | Face / Hand / Gesture / Pose / Segment | see [vision](#midi-audio-and-vision) |
 
-The **Sources** panel shows them all moving live.
+**Setup → Sources** shows them all moving live; the perform screen shows the
+ones the live preset uses.
 
-**Mappings.** Under **Modulation**, **Add mapping** connects a source to a
+**Mappings.** On the Edit screen, under **Modulation**, **Add mapping** connects a source to a
 parameter. Touch a parameter slider first and the new mapping targets it.
 Each mapping has an amount (-1..1 of the parameter's range), offset,
 smoothing time, invert, and a mode: *add to the dialled value* or *replace
@@ -256,36 +278,61 @@ trigger is held. Defaults: phone buttons 1–4 are glitch, freeze (hold),
 previous preset, next preset. Triggers are global; they do not change with
 presets, so "next preset" keeps working whatever preset you land on.
 
-**Presets** store the chain, its mappings and the LFO settings. A set of
-factory presets is installed on first run. **Save new**, **Update**,
-**Delete**, **Export** (one JSON file with all presets) and **Import** (adds
-to the list; unknown effects are dropped and out-of-range values clamped).
-Loading a preset crossfades over the **Crossfade** time: both chains run and
-are blended, so the change is smooth even between unrelated effects. Presets
-live in the browser's local storage; export them to keep a copy.
+**Presets** are the tiles along the bottom of the perform screen. Each one
+stores a chain, its mappings, its LFO settings and its pinned faders, plus:
+
+- **A name** and **a fade-in time**, set on its Edit screen. Loading a preset
+  crossfades over that time: both chains run and are blended, so the change is
+  smooth even between unrelated effects. Presets without their own time use
+  **Setup → Preset library → Default fade**.
+- **An Edit screen** (the **Edit** button on the tile). Everything changed
+  there is saved into the preset as you go; **Revert** restores it to how it
+  was when the screen was opened. **Duplicate** and **Delete** are there too.
+- **A position.** Drag a tile to reorder; `[` and `]` step through in that
+  order.
+
+**Save as new preset** keeps whatever is live as a new preset. A set of
+factory presets is installed on first run. **Setup → Preset library** exports
+every preset to one JSON file and imports such files (added at the end;
+unknown effects are dropped and out-of-range values clamped). Presets live in
+the browser's local storage; export them to keep a copy.
+
+**Faders.** The perform screen shows up to eight faders for the live preset.
+By default they are the first parameters of its chain; on the Edit screen,
+**Perform faders** pins the ones you want, in order. Dragging a fader changes
+the parameter for now without altering the saved preset; double-click resets
+it. A dashed line on a fader shows where modulation is currently pushing the
+parameter.
 
 ## MIDI, audio and vision
 
 All three are off until enabled, and all permission prompts appear on
 `/control`, never on the projector.
 
-**MIDI.** **Enable MIDI**, then:
+**MIDI.** Click **MIDI map** at the top right (or press `M`). Every control
+that can be mapped is outlined:
 
-- **Learn → parameter**: touch a parameter slider, click the button, move a
-  knob or fader. That control now sweeps the parameter's full range.
-- **Learn → trigger**: click, press a pad or key. It is added under Triggers;
-  choose its action there.
+- the panic buttons, the four input buttons, previous / next preset
+- every preset tile (a pad per preset; the pad stays with the slot)
+- the eight perform faders (the knob moves the parameter itself, so the
+  on-screen fader follows the hardware, whatever preset is live)
+- any effect parameter: on the Edit screen, touch its slider
+
+Click one, then move a knob or press a pad. The control shows what is mapped
+to it. Click a control and press `Delete` to clear it; `Esc` leaves map mode.
+Everything mapped this way is also listed under **Setup → Triggers and MIDI
+controls**, where a pad can be given any other action.
 
 Devices plugged in later are picked up automatically. A mapped knob that has
 not been touched since the page loaded leaves its parameter alone.
 
-**Audio.** **Enable audio**, choose the input, and set **Input gain** so the
+**Audio.** Under **Setup**, **Enable audio**, choose the input, and set **Input gain** so the
 level meter moves without sitting at maximum. **Beat threshold** is how far
 above the recent average a hit must rise to count. If `/control` says audio
 analysis is waiting, click the output window once: Chrome only starts audio
 processing in a window that has been clicked.
 
-**Vision (MediaPipe).** Five independent features, each off by default
+**Vision (MediaPipe).** Under **Setup**, five independent features, each off by default
 because each costs GPU and CPU time:
 
 | Feature | Sources it adds |
@@ -363,6 +410,23 @@ modulated.
 A shader that fails to compile is reported in the output window's console
 and that effect is skipped; the rest of the chain keeps running.
 
+## Sending the output to other software (Syphon, NDI)
+
+A web page cannot publish a Syphon or NDI source: browsers have no access to
+those frameworks. The output window is an ordinary Chrome window, though, so
+the usual route is to capture it:
+
+- Most VJ and mapping software can take a window or a display as an input
+  (VDMX window inputs, OBS window capture, screen-capture sources in
+  MadMapper and Resolume).
+- Utilities exist that republish a chosen window as a Syphon source.
+- Or give the output window its own display and capture that with a capture
+  card on a second machine.
+
+Capture adds a little latency and depends on the window staying visible. A
+native wrapper (an Electron build with a Syphon add-on) would be the way to a
+true Syphon server; it is not part of this project yet.
+
 ## Deploying to GitHub Pages
 
 `.github/workflows/pages.yml` builds on every push and deploys from the
@@ -406,9 +470,10 @@ npm test
 | File | Covers |
 | --- | --- |
 | `tests/smoke.mjs` | Pipeline, control ↔ output sync, keys, resize, reloads, lost GL context |
+| `tests/control-ui.mjs` | The three screens, palettes, perform faders, preset editing, fades, reordering, the pop-out output |
 | `tests/phone.mjs` | Real WebRTC against a local PeerServer: pairing, live video, hold on stall, every reconnect path, local camera |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
-| `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, learn mode |
+| `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |
 
 ## What has and has not been verified
@@ -432,5 +497,5 @@ controller. Check these the first time you set up:
 - Latency. `/control` shows an estimate (marked `≈` when it includes an
   allowance for the phone's capture and encode time); trust your eyes.
 - MediaPipe on the GPU. The tests use the CPU path. On a Mac the default is
-  the GPU; if a feature reports an error, switch the Vision panel to
+  the GPU; if a feature reports an error, switch Setup → Vision to
   **Run on CPU**.

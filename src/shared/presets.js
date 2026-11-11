@@ -8,15 +8,25 @@ import { readJSON, writeJSON } from './util.js';
 const KEY = 'thirdeye.presets.v1';
 const FILE_TAG = 'third-eye-cam-presets';
 
+export const MAX_FADE = 30;
+
+// A preset: { name, fade (seconds to crossfade in; null = the default), scene }.
 function clean(list) {
   return list
     .filter((p) => p && typeof p === 'object' && p.scene)
-    .map((p) => ({ name: String(p.name ?? 'Untitled').slice(0, 60), scene: sanitizeScene(p.scene) }));
+    .map((p) => {
+      const fade = Number(p.fade);
+      return {
+        name: String(p.name ?? 'Untitled').slice(0, 60),
+        fade: p.fade !== null && p.fade !== undefined && Number.isFinite(fade) ? Math.min(MAX_FADE, Math.max(0, fade)) : null,
+        scene: sanitizeScene(p.scene),
+      };
+    });
 }
 
 export function loadPresets() {
   const stored = readJSON(KEY, null);
-  return Array.isArray(stored) ? clean(stored) : factoryPresets();
+  return clean(Array.isArray(stored) ? stored : factoryPresets());
 }
 
 export function savePresets(list) {
@@ -27,13 +37,13 @@ export function resetPresets() {
   savePresets(factoryPresets());
 }
 
-// Loads a preset into the live state. `fade` (seconds) defaults to the
-// crossfade time set on the control page.
+// Loads a preset into the live state, crossfading over the preset's own
+// fade-in time (or `fade` seconds when given).
 export function applyPreset(store, index, fade) {
   const list = loadPresets();
   if (!list.length) return;
   const i = ((index % list.length) + list.length) % list.length;
-  store.dispatch({ op: 'scene', scene: list[i].scene, fade: fade ?? store.state.globals.fadeTime, presetIndex: i });
+  store.dispatch({ op: 'scene', scene: list[i].scene, fade: fade ?? list[i].fade ?? store.state.globals.fadeTime, presetIndex: i });
 }
 
 export function stepPreset(store, direction) {
@@ -41,8 +51,8 @@ export function stepPreset(store, direction) {
   applyPreset(store, current < 0 ? (direction > 0 ? 0 : -1) : current + direction);
 }
 
-export function snapshotPreset(store, name) {
-  return { name, scene: sceneOf(store.state) };
+export function snapshotPreset(store, name, fade = null) {
+  return { name, fade, scene: sceneOf(store.state) };
 }
 
 export function exportPresets(list) {

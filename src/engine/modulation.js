@@ -4,6 +4,7 @@
 
 import { TOGGLE_ACTIONS, runAction } from '../shared/actions.js';
 import { paramRange } from '../effects/index.js';
+import { macroValue, resolveMacros } from '../shared/macros.js';
 import { SOURCES, describeSource } from '../shared/sources.js';
 import { clamp } from '../shared/util.js';
 
@@ -39,6 +40,7 @@ export class Modulation {
     this.dirty = true;
     this.lfoState = [];
     this.gates = new Map(); // action binding id -> was above threshold
+    this.faderSeen = new Map(); // "macro:N" binding id -> last source value applied
 
     store.subscribe((op) => {
       if (op.op === 'scene' || op.op === 'replace' || (op.op === 'item' && op.list === 'mappings')) this.dirty = true;
@@ -105,7 +107,30 @@ export class Modulation {
     }
 
     // Triggers: a source rising through 0.5 fires its action.
+    let macros = null;
     for (const b of state.actions) {
+      if (b.action.startsWith('macro:')) {
+        // Continuous: a knob or fader sets the pinned parameter's own value,
+        // so the on-screen fader follows the hardware.
+        const has = this.values.has(b.source);
+        const v = has ? this.values.get(b.source) : undefined;
+        if (!this.faderSeen.has(b.id)) {
+          // First sight of this binding: adopt the current reading without
+          // applying it, so nothing jumps just because a page loaded.
+          this.faderSeen.set(b.id, v);
+          continue;
+        }
+        if (v === undefined || v === this.faderSeen.get(b.id)) continue;
+        this.faderSeen.set(b.id, v);
+        macros ??= resolveMacros(state);
+        const macro = macros[Number(b.action.slice(6))];
+        if (!macro) continue;
+        const unit = this.bipolar.get(b.source) ? v * 0.5 + 0.5 : v;
+        const value = macroValue(macro, unit);
+        if (macro.key === 'mix') this.store.patchItem('chain', macro.fx, { mix: value });
+        else this.store.setParam(macro.fx, macro.key, value);
+        continue;
+      }
       const on = (this.values.get(b.source) ?? 0) > 0.5;
       const was = this.gates.get(b.id);
       this.gates.set(b.id, on);

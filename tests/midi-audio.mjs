@@ -33,6 +33,7 @@ try {
   const midi = (bytes) => output.evaluate((b) => window.__midiInput.onmidimessage({ data: new Uint8Array(b) }), bytes);
 
   console.log('audio');
+  await control.evaluate(() => window.thirdEye.ui.setView('setup'));
   await control.click('text=Enable audio');
   check('audio analysis starts in the output window', await settle(async () => (await status()).audio.state === 'live', 'audio live'), (await status()).audio.label);
   check('level follows the signal', await settle(async () => (await source('audio.level')) > 0.05, 'level'));
@@ -76,15 +77,22 @@ try {
   check('note off closes the gate', (await source('midi.note.3.36')) === 0);
   check('MIDI sources get meters on control', await settle(() => control.evaluate(() => !!document.querySelector('.meter[title="midi.cc.1.74"]')), 'midi meter'));
 
-  // Learn: touch a parameter, arm learn, move a knob.
+  // MIDI map mode: every mappable control is outlined; click one, then
+  // move a knob or press a pad.
+  const armed = () => waitFor(() => output.evaluate(() => window.thirdEye.engine.midi.learning), { label: 'learn armed' });
+  const hint = () => control.locator('#map-hint').textContent();
+  await control.evaluate(() => window.thirdEye.ui.setView('edit'));
+  await control.click('#midi-map-toggle');
+  check('map mode outlines the controls', await control.evaluate(() => document.body.classList.contains('midi-map')) && (await control.locator('#map-hint').isVisible()));
+
+  // An effect parameter: touching its slider arms it.
   const slider = control.locator('.fx').first().locator('.tp-sldv_t').nth(2); // feedback rotate
   const box = await slider.boundingBox();
   await control.mouse.click(box.x + box.width * 0.5, box.y + box.height / 2);
-  await control.click('text=Learn → parameter');
-  check('learn prompt names the target', (await control.locator('#midi-note').textContent()).includes('rotate'), await control.locator('#midi-note').textContent());
-  await waitFor(() => output.evaluate(() => window.thirdEye.engine.midi.learning), { label: 'learn armed' });
+  check('touching a parameter arms it by name', (await hint()).includes('rotate'), await hint());
+  await armed();
   await midi([0xb0, 21, 127]);
-  check('learn creates a mapping to the touched parameter', await settle(() => output.evaluate(() => {
+  check('knob is mapped to the touched parameter', await settle(() => output.evaluate(() => {
     const m = window.thirdEye.store.state.mappings.find((x) => x.source === 'midi.cc.1.21');
     return m && m.key === 'rotate' && m.mode === 'set';
   }), 'mapping'));
@@ -94,26 +102,75 @@ try {
   check('knob at minimum drives it to its minimum', await settle(async () => Math.abs((await rotate()) + 0.2) < 0.005, 'min'), `rotate ${(await rotate()).toFixed(3)}`);
   check('learn disarms after one control', await output.evaluate(() => window.thirdEye.engine.midi.learning === false));
 
-  await control.click('text=Learn → trigger');
-  await waitFor(() => output.evaluate(() => window.thirdEye.engine.midi.learning), { label: 'learn armed' });
+  // A panic button: clicking it in map mode selects it, it does not fire.
+  await control.evaluate(() => window.thirdEye.ui.setView('perform'));
+  await control.click('.big.blackout');
+  check('clicking a control in map mode does not trigger it', await output.evaluate(() => window.thirdEye.store.state.globals.blackout === false));
+  await armed();
   await midi([0x99, 40, 100]);
-  check('learn → trigger adds a binding', await settle(() => output.evaluate(() => window.thirdEye.store.state.actions.some((b) => b.source === 'midi.note.10.40')), 'binding'));
+  check('pad is bound to blackout', await settle(() => output.evaluate(() => window.thirdEye.store.state.actions.some((b) => b.source === 'midi.note.10.40' && b.action === 'blackout')), 'binding'));
+  check('the control shows what is mapped to it', await settle(() => control.evaluate(() => document.querySelector('.big.blackout').dataset.midiLabel === 'Ch 10 note 40'), 'label'), await control.evaluate(() => document.querySelector('.big.blackout').dataset.midiLabel ?? ''));
   await midi([0x89, 40, 0]);
-  await control.evaluate(() => {
-    const s = window.thirdEye.store;
-    s.dispatch({ op: 'set', key: 'actions', value: s.state.actions.map((b) => (b.source === 'midi.note.10.40' ? { ...b, action: 'blackout' } : b)) });
-  });
   await new Promise((r) => setTimeout(r, 300));
   await midi([0x99, 40, 100]);
-  check('MIDI pad fires its action', await settle(() => output.evaluate(() => window.thirdEye.store.state.globals.blackout === true), 'blackout'));
+  check('MIDI pad fires blackout', await settle(() => output.evaluate(() => window.thirdEye.store.state.globals.blackout === true), 'blackout'));
+  await midi([0x89, 40, 0]);
+  await midi([0x99, 40, 100]);
+  await settle(() => output.evaluate(() => window.thirdEye.store.state.globals.blackout === false), 'blackout off');
   await midi([0x89, 40, 0]);
 
+  // A preset tile.
+  await control.locator('.tile .load').nth(2).click();
+  check('a preset tile can be armed without loading it', (await hint()).includes('Preset 3') && (await output.evaluate(() => window.thirdEye.store.state.presetIndex)) !== 2, await hint());
+  await armed();
+  await midi([0x99, 41, 100]);
+  await settle(() => output.evaluate(() => window.thirdEye.store.state.actions.some((b) => b.action === 'preset:2')), 'preset binding');
+  await midi([0x89, 41, 0]);
+  await new Promise((r) => setTimeout(r, 300));
+  await midi([0x99, 41, 100]);
+  check('MIDI pad loads its preset', await settle(() => output.evaluate(() => window.thirdEye.store.state.presetIndex === 2), 'preset loaded'));
+  await midi([0x89, 41, 0]);
+
+  // A perform fader: the knob moves the parameter itself, so the screen follows.
+  await settle(() => control.evaluate(() => document.querySelectorAll('.fader').length > 0 && window.thirdEye.store.state.presetIndex === 2), 'faders');
+  await control.locator('.fader').first().click();
+  await armed();
+  await midi([0xb0, 22, 64]);
+  await settle(() => output.evaluate(() => window.thirdEye.store.state.actions.some((b) => b.action === 'macro:0' && b.source === 'midi.cc.1.22')), 'fader binding');
+  await midi([0xb0, 22, 127]);
+  check('MIDI knob drives fader 1 to the top', await settle(() => control.evaluate(() => parseFloat(document.querySelector('.fader .fill').style.height) > 99), 'fader max'), await control.evaluate(() => `${document.querySelector('.fader .name').textContent} = ${document.querySelector('.fader .val').textContent}`));
+  await midi([0xb0, 22, 0]);
+  check('and to the bottom', await settle(() => control.evaluate(() => parseFloat(document.querySelector('.fader .fill').style.height) < 1), 'fader min'), await control.evaluate(() => `${document.querySelector('.fader .name').textContent} = ${document.querySelector('.fader .val').textContent}`));
+
+  // Clearing and leaving.
+  await control.click('.big.blackout');
+  await armed();
+  await control.keyboard.press('Delete');
+  check('Delete clears a mapping', await settle(() => output.evaluate(() => !window.thirdEye.store.state.actions.some((b) => b.action === 'blackout' && b.source.startsWith('midi.'))), 'cleared'));
+  await control.keyboard.press('Escape');
+  check('Esc leaves map mode', await control.evaluate(() => !document.body.classList.contains('midi-map')) && (await control.locator('#map-hint').isHidden()));
+  await control.click('.big.blackout');
+  check('controls work normally again', await settle(() => output.evaluate(() => window.thirdEye.store.state.globals.blackout === true), 'normal click'));
+  await control.keyboard.press('b');
+
   // A mapped knob that has not moved since loading must leave the value alone.
+  await control.evaluate(() => {
+    const s = window.thirdEye.store;
+    const fx = s.state.chain[0];
+    s.setScene({
+      chain: s.state.chain,
+      lfos: s.state.lfos,
+      macros: [],
+      mappings: [{ id: 't1', source: 'midi.cc.1.21', fx: fx.uid, key: 'zoom', amount: 1, offset: 0, smooth: 0, invert: false, mode: 'set', enabled: true }],
+    });
+  });
+  const zoom = () => output.evaluate(() => [...window.thirdEye.engine.pipeline.cur.instances.values()][0].values.zoom);
+  check('a mapped knob at zero holds its parameter at minimum', await settle(async () => (await zoom()) === 0.25, 'held at min'), `zoom ${await zoom()}`);
   await output.reload();
   await waitFor(() => output.evaluate(() => window.thirdEye?.engine?.renderFps > 0 && window.thirdEye.engine.midi.state === 'ready'), { label: 'output back' });
-  const base = await output.evaluate(() => window.thirdEye.store.state.chain[0].params.rotate);
+  const base = await output.evaluate(() => window.thirdEye.store.state.chain[0].params.zoom);
   await new Promise((r) => setTimeout(r, 500));
-  check('untouched MIDI mapping does not move its parameter after a reload', Math.abs((await rotate()) - base) < 1e-6, `rotate ${(await rotate()).toFixed(3)}, dialled ${base.toFixed(3)}`);
+  check('after a reload an untouched knob leaves its parameter at the dialled value', (await zoom()) === base && base > 0.25, `zoom ${await zoom()}, dialled ${base}`);
 
   if (process.env.SHOTS) await control.screenshot({ path: `${process.env.SHOTS}/control4.png`, fullPage: true });
 } catch (err) {

@@ -6,6 +6,7 @@
 //   { op: 'merge',   key, patch }             merge into a top-level object
 //   { op: 'set',     key, value }             replace a top-level list
 //   { op: 'scene',   scene, fade, presetIndex }  replace the scene
+//   { op: 'presetIndex', index }              which preset is current (after a reorder)
 //   { op: 'replace', state }                  full sync (sent in reply to hello)
 //
 // Transient events (glitch burst etc.) travel beside ops and are not stored.
@@ -85,6 +86,10 @@ export class Store {
       case 'set': {
         if (op.key !== 'actions') return;
         s.actions = sanitizeActions(structuredClone(op.value), []);
+        break;
+      }
+      case 'presetIndex': {
+        s.presetIndex = Number.isInteger(op.index) ? op.index : -1;
         break;
       }
       case 'scene': {

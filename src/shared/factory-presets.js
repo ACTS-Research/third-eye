@@ -16,7 +16,7 @@ function scene(effects, mappings = [], lfoRates = []) {
 
 export function factoryPresets() {
   return [
-    { name: 'Clean', scene: scene([]) },
+    { name: 'Clean', fade: 1, scene: scene([]) },
     {
       name: 'Tunnel',
       scene: scene(

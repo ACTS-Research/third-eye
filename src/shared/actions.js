@@ -1,8 +1,8 @@
 // Things a key, a button or (from Phase 3) a trigger can fire. They run in
 // whichever window initiated them and reach the other one through the store.
 
-import { stepPreset } from './presets.js';
-import { INPUT_KINDS } from './state.js';
+import { applyPreset, stepPreset } from './presets.js';
+import { INPUT_KINDS, INPUT_LABELS } from './state.js';
 
 export const ACTIONS = {
   blackout: 'Blackout',
@@ -17,7 +17,21 @@ export const ACTIONS = {
 // Actions that flip a switch: a momentary trigger turns them on while held.
 export const TOGGLE_ACTIONS = { blackout: 'blackout', freeze: 'freeze', bypassAll: 'bypassAll' };
 
+// Actions can carry an argument after a colon: "preset:3" loads the fourth
+// preset, "input:camera" selects an input, "macro:2" (handled by the engine,
+// continuously) drives the third perform fader.
+export function describeAction(action) {
+  if (ACTIONS[action]) return ACTIONS[action];
+  const [kind, arg] = String(action).split(':');
+  if (kind === 'preset') return `Preset ${Number(arg) + 1}`;
+  if (kind === 'input') return `Input: ${INPUT_LABELS[arg] ?? arg}`;
+  if (kind === 'macro') return `Fader ${Number(arg) + 1}`;
+  if (kind === 'param') return 'Parameter';
+  return action;
+}
+
 export function runAction(store, name, arg) {
+  if (typeof name === 'string' && name.includes(':')) [name, arg] = name.split(':');
   const g = store.state.globals;
   switch (name) {
     case 'blackout':
@@ -40,6 +54,11 @@ export function runAction(store, name, arg) {
     case 'glitch':
       store.emit('glitch');
       break;
+    case 'preset':
+      applyPreset(store, Number(arg) || 0);
+      break;
+    case 'macro':
+      break; // continuous; the engine applies it every frame
     case 'presetNext':
       stepPreset(store, 1);
       break;

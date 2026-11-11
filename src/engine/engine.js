@@ -5,7 +5,8 @@ import { clamp } from '../shared/util.js';
 import { AudioInput } from './audio.js';
 import { LocalCamera } from './camera.js';
 import { MidiInput } from './midi.js';
-import { ACTIONS } from '../shared/actions.js';
+import { describeAction } from '../shared/actions.js';
+import { macroUnit, resolveMacros } from '../shared/macros.js';
 import { TRIGGER_COUNT } from '../shared/protocol.js';
 import { InputManager } from './inputs.js';
 import { Modulation } from './modulation.js';
@@ -194,12 +195,22 @@ export class Engine {
 
   onPhoneMessage(_msg) {}
 
+  // Where modulation currently has each perform fader's parameter (0..1), so
+  // /control can draw it beside the dialled value.
+  macroLevels() {
+    return resolveMacros(this.store.state).map((macro) => {
+      if (!macro) return null;
+      const live = this.pipeline.cur.instances.get(macro.fx)?.values[macro.key];
+      return live === undefined ? null : Math.round(macroUnit(macro, live) * 1000) / 1000;
+    });
+  }
+
   // The phone labels its trigger buttons with whatever they are bound to.
   sendTriggerLabels() {
     const labels = [];
     for (let i = 1; i <= TRIGGER_COUNT; i++) {
       const bound = this.store.state.actions.find((b) => b.source === `trig.${i}`);
-      labels.push(bound ? ACTIONS[bound.action] ?? bound.action : `Trigger ${i}`);
+      labels.push(bound ? describeAction(bound.action) : `Trigger ${i}`);
     }
     this.link.send({ t: 'labels', triggers: labels });
   }
@@ -224,7 +235,7 @@ export class Engine {
     const watched = now - this.controlSeenAt < CONTROL_TIMEOUT_MS;
     if (watched && now - this.lastSourcesAt >= SOURCES_INTERVAL_MS) {
       this.lastSourcesAt = now;
-      this.bus.send('sources', { values: this.mod.snapshot() });
+      this.bus.send('sources', { values: this.mod.snapshot(), macros: this.macroLevels() });
     }
 
     this.inputs.feeds.phone.gated = this.link.hold;

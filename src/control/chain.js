@@ -81,6 +81,7 @@ export function mountChain(root, ui) {
     pane.addBinding(model, 'mix', { label: 'wet / dry', min: 0, max: 1, step: 0.01 }).on('change', (ev) => {
       if (guard) return;
       ui.lastTouched = { uid: item.uid, key: 'mix' };
+      ui.onParamTouched?.(`${def.name} · wet / dry`);
       store.patchItem('chain', item.uid, { mix: ev.value });
     });
     for (const [key, spec] of Object.entries(def.params)) {
@@ -99,6 +100,7 @@ export function mountChain(root, ui) {
       binding.on('change', (ev) => {
         if (guard) return;
         ui.lastTouched = { uid: item.uid, key };
+        ui.onParamTouched?.(`${def.name} · ${label}`);
         store.setParam(item.uid, key, typeof ev.value === 'boolean' ? (ev.value ? 1 : 0) : ev.value);
       });
     }

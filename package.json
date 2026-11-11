@@ -13,10 +13,12 @@
     "prebuild": "node scripts/fetch-models.mjs --strict",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node tests/smoke.mjs && node tests/phone.mjs && node tests/modulation.mjs && node tests/midi-audio.mjs && node tests/vision.mjs",
+    "test": "node tests/smoke.mjs && node tests/control-ui.mjs && node tests/phone.mjs && node tests/modulation.mjs && node tests/midi-audio.mjs && node tests/vision.mjs",
     "test:smoke": "node tests/smoke.mjs"
   },
   "dependencies": {
+    "@fontsource/big-shoulders-display": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
     "@mediapipe/tasks-vision": "^1.2.2",
     "peerjs": "^1.5.5",
     "qrcode-generator": "^2.0.4",

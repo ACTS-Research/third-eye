@@ -44,6 +44,7 @@ try {
   }));
 
   console.log('control -> output');
+  await control.evaluate(() => window.thirdEye.ui.setView('edit'));
   await control.selectOption('#col-chain select', 'kaleido');
   await control.click('text=Add effect');
   await waitFor(() => output.evaluate(() => window.thirdEye.store.state.chain.length === 3), { label: 'effect added on output' });
@@ -91,7 +92,7 @@ try {
 
   await output.keyboard.press('b');
   await sleep(200);
-  check('key in output reaches control', await control.evaluate(() => document.querySelector('.transport .danger').classList.contains('on')));
+  check('key in output reaches control', await control.evaluate(() => document.querySelector('.big.blackout').classList.contains('on')));
   await output.keyboard.press('b');
 
   console.log('video file input');
