@@ -25,6 +25,7 @@ export function mountStatus(root, ui) {
   row('phone', 'Phone');
   row('link', 'Link');
   row('stream', 'Stream');
+  row('sensors', 'Sensors');
 
   // Other modules add their own rows / pills / alerts through these.
   ui.statusRow = row;
@@ -107,6 +108,8 @@ export function mountStatus(root, ui) {
       p.media === 'connected' && p.kbps !== undefined
         ? [p.codec, `${(p.kbps / 1000).toFixed(1)} Mbps`, p.jitterBufferMs !== undefined ? `buffer ${p.jitterBufferMs.toFixed(0)} ms` : ''].filter(Boolean).join(' · ')
         : '—';
+    const sn = status.sensors;
+    rows.sensors.textContent = sn?.live ? `${sn.hz.toFixed(0)} Hz${sn.orientation ? '' : ' · no orientation'}${sn.motion ? '' : ' · no motion'}` : '—';
     ui.setAlert('phone', info?.hidden ? 'Phone: Safari is in the background — the camera is paused until it returns' : p.phone === 'silent' ? 'Phone stopped responding — it will reconnect by itself when it can' : null, 'bad');
     ui.setAlert('camera', input.kind === 'camera' && status.camera.state === 'error' ? `Local camera: ${status.camera.error}` : null);
     ui.setAlert('relay', p.route === 'relayed' ? 'Phone video is being relayed, not direct — expect extra latency' : null);

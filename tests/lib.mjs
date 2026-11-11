@@ -73,3 +73,54 @@ export function outputStats(page) {
     return { mean: sum / (w * h * 3), hash };
   });
 }
+
+// Local PeerServer so pairing works without the public PeerJS cloud.
+export async function startPeerServer(port = 9200) {
+  const { PeerServer } = await import('peer');
+  return new Promise((resolve) => {
+    PeerServer({ port, host: '127.0.0.1', path: '/' }, (server) => {
+      // Upgraded WebSockets are not closed by server.close(); track them.
+      server.sockets = new Set();
+      server.on('connection', (socket) => {
+        server.sockets.add(socket);
+        socket.on('close', () => server.sockets.delete(socket));
+      });
+      server.signalUrl = `ws://127.0.0.1:${port}/`;
+      resolve(server);
+    });
+  });
+}
+
+export function stopPeerServer(server) {
+  return new Promise((resolve) => {
+    server.close(() => resolve());
+    for (const socket of server.sockets) socket.destroy();
+  });
+}
+
+// Opens /control, /output and a paired /phone in one browser context.
+export async function openSession(browser, site, peerServer, errors, { start = true } = {}) {
+  const context = await browser.newContext({ viewport: { width: 1400, height: 900 } });
+  await context.grantPermissions(['camera', 'microphone', 'accelerometer', 'gyroscope', 'magnetometer']);
+  const control = await context.newPage();
+  watch(control, 'control', errors);
+  await control.goto(`${site.url}/control/`);
+  await control.evaluate((signal) => window.thirdEye.store.merge('net', { signal }), peerServer.signalUrl);
+  const output = await context.newPage();
+  await output.setViewportSize({ width: 1280, height: 720 });
+  watch(output, 'output', errors);
+  await output.goto(`${site.url}/output/`);
+  await waitFor(() => control.evaluate(() => window.thirdEye.ui.status?.phone.signal === 'open'), { label: 'host signaling', timeout: 20000 });
+  const url = await control.locator('#phone-link').getAttribute('href');
+  const phone = await context.newPage();
+  await phone.setViewportSize({ width: 390, height: 844 });
+  watch(phone, 'phone', errors);
+  await phone.goto(url);
+  if (start) {
+    await phone.click('#start');
+    await waitFor(() => control.evaluate(() => window.thirdEye.ui.status?.phone.phone === 'connected'), { label: 'phone paired', timeout: 20000 });
+  }
+  return { context, control, output, phone, url };
+}
+
+export const benignError = (e) => /peerjs|WebSocket|ERR_CONNECTION_REFUSED|Lost connection|server-error|socket/i.test(e);

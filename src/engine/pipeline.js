@@ -20,6 +20,61 @@ function effectSource(def) {
   return `${HEADER}\n${uniforms}\n${def.frag}\n${FOOTER}`;
 }
 
+// Ring buffer of past frames in a 2D array texture (one layer per frame).
+class History {
+  constructor(gl, spec, w, h) {
+    this.gl = gl;
+    this.frames = spec.frames ?? 60;
+    this.maxWidth = spec.maxWidth ?? 960;
+    this.head = 0;
+    this.fbo = gl.createFramebuffer();
+    this.tex = null;
+    this.resize(w, h);
+  }
+
+  resize(w, h) {
+    const gl = this.gl;
+    const scale = Math.min(1, this.maxWidth / w);
+    const tw = Math.max(16, Math.round(w * scale));
+    const th = Math.max(16, Math.round(h * scale));
+    if (this.tex && tw === this.w && th === this.h) return;
+    if (this.tex) gl.deleteTexture(this.tex);
+    this.w = tw;
+    this.h = th;
+    this.head = 0;
+    this.tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex);
+    gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.RGBA8, tw, th, this.frames);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
+    this.filled = false;
+  }
+
+  // Stores `tex` as the newest frame.
+  push(tex, copyProgram) {
+    const gl = this.gl;
+    copyProgram.use().tex('uTex', 0, tex);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+    gl.viewport(0, 0, this.w, this.h);
+    // First frame: fill every layer so the past is never black.
+    const count = this.filled ? 1 : this.frames;
+    for (let i = 0; i < count; i++) {
+      this.head = (this.head + 1) % this.frames;
+      gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, this.tex, 0, this.head);
+      drawFullscreen(gl);
+    }
+    this.filled = true;
+  }
+
+  dispose() {
+    this.gl.deleteFramebuffer(this.fbo);
+    this.gl.deleteTexture(this.tex);
+  }
+}
+
 class EffectInstance {
   constructor(pipe, def) {
     this.pipe = pipe;
@@ -33,17 +88,24 @@ class EffectInstance {
       const { gl, width, height } = pipe;
       this.own = [new Target(gl, width, height), new Target(gl, width, height)];
     }
+    this.history = def.uses?.history ? new History(pipe.gl, def.uses.history, pipe.width, pipe.height) : null;
   }
 
   resize(w, h) {
     if (this.own) for (const t of this.own) t.resize(w, h);
+    this.history?.resize(w, h);
   }
 
   // Renders into `scratch` (or this effect's own buffer) and returns the
   // texture holding the result.
   render(ctx, inTex, scratch, item) {
     const gl = this.pipe.gl;
+    if (this.history) this.history.push(inTex, this.pipe.copyProgram);
     const p = this.program.use();
+    if (this.history) {
+      p.tex('uHistory', 2, this.history.tex, gl.TEXTURE_2D_ARRAY);
+      p.f('uHistoryHead', this.history.head).f('uHistoryCount', this.history.frames);
+    }
     let dst = scratch;
     if (this.own) {
       dst = this.own[1 - this.cur];
@@ -66,6 +128,7 @@ class EffectInstance {
 
   dispose() {
     if (this.own) for (const t of this.own) t.dispose();
+    this.history?.dispose();
   }
 }
 

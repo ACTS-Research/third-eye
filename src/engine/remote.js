@@ -33,6 +33,7 @@ export class PhoneLink {
     this.stats = {};
     this.prevStats = null;
     this.key = '';
+    this.onData = null; // a data connection arrived (not yet open)
     this.onOpenData = null;
     setInterval(() => this.tick(), TICK_MS);
     this.open();
@@ -125,6 +126,7 @@ export class PhoneLink {
     const old = this.conn;
     this.conn = conn;
     if (old && old !== conn) old.close();
+    this.onData?.(conn);
     conn.on('open', () => {
       if (conn !== this.conn) return;
       this.hold = false;

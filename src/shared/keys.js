@@ -1,7 +1,7 @@
 // Keyboard shortcuts, active in both /control and /output.
 
 import { runAction } from './actions.js';
-import { INPUT_KINDS } from './state.js';
+import { INPUT_KINDS, INPUT_LABELS } from './state.js';
 import { isTypingTarget } from './util.js';
 
 export const KEYMAP = [
@@ -9,13 +9,15 @@ export const KEYMAP = [
   { keys: [' '], label: 'Space', action: 'freeze', help: 'Freeze frame' },
   { keys: ['x'], label: 'X', action: 'bypassAll', help: 'Bypass all effects' },
   { keys: ['g'], label: 'G', action: 'glitch', help: 'Glitch burst' },
+  { keys: [']', 'ArrowRight'], label: '] or →', action: 'presetNext', help: 'Next preset (crossfade)' },
+  { keys: ['[', 'ArrowLeft'], label: '[ or ←', action: 'presetPrev', help: 'Previous preset (crossfade)' },
   { keys: ['i'], label: 'I', action: 'inputNext', help: 'Next input' },
   ...INPUT_KINDS.map((kind, i) => ({
     keys: [String(i + 1)],
     label: String(i + 1),
     action: 'input',
     arg: kind,
-    help: `Input: ${kind}`,
+    help: `Input: ${INPUT_LABELS[kind]}`,
   })),
 ];
 

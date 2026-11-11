@@ -143,3 +143,34 @@ select { padding: 12px 10px; }
   #stage { height: 34vh; }
   #perform { flex: 1 1 50%; height: calc(100% - 44px); }
 }
+
+/* Performance controls ------------------------------------------------ */
+.pad {
+  position: relative;
+  flex: 1;
+  min-height: 120px;
+  border-radius: 16px;
+  border: 2px solid var(--line);
+  background:
+    linear-gradient(var(--line) 1px, transparent 1px) 0 50% / 100% 50%,
+    linear-gradient(90deg, var(--line) 1px, transparent 1px) 50% 0 / 50% 100%,
+    var(--panel);
+  touch-action: none;
+  overflow: hidden;
+}
+.pad.down { border-color: var(--accent); }
+.pad-label { position: absolute; left: 12px; top: 8px; color: var(--dim); font-weight: 700; font-size: 13px; }
+.pad-dot {
+  position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px;
+  border-radius: 50%; border: 3px solid var(--dim); pointer-events: none;
+}
+.pad.down .pad-dot { border-color: var(--accent); background: rgba(214, 255, 63, 0.3); }
+
+.triggers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; flex: 0 0 auto; }
+.trig {
+  height: 84px; padding: 4px; font-size: 14px; font-weight: 800; line-height: 1.15;
+  border-radius: 16px; touch-action: none; text-transform: uppercase; overflow: hidden;
+}
+.trig.down { background: var(--accent); border-color: var(--accent); color: #141600; transform: scale(0.97); }
+
+#motion-ask { margin: 6px 10px 0; background: var(--warn); border-color: var(--warn); color: #1a1200; }

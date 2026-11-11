@@ -9,7 +9,8 @@
     "dev:https": "HTTPS=1 vite --host",
     "build": "vite build",
     "preview": "vite preview",
-    "test:smoke": "node tests/smoke.mjs"
+    "test:smoke": "node tests/smoke.mjs",
+    "test": "node tests/smoke.mjs && node tests/phone.mjs && node tests/modulation.mjs"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "^1.2.2",

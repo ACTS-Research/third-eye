@@ -22,7 +22,8 @@ vec4 effect(vec2 uv) {
   p.x /= ASPECT;
   vec2 fuv = p + 0.5 - vec2(shiftX, shiftY);
 
-  vec3 fb = texture(uPrev, fuv).rgb * inFrame(fuv) * decay;
+  // The small constant makes 8-bit feedback actually reach black.
+  vec3 fb = max(texture(uPrev, fuv).rgb * inFrame(fuv) * decay - 0.003, 0.0);
   fb = clamp(hueRotate(fb, hue), 0.0, 1.0);
 
   vec3 live = texture(uTex, uv).rgb;

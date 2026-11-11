@@ -3,6 +3,7 @@
 
 import { Peer } from 'peerjs';
 import { hostPeerId, peerOptions } from '../shared/net.js';
+import { SENSOR_CHANNEL } from '../shared/protocol.js';
 
 const TICK_MS = 1000;
 const RETRY_MS = 2500;
@@ -22,6 +23,7 @@ export class HostLink {
     this.peer = null;
     this.conn = null;
     this.call = null;
+    this.sensorChannel = null;
     this.stream = null;
     this.quality = null;
     this.signal = 'connecting';
@@ -143,6 +145,18 @@ export class HostLink {
     }
   }
 
+  sendSensors(packet) {
+    const ch = this.sensorChannel;
+    // Skip rather than queue when the channel is backed up.
+    if (ch?.readyState === 'open' && ch.bufferedAmount < 1024) {
+      try {
+        ch.send(packet);
+      } catch {
+        /* channel closing */
+      }
+    }
+  }
+
   dropCall() {
     const call = this.call;
     this.call = null;
@@ -167,6 +181,14 @@ export class HostLink {
     this.connTriedAt = performance.now();
     const conn = this.peer.connect(this.hostId, { reliable: true, serialization: 'json' });
     this.conn = conn;
+    // Second channel on the same connection for sensor data: unordered and
+    // never retransmitted, so a late sample cannot delay a fresh one.
+    try {
+      this.sensorChannel = conn.peerConnection.createDataChannel(SENSOR_CHANNEL.label, SENSOR_CHANNEL.options);
+    } catch (err) {
+      this.sensorChannel = null;
+      console.warn('[link] no sensor channel', err);
+    }
     conn.on('open', () => {
       if (conn !== this.conn) return;
       this.error = '';

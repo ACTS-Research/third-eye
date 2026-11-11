@@ -3,25 +3,7 @@
 // the pipeline, last-frame hold, and every reconnect path.
 //   node tests/phone.mjs
 
-import { PeerServer } from 'peer';
-import { check, failureCount, launch, outputStats, sleep, startSite, waitFor, watch } from './lib.mjs';
-
-const PEER_PORT = 9200;
-const startPeerServer = () => new Promise((resolve) => {
-  PeerServer({ port: PEER_PORT, host: '127.0.0.1', path: '/' }, (server) => {
-    // Track raw sockets: upgraded WebSockets must be destroyed by hand.
-    server.sockets = new Set();
-    server.on('connection', (socket) => {
-      server.sockets.add(socket);
-      socket.on('close', () => server.sockets.delete(socket));
-    });
-    resolve(server);
-  });
-});
-const stopPeerServer = (server) => new Promise((resolve) => {
-  server.close(() => resolve());
-  for (const socket of server.sockets) socket.destroy();
-});
+import { check, failureCount, launch, outputStats, sleep, startPeerServer, startSite, stopPeerServer, waitFor, watch } from './lib.mjs';
 
 const site = await startSite();
 let peerServer = await startPeerServer();
@@ -41,7 +23,7 @@ try {
   const control = await context.newPage();
   watch(control, 'control', errors);
   await control.goto(`${site.url}/control/`);
-  await control.evaluate((sig) => window.thirdEye.store.merge('net', { signal: sig }), `ws://127.0.0.1:${PEER_PORT}/`);
+  await control.evaluate((sig) => window.thirdEye.store.merge('net', { signal: sig }), peerServer.signalUrl);
 
   const output = await context.newPage();
   await output.setViewportSize({ width: 1280, height: 720 });

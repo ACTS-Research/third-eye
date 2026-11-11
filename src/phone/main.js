@@ -5,7 +5,9 @@ import './phone.css';
 import { DEFAULT_QUALITY, QUALITY, normalizeRoom, parsePhoneParams } from '../shared/net.js';
 import { el, readJSON, writeJSON } from '../shared/util.js';
 import { CameraControls } from './camera-controls.js';
+import { SENSOR_HZ } from '../shared/protocol.js';
 import { HostLink } from './link.js';
+import { Sensors } from './sensors.js';
 
 const $ = (id) => document.getElementById(id);
 const PREFS_KEY = 'thirdeye.phone.v1';
@@ -30,6 +32,9 @@ const app = {
 };
 window.thirdEyePhone = app;
 
+const sensors = new Sensors();
+app.sensors = sensors;
+
 const savePrefs = () => writeJSON(PREFS_KEY, prefs);
 
 // ---------------------------------------------------------------- join ---
@@ -53,15 +58,19 @@ async function start() {
   $('start').disabled = true;
   $('join-error').textContent = '';
 
-  if (!app.controllerOnly) {
-    try {
-      await startCamera();
-    } catch (err) {
-      $('start').disabled = false;
-      $('join-error').textContent = cameraErrorText(err);
-      return;
-    }
+  // Both permission requests are issued inside this tap, camera first, with
+  // no await in between: iOS refuses a motion prompt once the tap has
+  // "expired", which it would have by the time the camera prompt returns.
+  const cameraReady = app.controllerOnly ? Promise.resolve() : startCamera();
+  const motionReady = sensors.requestPermission();
+  try {
+    await cameraReady;
+  } catch (err) {
+    $('start').disabled = false;
+    $('join-error').textContent = cameraErrorText(err);
+    return;
   }
+  motionReady.then(syncMotionAsk);
 
   app.started = true;
   $('join').hidden = true;
@@ -69,18 +78,43 @@ async function start() {
   $('room-label').textContent = app.room;
   buildTools();
   syncTools();
+  sensors.mountPad($('perform'));
+  sensors.mountTriggers($('perform'));
 
   app.link = new HostLink({
     room: app.room,
     signal: app.signal,
     onChange: renderState,
     onDataOpen: sendInfo,
-    onMessage: () => {},
+    onMessage: (msg) => {
+      if (msg.t === 'labels') sensors.setTriggerLabels(msg.triggers ?? []);
+    },
   });
+  setInterval(() => app.link.sendSensors(sensors.next()), 1000 / SENSOR_HZ);
   if (app.stream) app.link.setStream(app.stream, QUALITY[prefs.quality]);
   app.link.start();
   requestWakeLock();
   renderState(app.link.state);
+}
+
+// If the motion prompt was refused or never appeared, offer it again: a tap
+// on this button is a fresh gesture.
+function syncMotionAsk() {
+  let button = $('motion-ask');
+  if (sensors.permission !== 'denied') {
+    button?.remove();
+    return;
+  }
+  if (button) return;
+  button = el('button', {
+    id: 'motion-ask',
+    text: 'Enable motion sensors',
+    onclick: () => sensors.requestPermission().then((result) => {
+      syncMotionAsk();
+      if (result === 'denied') setNote('Motion access is blocked. In iOS Settings → Safari, allow Motion & Orientation Access, then reload.');
+    }),
+  });
+  $('note').after(button);
 }
 
 function cameraErrorText(err) {

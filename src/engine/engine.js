@@ -3,7 +3,11 @@
 
 import { clamp } from '../shared/util.js';
 import { LocalCamera } from './camera.js';
+import { ACTIONS } from '../shared/actions.js';
+import { TRIGGER_COUNT } from '../shared/protocol.js';
 import { InputManager } from './inputs.js';
+import { Modulation } from './modulation.js';
+import { PhoneSensors } from './phone-sensors.js';
 import { Pipeline } from './pipeline.js';
 import { PhoneLink } from './remote.js';
 
@@ -12,6 +16,7 @@ const GLITCH_MS = 450;
 const STALL_MS = 1000;
 const PREVIEW_INTERVAL_MS = 100;
 const STATUS_INTERVAL_MS = 500;
+const SOURCES_INTERVAL_MS = 66;
 
 export class Engine {
   constructor(canvas, store, bus) {
@@ -21,7 +26,10 @@ export class Engine {
     this.inputs = new InputManager();
     this.t0 = performance.now();
     this.glitchStart = -1e9;
-    this.phone = [0, 0, 0];
+    this.mod = new Modulation(store);
+    this.sensors = new PhoneSensors(this.mod);
+    this.resolve = this.mod.resolve;
+    this.lastSourcesAt = 0;
     this.maskFit = [1, 1, 0, 0];
     this.lost = false;
     this.pixelWidth = 0;
@@ -36,17 +44,12 @@ export class Engine {
     this.worstFrameMs = 0;
     this.lastFrameAt = 0;
 
-    this.resolve = (item, inst) => {
-      const v = inst.values;
-      const params = item.params;
-      for (const key in inst.def.params) v[key] = params[key];
-      v.mix = item.mix;
-    };
-
     this.initGL();
 
     this.camera = new LocalCamera(this.inputs.feeds.camera);
     this.link = new PhoneLink(this.inputs.feeds.phone, () => this.store.state.net, (msg) => this.onPhoneMessage(msg));
+    this.link.onData = (conn) => this.sensors.attach(conn);
+    this.link.onOpenData = () => this.sendTriggerLabels();
     this.latency = null;
     setInterval(() => this.housekeeping(), 1000);
 
@@ -128,7 +131,11 @@ export class Engine {
       case 'scene':
         this.pipeline.setChain(state.chain, op.fade ?? 0, performance.now());
         break;
+      case 'set':
+        if (op.key === 'actions') this.sendTriggerLabels();
+        break;
       case 'replace':
+        this.sendTriggerLabels();
         this.pipeline.setChain(state.chain, 0, performance.now());
         this.inputs.setKind(state.input.kind);
         this.pipeline.srcDirty = true;
@@ -161,6 +168,16 @@ export class Engine {
 
   onPhoneMessage(_msg) {}
 
+  // The phone labels its trigger buttons with whatever they are bound to.
+  sendTriggerLabels() {
+    const labels = [];
+    for (let i = 1; i <= TRIGGER_COUNT; i++) {
+      const bound = this.store.state.actions.find((b) => b.source === `trig.${i}`);
+      labels.push(bound ? ACTIONS[bound.action] ?? bound.action : `Trigger ${i}`);
+    }
+    this.link.send({ t: 'labels', triggers: labels });
+  }
+
   start() {
     const tick = (now) => {
       requestAnimationFrame(tick);
@@ -172,6 +189,15 @@ export class Engine {
   frame(now) {
     if (this.lastFrameAt) this.worstFrameMs = Math.max(this.worstFrameMs, now - this.lastFrameAt);
     this.lastFrameAt = now;
+
+    const dt = Math.min(0.1, (now - (this.prevFrameAt ?? now)) / 1000);
+    this.prevFrameAt = now;
+    this.sensors.frame(dt, now);
+    this.mod.frame(dt);
+    if (now - this.lastSourcesAt >= SOURCES_INTERVAL_MS) {
+      this.lastSourcesAt = now;
+      this.bus.send('sources', { values: this.mod.snapshot() });
+    }
 
     this.inputs.feeds.phone.gated = this.link.hold;
     if (!this.lost) {
@@ -186,7 +212,7 @@ export class Engine {
         this.pipeline.render({
           now,
           time: (now - this.t0) / 1000,
-          phone: this.phone,
+          phone: this.sensors.angles,
           maskTex: null,
           maskFit: this.maskFit,
           glitch: clamp(1 - (now - this.glitchStart) / GLITCH_MS, 0, 1),
@@ -235,6 +261,7 @@ export class Engine {
       this.lastInputFrames = 0;
     }
     this.lastStatusAt = now;
+    this.sensors.takeRate(dt);
     this.updateLatency();
     this.bus.send('status', { status: this.collectStatus(now) });
     this.worstFrameMs = 0;
@@ -262,6 +289,7 @@ export class Engine {
     return {
       latency: this.latency,
       phone: this.link.status(now),
+      sensors: this.sensors.status(now),
       camera: this.camera.status(),
       at: Date.now(),
       renderFps: this.renderFps,

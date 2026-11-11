@@ -6,10 +6,13 @@ import './control.css';
 import { createBus } from '../shared/bus.js';
 import { installKeys } from '../shared/keys.js';
 import { Store } from '../shared/store.js';
+import { readJSON, writeJSON } from '../shared/util.js';
 import { mountChain } from './chain.js';
 import { mountInputPanel } from './input-panel.js';
+import { mountModPanel } from './mod-panel.js';
 import { mountOutputPanel } from './output-panel.js';
 import { mountPhonePanel } from './phone-panel.js';
+import { mountPresetsPanel } from './presets-panel.js';
 import { mountPreview } from './preview.js';
 import { mountShortcuts } from './shortcuts.js';
 import { mountStatus } from './status.js';
@@ -52,6 +55,8 @@ mountInputPanel(left, ui);
 mountStatus(left, ui);
 mountChain(middle, ui);
 mountPhonePanel(right, ui);
+mountPresetsPanel(right, ui);
+mountModPanel(right, ui);
 mountShortcuts(right, ui);
 
 installKeys(store);
@@ -60,6 +65,21 @@ installKeys(store);
 document.addEventListener('click', (e) => {
   const button = e.target.closest?.('button');
   if (button) button.blur();
+});
+
+// Click a panel title to fold it; the choice is remembered.
+const FOLD_KEY = 'thirdeye.folded';
+const folded = new Set(readJSON(FOLD_KEY, ['lfo-panel', 'shortcuts']));
+for (const id of folded) document.getElementById(id)?.classList.add('collapsed');
+document.addEventListener('click', (e) => {
+  const title = e.target.closest?.('.panel > h2');
+  if (!title || e.target.closest('button')) return;
+  const panel = title.parentElement;
+  panel.classList.toggle('collapsed');
+  if (!panel.id) return;
+  if (panel.classList.contains('collapsed')) folded.add(panel.id);
+  else folded.delete(panel.id);
+  writeJSON(FOLD_KEY, [...folded]);
 });
 
 window.thirdEye = { store, bus, ui };

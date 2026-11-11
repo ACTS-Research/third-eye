@@ -237,3 +237,29 @@ button.on kbd { color: #141600; border-color: rgba(0, 0, 0, 0.3); background: rg
 details { margin-top: 8px; }
 details summary { cursor: pointer; }
 details .row:first-of-type { margin-top: 6px; }
+
+/* Presets ------------------------------------------------------------- */
+.preset-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
+.preset-list button { text-align: left; overflow: hidden; text-overflow: ellipsis; display: flex; gap: 8px; }
+.preset-list .num { color: var(--dim); font-variant-numeric: tabular-nums; }
+.preset-list button.on .num { color: #141600; }
+input[type='range'] { accent-color: var(--accent); min-width: 0; }
+
+/* Collapsible panels -------------------------------------------------- */
+.panel > h2 { cursor: pointer; user-select: none; }
+.panel > h2::after { content: '–'; color: var(--dim); margin-left: auto; }
+.panel > h2:has(button)::after { display: none; }
+.panel.collapsed > h2 { margin-bottom: 0; }
+.panel.collapsed > h2::after { content: '+'; }
+.panel.collapsed > :not(h2) { display: none; }
+
+/* Modulation ---------------------------------------------------------- */
+.meters { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 12px; }
+.meter { display: grid; grid-template-columns: 1fr 70px; align-items: center; gap: 6px; font-size: 11px; }
+.meter span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dim); }
+.meter .bar { position: relative; height: 8px; border-radius: 4px; background: var(--panel-2); overflow: hidden; }
+.meter .bar i { position: absolute; top: 0; bottom: 0; background: var(--accent); }
+.meter .bar.bipolar::after { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--dim); }
+.group-title { grid-column: 1 / -1; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin-top: 6px; }
+.binding { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 4px; align-items: center; margin-bottom: 4px; }
+.binding label { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--dim); }

@@ -4,12 +4,13 @@
 //   { op: 'param',   uid, key, value }        one effect parameter (hot path)
 //   { op: 'item',    list, id, patch }        merge into an item of a list
 //   { op: 'merge',   key, patch }             merge into a top-level object
+//   { op: 'set',     key, value }             replace a top-level list
 //   { op: 'scene',   scene, fade, presetIndex }  replace the scene
 //   { op: 'replace', state }                  full sync (sent in reply to hello)
 //
 // Transient events (glitch burst etc.) travel beside ops and are not stored.
 
-import { sanitizeScene, sanitizeState } from './state.js';
+import { sanitizeActions, sanitizeScene, sanitizeState } from './state.js';
 import { debounce, readJSON, writeJSON } from './util.js';
 
 const SESSION_KEY = 'thirdeye.session.v1';
@@ -70,7 +71,8 @@ export class Store {
       case 'item': {
         const list = s[op.list];
         if (!Array.isArray(list)) return;
-        const item = list.find((it) => (it.uid ?? it.id) === op.id);
+        const idKey = op.list === 'chain' ? 'uid' : 'id';
+        const item = list.find((it) => it[idKey] === op.id);
         if (!item) return;
         Object.assign(item, op.patch);
         break;
@@ -78,6 +80,11 @@ export class Store {
       case 'merge': {
         if (!s[op.key] || typeof s[op.key] !== 'object') return;
         Object.assign(s[op.key], op.patch);
+        break;
+      }
+      case 'set': {
+        if (op.key !== 'actions') return;
+        s.actions = sanitizeActions(structuredClone(op.value), []);
         break;
       }
       case 'scene': {
@@ -94,6 +101,7 @@ export class Store {
         return;
     }
     this.save();
+    this.lastRemote = remote;
     for (const fn of this.listeners) fn(op, this.state, remote);
   }
 
