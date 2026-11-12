@@ -19,8 +19,9 @@ export function mountRecordPanel(root, ui) {
   button.addEventListener('click', () => runAction(store, 'record'));
 
   const list = el('div', { id: 'recordings' });
-  const note = el('div', { class: 'dim small' });
+  const note = el('div', { class: 'dim small keep-2' });
   const format = el('select', {
+    class: 'grow',
     'aria-label': 'Recording format',
     onchange: () => store.merge('globals', { recFormat: format.value }),
   }, [el('option', { value: 'webm', text: 'WebM (written every second: safest)' }), el('option', { value: 'mp4', text: 'MP4 (opens anywhere, written in large pieces)' })]);
@@ -78,7 +79,8 @@ export function mountRecordPanel(root, ui) {
     const rec = status?.recording;
     button.disabled = !status;
     button.classList.toggle('on', !!rec?.active);
-    button.textContent = rec?.active ? `REC ${clock(rec.seconds)} · ${size(rec.bytes)}` : 'REC';
+    button.textContent = rec?.active ? `REC ${clock(rec.seconds)}` : 'REC';
+    button.title = rec?.active ? `Recording ${rec.name}, ${size(rec.bytes)} so far. Click or press R to stop.` : 'Record the output (R)';
     ui.setAlert?.('rec', rec?.error || null, 'bad');
     if (rec && rec.finished !== finished) {
       finished = rec.finished;

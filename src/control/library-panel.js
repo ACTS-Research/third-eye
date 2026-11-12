@@ -5,7 +5,7 @@ import { el } from '../shared/util.js';
 
 export function mountLibraryPanel(root, ui) {
   const { store, presets } = ui;
-  const note = el('div', { class: 'dim small', id: 'library-note' });
+  const note = el('div', { class: 'dim small keep-1', id: 'library-note' });
   const fade = el('input', {
     type: 'range',
     min: '0',

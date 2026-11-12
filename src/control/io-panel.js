@@ -8,7 +8,7 @@ export function mountIoPanel(root, ui) {
 
   // ---------------------------------------------------------------- MIDI --
   const midiToggle = el('button', { text: 'Enable MIDI', onclick: () => (store.state.midi.enabled ? store.merge('midi', { enabled: false }) : enableMidi()) });
-  const midiNote = el('div', { class: 'dim small', id: 'midi-note' });
+  const midiNote = el('div', { class: 'dim small keep-2', id: 'midi-note' });
 
   // Asks for MIDI access on this page (so the prompt is never on the
   // projector), then lets /output open the devices. Resolves true on success.
@@ -34,7 +34,7 @@ export function mountIoPanel(root, ui) {
   const device = el('select', { class: 'grow', onchange: () => store.merge('audio', { deviceId: device.value }) });
   const gain = el('input', { type: 'range', min: '0.2', max: '8', step: '0.1', class: 'grow', oninput: () => store.merge('audio', { gain: Number(gain.value) }) });
   const sens = el('input', { type: 'range', min: '1.1', max: '4', step: '0.05', class: 'grow', oninput: () => store.merge('audio', { sensitivity: Number(sens.value) }) });
-  const audioNote = el('div', { class: 'dim small', id: 'audio-note' });
+  const audioNote = el('div', { class: 'dim small keep-2', id: 'audio-note' });
 
   async function listDevices() {
     try {

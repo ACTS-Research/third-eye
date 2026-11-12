@@ -26,7 +26,7 @@ export function mountVisionPanel(root, ui) {
     title: 'Where inference runs',
     onchange: () => store.merge('vision', { delegate: delegate.value }),
   }, [el('option', { value: 'GPU', text: 'Run on GPU' }), el('option', { value: 'CPU', text: 'Run on CPU' })]);
-  const note = el('div', { class: 'dim small', id: 'vision-note' });
+  const note = el('div', { class: 'dim small keep-3', id: 'vision-note' });
 
   const sync = () => {
     const v = store.state.vision;

@@ -84,7 +84,7 @@ export function mountPerform(root, ui) {
 
   // ------------------------------------------------------------ faders ---
   const faderGrid = el('div', { class: 'faders' });
-  const faderNote = el('div', { class: 'dim small' });
+  const faderNote = el('div', { class: 'dim small keep-2' });
   const presetName = el('span');
   let faders = [];
 
@@ -161,7 +161,7 @@ export function mountPerform(root, ui) {
       mini.append(el('div', { class: 'meter', title: id }, [el('span', { text: s.label.startsWith(s.group) ? s.label : `${s.group} ${s.label}` }), el('div', { class: `bar${s.bipolar ? ' bipolar' : ''}` }, [fill])]));
       miniBars.set(id, { fill, bipolar: s.bipolar });
     }
-    mini.hidden = !used.length;
+    if (!used.length) mini.append(el('div', { class: 'dim small', text: 'No modulation in this preset.' }));
   }
 
   bus.on('sources', (m) => {
@@ -249,7 +249,6 @@ export function mountPerform(root, ui) {
   function syncState() {
     const { globals, input } = store.state;
     blackout.classList.toggle('on', globals.blackout);
-    blackout.lastChild.textContent = globals.blackout ? 'Blacked out' : 'Blackout';
     freeze.classList.toggle('on', globals.freeze);
     bypass.classList.toggle('on', globals.bypassAll);
     for (const kind of INPUT_KINDS) inputButtons[kind].setAttribute('aria-pressed', String(input.kind === kind));

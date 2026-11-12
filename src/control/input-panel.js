@@ -53,7 +53,7 @@ export function mountInputPanel(root, ui) {
     onchange: () => store.merge('input', { cameraId: camera.value }),
   });
   const findCameras = el('button', { text: 'Find cameras', onclick: () => listCameras(true) });
-  const cameraNote = el('div', { class: 'dim small' });
+  const cameraNote = el('div', { class: 'dim small keep-2' });
 
   async function listCameras(prompt) {
     if (!navigator.mediaDevices?.enumerateDevices) {

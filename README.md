@@ -102,7 +102,7 @@ npm run preview
 3. Pair the phone ([below](#pairing-the-phone)) and press `1` to select it.
 4. Click a preset on the strip, or **Edit** one.
 
-The coloured dots at the top right change the interface palette (red, amber,
+The coloured dot at the top right opens the interface palettes (red, amber,
 bone, lime, ice, magenta). All are a single ink on black so the laptop does
 not light the stage; the phone opens in the same palette.
 

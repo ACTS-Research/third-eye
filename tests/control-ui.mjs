@@ -63,7 +63,8 @@ try {
   console.log('palettes');
   const ink = () => control.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ink').trim());
   const red = await ink();
-  await control.click('#palette button[aria-label="Palette: Amber"]');
+  await control.click('#palette > button');
+  await control.click('#palette-menu button[aria-label="Palette: Amber"]');
   check('picking a palette re-inks the page', (await ink()) === '#ffb347' && red === '#ff6b5e', `${red} -> ${await ink()}`);
   check('the pairing link carries the palette', (await control.locator('#phone-link').getAttribute('href')).includes('pal=amber'));
   const phone = await context.newPage();
@@ -72,7 +73,8 @@ try {
   await phone.close();
   await control.reload();
   check('the palette is remembered', await settle(async () => (await ink()) === '#ffb347', 'palette restored'));
-  await control.click('#palette button[aria-label="Palette: Darkroom red"]');
+  await control.click('#palette > button');
+  await control.click('#palette-menu button[aria-label="Palette: Darkroom red"]');
 
   console.log('presets: load, fade, edit');
   check('factory presets on the strip', (await names()).length === 9, (await names()).join(', '));

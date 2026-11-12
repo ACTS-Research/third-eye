@@ -135,7 +135,7 @@ export function mountStatus(root, ui) {
   }
 
   // Real glass-to-glass measurement: flash the output, time the phone seeing it.
-  const testNote = el('div', { class: 'dim small', id: 'latency-note', text: 'Point the phone at the projected output so it fills most of the frame, then measure. The output flashes black and white for about ten seconds.' });
+  const testNote = el('div', { class: 'dim small keep-3', id: 'latency-note', text: 'Point the phone at the projected output so it fills most of the frame, then measure. The output flashes black and white for about ten seconds.' });
   const testButton = el('button', { id: 'latency-test', text: 'Measure real latency', onclick: () => ui.store.emit('latency-test') });
   ui.onStatus((status) => {
     const t = status?.latencyTest;

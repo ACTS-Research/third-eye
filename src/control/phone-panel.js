@@ -32,14 +32,14 @@ export function mountPhonePanel(root, ui) {
   const qr = el('canvas', { id: 'qr', width: 320, height: 320 });
   const code = el('div', { id: 'room-code' });
   const link = el('a', { id: 'phone-link', class: 'small', target: '_blank', rel: 'noopener' });
-  const warn = el('div', { class: 'small', style: 'font-weight:700' });
-  const state = el('div', { id: 'phone-state', class: 'small dim' });
+  const warn = el('div', { class: 'small keep-2', style: 'font-weight:700' });
+  const state = el('div', { id: 'phone-state', class: 'small dim keep-6' });
 
   // The same pairing details as a pop-over under the top bar: click the
   // phone or input status there and they appear without leaving the screen.
   const popQr = el('canvas', { width: 320, height: 320 });
   const popCode = el('div', { class: 'pop-code' });
-  const popState = el('div', { class: 'small' });
+  const popState = el('div', { class: 'small keep-6' });
   // The connection as four steps, so a failure names the step it is at.
   const popSteps = el('ol', { class: 'steps' });
   const popLink = el('div', { class: 'small dim', style: 'word-break:break-all' });
@@ -145,7 +145,7 @@ export function mountPhonePanel(root, ui) {
     else if (p.signal === 'error') text = p.error;
     else if (p.phone === 'connected') text = p.media === 'connected' ? 'Phone paired and streaming.' : 'Phone paired.';
     else if (p.signal === 'open') text = 'Ready. Scan the code with the iPhone camera.';
-    else if (p.signal === 'disconnected') text = `Cannot reach the pairing server${p.error ? ` (${p.error})` : ''}; retrying. This network may be blocking it: public and guest Wi-Fi often do. Try the iPhone's Personal Hotspot. A phone that is already paired keeps working.`;
+    else if (p.signal === 'disconnected') text = `Cannot reach the pairing server${p.error ? ` (${p.error})` : ''}; retrying. Public and guest Wi-Fi often block it: try the iPhone's Personal Hotspot. A phone that is already paired keeps working.`;
     else text = 'Connecting to the pairing server…';
     state.textContent = text;
     popState.textContent = text;

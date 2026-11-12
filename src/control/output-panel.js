@@ -11,7 +11,7 @@ export function mountOutputPanel(root, ui) {
 
   const select = el('select', { class: 'grow', onchange: () => choose(select.value) });
   const detect = el('button', { text: 'Find displays', onclick: () => loadScreens(true) });
-  const hint = el('div', { class: 'dim small' });
+  const hint = el('div', { class: 'dim small keep-3' });
   const openBtn = el('button', { class: 'primary grow', text: 'Open output window', onclick: open });
   const scale = el('select', {
     title: 'Render resolution',

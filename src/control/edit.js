@@ -31,7 +31,7 @@ export function mountEdit(root, ui) {
       if (Number.isFinite(v)) presets.update(presets.current, { fade: Math.min(MAX_FADE, Math.max(0, v)) });
     },
   });
-  const saved = el('span', { class: 'dim small' });
+  const saved = el('span', { class: 'dim small saved' });
   const saveNew = el('button', { class: 'primary', text: 'Save as new preset', onclick: () => ui.editPreset(presets.addFromLive()) });
   const duplicate = el('button', { text: 'Duplicate', onclick: () => {
     const i = presets.current;
@@ -71,7 +71,7 @@ export function mountEdit(root, ui) {
 
   // ------------------------------------------------------ pinned faders ---
   const slots = el('div');
-  const slotNote = el('div', { class: 'dim small' });
+  const slotNote = el('div', { class: 'dim small keep-3' });
 
   function setSlot(i, value) {
     const scene = sceneOf(store.state);

@@ -51,7 +51,7 @@ export function mountModPanel(roots, ui) {
 
   // ------------------------------------------------------------ mappings --
   const mapHost = el('div', { class: 'tp-host' });
-  const mapNote = el('div', { class: 'dim small' });
+  const mapNote = el('div', { class: 'dim small keep-2' });
   let mapPane = null;
   let openMapping = null;
 

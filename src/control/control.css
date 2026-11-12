@@ -32,7 +32,7 @@ button, select, input[type='text'], input[type='number'] {
 }
 input[type='text'], input[type='number'] { letter-spacing: 0; }
 button { cursor: pointer; white-space: nowrap; }
-.panel button.grow { white-space: normal; text-align: left; }
+.panel button.grow { white-space: normal; text-align: left; min-height: 4em; }
 button:hover, select:hover { border-color: var(--ink); }
 button:disabled { opacity: 0.4; cursor: default; }
 button.primary { border-color: var(--ink); }
@@ -73,8 +73,6 @@ kbd { font: inherit; opacity: 0.8; }
 .recording { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
 .recording .grow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #palette { display: flex; gap: 4px; }
-#palette button { width: 18px; height: 18px; padding: 0; border-radius: 50%; border: 1px solid var(--line); }
-#palette button[aria-pressed='true'] { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 #map-hint { padding: 8px 14px; border-bottom: 1px solid var(--ink); font-weight: 700; }
 #alerts { display: flex; flex-direction: column; }
@@ -250,4 +248,60 @@ body.midi-map [data-midi][data-midi-label]::after {
   .monitor { aspect-ratio: 16 / 9; }
   .edit-body { grid-template-columns: 1fr; }
   .col { overflow: visible; }
+}
+
+
+/* Layout stability ------------------------------------------------------
+   Nothing may move when a number or a message changes. Header items keep
+   their place, messages float over the page instead of pushing it down, and
+   every text that comes and goes has its room reserved. */
+#top { flex-wrap: nowrap; height: 48px; min-height: 48px; overflow: hidden; }
+#pills { flex: 1 1 0; min-width: 0; flex-wrap: nowrap; overflow: hidden; }
+.pill, .pill.bad { padding: 2px 8px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
+.pill:first-child { flex: 0 0 132px; }
+#views { margin-left: 0; flex-shrink: 0; }
+#rec, #rec.on { flex: 0 0 104px; width: 104px; text-align: left; overflow: hidden; }
+#midi-map-toggle { flex-shrink: 0; }
+
+main { position: relative; }
+#alerts, #map-hint { position: fixed; top: 48px; left: 0; right: 0; z-index: 15; }
+#map-hint { background: var(--bg); }
+#map-hint:not([hidden]) ~ #alerts { top: 82px; }
+
+#view-setup { grid-auto-rows: max-content; }
+.col, .side, .panic, .tiles, #view-setup { scrollbar-gutter: stable; }
+
+.tile.on .name { font-weight: 500; }
+.tile .name, .tile.on .name { font-weight: 500; }
+.stats dd { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.stats { grid-template-columns: auto minmax(0, 1fr); }
+.vision-grid button, .seg button { overflow: hidden; }
+.mini { min-height: 132px; flex-shrink: 0; }
+.keep-1 { min-height: 1.5em; }
+.keep-2 { min-height: 3em; }
+.keep-3 { min-height: 4.4em; }
+.keep-6 { min-height: 10em; }
+.edit-head .saved { flex: 0 0 150px; }
+.big b { white-space: nowrap; }
+
+/* Palette: one dot in the bar, the choices in a pop-over. */
+#palette { position: relative; flex-shrink: 0; }
+#palette > button { width: 22px; height: 22px; padding: 0; border-radius: 50%; border: 2px solid var(--line); background: var(--ink); display: block; }
+#palette-menu { position: fixed; z-index: 20; background: var(--bg); border: 2px solid var(--ink); padding: 6px; display: flex; flex-direction: column; gap: 2px; min-width: 170px; }
+#palette-menu button { display: flex; align-items: center; gap: 10px; border: 0; text-align: left; padding: 7px 8px; }
+#palette-menu button i { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+#palette-menu button[aria-checked='true'] { background: var(--ink); color: var(--on-ink); }
+
+@media (max-width: 1000px) {
+  /* Narrow window: one scrolling column, every block at its natural height. */
+  html, body { height: auto; min-height: 100%; }
+  main { flex: none; min-height: 0; }
+  .view { height: auto; }
+  #view-perform { grid-template-rows: none; grid-auto-rows: max-content; }
+  .faders { min-height: 380px; }
+  .edit-body { display: block; }
+  .edit-body .col + .col { border-left: 0; border-top: 1px solid var(--line); }
+  #top { position: sticky; top: 0; z-index: 16; background: var(--bg); gap: 10px; }
+  .wordmark { display: none; }
+  .pill:first-child { flex-basis: 118px; }
 }

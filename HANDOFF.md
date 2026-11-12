@@ -6,22 +6,18 @@
 Pages from `main`, plus the Perform / Edit / Setup redesign, MIDI map mode,
 offline reload, tap tempo, recording, codec choice and a real-latency
 measurement. On home Wi-Fi it pairs and streams end to end with a real iPhone;
-on a coffee-shop network and on the iPhone's Personal Hotspot it did not, and
-that was never diagnosed on the current version.
+and, since the room-code fixes, on the iPhone's Personal Hotspot too. A
+coffee-shop network did not work and has not been retried.
 
-**Next step.** Try the Personal Hotspot once on the current build: join the
-Mac to the hotspot, reload `/control`, use Restart output, pair. Click the
-phone status in the top bar: the pop-over lists the five connection steps and
-marks the one it is stuck at. The earlier hotspot failure was probably the
-room-code clash that has since been fixed (the phone did report "streaming"
-over the hotspot), but that is unconfirmed until this is tried.
+**Next step.** With the working setup, run the three things that have never
+seen real hardware: Measure real latency (Setup → Status) once per codec,
+a recording of several minutes, and MIDI map with a controller.
 
 **Decisions only you can make.**
 
-- Decide whether to allow a relay (TURN) fallback. Today video must go
-  directly between phone and Mac; if the hotspot blocks that, a relay is the
-  only fix, at the cost of latency and a dependency on someone's server.
-  (That the hotspot blocks the direct link is unconfirmed.)
+- Decide whether to allow a relay (TURN) fallback for networks that block
+  the direct phone-to-Mac link (public Wi-Fi, probably). Home Wi-Fi and the
+  hotspot do not need it; it costs latency and depends on someone's server.
 - Decide whether to run your own pairing server instead of the public PeerJS
   one. The public one worked on home Wi-Fi; it comes with no guarantees.
 - Pick the default recording format. It is WebM now because Chrome writes it

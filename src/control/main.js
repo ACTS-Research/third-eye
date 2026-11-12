@@ -117,25 +117,41 @@ mountPerform(views.perform, ui);
 for (const b of document.querySelectorAll('#views button')) b.addEventListener('click', () => ui.setView(b.dataset.view));
 ui.setView('perform');
 
-// Palette swatches.
-const swatches = document.getElementById('palette');
-function drawSwatches(active) {
-  swatches.replaceChildren(
+// Palette: one dot in the top bar; clicking it opens the choices.
+const paletteHost = document.getElementById('palette');
+const paletteDot = el('button', { title: 'Colour palette', 'aria-label': 'Colour palette', 'aria-haspopup': 'menu' });
+const paletteMenu = el('div', { id: 'palette-menu', role: 'menu', hidden: true });
+paletteHost.append(paletteDot);
+document.body.append(paletteMenu);
+function drawPalette(active) {
+  paletteMenu.replaceChildren(
     ...Object.entries(PALETTES).map(([key, p]) =>
       el('button', {
-        title: p.label,
+        role: 'menuitemradio',
+        'aria-checked': String(key === active),
         'aria-label': `Palette: ${p.label}`,
-        'aria-pressed': String(key === active),
-        style: `background:${p.ink}`,
         onclick: () => {
-          drawSwatches(applyPalette(key));
+          drawPalette(applyPalette(key));
+          paletteMenu.hidden = true;
           for (const fn of ui.paletteListeners) fn(key);
         },
-      }),
+      }, [el('i', { style: `background:${p.ink}` }), p.label]),
     ),
   );
 }
-drawSwatches(restorePalette());
+paletteDot.addEventListener('click', () => {
+  const r = paletteDot.getBoundingClientRect();
+  paletteMenu.style.top = `${r.bottom + 10}px`;
+  paletteMenu.style.right = `${Math.max(8, window.innerWidth - r.right)}px`;
+  paletteMenu.hidden = !paletteMenu.hidden;
+});
+document.addEventListener('pointerdown', (e) => {
+  if (!paletteMenu.hidden && !paletteMenu.contains(e.target) && e.target !== paletteDot) paletteMenu.hidden = true;
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') paletteMenu.hidden = true;
+});
+drawPalette(restorePalette());
 
 installKeys(store, {
   e: () => ui.setView(ui.view === 'edit' ? 'perform' : 'edit'),

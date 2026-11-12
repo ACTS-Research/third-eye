@@ -18,7 +18,7 @@ try {
   await control.keyboard.press('r');
   check('R starts recording', await settle(async () => (await status()).recording.active, 'recording'), (await status()).recording.error);
   check('WebM data reaches the file while still recording', await settle(async () => (await status()).recording.bytes > 20000, 'bytes', 20000), `${(await status()).recording.bytes} bytes after ${(await status()).recording.seconds.toFixed(0)} s`);
-  check('the button shows time and size', /REC \d\d:\d\d/.test(await control.locator('#rec').textContent()), await control.locator('#rec').textContent());
+  check('the button shows the elapsed time, and the size on hover', /REC \d\d:\d\d/.test(await control.locator('#rec').textContent()) && /MB/.test(await control.locator('#rec').getAttribute('title')), await control.locator('#rec').textContent());
   const name = (await status()).recording.name;
   await control.click('#rec');
   check('REC stops it', await settle(async () => {
