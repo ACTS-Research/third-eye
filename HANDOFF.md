@@ -151,6 +151,9 @@ Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
 - **Nothing is ever drawn on the output** except the picture (and the idle
   hint before fullscreen). Status goes to `/control`. Nothing may cover the
   monitor on `/control` either, except the operator's own "Monitor off".
+- **The phone is never tethered.** The owner rules out a cable between the
+  phone and the Mac (2026-11-12): it defeats the purpose. Do not propose USB
+  as the answer to a network problem.
 - **Nothing may be fetched from a third party at run time.** Fonts, the
   MediaPipe runtime and models are all served from the site.
 - **Keep `--ink` a plain colour.** The dimmer sets it from script

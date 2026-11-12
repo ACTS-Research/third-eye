@@ -199,20 +199,26 @@ other directly, pairing fails visibly rather than silently routing your show
 through the internet. `/control` shows the route (`direct (LAN)`), round-trip
 time, bitrate and jitter buffer under **Status**.
 
-Recommended, in order:
+The phone is meant to move freely, so the link is wireless. Recommended, in
+order:
 
-1. **iPhone Personal Hotspot over USB.** Plug the phone into the Mac, turn on
-   Personal Hotspot, and select the iPhone under the Mac's network settings.
-   The link is a cable, immune to the room's radio traffic, and the phone's
-   mobile data covers page loading and the handshake.
-2. **iPhone Personal Hotspot over Wi-Fi.** The Mac joins the phone's hotspot.
-   Leave "Maximize Compatibility" off so the hotspot uses 5 GHz. This works
-   even where the venue Wi-Fi does not: at a coffee shop, the Mac on the
-   hotspot and the same iPhone on the shop's Wi-Fi paired and streamed.
-3. **Your own router.** A small travel router on a clear 5 GHz channel, placed
+1. **iPhone Personal Hotspot over Wi-Fi.** The Mac joins the phone's hotspot.
+   On the iPhone, leave Wi-Fi on (the hotspot uses it), turn **Auto-Join**
+   off for the venue's network so the phone does not hop onto it, switch on
+   **Settings → Personal Hotspot → Allow Others to Join**, and keep that
+   screen open until the Mac has joined. Once it has, the phone uses mobile
+   data for its own internet by itself. Leave "Maximize Compatibility" off so
+   the hotspot uses 5 GHz. This works even where the venue Wi-Fi does not: at
+   a coffee shop, the Mac on the hotspot and the same iPhone paired and
+   streamed. Check a website loads on the Mac before opening `/control`.
+2. **Your own router.** A small travel router on a clear 5 GHz channel, placed
    near the stage, with only the phone and the Mac on it. It needs an internet
    uplink for the handshake unless you
    [self-host signaling](#self-hosting-the-signaling-server).
+
+A USB cable between the phone and the Mac (Personal Hotspot, **USB Only**)
+also works and is immune to the room's radio traffic, but it tethers the
+phone; keep it for testing at a desk.
 
 **Avoid venue Wi-Fi.** Guest networks usually isolate clients from each other
 (pairing then cannot work at all), sit behind captive portals, and get
@@ -529,7 +535,7 @@ Three things to tune, all under **Setup**:
 - **Quality** (on the phone). 720p · 60, the default, halves the time
   between frames compared with 720p · 30, at a higher bitrate and more heat
   on the phone. The phone remembers the last quality chosen on it.
-- **Network.** See [Show networking](#show-networking); a cable beats Wi-Fi.
+- **Network.** See [Show networking](#show-networking).
 
 To see what a change really did, use **Status → Measure real latency**. Point
 the phone at the projected output so it fills most of the frame and click it:
