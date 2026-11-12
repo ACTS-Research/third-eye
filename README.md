@@ -129,6 +129,12 @@ minimised or completely covered.
 4. The phone shows `LIVE — streaming to Mac`; `/control` shows
    `Phone: streaming`.
 
+If it does not get that far, click the phone status in the top bar of
+`/control`. The pop-over shows the QR code and room code again, and lists the
+connection as five steps (output open, pairing server reached, phone found,
+video link, picture arriving) with the one it is stuck at marked. It also has
+**Restart output** and **New room code**.
+
 On the phone:
 
 | Control | What it does |
@@ -375,7 +381,11 @@ file.
 | Phone stream stalls or drops | Output holds the last frame. `/control` shows a red alert. Phone and Mac each retry on their own until the stream is back |
 | Phone camera flips or restarts | Last frame is held; no black flash |
 | Safari goes to the background | `/control` alert while hidden; red warning on the phone when it returns; stream resumes |
-| Signaling server unreachable | A paired phone keeps streaming. Both sides keep retrying the server quietly |
+| Pairing server unreachable | A paired phone keeps streaming. Both sides keep retrying; the top bar says so |
+| Room code taken by something else | The output moves to a new code after three tries and `/control` says to scan again |
+| A second output window is opened | It stays idle with a message; the running one is untouched |
+| Not sure which window has the phone | **Restart output** closes every output window in this browser and opens one fresh one |
+| A newer version of the app was deployed | `/control` says so, and warns if the output window is on a different version |
 | `/control` reloaded or closed | `/output` unaffected |
 | `/output` reloaded | Restores the last state; the phone reconnects by itself |
 | Internet drops, then a page is reloaded | The page loads from the browser's stored copy. Pairing a phone again still needs the signaling server |
@@ -531,9 +541,10 @@ npm test
 | File | Covers |
 | --- | --- |
 | `tests/smoke.mjs` | Pipeline, control ↔ output sync, keys, resize, reloads, lost GL context |
+| `tests/layout.mjs` | No overlaps at six window widths on every screen; nothing moves when the information changes; the palette pop-over |
 | `tests/control-ui.mjs` | The three screens, palettes, perform faders, preset editing, fades, reordering, the pop-out output |
 | `tests/offline.mjs` | Reloading every page with the server gone; tap tempo and tempo-synced LFOs |
-| `tests/phone.mjs` | Real WebRTC against a local PeerServer: pairing, live video, hold on stall, every reconnect path, local camera |
+| `tests/phone.mjs` | Real WebRTC against a local PeerServer: pairing, live video, hold on stall, every reconnect path, a second output window, a taken room code, Restart output, local camera |
 | `tests/record-latency.mjs` | Recording to WebM and MP4, saving and deleting; the latency measurement; switching codec |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
@@ -541,24 +552,25 @@ npm test
 
 ## What has and has not been verified
 
-Everything above was developed and tested in headless Chromium, with
-Chromium's fake camera and microphone standing in for hardware. That covers
-the rendering pipeline, state sync, the WebRTC link and its recovery paths,
-the modulation system, presets, audio analysis and the MediaPipe features.
+**On real devices** (a Mac, an iPhone, home Wi-Fi and the iPhone's Personal
+Hotspot): pairing by QR code through the public PeerJS server, live video
+into the effects chain over a direct link with H.264, the control screens,
+and the output window. A coffee-shop network did not work; it was not retried
+after the pairing fixes that followed.
 
-It has **not** been run on a real iPhone, a real projector or a real MIDI
-controller. Check these the first time you set up:
+**Only in headless Chromium**, with a fake camera and microphone: everything
+else. Check these the first time you use them:
 
-- The order and wording of the iOS permission prompts. If motion access is
-  refused or never asked, the phone shows an **Enable motion sensors** button.
-- Which camera controls appear. That depends entirely on what the iPhone's
-  camera reports; an empty list is not an error.
+- **Measure real latency.** It has only seen a simulated camera.
+- Recordings longer than a few seconds.
+- MIDI map with a physical controller.
+- Fullscreen placement on a projector through the Window Management
+  permission, and 60 fps at the projector's resolution.
+- MediaPipe on the GPU. The tests use the CPU path. If a feature reports an
+  error, switch Setup → Vision to **Run on CPU**.
 - The direction of **Rotate / Counter-rotate**. If the picture turns twice as
   far instead of staying level, set `follow` to -1.
-- Fullscreen placement on the projector through the Window Management
-  permission, and that the output holds 60 fps at the projector's resolution.
-- Latency. `/control` shows an estimate (marked `≈` when it includes an
-  allowance for the phone's capture and encode time); trust your eyes.
-- MediaPipe on the GPU. The tests use the CPU path. On a Mac the default is
-  the GPU; if a feature reports an error, switch Setup → Vision to
-  **Run on CPU**.
+- Which camera controls appear on the phone. That depends on what the
+  iPhone's camera reports; an empty list is not an error.
+- Tap tempo, offline reload and the motion sensors and touch controls on the
+  phone have not been reported on either way.

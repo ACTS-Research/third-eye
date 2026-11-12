@@ -4,19 +4,18 @@
 
 **Where things stand.** Everything planned is built and live on GitHub Pages
 from `main`, and it pairs and streams with a real iPhone on home Wi-Fi and on
-the iPhone's Personal Hotspot. This session added recording, codec choice, a
-real-latency measurement, self-healing pairing (one output per browser,
-automatic new room code, a five-step connection checklist) and a control
-page that no longer jumps or overlaps.
+the iPhone's Personal Hotspot. The control page is the "Darkroom" redesign
+(Perform / Edit / Setup) with MIDI map, recording, tap tempo, offline reload
+and self-healing pairing.
 
-**Next step.** With the working setup, run Measure real latency (Setup →
-Status) once per codec and at 720p60 versus 720p30, with the phone pointed at
-the output. It has only ever seen a simulated camera.
+**Next step.** On the real setup, run Measure real latency (Setup → Status)
+once per codec and at 720p60 versus 720p30, with the phone pointed at the
+output. It has only ever seen a simulated camera.
 
 **Decisions only you can make.**
 
 - Decide whether to allow a relay (TURN) fallback for networks that block
-  the direct phone-to-Mac link. Home Wi-Fi and the hotspot do not need it; a
+  the direct phone-to-Mac link. Home Wi-Fi and the hotspot do not need it. A
   coffee-shop network failed and was not retried after the pairing fixes, so
   whether it needs one is unconfirmed. A relay costs latency and depends on
   someone's server.
@@ -26,27 +25,123 @@ the output. It has only ever seen a simulated camera.
   disk every second; MP4 opens in more players but is written in large pieces.
 - Say whether the board cover should stay the design prototype
   (`screenshots/third-eye-current.png`) or become a capture of the real app.
-- Delete the old `claude/affectionate-gates-x6ngzx` branch and its Pages
-  deployment rule when you no longer want them. Nothing deploys from it.
+- Delete the branch `claude/affectionate-gates-x6ngzx` on GitHub (Branches
+  page, trash icon) and its rule under Settings → Environments →
+  `github-pages`. It is fully contained in `main`; the cloud session could
+  not delete it.
+- Export your presets (Setup → Preset library → Export presets) if you care
+  about them. They live only in your browser, not in this repo.
 
-**Never run on real hardware (all unconfirmed).**
+**Branch.** Work is on `main`, the default branch and the one that deploys.
+Nothing is waiting to be merged.
 
-- Measure real latency against a projector, and whether H.264 beats VP8 / VP9.
-- Recordings longer than a few seconds.
-- MIDI map mode with a physical controller.
-- Fullscreen placement on a second display, and 60 fps at projector size.
-- MediaPipe features on the Mac's GPU.
-- The direction of Rotate / Counter-rotate (set `follow` to -1 if it doubles).
+---
 
-**Known rough edges.**
+## For whoever picks this up
+
+Read `README.md` for what the app does and how it is used. This section is
+what the README does not say.
+
+### Shape of the code
+
+Three static pages built by Vite, no framework. About 7,800 lines in `src/`.
+
+| Path | What lives there |
+| --- | --- |
+| `src/engine/` | Everything that runs in `/output`: the WebGL2 pipeline (`pipeline.js`), inputs, the host side of the phone link (`remote.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop |
+| `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js`, `edit.js` (+ `chain.js`, `mod-panel.js`), and the Setup panels. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts |
+| `src/phone/` | The iPhone page: `main.js`, `link.js` (reconnect watchdog), `sensors.js`, `camera-controls.js` |
+| `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js`, `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `sources.js`, `palette.js` + `theme.css` |
+| `src/effects/` | One file per effect; `index.js` is the registry, `common.glsl.js` the shared GLSL |
+| `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
+| `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot) |
+| `tests/` | Nine headless suites and `lib.mjs` |
+
+### Rules that are easy to break
+
+- **`/output` owns everything live.** Video, the phone connection, MIDI,
+  audio and vision all run there. `/control` only edits state and shows what
+  the output reports, so it can be reloaded mid-show. Do not move live work
+  into `/control`.
+- **State changes are ops.** Go through `store.dispatch` / `merge` /
+  `patchItem` / `setScene`; both windows apply the same op. A new top-level
+  state key needs a default in `defaultState()` and a line in
+  `sanitizeState()`, or it is dropped on load.
+- **A scene is what a preset stores**: `chain`, `mappings`, `lfos`, `macros`.
+  Triggers (`actions`), tempo, network and device settings are global.
+- **Nothing is ever drawn on the output** except the picture (and the idle
+  hint before fullscreen). Status goes to `/control`.
+- **Nothing may be fetched from a third party at run time.** Fonts, the
+  MediaPipe runtime and models are all served from the site.
+- **The control page must not jump.** Text that comes and goes gets a
+  reserved height (`keep-1` … `keep-6` in `control.css`); alerts float.
+  `tests/layout.mjs` enforces this.
+- **Anything a performer can press should carry `data-midi="<action>"`** so
+  MIDI map mode picks it up.
+- **The phone must release its video sender before stopping a camera track**
+  (`link.detach()`), or the Mac receives a black frame.
+- Copy on the pages is plain and says what to do; see the existing messages.
+
+### Working in the cloud sandbox
+
+- **Push straight to `main`** (the owner's instruction). Every push deploys;
+  check the "Build and deploy to GitHub Pages" run afterwards.
+- **The deployed site and the public PeerJS server cannot be reached from the
+  sandbox.** Pairing is tested against a local PeerServer (`tests/lib.mjs`).
+- **Run suites one at a time with a timeout under two minutes**, or in the
+  background; `tests/vision.mjs` takes several minutes. `SKIP_BUILD=1` reuses
+  `dist/`. Do not rebuild while a suite is running.
+- **Headless Chromium starves background pages**: frames arrive hundreds of
+  milliseconds apart and timers are throttled to about one a second. Tests
+  must poll for a condition, never sleep and sample. Low fps readings in
+  sandbox screenshots mean nothing.
+- **This Chromium has no MIDI backend** (`requestMIDIAccess` never settles);
+  the MIDI test stubs a device.
+- Deleting a remote branch and changing repository settings are not possible
+  from the cloud session.
+
+### Things outside this repo
+
+- The three design directions the redesign came from are on a design canvas:
+  https://claude.ai/artifact/4bRZEX1Xp89CPKQF79ozx6 (private to the owner).
+  Direction C, "Darkroom", was chosen.
+- Presets and recordings live in the owner's browser storage.
+
+### Known rough edges
 
 - Several alerts at once stack over the top of the page.
-- Below about 1000 px wide, the top bar only has room for the output readout.
-- The first reload after a deploy can still show the previous version for a
-  few seconds; the control page warns when the two windows differ.
+- Below about 1000 px wide the top bar only has room for the output readout.
+- The first reload after a deploy can show the previous version for a few
+  seconds; `/control` warns when its version and the output's differ.
+- An early screenshot showed the output at 30 fps rather than 60; it read 60
+  later. Never explained (Low Power Mode is a guess).
+- MP4 recording holds most of the file back until recording stops.
 
-**Branch.** Work is on `main`, which is the default branch and the one that
-deploys. Nothing is waiting to be merged.
+### Never run on real hardware (all unconfirmed)
 
-**How to check a change.** `npm test` runs nine headless suites. They use a
-fake camera and microphone, so they do not replace a run on the real devices.
+Measure real latency against a projector; whether H.264 beats VP8 / VP9;
+recordings longer than a few seconds; MIDI map with a physical controller;
+fullscreen placement on a second display; MediaPipe on the Mac's GPU; the
+direction of Rotate / Counter-rotate. Tap tempo, offline reload, and the
+phone's sensors and touch controls have not been reported on either way.
+
+### Ideas raised and not started
+
+Relay fallback; own pairing server; a cue list beyond per-preset fade and
+order; tempo from the audio beat; a native wrapper for a true Syphon output.
+
+### Prompt to start a new session
+
+```
+You are picking up Third Eye Cam (repo ACTS-Research/third-eye, branch main).
+Read CLAUDE.md, then HANDOFF.md, then README.md before doing anything; the
+handoff says where things stand, the rules that are easy to break, and how
+to work in the cloud sandbox. Work on main and push to main. After each
+push, check that the "Build and deploy to GitHub Pages" run succeeded. Run
+the test suites that cover what you change (one at a time, under two
+minutes each, or in the background) and tell me plainly what you could not
+verify on real hardware. When I say "wrap up", follow CLAUDE.md.
+
+First, tell me in a few lines what you understand the current state and the
+next step to be, then wait for what I want to do.
+```
