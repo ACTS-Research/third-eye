@@ -379,16 +379,23 @@ file.
 
 ## What happens when things go wrong
 
+Problems show as strips across the top of `/control`. A strip with a fix is
+a button that says where it goes (**Show pairing**, **Show QR code**,
+**Reload both pages**, **Go to Input**, **Go to Recording**, **Go to
+Vision**). Every strip has an **×** on the right; a closed strip stays closed
+until its message changes or the problem clears and comes back. Strips about
+a passing state (a stall, a recovering graphics context) remove themselves.
+
 | Event | Behaviour |
 | --- | --- |
 | Phone stream stalls or drops | Output holds the last frame. `/control` shows a red alert. Phone and Mac each retry on their own until the stream is back |
 | Phone camera flips or restarts | Last frame is held; no black flash |
 | Safari goes to the background | `/control` alert while hidden; red warning on the phone when it returns; stream resumes |
 | Pairing server unreachable | A paired phone keeps streaming. Both sides keep retrying; the top bar says so |
-| Room code taken by something else | The output moves to a new code after three tries and `/control` says to scan again |
+| Room code taken by something else | The output moves to a new code after three tries and `/control` says to scan again, with the QR code a click away; the strip goes once the phone pairs |
 | A second output window is opened | It stays idle with a message; the running one is untouched |
 | Not sure which window has the phone | **Restart output** closes every output window in this browser and opens one fresh one |
-| A newer version of the app was deployed | `/control` says so, and warns if the output window is on a different version |
+| A newer version of the app was deployed | `/control` says so, and warns if the output window is on a different version. **Reload both pages** reloads the output in place (it stays on its display but leaves fullscreen) and then `/control` |
 | `/control` reloaded or closed | `/output` unaffected |
 | `/output` reloaded | Restores the last state; the phone reconnects by itself |
 | Internet drops, then a page is reloaded | The page loads from the browser's stored copy. Pairing a phone again still needs the signaling server |

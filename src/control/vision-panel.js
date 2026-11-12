@@ -47,8 +47,9 @@ export function mountVisionPanel(root, ui) {
       if (wanted[key] && f?.state === 'error') errors.push(`${label}: ${f.error}`);
     }
     const usesMask = store.state.chain.some((it) => it.target !== 'all' && !it.bypass);
-    ui.setAlert('mask', status && usesMask && !wanted.segment ? 'An effect is set to person / background only, but Segmentation is off — it applies to the whole picture' : null);
-    ui.setAlert('vision', errors.length ? `Vision: ${errors.join(' · ')}` : null);
+    const toVision = ui.alertTo?.panel('vision-panel', 'Go to Vision');
+    ui.setAlert('mask', status && usesMask && !wanted.segment ? 'An effect is set to person / background only, but Segmentation is off — it applies to the whole picture' : null, 'warn', toVision);
+    ui.setAlert('vision', errors.length ? `Vision: ${errors.join(' · ')}` : null, 'warn', toVision);
     if (!v?.enabled) {
       note.textContent = 'All off. Each feature costs GPU and CPU time; switch on only what a preset uses.';
       return;

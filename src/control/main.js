@@ -70,6 +70,22 @@ const ui = {
     for (const fn of this.viewListeners) fn(name);
     this.midiMap?.refresh();
   },
+  // Opens Setup on one panel and flashes it, for alerts that point there.
+  goToPanel(id) {
+    const panel = document.getElementById(id);
+    if (!panel) return;
+    this.setView(panel.closest('[id^="view-"]')?.id.replace('view-', '') ?? 'setup');
+    panel.scrollIntoView({ block: 'center' });
+    panel.classList.remove('flash');
+    void panel.offsetWidth; // restart the animation
+    panel.classList.add('flash');
+  },
+  // Picks up a new version: the output reloads in place (it stays on its
+  // display but leaves fullscreen), then this page reloads.
+  reloadBoth() {
+    bus.send('output', { cmd: 'reload' });
+    setTimeout(() => location.reload(), 250);
+  },
   // Opens the edit screen on a preset, loading it first if it is not live.
   editPreset(index) {
     if (this.presets.list[index] && this.presets.current !== index) applyPreset(store, index, 0);
@@ -232,7 +248,7 @@ document.addEventListener('click', (e) => {
 });
 
 // Offline reload: say on the setup screen whether it is in place.
-enableOffline(() => ui.setAlert?.('update', 'A newer version of the app has been downloaded. Reload this page, then use Restart output (Setup → Output).')).then((state) => {
+enableOffline(() => ui.setAlert?.('update', 'A newer version of the app has been downloaded. Reloading exits fullscreen.', 'warn', ui.alertTo.reload)).then((state) => {
   ui.offline = state;
   if (ui.statusRows?.offline) ui.statusRows.offline.textContent = state === 'ready' ? 'ready: pages reload without internet' : state;
 });

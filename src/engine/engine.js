@@ -66,6 +66,8 @@ export class Engine {
     this.link = new PhoneLink(this.inputs.feeds.phone, () => this.store.state.net, (msg) => this.onPhoneMessage(msg));
     this.link.onData = (conn) => this.sensors.attach(conn);
     this.link.onOpenData = () => {
+      // A phone on the new room code clears the "scan again" notice.
+      this.link.notice = '';
       this.sendTriggerLabels();
       this.link.send({ t: 'config', codec: this.store.state.net.codec });
       this.link.send({ t: 'look', ...readLook() });

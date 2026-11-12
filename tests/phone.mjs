@@ -149,6 +149,11 @@ try {
   const h2 = await outputStats(output);
   check('last frame held on stall', h1.mean > 5 && h1.hash === h2.hash);
   await control.keyboard.press('x');
+  // As after a taken room code: the "scan again" notice is up while no phone is paired.
+  await output.evaluate(() => {
+    window.thirdEye.engine.link.notice = 'Room code TEST1 was in use somewhere else, so a new one was made. Scan the QR code again.';
+  });
+  check('the room-code strip shows while no phone is paired', await waitFor(() => control.locator('#alerts .alert[data-key="room"]').count().then((n) => n === 1), { label: 'room strip' }).then(() => true, () => false));
 
   phone = await context.newPage();
   await phone.setViewportSize({ width: 390, height: 844 });
@@ -157,6 +162,7 @@ try {
   await phone.click('#start');
   await waitStatus(control, (st) => st.input.state === 'live', 'phone rejoined');
   check('phone rejoins after a reload', true);
+  check('the room-code strip goes away once the phone pairs', await waitFor(() => control.locator('#alerts .alert[data-key="room"]').count().then((n) => n === 0), { label: 'room strip gone' }).then(() => true, () => false));
 
   await output.reload();
   await waitFor(() => output.evaluate(() => window.thirdEye?.engine.inputs.feeds.phone.frames > 3), { label: 'frames after output reload', timeout: 30000 });

@@ -81,7 +81,7 @@ export function mountRecordPanel(root, ui) {
     button.classList.toggle('on', !!rec?.active);
     button.textContent = rec?.active ? `REC ${clock(rec.seconds)}` : 'REC';
     button.title = rec?.active ? `Recording ${rec.name}, ${size(rec.bytes)} so far. Click or press R to stop.` : 'Record the output (R)';
-    ui.setAlert?.('rec', rec?.error || null, 'bad');
+    ui.setAlert?.('rec', rec?.error || null, 'bad', ui.alertTo?.panel('record-panel', 'Go to Recording'));
     if (rec && rec.finished !== finished) {
       finished = rec.finished;
       refresh();

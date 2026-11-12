@@ -84,6 +84,9 @@ Three static pages built by Vite, no framework. About 7,800 lines in `src/`.
 - **The control page must not jump.** Text that comes and goes gets a
   reserved height (`keep-1` … `keep-6` in `control.css`); alerts float.
   `tests/layout.mjs` enforces this.
+- **An alert with a fix passes an action** (`ui.setAlert(key, text, level,
+  ui.alertTo.…)`): pairing, QR code, reload both pages, or a Setup panel by
+  id. Every alert gets an × automatically.
 - **Anything a performer can press should carry `data-midi="<action>"`** so
   MIDI map mode picks it up.
 - **The phone must release its video sender before stopping a camera track**
@@ -117,7 +120,7 @@ Three static pages built by Vite, no framework. About 7,800 lines in `src/`.
 
 ### Known rough edges
 
-- Several alerts at once stack over the top of the page.
+- Several alerts at once stack over the top of the page. Each can be closed with its ×.
 - Below about 1000 px wide the top bar only has room for the output readout.
 - The first reload after a deploy can show the previous version for a few
   seconds; `/control` warns when its version and the output's differ.

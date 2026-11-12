@@ -139,6 +139,39 @@ try {
     }
   }
 
+  console.log('alert strips');
+  await control.evaluate(() => window.thirdEye.ui.setView('perform'));
+  await show(variants.trouble);
+  await sleep(200);
+  const strip = (key) => control.locator(`#alerts .alert[data-key="${key}"]`);
+  const keys = await control.locator('#alerts .alert').evaluateAll((nodes) => nodes.map((n) => n.dataset.key));
+  check('several alerts are up', keys.length >= 4, keys.join(', '));
+  const closeAtRight = await control.locator('#alerts .alert').evaluateAll((nodes) => nodes.every((n) => {
+    const x = n.querySelector(':scope > .close');
+    return x && Math.abs(x.getBoundingClientRect().right - n.getBoundingClientRect().right) < 1;
+  }));
+  check('every strip has an × at the far right', closeAtRight);
+  check('fixable strips say where they go', (await strip('room').textContent()).includes('Show QR code') && (await strip('build').textContent()).includes('Reload both pages') && (await strip('rec').textContent()).includes('Go to Recording') && (await strip('input').textContent()).includes('Show pairing'));
+  await strip('room').locator('.go').click();
+  check('the room-code strip opens the QR code', await control.locator('#pairing-pop').isVisible());
+  await control.keyboard.press('Escape');
+  await strip('rec').locator('.go').click();
+  check('the recording strip opens Setup at the Recording panel', (await control.evaluate(() => window.thirdEye.ui.view)) === 'setup' && (await control.locator('#record-panel').evaluate((n) => n.classList.contains('flash'))));
+  await strip('build').locator('.close').click();
+  check('× closes a strip', (await strip('build').count()) === 0);
+  await show(variants.trouble);
+  await sleep(100);
+  check('a closed strip stays closed while its message is the same', (await strip('build').count()) === 0 && (await strip('room').count()) === 1);
+  await show({ ...variants.trouble, phone: { ...variants.trouble.phone, notice: '' } });
+  await sleep(100);
+  check('a strip whose problem is gone disappears by itself', (await strip('room').count()) === 0);
+  await show(variants.streaming);
+  await show(variants.trouble);
+  await sleep(100);
+  check('a closed strip comes back if the problem clears and returns', (await strip('build').count()) === 1);
+  await show(null);
+  await control.evaluate(() => window.thirdEye.ui.setView('perform'));
+
   console.log('palette pop-over');
   await control.evaluate(() => window.thirdEye.ui.setView('perform'));
   check('one dot in the bar, choices hidden', (await control.locator('#palette > button').count()) === 1 && (await control.locator('#palette-menu').isHidden()));

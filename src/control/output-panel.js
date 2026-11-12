@@ -109,7 +109,7 @@ export function mountOutputPanel(root, ui) {
   });
 
   root.append(
-    el('div', { class: 'panel' }, [
+    el('div', { class: 'panel', id: 'output-panel' }, [
       el('h2', {}, ['Output', el('button', { class: 'icon', text: '↻', title: 'Reload the output window', onclick: () => bus.send('output', { cmd: 'reload' }) })]),
       el('div', { class: 'row' }, [openBtn]),
       el('div', { class: 'row' }, [el('button', { class: 'grow', id: 'restart-output', text: 'Close all output windows and open a new one', onclick: restart })]),

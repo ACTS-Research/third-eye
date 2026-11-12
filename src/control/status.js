@@ -48,21 +48,57 @@ export function mountStatus(root, ui) {
     pills.append(p);
     return p;
   };
+  // Alerts: one strip each. A strip with a fix is a button that goes there
+  // (`action: { label, run }`); every strip has an × on the right. A closed
+  // strip stays closed until its message changes or it clears and returns.
+  // Strips that describe a passing state remove themselves when it passes.
   const alertNodes = new Map();
-  ui.setAlert = (key, text, level = 'warn') => {
+  const dismissed = new Map(); // key -> the text that was closed
+  ui.setAlert = (key, text, level = 'warn', action = null) => {
     let node = alertNodes.get(key);
-    if (!text) {
+    if (!text || dismissed.get(key) === text) {
+      if (!text) dismissed.delete(key);
       node?.remove();
       alertNodes.delete(key);
       return;
     }
+    dismissed.delete(key);
     if (!node) {
-      node = el('div');
+      node = el('div', { role: 'alert' });
+      node.dataset.key = key;
       alertNodes.set(key, node);
       alerts.append(node);
     }
-    node.className = `alert ${level}`;
-    node.textContent = text;
+    if (node.dataset.text === text && node.dataset.level === level && node.dataset.action === (action?.label ?? '')) return;
+    node.dataset.text = text;
+    node.dataset.level = level;
+    node.dataset.action = action?.label ?? '';
+    node.className = `alert ${level}${action ? ' fix' : ''}`;
+    const close = el('button', {
+      class: 'close',
+      text: '×',
+      title: 'Close this message',
+      'aria-label': 'Close this message',
+      onclick: (e) => {
+        e.stopPropagation();
+        dismissed.set(key, text);
+        node.remove();
+        alertNodes.delete(key);
+      },
+    });
+    const body = action
+      ? el('button', { class: 'go', title: action.label, onclick: () => action.run() }, [el('span', { class: 'text', text }), el('span', { class: 'act', text: `${action.label} →` })])
+      : el('span', { class: 'text', text });
+    node.replaceChildren(body, close);
+  };
+
+  // Where alerts send the operator.
+  const showPairing = { label: 'Show pairing', run: () => ui.togglePairing?.(phonePill) };
+  ui.alertTo = {
+    pairing: showPairing,
+    qr: { label: 'Show QR code', run: () => ui.togglePairing?.(phonePill) },
+    reload: { label: 'Reload both pages', run: () => ui.reloadBoth() },
+    panel: (id, label) => ({ label, run: () => ui.goToPanel(id) }),
   };
 
   const setPill = (pill, level, text) => {
@@ -91,9 +127,10 @@ export function mountStatus(root, ui) {
     rows.input.textContent = input.width ? `${label} ${input.width}×${input.height}` : label;
     rows.inputFps.textContent = `${input.fps.toFixed(1)} fps`;
 
-    ui.setAlert('input', input.state === 'stalled' ? `${label} stalled — output is holding the last frame` : null, 'bad');
-    ui.setAlert('build', status.build !== __BUILD__ ? 'The output window is running a different version of the app than this page. Reload this page, then use Restart output (Setup → Output).' : null);
-    ui.setAlert('room', p0.notice || null);
+    const stallFix = input.kind === 'phone' ? ui.alertTo.pairing : ui.alertTo.panel('input-panel', 'Go to Input');
+    ui.setAlert('input', input.state === 'stalled' ? `${label} stalled — output is holding the last frame` : null, 'bad', stallFix);
+    ui.setAlert('build', status.build !== __BUILD__ ? 'The output window runs a different version of the app than this page. Reloading exits fullscreen.' : null, 'warn', ui.alertTo.reload);
+    ui.setAlert('room', p0.notice || null, 'warn', ui.alertTo.qr);
     ui.setAlert('gl', status.contextLost ? 'Output lost its graphics context — recovering' : null, 'bad');
 
     const lat = status.latency;
@@ -129,8 +166,8 @@ export function mountStatus(root, ui) {
         : '—';
     const sn = status.sensors;
     rows.sensors.textContent = sn?.live ? `${sn.hz.toFixed(0)} Hz${sn.orientation ? '' : ' · no orientation'}${sn.motion ? '' : ' · no motion'}` : '—';
-    ui.setAlert('phone', info?.hidden ? 'Phone: Safari is in the background — the camera is paused until it returns' : p.phone === 'silent' ? 'Phone stopped responding — it will reconnect by itself when it can' : null, 'bad');
-    ui.setAlert('camera', input.kind === 'camera' && status.camera.state === 'error' ? `Local camera: ${status.camera.error}` : null);
+    ui.setAlert('phone', info?.hidden ? 'Phone: Safari is in the background — the camera is paused until it returns' : p.phone === 'silent' ? 'Phone stopped responding — it will reconnect by itself when it can' : null, 'bad', ui.alertTo.pairing);
+    ui.setAlert('camera', input.kind === 'camera' && status.camera.state === 'error' ? `Local camera: ${status.camera.error}` : null, 'warn', ui.alertTo.panel('input-panel', 'Go to Input'));
     ui.setAlert('relay', p.route === 'relayed' ? 'Phone video is being relayed, not direct — expect extra latency' : null);
   }
 

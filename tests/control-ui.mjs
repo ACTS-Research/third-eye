@@ -183,6 +183,14 @@ try {
     await sleep(1500);
     await control.screenshot({ path: `${process.env.SHOTS}/ui-perform.png` });
   }
+
+  console.log('new version strip');
+  await output.evaluate(() => { window.beforeReload = true; });
+  await control.evaluate(() => { window.beforeReload = true; });
+  await control.evaluate(() => window.thirdEye.ui.setAlert('update', 'A newer version of the app has been downloaded. Reloading exits fullscreen.', 'warn', window.thirdEye.ui.alertTo.reload));
+  await control.locator('#alerts .alert[data-key="update"] .go').click();
+  const reloaded = (page) => waitFor(() => page.evaluate(() => !window.beforeReload && !!window.thirdEye).catch(() => false), { label: 'reloaded', timeout: 15000 }).then(() => true, () => false);
+  check('"Reload both pages" reloads the output window and this page', (await reloaded(output)) && (await reloaded(control)));
 } catch (err) {
   check('test ran to completion', false, err.message.split('\n')[0]);
 } finally {
