@@ -83,6 +83,36 @@ try {
     }
   }
 
+  console.log('fader names and the note under the faders, every factory preset');
+  await control.evaluate(() => window.thirdEye.ui.setView('perform'));
+  for (const [width, height] of [[1024, 700], [1280, 720], [1440, 800], [1440, 900], [1728, 1000]]) {
+    await control.setViewportSize({ width, height });
+    const problems = new Set();
+    for (let i = 0; i < 9; i++) {
+      await control.locator('.tile .load').nth(i).click();
+      await sleep(120);
+      const found = await control.evaluate(() => {
+        const out = [];
+        const side = document.querySelector('#view-perform .side');
+        const parts = [...side.querySelectorAll(':scope > *, .fader')].filter((n) => n.offsetParent !== null && n.getBoundingClientRect().height > 0 && n.textContent.trim() !== '' || n.classList.contains('fader'));
+        const boxes = parts.filter((n) => !n.classList.contains('faders')).map((n) => ({ name: n.classList.contains('fader') ? `fader "${n.querySelector('.name').textContent}"` : n.className.split(' ')[0] || n.tagName, r: n.getBoundingClientRect() }));
+        for (let a = 0; a < boxes.length; a++) {
+          for (let b = a + 1; b < boxes.length; b++) {
+            const p = boxes[a].r;
+            const q = boxes[b].r;
+            if (Math.min(p.right, q.right) - Math.max(p.left, q.left) > 1 && Math.min(p.bottom, q.bottom) - Math.max(p.top, q.top) > 1) out.push(`${boxes[a].name} overlaps ${boxes[b].name}`);
+          }
+        }
+        for (const n of side.querySelectorAll('.fader .name, .mini .meter span')) if (n.scrollWidth > n.clientWidth + 1) out.push(`"${n.textContent}" is cut off`);
+        return out;
+      });
+      for (const f of found) problems.add(f);
+    }
+    check(`${width}×${height}: fader and meter names whole, nothing overlapping in the fader column`, problems.size === 0, [...problems].slice(0, 4).join('; '));
+  }
+  await control.setViewportSize({ width: 1280, height: 800 });
+  await control.locator('.tile .load').nth(1).click();
+
   console.log('nothing moves when the information changes');
   await control.setViewportSize({ width: 1280, height: 800 });
   // The worst case for every message on the page, and the output going away.

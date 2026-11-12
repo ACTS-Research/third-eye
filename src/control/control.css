@@ -124,14 +124,16 @@ main { flex: 1; min-height: 0; }
 
 .side { border-left: 1px solid var(--line); padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; }
 .side-head { display: flex; justify-content: space-between; gap: 8px; text-transform: uppercase; letter-spacing: 0.1em; }
-.faders { flex: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: minmax(150px, 1fr); gap: 12px; min-height: 160px; }
+/* The grid may grow but never shrinks below its rows, so the note and meters
+   under it are never drawn over the faders; the column scrolls instead. */
+.faders { flex: 1 0 auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: minmax(124px, 1fr); gap: 12px; }
 .fader { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; touch-action: none; cursor: ns-resize; padding: 0; border: 0; background: none; min-width: 0; }
-.fader .track { flex: 1; width: 100%; min-height: 90px; border: 1px solid var(--ink); position: relative; }
+.fader .track { flex: 1; width: 100%; min-height: 70px; border: 1px solid var(--ink); position: relative; }
 .fader .fill { position: absolute; left: 0; right: 0; bottom: 0; background: var(--ink); }
 /* Where modulation has the parameter right now. */
 .fader .live { position: absolute; left: -4px; right: -4px; border-top: 2px dashed #fff; mix-blend-mode: difference; pointer-events: none; }
 .fader .val { font: 700 24px/1 var(--display); font-variant-numeric: tabular-nums; }
-.fader .name { font-size: 10px; letter-spacing: 0.04em; width: 100%; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: uppercase; }
+.fader .name { font: 700 12px/1.1 var(--display); letter-spacing: 0.03em; width: 100%; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: uppercase; }
 .mini { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
 
 .strip { grid-column: 1 / -1; border-top: 1px solid var(--line); padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; }
@@ -153,7 +155,7 @@ main { flex: 1; min-height: 0; }
 /* Meters -------------------------------------------------------------- */
 .meters { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; }
 .meter { display: grid; grid-template-columns: minmax(0, 1fr) 76px; align-items: center; gap: 8px; font-size: 11px; }
-.mini .meter { grid-template-columns: 96px minmax(0, 1fr); }
+.mini .meter { grid-template-columns: minmax(0, 1fr) 84px; }
 .meter span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.04em; }
 .meter .bar { position: relative; height: 8px; border: 1px solid var(--line); overflow: hidden; }
 .meter .bar i { position: absolute; top: 0; bottom: 0; background: var(--ink); }
