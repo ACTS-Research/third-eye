@@ -277,6 +277,10 @@ body.midi-map [data-midi][data-midi-label]::after {
 .pill, .pill.bad { padding: 2px 8px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
 /* Wide enough for "Output off · 60 fps", the longest steady reading. */
 .pill:first-child { flex: 0 0 176px; }
+/* When the bar is tight the input status gives way first, all the way,
+   before the phone status loses a letter: its messages are long, and
+   "Phone: not paired" should stay readable. */
+#in-pill { flex-shrink: 100000; }
 #views { margin-left: 0; flex-shrink: 0; }
 #rec, #rec.on { flex: 0 0 104px; width: 104px; text-align: left; overflow: hidden; }
 #midi-map-toggle { flex-shrink: 0; }

@@ -60,8 +60,8 @@ try {
   await control.keyboard.press('Escape');
   check('Esc closes it', await control.locator('#pairing-pop').isHidden());
   await control.locator('#pills .pill').nth(1).click();
-  check('the input status opens it too', await control.locator('#pairing-pop').isVisible());
-  await control.click('#pairing-pop >> text=Close');
+  check('the input status goes to the Input panel instead, and says so', (await control.evaluate(() => window.thirdEye.ui.view)) === 'setup' && (await control.locator('#input-panel').evaluate((n) => n.classList.contains('flash'))) && (await control.locator('#pairing-pop').isHidden()) && (await control.locator('#in-pill').getAttribute('title')) !== (await control.locator('#phone-pill').getAttribute('title')), await control.locator('#in-pill').getAttribute('title'));
+  await control.evaluate(() => window.thirdEye.ui.setView('perform'));
 
   console.log('palettes');
   const ink = () => control.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ink').trim());

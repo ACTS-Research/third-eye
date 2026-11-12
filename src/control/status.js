@@ -16,20 +16,18 @@ export function mountStatus(root, ui) {
   outPill.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') outClick();
   });
-  const inPill = el('span', { class: 'pill' });
-  // Clicking the input or phone status opens the pairing details below it.
-  const pairing = (pill) => {
-    pill.tabIndex = 0;
-    pill.setAttribute('role', 'button');
-    pill.title = 'Show the QR code and connection details';
-    pill.addEventListener('click', () => ui.togglePairing?.(pill));
+  // Each readout is a button that goes to its own place: the input status
+  // to the Input panel, the phone status to the pairing details below it.
+  const button = (id, title, run) => {
+    const pill = el('span', { class: 'pill', id, role: 'button', tabindex: '0', title });
+    pill.addEventListener('click', () => run(pill));
     pill.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') ui.togglePairing?.(pill);
+      if (e.key === 'Enter') run(pill);
     });
+    return pill;
   };
-  const phonePill = el('span', { class: 'pill' });
-  pairing(inPill);
-  pairing(phonePill);
+  const inPill = button('in-pill', 'Choose and set up the input (Setup → Input)', () => ui.goToPanel('input-panel'));
+  const phonePill = button('phone-pill', 'Show the QR code and connection details', (pill) => ui.togglePairing?.(pill));
   pills.append(outPill, inPill, phonePill);
 
   const rows = {};

@@ -36,7 +36,7 @@ export function mountPhonePanel(root, ui) {
   const state = el('div', { id: 'phone-state', class: 'small dim keep-6' });
 
   // The same pairing details as a pop-over under the top bar: click the
-  // phone or input status there and they appear without leaving the screen.
+  // phone status there and they appear without leaving the screen.
   const popQr = el('canvas', { width: 320, height: 320 });
   const popCode = el('div', { class: 'pop-code' });
   const popState = el('div', { class: 'small keep-6' });
@@ -73,7 +73,7 @@ export function mountPhonePanel(root, ui) {
     pop.hidden = false;
   };
   document.addEventListener('pointerdown', (e) => {
-    if (!pop.hidden && !pop.contains(e.target) && !e.target.closest?.('.pill')) hidePop();
+    if (!pop.hidden && !pop.contains(e.target) && !e.target.closest?.('#phone-pill')) hidePop();
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') hidePop();
