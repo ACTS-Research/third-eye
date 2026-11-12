@@ -61,7 +61,7 @@ try {
   await control.click('#pairing-pop >> text=Close');
 
   console.log('palettes');
-  const ink = () => control.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ink-full').trim());
+  const ink = () => control.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ink').trim());
   const red = await ink();
   await control.click('#palette > button');
   await control.click('#palette-menu button[aria-label="Palette: Amber"]');
@@ -70,6 +70,12 @@ try {
   const phone = await context.newPage();
   await phone.goto(await control.locator('#phone-link').getAttribute('href'));
   check('the phone page opens in the same palette', (await phone.evaluate(() => document.documentElement.dataset.palette)) === 'amber');
+  // The phone's own stylesheet builds on the theme; a loop between them once
+  // blanked every ink colour on the phone (black text, no START button).
+  const phoneInk = () => phone.evaluate(() => ({ text: getComputedStyle(document.body).color, start: getComputedStyle(document.getElementById('start')).backgroundColor }));
+  check('the phone page is actually inked', (await phoneInk()).text === 'rgb(255, 179, 71)' && (await phoneInk()).start === 'rgb(255, 179, 71)', JSON.stringify(await phoneInk()));
+  await phone.goto(`${site.url}/phone/?room=ABCDE`);
+  check('and in the default palette at full brightness', (await phoneInk()).text === 'rgb(255, 107, 94)' && (await phoneInk()).start === 'rgb(255, 107, 94)', JSON.stringify(await phoneInk()));
   await phone.close();
   await control.reload();
   check('the palette is remembered', await settle(async () => (await ink()) === '#ffb347', 'palette restored'));
@@ -93,7 +99,7 @@ try {
   check('the pairing link carries the dimmer', (await control.locator('#phone-link').getAttribute('href')).includes('dim=25'));
   const dimPhone = await context.newPage();
   await dimPhone.goto(await control.locator('#phone-link').getAttribute('href'));
-  check('the phone page opens dimmed', (await dimPhone.evaluate(() => document.documentElement.style.getPropertyValue('--dim'))) === '25%');
+  check('the phone page opens dimmed', (await dimPhone.evaluate(() => document.documentElement.dataset.dim)) === '25' && (await dimPhone.evaluate(() => /^#[0-9a-f]{6}$/.test(document.documentElement.style.getPropertyValue('--ink')))));
   await dimPhone.close();
   await control.reload();
   check('the dimmer is remembered', await settle(async () => (await control.locator('#dimmer').getAttribute('aria-valuenow')) === '25', 'dim restored'));

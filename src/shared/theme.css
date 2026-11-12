@@ -1,13 +1,13 @@
 /* Darkroom: one ink colour on near-black, so the laptop and the phone do not
    light up the stage. Every palette only swaps these three values. The
-   dimmer (--dim, set by palette.js) scales the ink's light toward the
-   background, so every line, label and fill dims together. */
+   dimmer (palette.js) overrides --ink with a plain colour worked out in
+   script, so every line, label and fill dims together. Keep --ink a plain
+   colour: Safari on the iPhone rejected a color-mix() here. */
 
 :root {
   color-scheme: dark;
-  --ink-full: #ff6b5e;
+  --ink: #ff6b5e;
   --bg: #060303;
-  --ink: color-mix(in srgb-linear, var(--ink-full) var(--dim, 100%), var(--bg));
   --on-ink: #140302;
   --line: color-mix(in srgb, var(--ink) 34%, var(--bg));
   --soft: color-mix(in srgb, var(--ink) 80%, var(--bg));
@@ -15,11 +15,11 @@
   --display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 }
-:root[data-palette='amber'] { --ink-full: #ffb347; --bg: #070502; --on-ink: #150c00; }
-:root[data-palette='bone'] { --ink-full: #e8e4dc; --bg: #050505; --on-ink: #0a0a0a; }
-:root[data-palette='lime'] { --ink-full: #d6ff3f; --bg: #050702; --on-ink: #0f1400; }
-:root[data-palette='ice'] { --ink-full: #7ce3ff; --bg: #02060a; --on-ink: #00141c; }
-:root[data-palette='magenta'] { --ink-full: #ff7ad9; --bg: #080308; --on-ink: #1a0014; }
+:root[data-palette='amber'] { --ink: #ffb347; --bg: #070502; --on-ink: #150c00; }
+:root[data-palette='bone'] { --ink: #e8e4dc; --bg: #050505; --on-ink: #0a0a0a; }
+:root[data-palette='lime'] { --ink: #d6ff3f; --bg: #050702; --on-ink: #0f1400; }
+:root[data-palette='ice'] { --ink: #7ce3ff; --bg: #02060a; --on-ink: #00141c; }
+:root[data-palette='magenta'] { --ink: #ff7ad9; --bg: #080308; --on-ink: #1a0014; }
 
 @keyframes blink { 50% { opacity: 0.35; } }
 @media (prefers-reduced-motion: reduce) {

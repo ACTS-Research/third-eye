@@ -61,7 +61,7 @@ try {
   check('output shows the phone picture', (await outputStats(output)).mean > 5);
   check('phone shows LIVE', (await phone.locator('#state').textContent()).startsWith('LIVE'));
   // Palette and dimmer changed on the Mac reach a paired phone without a rescan.
-  const look = () => phone.evaluate(() => `${document.documentElement.dataset.palette ?? 'darkroom'} ${document.documentElement.style.getPropertyValue('--dim') || '100%'}`);
+  const look = () => phone.evaluate(() => `${document.documentElement.dataset.palette ?? 'darkroom'} ${(document.documentElement.dataset.dim ?? '100') + '%'}`);
   await control.evaluate(() => {
     localStorage.setItem('thirdeye.palette', 'ice');
     localStorage.setItem('thirdeye.dim', '40');

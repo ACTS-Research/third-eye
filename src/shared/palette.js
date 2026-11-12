@@ -9,13 +9,14 @@ import '@fontsource/jetbrains-mono/latin-400';
 import '@fontsource/jetbrains-mono/latin-500';
 import '@fontsource/jetbrains-mono/latin-700';
 
+// ink and bg must match shared/theme.css.
 export const PALETTES = {
-  darkroom: { label: 'Darkroom red', ink: '#ff6b5e' },
-  amber: { label: 'Amber', ink: '#ffb347' },
-  bone: { label: 'Bone', ink: '#e8e4dc' },
-  lime: { label: 'Lime', ink: '#d6ff3f' },
-  ice: { label: 'Ice', ink: '#7ce3ff' },
-  magenta: { label: 'Magenta', ink: '#ff7ad9' },
+  darkroom: { label: 'Darkroom red', ink: '#ff6b5e', bg: '#060303' },
+  amber: { label: 'Amber', ink: '#ffb347', bg: '#070502' },
+  bone: { label: 'Bone', ink: '#e8e4dc', bg: '#050505' },
+  lime: { label: 'Lime', ink: '#d6ff3f', bg: '#050702' },
+  ice: { label: 'Ice', ink: '#7ce3ff', bg: '#02060a' },
+  magenta: { label: 'Magenta', ink: '#ff7ad9', bg: '#080308' },
 };
 
 
@@ -36,18 +37,42 @@ export function applyPalette(name, { save = true } = {}) {
   if (palette === 'darkroom') delete document.documentElement.dataset.palette;
   else document.documentElement.dataset.palette = palette;
   if (save) store(LOOK_KEYS.palette, palette);
+  paintDim();
   return palette;
 }
 
 export function currentDim() {
-  return clampDim(document.documentElement.style.getPropertyValue('--dim').replace('%', ''));
+  return clampDim(document.documentElement.dataset.dim);
+}
+
+// sRGB hex <-> linear light, so "25 %" means a quarter of the light.
+const toLinear = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+const toSrgb = (l) => (l <= 0.0031308 ? l * 12.92 : 1.055 * l ** (1 / 2.4) - 0.055);
+const channels = (hex) => [1, 3, 5].map((i) => toLinear(parseInt(hex.slice(i, i + 2), 16) / 255));
+
+export function dimmedInk(name, dim) {
+  const p = PALETTES[name] ?? PALETTES.darkroom;
+  const k = clampDim(dim) / 100;
+  const ink = channels(p.ink);
+  const bg = channels(p.bg);
+  return `#${ink.map((v, i) => Math.round(toSrgb(v * k + bg[i] * (1 - k)) * 255).toString(16).padStart(2, '0')).join('')}`;
+}
+
+// Sets --ink to the dimmed colour as a plain hex value (or leaves the
+// palette's own when at full).
+function paintDim() {
+  const root = document.documentElement;
+  const dim = currentDim();
+  if (dim === 100) root.style.removeProperty('--ink');
+  else root.style.setProperty('--ink', dimmedInk(currentPalette(), dim));
 }
 
 // Dimmer, 25..100: how much of the palette's light the ink keeps.
 export function applyDim(value, { save = true } = {}) {
   const dim = clampDim(value);
-  if (dim === 100) document.documentElement.style.removeProperty('--dim');
-  else document.documentElement.style.setProperty('--dim', `${dim}%`);
+  if (dim === 100) delete document.documentElement.dataset.dim;
+  else document.documentElement.dataset.dim = String(dim);
+  paintDim();
   if (save) store(LOOK_KEYS.dim, String(dim));
   return dim;
 }
