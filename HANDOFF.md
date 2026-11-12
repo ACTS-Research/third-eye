@@ -23,10 +23,11 @@ flash shows up again.
 **Decisions only you can make.**
 
 - Decide whether to allow a relay (TURN) fallback for networks that block
-  the direct phone-to-Mac link. Home Wi-Fi and the hotspot do not need it. A
-  coffee-shop network failed and was not retried after the pairing fixes, so
-  whether it needs one is unconfirmed. A relay costs latency and depends on
-  someone's server.
+  the direct phone-to-Mac link. Home Wi-Fi and the hotspot do not need it:
+  at a coffee shop, the Mac on the iPhone's hotspot (the same iPhone on the
+  shop's Wi-Fi and streaming) works. Both devices on the shop's Wi-Fi did
+  not, and that is the case a relay would cover. A relay costs latency and
+  depends on someone's server.
 - Decide whether to run your own pairing server instead of the public PeerJS
   one. The public one works; it comes with no guarantees.
 - Pick the default recording format. It is WebM because Chrome writes it to

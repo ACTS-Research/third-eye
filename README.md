@@ -173,7 +173,9 @@ Recommended, in order:
    The link is a cable, immune to the room's radio traffic, and the phone's
    mobile data covers page loading and the handshake.
 2. **iPhone Personal Hotspot over Wi-Fi.** The Mac joins the phone's hotspot.
-   Leave "Maximize Compatibility" off so the hotspot uses 5 GHz.
+   Leave "Maximize Compatibility" off so the hotspot uses 5 GHz. This works
+   even where the venue Wi-Fi does not: at a coffee shop, the Mac on the
+   hotspot and the same iPhone on the shop's Wi-Fi paired and streamed.
 3. **Your own router.** A small travel router on a clear 5 GHz channel, placed
    near the stage, with only the phone and the Mac on it. It needs an internet
    uplink for the handshake unless you
@@ -587,8 +589,9 @@ npm test
 Hotspot): pairing by QR code through the public PeerJS server, live video
 into the effects chain over a direct link with H.264, the control screens,
 the output window, and Measure real latency with H.264 at 30 and 60 fps
-against the Mac's own screen (see [Latency](#latency)). A coffee-shop network did not work; it was not retried
-after the pairing fixes that followed.
+against the Mac's own screen (see [Latency](#latency)). At a coffee shop the
+Mac on the iPhone's hotspot works (the iPhone itself on the shop's Wi-Fi);
+the Mac and the phone both on the shop's Wi-Fi do not.
 
 **Only in headless Chromium**, with a fake camera and microphone: everything
 else. Check these the first time you use them:
