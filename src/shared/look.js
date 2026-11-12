@@ -1,6 +1,6 @@
 // The look of the operator's pages: palette and dimmer. A preference of this
 // browser, not show state, so it lives in localStorage. /control writes it;
-// /output (same browser) reads it and passes it to the phone. No CSS here, so
+// the engine (same browser) reads it and passes it to the phone. No CSS here, so
 // the output can import it without pulling in the theme.
 
 export const LOOK_KEYS = { palette: 'thirdeye.palette', dim: 'thirdeye.dim' };

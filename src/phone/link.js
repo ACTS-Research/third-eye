@@ -37,6 +37,8 @@ export class HostLink {
     this.callTriedAt = -1e9;
     this.callBadSince = 0;
     this.connBadSince = 0;
+    this.session = null; // which run of the Mac's engine the data link reaches
+    this.callSession = null; // and which one the video call was made to
     this.timer = 0;
   }
 
@@ -70,7 +72,7 @@ export class HostLink {
     });
     peer.on('error', (err) => {
       if (peer !== this.peer) return;
-      if (err.type === 'peer-unavailable') this.error = 'Mac not found. Is the output window open, and is the room code right?';
+      if (err.type === 'peer-unavailable') this.error = 'Mac not found. Is the control page open on the Mac, and is the room code right?';
       else this.error = `Signaling: ${err.type ?? err}`;
       this.changed();
     });
@@ -190,8 +192,25 @@ export class HostLink {
     }
   }
 
+  // The Mac says which run of its engine this is. The picture can move
+  // between its control page and its output window; a video call made to the
+  // one that stopped leads nowhere, and this end can take a long time to
+  // notice by itself. Call again at once.
+  onHostSession(session) {
+    const stale = this.call && this.callSession && this.callSession !== session;
+    this.session = session;
+    if (stale) {
+      this.dropCall();
+      this.callTriedAt = -1e9;
+      this.tick();
+    } else if (this.call) {
+      this.callSession = session;
+    }
+  }
+
   connectData() {
     this.connTriedAt = performance.now();
+    this.session = null;
     const conn = this.peer.connect(this.hostId, { reliable: true, serialization: 'json' });
     this.conn = conn;
     // Second channel on the same connection for sensor data: unordered and
@@ -213,6 +232,7 @@ export class HostLink {
       if (conn !== this.conn || !msg) return;
       if (msg.t === 'pong') this.rttMs = performance.now() - msg.ts;
       else if (msg.t === 'config') this.setCodec(msg.codec);
+      else if (msg.t === 'host') this.onHostSession(msg.session);
       else this.onMessage?.(msg);
     });
     conn.on('close', () => {
@@ -228,6 +248,7 @@ export class HostLink {
     const call = this.peer.call(this.hostId, this.stream, { sdpTransform: (sdp) => preferCodec(sdp, this.codec) });
     if (!call) return;
     this.call = call;
+    this.callSession = this.session;
     const pc = call.peerConnection;
     pc?.addEventListener('connectionstatechange', () => {
       if (call !== this.call) return;

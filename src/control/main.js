@@ -1,6 +1,8 @@
 // /control: the operator's page. It edits the shared state and shows what
-// /output reports back; it never touches video itself, so reloading it
-// mid-show is harmless.
+// the engine reports back. While an output window is open the engine runs
+// there and this page never touches video, so reloading it mid-show is
+// harmless; with no output window this page hosts the engine itself
+// (host.js) and the monitor is the live picture.
 //
 // Three screens: Perform (the show), Edit (one preset), Setup (everything
 // you do once before the show).
@@ -16,6 +18,7 @@ import { Store } from '../shared/store.js';
 import { el, readJSON, writeJSON } from '../shared/util.js';
 import { mountChain } from './chain.js';
 import { mountEdit } from './edit.js';
+import { installHost } from './host.js';
 import { mountInputPanel } from './input-panel.js';
 import { mountIoPanel } from './io-panel.js';
 import { mountLibraryPanel } from './library-panel.js';
@@ -32,7 +35,7 @@ import { mountVisionPanel } from './vision-panel.js';
 
 restorePalette();
 
-const bus = createBus();
+const bus = createBus({ loopback: true });
 const store = new Store(bus);
 const views = {
   perform: document.getElementById('view-perform'),
@@ -50,6 +53,11 @@ const ui = {
   statusListeners: new Set(),
   viewListeners: new Set(),
   paletteListeners: new Set(),
+  hostListeners: new Set(),
+  // Called when the engine's host changes (this page, an output window…).
+  onHost(fn) {
+    this.hostListeners.add(fn);
+  },
   onStatus(fn) {
     this.statusListeners.add(fn);
   },
@@ -59,7 +67,10 @@ const ui = {
   onPalette(fn) {
     this.paletteListeners.add(fn);
   },
-  get outputAlive() {
+  // Where each screen shows the picture: { perform, edit } elements.
+  monitors: {},
+  // True while status keeps arriving from the engine, wherever it runs.
+  get engineAlive() {
     return performance.now() - this.statusAt < 1500;
   },
   setView(name) {
@@ -94,18 +105,13 @@ const ui = {
 };
 ui.presets = createPresetModel(ui);
 
-bus.on('status', (m) => {
-  ui.status = m.status;
-  ui.statusAt = performance.now();
-  for (const fn of ui.statusListeners) fn(ui.status);
-});
-// Tell /output someone is watching, so it sends the monitor and the meters.
+// Tell the engine someone is watching, so it sends the monitor and the meters.
 bus.send('control-alive');
 bus.on('hello', () => bus.send('control-alive'));
-// Keep panels ticking so they notice when /output goes away.
+// Keep panels ticking so they notice when the engine goes quiet.
 setInterval(() => {
   bus.send('control-alive');
-  if (!ui.outputAlive) for (const fn of ui.statusListeners) fn(null);
+  if (!ui.engineAlive) for (const fn of ui.statusListeners) fn(null);
 }, 1000);
 
 installMidiMap(ui);
@@ -129,6 +135,10 @@ mountShortcuts(setupC, ui);
 ui.refreshSlots();
 
 mountPerform(views.perform, ui);
+
+// Decides whether this page or an output window hosts the engine, and
+// delivers its status to the panels above.
+installHost(ui);
 
 // Screen switching.
 for (const b of document.querySelectorAll('#views button')) b.addEventListener('click', () => ui.setView(b.dataset.view));
@@ -164,6 +174,7 @@ function drawDim(dim) {
 }
 function setDim(value, done = false) {
   drawDim(applyDim(value));
+  ui.lookChanged?.();
   if (done) for (const fn of ui.paletteListeners) fn();
 }
 const dimAt = (e) => {
@@ -253,4 +264,12 @@ enableOffline(() => ui.setAlert?.('update', 'A newer version of the app has been
   if (ui.statusRows?.offline) ui.statusRows.offline.textContent = state === 'ready' ? 'ready: pages reload without internet' : state;
 });
 
-window.thirdEye = { store, bus, ui };
+// Debug / test handle. `engine` is set once this page has hosted it.
+window.thirdEye = {
+  store,
+  bus,
+  ui,
+  get engine() {
+    return ui.host.engine;
+  },
+};

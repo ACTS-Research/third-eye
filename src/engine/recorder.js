@@ -1,4 +1,4 @@
-// Records the output canvas (and the audio input, when that is on) to a file
+// Records the engine's canvas (and the audio input, when that is on) to a file
 // in the browser's private storage. /control lists the files and saves them
 // to disk. Capturing costs nothing while not recording.
 

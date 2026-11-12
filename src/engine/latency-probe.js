@@ -37,6 +37,13 @@ export class LatencyProbe {
     this.baseline = 0;
   }
 
+  // The engine is stopping mid-measurement.
+  cancel() {
+    if (this.state !== 'running') return;
+    this.state = 'failed';
+    this.message = 'The measurement was interrupted. Try again.';
+  }
+
   // Called every frame. Returns what the output must show: 'black', 'white'
   // or null (normal picture). `frameMs` is the display's frame time.
   frame(now, frameMs) {

@@ -27,7 +27,8 @@ export class Store {
     bus.on('op', (m) => this.apply(m.op, true));
     bus.on('event', (m) => this.fire(m.name, m.data, true));
     // A newly opened window adopts the state of whichever window is already
-    // running, so reloading /control never disturbs a live /output.
+    // running, so reloading /control never disturbs a live /output. (When
+    // /control hosts the engine itself they share this one Store.)
     bus.on('hello', () => bus.send('op', { op: { op: 'replace', state: this.state } }));
     bus.send('hello');
   }

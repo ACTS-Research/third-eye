@@ -8,7 +8,7 @@
 //   uHistoryHead  float           layer index of the newest frame
 //   uHistoryCount float           number of layers in the ring buffer
 //   uResolution   vec2            render size in pixels
-//   uTime         float           seconds since the output window loaded
+//   uTime         float           seconds since the engine was created
 //   uPhone        vec3            phone roll, pitch, yaw in radians
 //
 // An effect body defines:  vec4 effect(vec2 uv)

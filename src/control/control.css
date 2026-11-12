@@ -119,6 +119,8 @@ main { flex: 1; min-height: 0; }
 
 .monitor { position: relative; background: #000; min-height: 0; min-width: 0; display: grid; place-items: center; overflow: hidden; }
 .monitor canvas { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* While this page hosts the engine its canvas (#stage) is the monitor. */
+.host-local canvas.readback { display: none; }
 .monitor-note { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center; text-align: center; background: var(--bg); padding: 20px; }
 .monitor-note b { font: 800 34px/1 var(--display); text-transform: uppercase; letter-spacing: 0.04em; }
 
@@ -273,7 +275,8 @@ body.midi-map [data-midi][data-midi-label]::after {
 #top { flex-wrap: nowrap; height: 48px; min-height: 48px; overflow: hidden; }
 #pills { flex: 1 1 0; min-width: 0; flex-wrap: nowrap; overflow: hidden; }
 .pill, .pill.bad { padding: 2px 8px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
-.pill:first-child { flex: 0 0 132px; }
+/* Wide enough for "Output off · 60 fps", the longest steady reading. */
+.pill:first-child { flex: 0 0 176px; }
 #views { margin-left: 0; flex-shrink: 0; }
 #rec, #rec.on { flex: 0 0 104px; width: 104px; text-align: left; overflow: hidden; }
 #midi-map-toggle { flex-shrink: 0; }
@@ -295,6 +298,7 @@ main { position: relative; }
 .keep-1 { min-height: 1.5em; }
 .keep-2 { min-height: 3em; }
 .keep-3 { min-height: 4.4em; }
+.keep-4 { min-height: 5.9em; }
 .keep-6 { min-height: 10em; }
 .edit-head .saved { flex: 0 0 150px; }
 .big b { white-space: nowrap; }
@@ -323,5 +327,4 @@ main { position: relative; }
   .edit-body .col + .col { border-left: 0; border-top: 1px solid var(--line); }
   #top { position: sticky; top: 0; z-index: 16; background: var(--bg); gap: 10px; }
   .wordmark { display: none; }
-  .pill:first-child { flex-basis: 118px; }
 }

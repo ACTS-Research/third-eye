@@ -47,7 +47,7 @@ export function mountInputPanel(root, ui) {
   ]);
 
   // Local cameras. Permission is asked here, on the operator's screen, so
-  // /output can open the chosen device without ever showing a prompt.
+  // the engine can open the chosen device without ever showing a prompt.
   const camera = el('select', {
     class: 'grow',
     onchange: () => store.merge('input', { cameraId: camera.value }),
@@ -80,9 +80,16 @@ export function mountInputPanel(root, ui) {
   }
   navigator.mediaDevices?.addEventListener?.('devicechange', () => listCameras(false));
 
-  // The file lives in memory only: hand it over again if /output reloads.
+  // The file lives in memory only: hand it over again when an output window
+  // (re)loads, and when this page starts hosting the engine.
   bus.on('hello', () => {
     if (file) bus.send('file', { file });
+  });
+  let hosting = false;
+  ui.onHost((host) => {
+    const now = host.state === 'local';
+    if (now && !hosting && file) bus.send('file', { file });
+    hosting = now;
   });
 
   const sync = () => {

@@ -21,12 +21,15 @@ try {
 
   console.log('screens and the pop-out output');
   check('opens on the perform screen', await control.locator('#view-perform').isVisible() && (await control.locator('#view-setup').isHidden()));
-  check('says the output window is closed and offers to open it', (await control.locator('.monitor-note').textContent()).includes('Output window is closed'));
-  const [output] = await Promise.all([context.waitForEvent('page'), control.click('.monitor-note button')]);
+  check('with no output window the monitor is live and nothing covers it', await settle(() => control.evaluate(() => document.querySelector('.monitor #stage')?.offsetParent != null && document.querySelector('.monitor-note').hidden && window.thirdEye.ui.status?.renderFps > 0), 'live monitor'));
+  check('the top bar says the output is off and is a button', await settle(async () => /Output off/i.test(await control.locator('#out-pill').textContent()), 'pill') && (await control.locator('#out-pill').getAttribute('role')) === 'button', await control.locator('#out-pill').textContent());
+  check('Setup says the output window is optional', (await control.locator('#output-note').textContent()).includes('Optional: for a projector'));
+  const [output] = await Promise.all([context.waitForEvent('page'), control.click('#out-pill')]);
   watch(output, 'output', errors);
   await output.waitForLoadState();
-  check('the output opens as a separate window', output.url().endsWith('/output/'));
-  check('the note clears once the output is running', await settle(() => control.locator('.monitor-note').isHidden(), 'note hidden', 15000));
+  check('clicking it opens the output as a separate window', output.url().endsWith('/output/'));
+  check('the top bar then shows the output', await settle(async () => /^Output \d+ fps/i.test(await control.locator('#out-pill').textContent()), 'output pill', 15000), await control.locator('#out-pill').textContent());
+  check('nothing covers the monitor', await control.locator('.monitor-note').isHidden());
   const state = (fn) => output.evaluate(fn);
   check('monitor shows the output', await settle(() => control.evaluate(() => {
     const c = document.getElementById('preview');

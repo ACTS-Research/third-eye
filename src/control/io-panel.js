@@ -1,5 +1,5 @@
 // MIDI and audio inputs. Permission prompts are raised here, on the
-// operator's screen; /output then opens the devices without prompting.
+// operator's screen; the engine then opens the devices without prompting.
 
 import { el } from '../shared/util.js';
 
@@ -11,7 +11,7 @@ export function mountIoPanel(root, ui) {
   const midiNote = el('div', { class: 'dim small keep-2', id: 'midi-note' });
 
   // Asks for MIDI access on this page (so the prompt is never on the
-  // projector), then lets /output open the devices. Resolves true on success.
+  // projector), then lets the engine open the devices. Resolves true on success.
   async function enableMidi() {
     if (store.state.midi.enabled) return true;
     if (!navigator.requestMIDIAccess) {
@@ -84,7 +84,7 @@ export function mountIoPanel(root, ui) {
     const m = status.midi;
     if (store.state.midi.enabled) {
       if (m.state === 'ready') midiNote.textContent = m.inputs.length ? `${m.inputs.join(', ')}${m.last ? ` — last: ${m.last}` : ''}` : 'No MIDI device connected. Plug one in; it is picked up automatically.';
-      else if (m.state === 'denied') midiNote.textContent = `MIDI unavailable in the output window: ${m.error}`;
+      else if (m.state === 'denied') midiNote.textContent = `MIDI unavailable${status.host?.role === 'output' ? ' in the output window' : ''}: ${m.error}`;
       else if (m.state === 'unsupported') midiNote.textContent = 'This browser has no Web MIDI.';
     } else {
       midiNote.textContent = 'To assign knobs, faders and pads, use MIDI map at the top right.';
@@ -94,7 +94,7 @@ export function mountIoPanel(root, ui) {
     else if (a.state === 'live') audioNote.textContent = `Listening: ${a.label}`;
     else if (a.state === 'error') audioNote.textContent = a.error;
     else if (a.state === 'lost') audioNote.textContent = 'Audio device disconnected.';
-    ui.setAlert('audio', store.state.audio.enabled && a.state === 'suspended' ? 'Audio analysis is waiting: click the output window once to start it' : null);
+    ui.setAlert('audio', store.state.audio.enabled && a.state === 'suspended' ? `Audio analysis is waiting: click ${status.host?.role === 'output' ? 'the output window' : 'anywhere on this page'} once to start it` : null);
   });
 
   root.append(

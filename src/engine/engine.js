@@ -1,5 +1,8 @@
 // Owns the WebGL context, the render loop and everything that feeds it.
-// Runs only in /output.
+// One engine runs per browser: in /output while an output window is open,
+// otherwise in /control (src/control/host.js decides). start() and stop() can
+// be called again and again; a stopped engine holds no room code, no devices
+// and no recording, and ignores the store until it is started again.
 
 import { clamp } from '../shared/util.js';
 import { AudioInput } from './audio.js';
@@ -29,10 +32,16 @@ const SOURCES_INTERVAL_MS = 66;
 const CONTROL_TIMEOUT_MS = 3000;
 
 export class Engine {
-  constructor(canvas, store, bus) {
+  // role: 'output' or 'control', the page hosting this engine; id tells two
+  // hosts apart. size: { width, height } renders at a fixed size instead of
+  // following the canvas element (the monitor on /control).
+  constructor(canvas, store, bus, { role = 'output', id = '', size = null } = {}) {
     this.canvas = canvas;
     this.store = store;
     this.bus = bus;
+    this.host = { role, id };
+    this.running = false;
+    this.raf = 0;
     this.inputs = new InputManager();
     this.t0 = performance.now();
     this.glitchStart = -1e9;
@@ -63,19 +72,26 @@ export class Engine {
     this.initGL();
 
     this.camera = new LocalCamera(this.inputs.feeds.camera);
+    // The link opens in start(): until then the room code is not taken.
     this.link = new PhoneLink(this.inputs.feeds.phone, () => this.store.state.net, (msg) => this.onPhoneMessage(msg));
     this.link.onData = (conn) => this.sensors.attach(conn);
     this.link.onOpenData = () => {
       // A phone on the new room code clears the "scan again" notice.
       this.link.notice = '';
+      // Which run of which engine this is. When the picture moves between
+      // /control and the output window the phone sees a new one, and calls
+      // again at once instead of waiting to notice its old call went dead.
+      this.link.send({ t: 'host', session: this.session });
       this.sendTriggerLabels();
       this.link.send({ t: 'config', codec: this.store.state.net.codec });
-      this.link.send({ t: 'look', ...readLook() });
+      this.sendLook();
     };
     // Palette and dimmer are set on /control and kept in this browser's
-    // storage; a change there fires here, and the phone follows.
+    // storage; a change there fires here, and the phone follows. (No storage
+    // event reaches the window that made the change: when /control hosts the
+    // engine it calls sendLook() itself.)
     window.addEventListener('storage', (e) => {
-      if (e.key === LOOK_KEYS.palette || e.key === LOOK_KEYS.dim) this.link.send({ t: 'look', ...readLook() });
+      if (e.key === LOOK_KEYS.palette || e.key === LOOK_KEYS.dim) this.sendLook();
     });
     this.link.getCodec = () => this.store.state.net.codec;
     this.link.onRoomTaken = () => {
@@ -84,7 +100,9 @@ export class Engine {
       this.store.merge('net', { room: randomRoom() });
     };
     this.latency = null;
-    setInterval(() => this.housekeeping(), 1000);
+    setInterval(() => {
+      if (this.running) this.housekeeping();
+    }, 1000);
 
     canvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault();
@@ -97,34 +115,47 @@ export class Engine {
       this.lost = false;
     });
 
-    new ResizeObserver((entries) => {
-      const entry = entries[0];
-      const box = entry.devicePixelContentBoxSize?.[0];
-      if (box) {
-        this.pixelWidth = box.inlineSize;
-        this.pixelHeight = box.blockSize;
-      } else {
-        this.pixelWidth = Math.round(entry.contentRect.width * devicePixelRatio);
-        this.pixelHeight = Math.round(entry.contentRect.height * devicePixelRatio);
-      }
+    if (size) {
+      this.pixelWidth = size.width;
+      this.pixelHeight = size.height;
       this.applySize();
-    }).observe(canvas, { box: 'content-box' });
+    } else {
+      new ResizeObserver((entries) => {
+        const entry = entries[0];
+        const box = entry.devicePixelContentBoxSize?.[0];
+        if (box) {
+          this.pixelWidth = box.inlineSize;
+          this.pixelHeight = box.blockSize;
+        } else {
+          this.pixelWidth = Math.round(entry.contentRect.width * devicePixelRatio);
+          this.pixelHeight = Math.round(entry.contentRect.height * devicePixelRatio);
+        }
+        this.applySize();
+      }).observe(canvas, { box: 'content-box' });
+    }
 
-    store.subscribe((op) => this.onOp(op));
+    store.subscribe((op) => {
+      if (this.running) this.onOp(op);
+    });
     store.onEvent((name, data) => {
+      if (!this.running) return;
       if (name === 'glitch') this.glitchStart = performance.now();
       else if (name === 'tap') this.tempo.tap(data?.at ?? Date.now());
       else if (name === 'record') this.recorder.toggle(this.store.state.globals.recFormat);
       else if (name === 'latency-test') this.probe.start();
     });
     // /control announces itself; without it nobody is looking at the preview
-    // or the meters, so the readback and the broadcasts are skipped.
+    // or the meters, so the readback and the broadcasts are skipped. A
+    // control page in another window needs the small readback picture; the
+    // page hosting this engine shows the canvas itself and does not.
     this.controlSeenAt = -1e9;
-    bus.on('control-alive', () => {
+    this.remoteControlSeenAt = -1e9;
+    bus.on('control-alive', (_m, local) => {
       this.controlSeenAt = performance.now();
+      if (!local) this.remoteControlSeenAt = this.controlSeenAt;
     });
     bus.on('midi', (m) => {
-      if (m.cmd === 'learn') this.midi.learning = !!m.on;
+      if (m.cmd === 'learn' && this.running) this.midi.learning = !!m.on;
     });
     bus.on('file', (m) => {
       if (m.file) this.inputs.feeds.file.setBlob(m.file);
@@ -171,6 +202,20 @@ export class Engine {
     this.pipeline?.resize(w, h);
   }
 
+  // Takes everything from the store again: after a full sync, and when a
+  // stopped engine starts and has missed whatever changed meanwhile.
+  resync() {
+    const state = this.store.state;
+    this.sendTriggerLabels();
+    this.pipeline.setChain(state.chain, 0, performance.now());
+    this.inputs.setKind(state.input.kind);
+    this.pipeline.srcDirty = true;
+    this.mod.dirty = true;
+    this.applySize();
+    this.link.refresh();
+    this.housekeeping();
+  }
+
   onOp(op) {
     const state = this.store.state;
     switch (op.op) {
@@ -181,13 +226,7 @@ export class Engine {
         if (op.key === 'actions') this.sendTriggerLabels();
         break;
       case 'replace':
-        this.sendTriggerLabels();
-        this.pipeline.setChain(state.chain, 0, performance.now());
-        this.inputs.setKind(state.input.kind);
-        this.pipeline.srcDirty = true;
-        this.applySize();
-        this.link.refresh();
-        this.housekeeping();
+        this.resync();
         break;
       case 'merge':
         if (op.key === 'input') {
@@ -244,12 +283,42 @@ export class Engine {
     this.link.send({ t: 'labels', triggers: labels });
   }
 
+  // The phone wears the palette and dimmer of the control page.
+  sendLook() {
+    this.link.send({ t: 'look', ...readLook() });
+  }
+
   start() {
+    if (this.running) return;
+    this.running = true;
+    this.session = Math.random().toString(36).slice(2, 10);
+    this.lastStatusAt = performance.now();
+    this.lastFrameAt = 0;
+    this.prevFrameAt = undefined;
+    this.renderFrames = 0;
+    this.link.resume();
+    if (!this.lost) this.resync();
     const tick = (now) => {
-      requestAnimationFrame(tick);
+      this.raf = requestAnimationFrame(tick);
       this.frame(now);
     };
-    requestAnimationFrame(tick);
+    this.raf = requestAnimationFrame(tick);
+  }
+
+  // Lets go of everything another window's engine would need: the room code
+  // first, then the recording, MIDI, the microphone, vision and the camera.
+  stop() {
+    if (!this.running) return;
+    this.running = false;
+    cancelAnimationFrame(this.raf);
+    this.link.shutdown();
+    this.recorder.stop();
+    this.probe.cancel();
+    this.midi.disable();
+    if (this.audio.state !== 'off') this.audio.disable();
+    this.vision.configure({});
+    this.camera.stop();
+    this.inputs.feeds.phone.clear();
   }
 
   frame(now) {
@@ -281,7 +350,8 @@ export class Engine {
       this.maskFit[2] = state.input.mirror ? 1 : 0;
       this.maskFit[3] = maskTex ? 1 : 0;
       const flash = this.probe.frame(now, 1000 / Math.max(this.renderFps, 30));
-      const wantPreview = watched && g.preview && now - this.lastPreviewAt >= PREVIEW_INTERVAL_MS;
+      const remoteWatched = now - this.remoteControlSeenAt < CONTROL_TIMEOUT_MS;
+      const wantPreview = remoteWatched && g.preview && now - this.lastPreviewAt >= PREVIEW_INTERVAL_MS;
       if (wantPreview) this.lastPreviewAt = now;
       try {
         // Collect the previous preview before a new one can be started.
@@ -374,6 +444,7 @@ export class Engine {
   collectStatus(now) {
     return {
       build: __BUILD__,
+      host: this.host,
       latency: this.latency,
       phone: this.link.status(now),
       sensors: this.sensors.status(now),

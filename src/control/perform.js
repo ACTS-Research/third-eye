@@ -58,28 +58,23 @@ export function mountPerform(root, ui) {
   const panic = el('aside', { class: 'panic', 'aria-label': 'Panic controls and inputs' }, [blackout, freeze, bypass, glitch, tempo, inputs, inputName]);
 
   // ----------------------------------------------------------- monitor ---
-  const canvas = el('canvas', { id: 'preview', width: 480, height: 270 });
+  // With an output window open this canvas shows the small picture it sends
+  // back. With none, host.js puts the engine's own canvas here instead.
+  const canvas = el('canvas', { id: 'preview', class: 'readback', width: 480, height: 270 });
   attachPreview(ui, canvas);
   const noteTitle = el('b');
   const noteText = el('span', { class: 'dim' });
-  const noteButton = el('button', { class: 'primary', text: 'Open output window', onclick: () => ui.openOutput?.() });
-  const note = el('div', { class: 'monitor-note' }, [noteTitle, noteText, noteButton]);
+  const note = el('div', { class: 'monitor-note' }, [noteTitle, noteText]);
   const monitor = el('div', { class: 'monitor' }, [canvas, note]);
+  ui.monitors.perform = monitor;
 
+  // The only thing that ever covers the monitor is the operator's own choice
+  // to switch off the readback from an output window.
   function syncMonitor() {
-    let title = '';
-    let text = '';
-    if (!ui.outputAlive) {
-      title = 'Output window is closed';
-      text = 'It does the rendering. Open it, then drag it to the projector or pick a display under Setup.';
-    } else if (!store.state.globals.preview) {
-      title = 'Monitor is off';
-      text = 'The output is running. Turn the monitor back on under Setup → Output.';
-    }
-    note.hidden = !title;
-    noteTitle.textContent = title;
-    noteText.textContent = text;
-    noteButton.hidden = ui.outputAlive;
+    const off = ui.host?.state === 'remote' && ui.engineAlive && !store.state.globals.preview;
+    note.hidden = !off;
+    noteTitle.textContent = off ? 'Monitor is off' : '';
+    noteText.textContent = off ? 'The output is running. Turn the monitor back on under Setup → Output.' : '';
   }
 
   // ------------------------------------------------------------ faders ---
@@ -283,6 +278,7 @@ export function mountPerform(root, ui) {
   });
   presets.onChange(buildTiles);
   ui.onStatus(syncMonitor);
+  ui.onHost(syncMonitor);
 
   root.append(panic, monitor, side, strip);
   buildFaders();

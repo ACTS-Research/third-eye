@@ -6,7 +6,16 @@ const INPUT_STATE_TEXT = { live: 'live', stalled: 'STALLED — holding last fram
 export function mountStatus(root, ui) {
   const pills = document.getElementById('pills');
   const alerts = document.getElementById('alerts');
-  const outPill = el('span', { class: 'pill' });
+  // The first readout says where the picture is drawn and how fast. With no
+  // output window it is calm, and a click opens one.
+  const outPill = el('span', { class: 'pill', id: 'out-pill', role: 'button', tabindex: '0' });
+  const outClick = () => {
+    if (ui.host?.role !== 'output') ui.openOutput?.();
+  };
+  outPill.addEventListener('click', outClick);
+  outPill.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') outClick();
+  });
   const inPill = el('span', { class: 'pill' });
   // Clicking the input or phone status opens the pairing details below it.
   const pairing = (pill) => {
@@ -108,7 +117,12 @@ export function mountStatus(root, ui) {
 
   function update(status) {
     if (!status) {
-      setPill(outPill, 'bad', 'Output closed');
+      // Between hosts for a moment, or an output window that is not drawing.
+      const h = ui.host;
+      if (h?.stalled) setPill(outPill, 'bad', 'Output not drawing');
+      else if (h?.state === 'failed') setPill(outPill, 'bad', 'No picture');
+      else setPill(outPill, '', h?.state === 'remote' ? 'Output …' : 'Starting…');
+      outPill.title = '';
       setPill(inPill, '', 'Input —');
       setPill(phonePill, '', 'Phone —');
       for (const key of Object.keys(rows)) if (key !== 'offline') rows[key].textContent = '—';
@@ -117,9 +131,17 @@ export function mountStatus(root, ui) {
     }
     const p0 = status.phone;
     const fps = status.renderFps;
-    setPill(outPill, fps > 50 ? 'good' : fps > 24 ? 'warn' : 'bad', `Output ${fps.toFixed(0)} fps`);
+    const inOutput = status.host?.role === 'output';
+    const slow = fps > 50 ? '' : fps > 24 ? 'warn' : 'bad';
+    if (inOutput) {
+      setPill(outPill, slow || 'good', `Output ${fps.toFixed(0)} fps`);
+      outPill.title = 'The output window draws the picture';
+    } else {
+      setPill(outPill, slow, `Output off · ${fps.toFixed(0)} fps`);
+      outPill.title = 'No output window: the picture runs on this page. Click to open the output window.';
+    }
     rows.render.textContent = `${fps.toFixed(1)} fps · worst ${status.worstFrameMs.toFixed(0)} ms`;
-    rows.size.textContent = `${status.width}×${status.height}${status.fullscreen ? ' fullscreen' : ' windowed'}`;
+    rows.size.textContent = `${status.width}×${status.height}${inOutput ? (status.fullscreen ? ' fullscreen' : ' windowed') : ' on this page'}`;
 
     const input = status.input;
     const label = INPUT_LABELS[input.kind] ?? input.kind;
@@ -128,10 +150,10 @@ export function mountStatus(root, ui) {
     rows.inputFps.textContent = `${input.fps.toFixed(1)} fps`;
 
     const stallFix = input.kind === 'phone' ? ui.alertTo.pairing : ui.alertTo.panel('input-panel', 'Go to Input');
-    ui.setAlert('input', input.state === 'stalled' ? `${label} stalled — output is holding the last frame` : null, 'bad', stallFix);
-    ui.setAlert('build', status.build !== __BUILD__ ? 'The output window runs a different version of the app than this page. Reloading exits fullscreen.' : null, 'warn', ui.alertTo.reload);
+    ui.setAlert('input', input.state === 'stalled' ? `${label} stalled — holding the last frame` : null, 'bad', stallFix);
+    ui.setAlert('build', inOutput && status.build !== __BUILD__ ? 'The output window runs a different version of the app than this page. Reloading exits fullscreen.' : null, 'warn', ui.alertTo.reload);
     ui.setAlert('room', p0.notice || null, 'warn', ui.alertTo.qr);
-    ui.setAlert('gl', status.contextLost ? 'Output lost its graphics context — recovering' : null, 'bad');
+    ui.setAlert('gl', status.contextLost ? 'The picture lost its graphics context — recovering' : null, 'bad');
 
     const lat = status.latency;
     rows.latency.textContent = lat ? `${lat.measured ? '' : '≈ '}${lat.ms.toFixed(0)} ms` : '—';
@@ -172,18 +194,21 @@ export function mountStatus(root, ui) {
   }
 
   // Real glass-to-glass measurement: flash the output, time the phone seeing it.
-  const testNote = el('div', { class: 'dim small keep-3', id: 'latency-note', text: 'Point the phone at the projected output so it fills most of the frame, then measure. The output flashes black and white for about ten seconds.' });
+  const testNote = el('div', { class: 'dim small keep-3', id: 'latency-note', text: 'Point the phone at the projected output (or, with no output window, at the monitor on the Perform screen) so it fills most of the frame, then measure. The picture flashes black and white for about ten seconds.' });
   const testButton = el('button', { id: 'latency-test', text: 'Measure real latency', onclick: () => ui.store.emit('latency-test') });
   ui.onStatus((status) => {
     const t = status?.latencyTest;
     testButton.disabled = !status || t?.state === 'running';
     if (!t || t.state === 'idle') return;
-    if (t.state === 'running') testNote.textContent = 'Measuring… the output is flashing.';
+    if (t.state === 'running') testNote.textContent = 'Measuring… the picture is flashing.';
     else if (t.state === 'done') testNote.textContent = `Measured ${t.ms.toFixed(0)} ms, output to Mac: ${t.message}.`;
     else testNote.textContent = t.message;
   });
 
   ui.onStatus(update);
+  ui.onHost(() => {
+    if (!ui.engineAlive) update(null);
+  });
   root.append(el('div', { class: 'panel' }, [el('h2', { text: 'Status' }), list, el('div', { class: 'row', style: 'margin-top:10px' }, [testButton]), testNote]));
   update(null);
 }

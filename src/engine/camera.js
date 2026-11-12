@@ -1,6 +1,6 @@
 // Local camera input (built-in, USB, or an iPhone through Continuity Camera).
 // Permission is requested from /control so no prompt ever appears on the
-// projector; /output just opens the device that was picked there.
+// projector; the engine just opens the device that was picked there.
 
 export class LocalCamera {
   constructor(feed) {

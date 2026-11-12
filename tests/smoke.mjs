@@ -1,5 +1,6 @@
-// Phase 1 smoke test: /control and /output in one browser, test pattern
-// through the effects chain, BroadcastChannel sync in both directions.
+// Phase 1 smoke test: /control alone, then /control and /output in one
+// browser, test pattern through the effects chain, BroadcastChannel sync in
+// both directions, and back to /control alone.
 //   npm run test:smoke
 
 import { check, failureCount, launch, outputStats, sleep, startSite, waitFor, watch } from './lib.mjs';
@@ -16,7 +17,26 @@ try {
 
   console.log('control without output');
   check('chain cards rendered', (await control.locator('.fx').count()) === 2);
-  check('output reported closed', (await control.locator('#pills .pill').first().textContent()).includes('closed'));
+  const alone = await waitFor(() => control.evaluate(() => {
+    const st = window.thirdEye.ui.status;
+    return st?.host.role === 'control' && st.renderFps > 0 ? st : null;
+  }), { label: 'control renders by itself' });
+  check('control renders the picture itself', alone.input.kind === 'pattern' && alone.input.state === 'live', `${alone.width}x${alone.height}`);
+  check('output reported off', /Output off/i.test(await control.locator('#pills .pill').first().textContent()));
+  // The readback is only rendered for a control page in another window;
+  // outputStats reads it, so pretend one is watching.
+  await control.evaluate(() => {
+    window.thirdEye.engine.remoteControlSeenAt = Infinity;
+  });
+  await waitFor(async () => (await outputStats(control)).mean > 10, { label: 'picture on control' });
+  await control.evaluate(() => {
+    const ext = window.thirdEye.engine.gl.getExtension('WEBGL_lose_context');
+    window.__ext = ext;
+    ext.loseContext();
+  });
+  await sleep(300);
+  await control.evaluate(() => window.__ext.restoreContext());
+  check('control recovers from a lost GL context', await waitFor(async () => (await outputStats(control)).mean > 10, { label: 'context back', timeout: 5000 }).then(() => true, () => false));
 
   const output = await context.newPage();
   await output.setViewportSize({ width: 1280, height: 720 });
@@ -25,7 +45,8 @@ try {
   await waitFor(() => output.evaluate(() => !!window.thirdEye?.engine?.renderFps), { label: 'render fps' });
 
   console.log('render');
-  const status = await waitFor(() => control.evaluate(() => window.thirdEye.ui.status), { label: 'status on control' });
+  const status = await waitFor(() => control.evaluate(() => (window.thirdEye.ui.status?.host.role === 'output' ? window.thirdEye.ui.status : null)), { label: 'status on control' });
+  check('the output window took the engine over', await control.evaluate(() => !window.thirdEye.engine.running));
   check('status reaches control', !!status, `${status.renderFps.toFixed(0)} fps, ${status.width}x${status.height}`);
   check('canvas matches viewport', status.width === 1280 && status.height === 720);
   check('input is the live test pattern', status.input.kind === 'pattern' && status.input.state === 'live');
@@ -136,6 +157,8 @@ try {
   await control.reload();
   await waitFor(() => control.evaluate(() => window.thirdEye?.store.state.chain.length === 3), { label: 'control adopts output state' });
   check('reloaded control adopts live state', true);
+  await waitFor(() => control.evaluate(() => window.thirdEye.ui.status?.host.role === 'output'), { label: 'status after control reload' });
+  check('reloaded control leaves the engine with the output', await control.evaluate(() => !window.thirdEye.engine));
 
   await output.evaluate(() => {
     const ext = window.thirdEye.engine.gl.getExtension('WEBGL_lose_context');
@@ -150,6 +173,19 @@ try {
   await output.reload();
   await waitFor(() => output.evaluate(() => window.thirdEye?.engine?.renderFps > 0), { label: 'output back after reload' });
   check('reloaded output resumes with the same chain', await output.evaluate(() => window.thirdEye.store.state.chain.length === 3));
+
+  console.log('output closed');
+  // A video file picked while the output was open goes to the control page's
+  // own engine when the picture comes back to it.
+  await control.setInputFiles('#input-panel input[type=file]', { name: 'clip.webm', mimeType: 'video/webm', buffer: Buffer.from(clip) });
+  await waitFor(() => control.evaluate(() => window.thirdEye.ui.status?.input.kind === 'file' && window.thirdEye.ui.status.input.state === 'live'), { label: 'file live on output', timeout: 8000 });
+  await output.close({ runBeforeUnload: true });
+  const back = await waitFor(() => control.evaluate(() => {
+    const st = window.thirdEye.ui.status;
+    return st?.host.role === 'control' && st.input.kind === 'file' && st.input.state === 'live' && st.input.width === 320 ? st : null;
+  }), { label: 'file live on control', timeout: 15000 }).catch(() => null);
+  check('closing the output brings the picture, and the video file, back to control', !!back);
+  check('same chain on control', await control.evaluate(() => window.thirdEye.store.state.chain.length === 3));
 
   // The sandbox cannot reach the public PeerJS server; that noise is expected.
   const real = errors.filter((e) => !/peerjs|WebSocket|Lost connection/i.test(e));

@@ -1,5 +1,6 @@
-// The monitor image /output sends back (small, about ten times a second).
-// Any number of canvases can show it.
+// The monitor image an output window sends back (small, about ten times a
+// second). Any number of canvases can show it. Not used while this page
+// hosts the engine: the monitor is then the engine's own canvas (host.js).
 
 const canvases = new Set();
 let installed = false;

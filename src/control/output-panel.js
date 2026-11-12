@@ -12,6 +12,7 @@ export function mountOutputPanel(root, ui) {
   const select = el('select', { class: 'grow', onchange: () => choose(select.value) });
   const detect = el('button', { text: 'Find displays', onclick: () => loadScreens(true) });
   const hint = el('div', { class: 'dim small keep-3' });
+  const note = el('div', { class: 'dim small keep-4', id: 'output-note' });
   const openBtn = el('button', { class: 'primary grow', text: 'Open output window', onclick: open });
   const scale = el('select', {
     title: 'Render resolution',
@@ -23,7 +24,7 @@ export function mountOutputPanel(root, ui) {
   ]);
   const previewBtn = el('button', {
     text: 'Monitor',
-    title: 'Show a small copy of the output on this page',
+    title: 'Show a small copy of the output window\'s picture on this page',
     onclick: () => store.merge('globals', { preview: !store.state.globals.preview }),
   });
 
@@ -104,14 +105,19 @@ export function mountOutputPanel(root, ui) {
   };
   store.subscribe(sync);
   ui.onStatus((status) => {
-    openBtn.textContent = status ? (status.fullscreen ? 'Output is fullscreen' : 'Output is open: click it or press F for fullscreen') : 'Open output window';
-    openBtn.classList.toggle('primary', !status);
+    const open = status?.host?.role === 'output';
+    openBtn.textContent = open ? (status.fullscreen ? 'Output is fullscreen' : 'Output is open: click it or press F for fullscreen') : 'Open output window';
+    openBtn.classList.toggle('primary', !open);
+    note.textContent = open
+      ? 'The picture is drawn in the output window. Close it and the picture returns to this page; the phone reconnects in a few seconds.'
+      : 'Optional: for a projector or second screen. Until then the picture runs on this page. Opening it reconnects the phone (a few seconds) and stops a recording.';
   });
 
   root.append(
     el('div', { class: 'panel', id: 'output-panel' }, [
       el('h2', {}, ['Output', el('button', { class: 'icon', text: '↻', title: 'Reload the output window', onclick: () => bus.send('output', { cmd: 'reload' }) })]),
       el('div', { class: 'row' }, [openBtn]),
+      note,
       el('div', { class: 'row' }, [el('button', { class: 'grow', id: 'restart-output', text: 'Close all output windows and open a new one', onclick: restart })]),
       el('div', { class: 'row' }, [select, detect]),
       el('div', { class: 'row' }, [scale, previewBtn]),

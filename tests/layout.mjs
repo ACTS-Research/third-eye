@@ -136,7 +136,11 @@ try {
     streaming.latency = { ms: 145, measured: false };
     streaming.latencyTest = { state: 'done', ms: 166.7, message: '5 of 5 flashes seen, 167–200 ms; 2 strays at 817, 1017 ms left out' };
     streaming.sensors = { live: true, hz: 60, orientation: true, motion: true };
-    return { real, trouble, streaming };
+    // The same with no output window: the picture runs on the control page.
+    const local = structuredClone(streaming);
+    local.host = { role: 'control', id: 'here' };
+    local.renderFps = 59.6;
+    return { real, trouble, streaming, local };
   });
   const show = (status) => control.evaluate((s) => {
     const { ui } = window.thirdEye;
@@ -144,8 +148,11 @@ try {
     ui.statusAt = s ? performance.now() + 1e9 : -Infinity; // hold this state against live updates
     for (const fn of ui.statusListeners) fn(s);
   }, status);
-  // Stop live status from replacing the staged ones.
+  // Stop live status from replacing the staged ones: close the output, let
+  // the control page take the picture over, then stop its engine too.
   await output.close();
+  await waitFor(() => control.evaluate(() => window.thirdEye.ui.status?.host.role === 'control'), { label: 'control hosting', timeout: 15000 });
+  await control.evaluate(() => window.thirdEye.engine.stop());
   await sleep(300);
   for (const view of VIEWS) {
     await control.evaluate((v) => window.thirdEye.ui.setView(v), view);
@@ -160,8 +167,12 @@ try {
     await show(null);
     await sleep(200);
     const closed = await snapshot(control);
-    const moved = [...diff(calm, loud), ...diff(calm, closed)];
-    check(`${view}: same layout when streaming, in trouble, and with the output closed`, moved.length === 0, moved.slice(0, 5).join('; '));
+    await show(variants.local);
+    await sleep(200);
+    const local = await snapshot(control);
+    check(`${view}: the output-off readout is not cut short`, await control.locator('#out-pill').evaluate((n) => n.scrollWidth <= n.clientWidth + 1), await control.locator('#out-pill').textContent());
+    const moved = [...diff(calm, loud), ...diff(calm, closed), ...diff(calm, local)];
+    check(`${view}: same layout when streaming, in trouble, between hosts, and with no output window`, moved.length === 0, moved.slice(0, 5).join('; '));
     if (process.env.SHOTS) {
       await show(variants.trouble);
       await sleep(100);

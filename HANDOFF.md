@@ -1,31 +1,30 @@
 # Handoff
 
-## 2026-11-12 (second session)
+## 2026-11-12 (third session)
 
-**Where things stand.** Everything planned is built, live on GitHub Pages
-from `main`, and pairs and streams with a real iPhone (home Wi-Fi; and at a
-coffee shop with the Mac on the iPhone's hotspot). This session added the
-first real latency numbers, a dimmer, clickable alert strips and a fader
-clean-up, and fixed a bug that blacked out the phone page. Next is making
-the output window optional, which changes who owns the engine.
+**Where things stand.** The output window is now optional. `/control` runs
+the whole instrument by itself, with the live picture in its monitor; opening
+the output window moves the picture there and closing it moves it back.
+Everything is live on GitHub Pages from `main`. All eleven test suites pass
+in headless Chromium; none of the new behaviour has been tried on the real
+Mac and iPhone yet.
 
-**Next step.** Build the optional output window, plan A in
-[Plan: optional output window](#plan-optional-output-window) below, once
-you have answered the three questions there. Start it in a fresh session
-with the prompt at the end of this file.
+**Next step.** Try it on the real Mac and iPhone: open `/control` alone and
+pair the phone, open the output window and watch the phone come back by
+itself, close it and watch again. Note how long each reconnect takes.
 
 **Decisions only you can make.**
 
-- Approve plan A for the optional output window (or choose B), say whether
-  a 1–3 second phone reconnect when the output opens or closes is
-  acceptable, and whether a recording should stop at that switch or block
-  it. Details in the plan below.
+- Say whether 1280×720 is the right size for the picture (and recordings)
+  while no output window is open. It is fixed so recordings do not depend on
+  the size of the monitor on the page.
 - Decide whether to allow a relay (TURN) fallback. The hotspot route works
   everywhere tried so far; only the Mac and the phone both on venue Wi-Fi
   fails, and that is the case a relay would cover. A relay costs latency and
   depends on someone's server.
 - Decide whether to run your own pairing server instead of the public PeerJS
-  one. The public one works; it comes with no guarantees.
+  one. The public one works; it comes with no guarantees. It is now also
+  needed each time the output window opens or closes with a phone paired.
 - Pick the default recording format. It is WebM because Chrome writes it to
   disk every second; MP4 opens in more players but is written in large pieces.
 - Say whether the board cover should stay the design prototype
@@ -37,15 +36,30 @@ with the prompt at the end of this file.
 - Export your presets (Setup → Preset library → Export presets) if you care
   about them. They live only in your browser, not in this repo.
 
-**When you are next in the studio.** Measure real latency fullscreen on
-the projector at 720p · 60 (so far only against the Mac's own screen: 200 ms
-at 30 fps, 167 ms at 60), check the Latency line reads close to it, and move
-the Dim strip with the phone paired to see the phone follow.
+**When you are next in the studio.** Open the output window before the
+show, then: measure real latency fullscreen on the projector at 720p · 60 (so
+far only against the Mac's own screen: 200 ms at 30 fps, 167 ms at 60), check
+the Latency line reads close to it, move the Dim strip with the phone paired
+to see the phone follow, and cover or minimise the output window for a few
+seconds to see `/control` say it is not drawing (it must not take the picture
+over).
 
 **Branch.** Work is on `main`, the default branch and the one that deploys.
 Nothing is waiting to be merged; everything is pushed.
 
 ### This session, in short
+
+- The engine moves between windows (plan A). Details under
+  [Optional output window](#optional-output-window-built-2026-11-12-third-session).
+- Top bar: `Output off · 60 fps` is calm and opens the output window when
+  clicked. An alert appears only if the output vanishes without warning or
+  stops drawing. Nothing covers the monitor any more.
+- Fixed on the way: a video call left open on the Mac when the phone link
+  was shut down (PeerJS skips connections on destroy).
+- New suites: `tests/handover.mjs`, `tests/standalone.mjs`; `smoke`,
+  `control-ui` and `layout` cover both modes.
+
+### Second session (2026-11-12), in short
 
 - Latency measured on the real phone; 720p · 60 is the phone's default; the
   Latency estimate allows one camera frame; a stray flash is named apart.
@@ -60,68 +74,33 @@ Nothing is waiting to be merged; everything is pushed.
   and the phone's own `--dim`). That also hid START and broke pairing tests
   in the field; after the fix the hotspot route works.
 
-### Plan: optional output window
+### Optional output window (built 2026-11-12, third session)
 
-**What the owner wants.** The app runs fully without an output window: the
-phone streams and the preview is live. The output window is only for a
-projector or second screen. When it is closed or drops, the status lights up
-where it is; nothing stops and nothing covers the preview.
+Plan A as approved: the engine moves between windows. The phone reconnects
+at each switch (1.5–2.5 s in the headless tests) and a recording in progress
+stops.
 
-**Why it is not so today.** Everything live runs in `/output` (render loop,
-phone link, MIDI, audio, vision, recorder, latency probe; `engine.js`).
-`/control` only edits state and shows a ~10 fps readback (`preview.js`).
-Closing the output drops the phone, and `perform.js` covers the monitor with
-"Output window is closed".
-
-**Plan A (recommended): the engine moves between windows.**
-
-1. *One engine per browser.* Extend the existing `output-ping` / standby
-   handshake (`src/output/main.js`) into claim / release: `/control` hosts
-   an engine while no output claims it; an opening output claims it,
-   `/control` shuts its engine down (`link.shutdown()` frees the room code)
-   and confirms, then the output starts. When the output goes (`pagehide`,
-   or status silent for ~2 s), `/control` starts its engine again after a
-   grace period of about 1.5 s, so an output reload does not bounce it.
-2. *Engine in `/control`.* `new Engine(canvas, store, localBus)` on the
-   control page, sharing its `Store`. The engine talks over the bus
-   (`status`, `sources`, `preview`, `midi-learned` out; `control-alive`,
-   `midi`, `file`, `output` in) and BroadcastChannel never delivers to its
-   own window, so give it a local loopback: UI → engine and engine → UI
-   delivered in-page; do not loop store `op`s back (they would apply twice).
-3. *Monitor.* With the engine in `/control`, render straight into the
-   monitor canvas at full rate (one canvas; move it between Perform and Edit,
-   or copy it); with the output hosting, keep the readback. Remove the full
-   cover in `perform.js`.
-4. *Status.* "Output: off" becomes a calm top-bar item with an Open action;
-   it lights up only if an output in use drops unexpectedly. The status pills
-   already work from `status` messages, wherever the engine runs.
-5. *Moves with the engine:* recording (stops at a switch unless the owner
-   wants switches blocked while recording), MIDI, audio (needs a click on the
-   page that hosts it), vision, latency test (in `/control` it flashes the
-   monitor). `engine.js` has no output-only code; fullscreen and the idle
-   hint live in `src/output/main.js`.
-6. *Tests.* Most suites open an output window. Run the key ones in both
-   modes, and add: engine runs with no output; opening the output hands over
-   (phone reconnects, state kept, only one engine, room code kept); closing
-   it hands back; an output reload does not bounce.
-7. *Docs.* README (diagram, Setup, Running a show, What happens when things
-   go wrong) and the rules below: "`/output` owns everything live" becomes
-   "whichever window hosts the engine owns everything live; the output hosts
-   it when open".
-
-**Cost of A:** at each switch the phone reconnects (about 1–3 s, needs the
-pairing server), so open the output before the show. Once open, the output
-renders on its own, so covering, minimising or reloading `/control` cannot
-freeze the projector.
-
-**Plan B (not recommended):** the engine always in `/control`, the output
-window only mirrors it (like Resolume or VDMX). No reconnects, but Chrome
-pauses drawing in a minimised or fully covered window (macOS especially),
-so hiding `/control` mid-show would freeze the projector; reloading
-`/control` would stop the show; mirroring adds about a frame.
-
-**Not a rebuild.** Engine, effects, phone page, pairing and the control UI
-work and are tested; only window ownership changes.
+- **Who hosts** is decided in `src/control/host.js`; the header comment there
+  lists the states and the bus messages. In short: `/control` asks
+  `engine-who` on load and starts its own engine if nobody answers; an output
+  window claims with `output-ping` (the hosting `/control` stops and answers
+  `engine-released`); a host says `engine-gone` as its page closes; a quiet
+  host is probed with `engine-who` before it is taken for gone, because a
+  window Chrome has stopped drawing sends no status but still answers.
+- **One `Engine` object per page**, started and stopped (`engine.start()`,
+  `engine.stop()`), never rebuilt. A stopped engine holds no room code, no
+  devices and no recording, and ignores the store; `start()` takes everything
+  from the store again (`resync()`).
+- **The bus loops back** in `/control` (`createBus({ loopback: true })`), so
+  the engine and the UI talk in one window. Store traffic (`op`, `event`,
+  `hello`) is never looped back.
+- **The monitor** on `/control` is the engine's own canvas (`#stage`) while
+  it hosts, moved between the Perform and Edit screens; otherwise the small
+  readback (`canvas.readback`). In `/control` the engine renders at a fixed
+  1280×720.
+- **The phone learns the picture moved** from a `host` message carrying a
+  session id (new at every `engine.start()`), and calls again at once
+  (`onHostSession` in `src/phone/link.js`).
 
 ---
 
@@ -136,21 +115,33 @@ Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
 
 | Path | What lives there |
 | --- | --- |
-| `src/engine/` | Everything that runs in `/output`: the WebGL2 pipeline (`pipeline.js`), inputs, the host side of the phone link (`remote.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop |
-| `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js`, `edit.js` (+ `chain.js`, `mod-panel.js`), and the Setup panels. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts |
+| `src/engine/` | Everything live: the WebGL2 pipeline (`pipeline.js`), inputs, the host side of the phone link (`remote.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop. It runs in `/output` while an output window is open, otherwise in `/control` |
+| `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js`, `edit.js` (+ `chain.js`, `mod-panel.js`), and the Setup panels. `host.js` decides which window hosts the engine and owns the monitor canvas. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts |
 | `src/phone/` | The iPhone page: `main.js`, `link.js` (reconnect watchdog), `sensors.js`, `camera-controls.js` |
-| `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js`, `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `sources.js`, `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; `/output` forwards them to the phone) |
+| `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js`, `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `sources.js`, `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; the engine forwards them to the phone) |
 | `src/effects/` | One file per effect; `index.js` is the registry, `common.glsl.js` the shared GLSL |
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot) |
-| `tests/` | Nine headless suites and `lib.mjs` |
+| `tests/` | Eleven headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 
-- **`/output` owns everything live** (until the optional-output plan above is
-  built). Video, the phone connection, MIDI, audio and vision all run there.
-  `/control` only edits state and shows what the output reports, so it can
-  be reloaded mid-show.
+- **Whichever window hosts the engine owns everything live**: video, the
+  phone connection, MIDI, audio, vision, recording. The output window hosts
+  it when open, `/control` otherwise. Only one engine may run per browser:
+  two would fight over the room code. With the output open, `/control` only
+  edits state and shows what the output reports, so it can be reloaded
+  mid-show.
+- **Anything the engine listens for must work while it is stopped.** Guard
+  new store, bus and window listeners in `engine.js` with `this.running`,
+  and release new devices in `stop()`.
+- **A message between the engine and the control UI goes over the bus**, not
+  by direct call, so it works in both modes. A page never gets a storage
+  event for its own change: `/control` calls `ui.lookChanged()` for the
+  palette and dimmer.
+- **Close a PeerJS connection yourself before destroying its peer.**
+  `peer.destroy()` skips every other connection (it removes them from the
+  list it is looping over); `PhoneLink.destroy()` works around it.
 - **State changes are ops.** Go through `store.dispatch` / `merge` /
   `patchItem` / `setScene`; both windows apply the same op. A new top-level
   state key needs a default in `defaultState()` and a line in
@@ -158,7 +149,8 @@ Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
 - **A scene is what a preset stores**: `chain`, `mappings`, `lfos`, `macros`.
   Triggers (`actions`), tempo, network and device settings are global.
 - **Nothing is ever drawn on the output** except the picture (and the idle
-  hint before fullscreen). Status goes to `/control`.
+  hint before fullscreen). Status goes to `/control`. Nothing may cover the
+  monitor on `/control` either, except the operator's own "Monitor off".
 - **Nothing may be fetched from a third party at run time.** Fonts, the
   MediaPipe runtime and models are all served from the site.
 - **Keep `--ink` a plain colour.** The dimmer sets it from script
@@ -190,6 +182,12 @@ Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
   milliseconds apart and timers are throttled to about one a second. Tests
   must poll for a condition, never sleep and sample. Low fps readings in
   sandbox screenshots mean nothing.
+- **`outputStats()` in the tests reads the small readback**, which an engine
+  only renders for a control page in another window. To read it on
+  `/control` itself, set `engine.remoteControlSeenAt = Infinity` first.
+- **To stage statuses on `/control`** (`tests/layout.mjs`), close the output,
+  wait for `/control` to host, then `engine.stop()`; otherwise live status
+  replaces the staged one.
 - **This Chromium has no MIDI backend** (`requestMIDIAccess` never settles);
   the MIDI test stubs a device.
 - Deleting a remote branch and changing repository settings are not possible
@@ -213,11 +211,18 @@ Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
   later. Never explained (Low Power Mode is a guess).
 - MP4 recording holds most of the file back until recording stops.
 - One `control-ui` check ("it says what is wrong and what to try") is
-  timing-dependent and occasionally fails; it passes on a rerun.
+  timing-dependent and occasionally fails; it passes on a rerun. So does
+  "the output flashes black and white during the test" in `record-latency`.
+- In the sandbox a busy output can go quiet for two seconds, and `/control`
+  then shows "not drawing" for a moment. Not seen to matter; on a real Mac
+  it should only appear for a window that is really hidden.
 
 ### Never run on real hardware (all unconfirmed)
 
-Measure real latency against a projector (only the Mac's own screen so
+Running with no output window; the phone reconnecting when the output opens
+or closes, and how long it takes; a covered or minimised output being
+reported as not drawing; audio, MIDI and recording on `/control`. Measure
+real latency against a projector (only the Mac's own screen so
 far, H.264 only); whether H.264 beats VP8 / VP9; the corrected Latency
 estimate and the stray-flash note on the result line; the dimmer on the
 iPhone, live and from the QR link; Reload both pages after a real deploy;
@@ -228,7 +233,7 @@ phone's sensors and touch controls have not been reported on either way.
 
 ### Ideas raised and not started
 
-Optional output window (planned above); relay fallback; own pairing
+Relay fallback; own pairing
 server; a cue list beyond per-preset fade and order; tempo from the audio
 beat; a native wrapper for a true Syphon output; a MIDI mapping for the
 dimmer.
@@ -241,16 +246,10 @@ Read CLAUDE.md, then HANDOFF.md, then README.md before doing anything; the
 handoff says where things stand, the rules that are easy to break, how to
 work in the cloud sandbox, and the plan for this session.
 
-This session: make the output window optional, following "Plan: optional
-output window" in HANDOFF.md. My answers to its questions:
-- Plan: A (the engine moves between windows)   <- or B
-- A 1-3 s phone reconnect when the output opens or closes: OK   <- or not
-- A recording in progress at a switch: stop it   <- or block the switch
+This session: <say what you want done>.
 
-Before writing code, read src/engine/engine.js, src/output/main.js,
-src/control/main.js, src/control/perform.js, src/control/preview.js and
-src/shared/store.js and src/shared/bus.js, then tell me in a few lines how
-you will do it and what will change for me, and wait for my go.
+Before writing code, tell me in a few lines how you will do it and what will
+change for me, and wait for my go.
 
 Work on main and push to main. After each push, check that the "Build and
 deploy to GitHub Pages" run succeeded. Run the test suites that cover what

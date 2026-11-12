@@ -40,7 +40,7 @@ export function mountPhonePanel(root, ui) {
   const popQr = el('canvas', { width: 320, height: 320 });
   const popCode = el('div', { class: 'pop-code' });
   const popState = el('div', { class: 'small keep-6' });
-  // The connection as four steps, so a failure names the step it is at.
+  // The connection as five steps, so a failure names the step it is at.
   const popSteps = el('ol', { class: 'steps' });
   const popLink = el('div', { class: 'small dim', style: 'word-break:break-all' });
   const pop = el('div', { id: 'pairing-pop', hidden: true, role: 'dialog', 'aria-label': 'Pair the phone' }, [
@@ -109,7 +109,7 @@ export function mountPhonePanel(root, ui) {
     const net = store.state.net;
     codec.value = net.codec;
     // The phone opens in the same colours and dimmer as this page; once
-    // paired, /output keeps it in step.
+    // paired, the engine keeps it in step.
     const link_ = new URL(phoneUrl(net));
     if (currentPalette() !== 'darkroom') link_.searchParams.set('pal', currentPalette());
     if (currentDim() !== 100) link_.searchParams.set('dim', String(currentDim()));
@@ -143,7 +143,7 @@ export function mountPhonePanel(root, ui) {
   ui.onStatus((status) => {
     const p = status?.phone;
     let text;
-    if (!p) text = 'Open the output window first: it is what the phone connects to.';
+    if (!p) text = ui.host?.stalled ? 'The output window is not drawing. Bring it back into view.' : 'Starting…';
     else if (p.signal === 'error') text = p.error;
     else if (p.phone === 'connected') text = p.media === 'connected' ? 'Phone paired and streaming.' : 'Phone paired.';
     else if (p.signal === 'open') text = 'Ready. Scan the code with the iPhone camera.';
@@ -155,7 +155,7 @@ export function mountPhonePanel(root, ui) {
     const paired = p?.phone === 'connected';
     const video = paired && p.media === 'connected';
     const steps = [
-      ['Output window open', !!p, 'Open it: it is what the phone connects to.'],
+      [`Picture running${p ? (status.host?.role === 'output' ? ': in the output window' : ': on this page') : ''}`, !!p, 'Starting. If this stays, reload this page.'],
       ['Mac reached the pairing server', p?.signal === 'open' || paired, p?.signal === 'error' ? 'Room code taken elsewhere.' : 'No answer yet. The network may block it.'],
       ['Phone found the Mac', paired, 'Scan the code and tap START on the phone. If the phone says "Mac not found", the code is wrong or stale.'],
       [`Video link${video && p.route ? `: ${p.route}` : ''}`, video, p?.info?.controllerOnly ? 'The phone\'s camera is off (controller only).' : 'Phone and Mac cannot reach each other directly on this network.'],

@@ -1,4 +1,5 @@
-// /output: the fullscreen render. Nothing but the picture is ever drawn here;
+// /output: the fullscreen render, for a projector or second screen. While it
+// is open it hosts the engine. Nothing but the picture is ever drawn here;
 // all status goes to /control over the bus.
 
 import { createBus } from '../shared/bus.js';
@@ -13,11 +14,18 @@ const hint = document.getElementById('hint');
 
 const bus = createBus();
 
-// Only one output window per browser may run: two would fight over the room
-// code and the phone would end up talking to the wrong one. If one is already
-// running, this window stands by instead of starting.
+// One engine runs per browser, and an output window is where it belongs
+// while one is open (see src/control/host.js). Starting up, this window asks:
+//  - another output window is already running: it answers output-pong and
+//    this one stands by instead (two would fight over the room code and the
+//    phone would end up talking to the wrong one);
+//  - /control hosts the engine: it stops its own, which frees the room code,
+//    and answers engine-released;
+//  - nobody answers: start.
+const id = Math.random().toString(36).slice(2, 10);
 const alreadyRunning = await new Promise((resolve) => {
   bus.on('output-pong', () => resolve(true));
+  bus.on('engine-released', () => resolve(false));
   bus.send('output-ping');
   setTimeout(() => resolve(false), 400);
 });
@@ -33,10 +41,26 @@ if (alreadyRunning) {
   await new Promise(() => {}); // nothing below runs in a standby window
 }
 bus.on('output-ping', () => bus.send('output-pong'));
+bus.on('engine-who', () => bus.send('engine-here', { host: { role: 'output', id } }));
 
 const store = new Store(bus);
-const engine = new Engine(canvas, store, bus);
+const engine = new Engine(canvas, store, bus, { role: 'output', id });
 engine.start();
+
+// Going away (closed, reloaded, navigated): let go of the room code at once
+// and say so, so /control takes the picture back without waiting to notice.
+let gone = false;
+function leave(reload = false) {
+  if (gone) return;
+  gone = true;
+  engine.stop();
+  bus.send('engine-gone', { host: { role: 'output', id }, reload });
+}
+window.addEventListener('pagehide', () => leave());
+// A page brought back from the back/forward cache has a stopped engine.
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) location.reload();
+});
 
 // Debug / test handle.
 window.thirdEye = { engine, store, bus };
@@ -80,11 +104,16 @@ canvas.addEventListener('click', () => {
   if (!document.fullscreenElement) toggleFullscreen();
 });
 bus.on('output', (m) => {
-  if (m.cmd === 'reload') location.reload();
+  if (m.cmd === 'reload') {
+    // Tells /control this window is coming straight back, so it waits
+    // rather than starting its own engine in between.
+    leave(true);
+    location.reload();
+  }
   if (m.cmd === 'close') {
     // Let go of the room code at once, then go away. A window the user
     // opened by hand cannot close itself, so it is blanked instead.
-    engine.link.shutdown();
+    leave();
     window.close();
     setTimeout(() => location.replace('about:blank'), 150);
   }

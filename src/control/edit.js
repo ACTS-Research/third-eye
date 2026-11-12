@@ -65,9 +65,10 @@ export function mountEdit(root, ui) {
 
   const chainCol = el('div', { class: 'col', id: 'col-chain' });
   const sideCol = el('div', { class: 'col', id: 'col-edit-side' });
-  const canvas = el('canvas', { width: 480, height: 270 });
+  const canvas = el('canvas', { class: 'readback', width: 480, height: 270 });
   attachPreview(ui, canvas);
-  sideCol.append(el('div', { class: 'edit-monitor' }, [canvas]));
+  ui.monitors.edit = el('div', { class: 'edit-monitor' }, [canvas]);
+  sideCol.append(ui.monitors.edit);
 
   // ------------------------------------------------------ pinned faders ---
   const slots = el('div');

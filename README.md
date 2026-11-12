@@ -1,25 +1,35 @@
 # Third Eye Cam
 
 A live video instrument. An iPhone streams its camera over WebRTC to a Mac
-running Chrome, where a WebGL2 effects chain processes it and sends the result
-to a fullscreen window on a second display (projector or TV). The phone is
-also the controller: its motion sensors, an XY pad and four trigger buttons
-modulate the effects.
+running Chrome, where a WebGL2 effects chain processes it. The picture shows
+on the control page itself, and, when you open the output window, fullscreen
+on a second display (projector or TV). The phone is also the controller: its
+motion sensors, an XY pad and four trigger buttons modulate the effects.
 
-Built for live performance: the output window keeps rendering whatever else
-fails, and every failure is reported on the operator's screen only.
+Built for live performance: once the output window is open it keeps rendering
+whatever else fails, and every failure is reported on the operator's screen
+only.
 
 ```
  iPhone Safari (/phone)                     Mac Chrome
  ┌──────────────────────┐    WebRTC     ┌──────────────────────────────┐
- │ camera ──────────────┼──── video ───▶│ /output  (second display)    │
- │ tilt, shake, XY pad, │               │   input → effects → screen   │
- │ triggers ────────────┼─ data 60 Hz ─▶│   owns the render loop       │
- └──────────────────────┘               │        ▲ BroadcastChannel    │
-                                        │ /control (laptop screen)     │
-                                        │   chain, mappings, presets   │
+ │ camera ──────────────┼──── video ───▶│ the engine                   │
+ │ tilt, shake, XY pad, │               │   input → effects → picture  │
+ │ triggers ────────────┼─ data 60 Hz ─▶│                              │
+ └──────────────────────┘               │ runs in /output while an     │
+                                        │ output window is open        │
+                                        │   (second display)           │
+                                        │        ▲ BroadcastChannel    │
+                                        │ otherwise in /control        │
+                                        │   (laptop screen: chain,     │
+                                        │   mappings, presets, monitor)│
                                         └──────────────────────────────┘
 ```
+
+One engine runs per browser. It does everything live: the render loop, the
+phone link, MIDI, audio, vision and recording. With no output window it runs
+in `/control` and the monitor there is the picture. Opening the output window
+moves it there; closing that window moves it back.
 
 ## Contents
 
@@ -88,19 +98,26 @@ npm run preview
 
 | Screen | For |
 | --- | --- |
-| **Perform** | The show: panic buttons, input select, a monitor of the output, eight faders for the live preset, and the preset strip |
+| **Perform** | The show: panic buttons, input select, the monitor, eight faders for the live preset, and the preset strip |
 | **Edit** | One preset: its name, fade-in time, effects chain, pinned faders and modulation |
 | **Setup** | Everything done once beforehand: output window, inputs, pairing, MIDI, audio, vision, triggers, preset files |
 
-1. On the Mac open `/control` in Chrome and click **Open output window**. The
-   picture is rendered in that separate window, which is the one that goes to
-   the projector.
-2. Connect the projector. Under **Setup → Output**, click **Find displays**,
-   allow the prompt and pick the projector; the output window then opens on
-   it. Click the window once (or press `F`) to go fullscreen. Without the
-   permission, drag the window to the projector yourself and press `F`.
-3. Pair the phone ([below](#pairing-the-phone)) and press `1` to select it.
-4. Click a preset on the strip, or **Edit** one.
+1. On the Mac open `/control` in Chrome. That is enough to play: the picture
+   runs on the page and the monitor on the Perform screen shows it live. The
+   top bar reads `Output off`.
+2. Pair the phone ([below](#pairing-the-phone)) and press `1` to select it.
+3. Click a preset on the strip, or **Edit** one.
+4. For a projector or second screen, open the output window: click `Output
+   off` in the top bar, or **Setup → Output → Open output window**. Under
+   **Setup → Output**, **Find displays** lets you pick the projector first, so
+   the window opens on it. Click the window once (or press `F`) to go
+   fullscreen. Without the permission, drag the window to the projector
+   yourself and press `F`.
+
+**Open the output window before the show, not during it.** Opening or closing
+it moves the picture between the two windows: the phone reconnects by itself
+in a few seconds (it needs the pairing server for that), and a recording in
+progress stops.
 
 The coloured dot at the top right opens the interface palettes (red, amber,
 bone, lime, ice, magenta). All are a single ink on black so the laptop does
@@ -113,18 +130,29 @@ The output window shows only the picture. A small "click for fullscreen" hint
 appears while it is windowed and fades after four seconds; nothing is ever
 drawn over the picture in fullscreen.
 
-`/control` is only a remote control. You can reload or even close it during a
-show; `/output` keeps running with the current state and a reopened `/control`
-picks that state up. If `/output` itself is reloaded it restores the last
-state from local storage and the phone reconnects by itself.
+While the output window is open, `/control` is only a remote control. You
+can reload or even close it during a show; `/output` keeps running with the
+current state and a reopened `/control` picks that state up. If `/output`
+itself is reloaded it restores the last state from local storage and the phone
+reconnects by itself; `/control` waits for it rather than taking the picture
+over in between.
+
+With no output window, `/control` is the show: reloading it restarts the
+picture and the phone reconnects, and a `/control` tab that is minimised or
+hidden behind another tab stops drawing.
 
 Keep the output window visible. Chrome stops drawing windows that are
-minimised or completely covered.
+minimised or completely covered; `/control` then says the output is not
+drawing.
+
+Two `/control` tabs can be open at once. Only one hosts the picture; the
+other shows a small copy of it.
 
 ## Pairing the phone
 
-1. With the output window open, **Setup → Phone** on `/control` shows a QR
-   code and a five-character room code.
+1. **Setup → Phone** on `/control` shows a QR code and a five-character room
+   code. (So does a click on the phone status in the top bar.) The output
+   window does not need to be open.
 2. Point the iPhone's camera app at the QR code and open the link in Safari,
    or open `/phone` by hand and type the room code.
 3. Tap **START**. iOS asks for the camera, then for motion and orientation
@@ -134,8 +162,8 @@ minimised or completely covered.
 
 If it does not get that far, click the phone status in the top bar of
 `/control`. The pop-over shows the QR code and room code again, and lists the
-connection as five steps (output open, pairing server reached, phone found,
-video link, picture arriving) with the one it is stuck at marked. It also has
+connection as five steps (picture running, pairing server reached, phone
+found, video link, picture arriving) with the one it is stuck at marked. It also has
 **Restart output** and **New room code**.
 
 On the phone:
@@ -338,7 +366,8 @@ when it is pushed up, dark stripes cut into the fill when it is pulled down.
 ## MIDI, audio and vision
 
 All three are off until enabled, and all permission prompts appear on
-`/control`, never on the projector.
+`/control`, never on the projector. They run wherever the picture runs, and
+move with it when the output window opens or closes.
 
 **MIDI.** Click **MIDI map** at the top right (or press `M`). Every control
 that can be mapped is outlined:
@@ -360,8 +389,9 @@ not been touched since the page loaded leaves its parameter alone.
 **Audio.** Under **Setup**, **Enable audio**, choose the input, and set **Input gain** so the
 level meter moves without sitting at maximum. **Beat threshold** is how far
 above the recent average a hit must rise to count. If `/control` says audio
-analysis is waiting, click the output window once: Chrome only starts audio
-processing in a window that has been clicked.
+analysis is waiting, click the output window once (the message says which
+window): Chrome only starts audio processing in a window that has been
+clicked.
 
 **Vision (MediaPipe).** Under **Setup**, five independent features, each off by default
 because each costs GPU and CPU time:
@@ -391,16 +421,19 @@ a passing state (a stall, a recovering graphics context) remove themselves.
 
 | Event | Behaviour |
 | --- | --- |
-| Phone stream stalls or drops | Output holds the last frame. `/control` shows a red alert. Phone and Mac each retry on their own until the stream is back |
+| Phone stream stalls or drops | The picture holds the last frame. `/control` shows a red alert. Phone and Mac each retry on their own until the stream is back |
 | Phone camera flips or restarts | Last frame is held; no black flash |
 | Safari goes to the background | `/control` alert while hidden; red warning on the phone when it returns; stream resumes |
 | Pairing server unreachable | A paired phone keeps streaming. Both sides keep retrying; the top bar says so |
 | Room code taken by something else | The output moves to a new code after three tries and `/control` says to scan again, with the QR code a click away; the strip goes once the phone pairs |
+| The output window is closed | The picture returns to `/control` after about two seconds; the phone reconnects by itself. The top bar reads `Output off`; no alert |
+| The output window crashes or is killed | The same, and `/control` says the output stopped without warning, with **Open output window** on the strip |
+| The output window is minimised or covered | Chrome stops drawing it. `/control` says the output is not drawing and leaves the picture with it; bring the window back into view |
 | A second output window is opened | It stays idle with a message; the running one is untouched |
 | Not sure which window has the phone | **Restart output** closes every output window in this browser and opens one fresh one |
 | A newer version of the app was deployed | `/control` says so, and warns if the output window is on a different version. **Reload both pages** reloads the output in place (it stays on its display but leaves fullscreen) and then `/control` |
-| `/control` reloaded or closed | `/output` unaffected |
-| `/output` reloaded | Restores the last state; the phone reconnects by itself |
+| `/control` reloaded or closed | With the output window open: `/output` unaffected. With none: the picture restarts with the page and the phone reconnects |
+| `/output` reloaded | Restores the last state; the phone reconnects by itself. `/control` waits for it |
 | Internet drops, then a page is reloaded | The page loads from the browser's stored copy. Pairing a phone again still needs the signaling server |
 | Local camera unplugged | Last frame held; reopened automatically when it returns |
 | Graphics context lost | Pipeline is rebuilt in place; the phone link stays up |
@@ -450,14 +483,19 @@ modulated.
 - `uses: { history: { frames, maxWidth } }` gives a ring buffer of past input
   frames as `uHistory` (see `delay.js`).
 
-A shader that fails to compile is reported in the output window's console
-and that effect is skipped; the rest of the chain keeps running.
+A shader that fails to compile is reported in the console of the window
+drawing the picture and that effect is skipped; the rest of the chain keeps
+running.
 
 ## Recording
 
 **REC** in the top bar (or `R`, or a MIDI pad mapped to it) records exactly
 what the output shows, at the output's size, with the audio input if that is
 switched on. The button shows elapsed time and file size while it runs.
+
+With no output window the picture is rendered, and recorded, at 1280×720
+whatever the size of the monitor on the page. Opening or closing the output
+window stops a recording; what was recorded up to then is kept.
 
 Recordings are written inside the browser's own storage as they are made, so
 nothing is held in memory and nothing needs choosing mid-show. Afterwards,
@@ -470,8 +508,9 @@ loses at most the last second; **MP4** opens in more players but Chrome writes
 it in large pieces, so more is at risk if the browser dies. WebM plays in
 Chrome and VLC, not in QuickTime.
 
-Recording costs GPU and CPU. Check that **Output** in the top bar still reads
-60 fps while it runs; if not, lower **Setup → Output** resolution.
+Recording costs GPU and CPU. Check that the first readout in the top bar
+(`Output 60 fps`, or `Output off · 60 fps`) still reads 60 fps while it runs;
+if not, lower **Setup → Output** resolution.
 
 ## Latency
 
@@ -493,7 +532,9 @@ the output goes black and flashes white five times, and the Mac times how
 long each flash takes to come back through the camera. The result is the
 whole loop the audience sees (projector, camera, phone, network, Mac), which
 the **Latency** line above it can only estimate. Run it before the show, not
-during: it takes over the output for about ten seconds.
+during: it takes over the output for about ten seconds. With no output window
+it flashes the monitor on the Perform screen instead; that measures the
+laptop's screen, not a projector.
 
 The result is the median of the five flashes. A flash that comes back far
 later than the others (a camera hiccup or a frozen frame) is named as a
@@ -573,9 +614,11 @@ npm test
 
 | File | Covers |
 | --- | --- |
-| `tests/smoke.mjs` | Pipeline, control ↔ output sync, keys, resize, reloads, lost GL context |
+| `tests/smoke.mjs` | Pipeline with no output window and with one, control ↔ output sync, keys, resize, reloads, lost GL context in either window, a video file following the picture back to `/control` |
+| `tests/handover.mjs` | The optional output window, with real WebRTC: `/control` renders alone and the phone pairs with it; opening the output hands over (state and room code kept, recording stopped, one engine only, phone reconnects); an output reload does not bounce; an output that stops drawing is not taken for gone; closing it hands back; one that vanishes raises the alert |
+| `tests/standalone.mjs` | With no output window at all: recording, the latency measurement, audio, MIDI and MIDI map, palette and dimmer reaching the phone; opening an output releases the microphone and MIDI |
 | `tests/layout.mjs` | No overlaps at six window widths on every screen; the fader column (names whole, nothing overlapping) for every factory preset at five window sizes; nothing moves when the information changes; alert strips (fix buttons, ×, closing and returning); the palette pop-over |
-| `tests/control-ui.mjs` | The three screens, palettes and the dimmer (and that the phone page is really inked), perform faders and the modulation band, preset editing, fades, reordering, the pop-out output, Reload both pages |
+| `tests/control-ui.mjs` | The three screens, the live monitor and the `Output off` readout that opens the output, palettes and the dimmer (and that the phone page is really inked), perform faders and the modulation band, preset editing, fades, reordering, the pop-out output, Reload both pages |
 | `tests/offline.mjs` | Reloading every page with the server gone; tap tempo and tempo-synced LFOs |
 | `tests/phone.mjs` | Real WebRTC against a local PeerServer: pairing, live video, palette and dimmer following live, the room-code strip clearing once the phone pairs, hold on stall, every reconnect path, a second output window, a taken room code, Restart output, local camera |
 | `tests/record-latency.mjs` | Recording to WebM and MP4, saving and deleting; the latency measurement, including a stray late flash; switching codec |
@@ -596,6 +639,11 @@ the Mac and the phone both on the shop's Wi-Fi do not.
 **Only in headless Chromium**, with a fake camera and microphone: everything
 else. Check these the first time you use them:
 
+- **Running with no output window, and moving the picture** by opening and
+  closing it: that the iPhone reconnects by itself each time and how long it
+  takes (1.5–2.5 s in the tests), that the monitor on `/control` holds 60 fps,
+  and that a covered or minimised output is reported as not drawing rather
+  than taken over.
 - **Measure real latency** through a projector, and with VP8 or VP9. It
   has only been run against the Mac's screen, with H.264.
 - Recordings longer than a few seconds.

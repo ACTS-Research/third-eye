@@ -1,5 +1,5 @@
-// Host side of the phone link. /output registers with the signaling server
-// under an id derived from the room code and waits. The phone calls in with
+// Host side of the phone link. The page hosting the engine registers with the
+// signaling server under an id derived from the room code and waits. The phone calls in with
 // its camera (a PeerJS media connection) and opens a data connection.
 //
 // A watchdog owns all recovery: whatever breaks, the next tick repairs it.
@@ -13,6 +13,9 @@ import { preferCodec } from '../shared/sdp.js';
 const TICK_MS = 1000;
 const PHONE_TIMEOUT_MS = 4000;
 const CONNECT_TIMEOUT_MS = 15000;
+// How long after a start "room code taken" is put down to the window that
+// just handed over, and simply tried again.
+const HANDOVER_MS = 4000;
 
 export class PhoneLink {
   constructor(feed, getNet, onMessage) {
@@ -37,8 +40,9 @@ export class PhoneLink {
     this.key = '';
     this.onData = null; // a data connection arrived (not yet open)
     this.onOpenData = null;
+    // Nothing is registered until resume(): the engine decides when.
+    this.stopped = true;
     setInterval(() => this.tick(), TICK_MS);
-    this.open();
   }
 
   open() {
@@ -79,18 +83,21 @@ export class PhoneLink {
     peer.on('error', (err) => {
       if (peer !== this.peer) return;
       if (err.type === 'unavailable-id') {
+        if (performance.now() - this.resumedAt < HANDOVER_MS) {
+          this.handoverRetry = true;
+          return;
+        }
         this.taken = true;
         this.takenCount = (this.takenCount ?? 0) + 1;
-        // No other output in this browser holds it (that one would have made
-        // this window stand by), so it is a stale registration or another
-        // computer. Waiting rarely helps: move to a fresh code.
+        // No other window in this browser holds it (only one hosts the
+        // engine), so it is a stale registration or another computer. Waiting rarely helps: move to a fresh code.
         if (this.takenCount >= 3) {
           this.takenCount = 0;
           this.onRoomTaken?.();
           return;
         }
         this.signal = 'error';
-        this.error = 'This room code is held by another output window. The phone is talking to that one, not this one. Checking again; if it stays taken a new room code is made automatically.';
+        this.error = 'This room code is held by another window or computer. The phone is talking to that one, not this one. Checking again; if it stays taken a new room code is made automatically.';
       } else if (err.type !== 'peer-unavailable') {
         this.error = err.type ?? String(err);
       }
@@ -104,10 +111,26 @@ export class PhoneLink {
   }
 
   destroy() {
-    const peer = this.peer;
+    const { peer, call, conn } = this;
     this.peer = null;
     this.call = null;
     this.conn = null;
+    // Closed by hand first: PeerJS skips every other connection of a peer
+    // when it is destroyed, which would leave the video call open and still
+    // decoding in a window that no longer shows it.
+    for (const c of [call, conn]) {
+      const pc = c?.peerConnection;
+      try {
+        c?.close();
+      } catch {
+        /* already closed */
+      }
+      try {
+        pc?.close();
+      } catch {
+        /* already closed */
+      }
+    }
     try {
       peer?.destroy();
     } catch {
@@ -115,10 +138,30 @@ export class PhoneLink {
     }
   }
 
-  // Stops for good: releases the room code and never reconnects.
+  // Releases the room code and stays away until resume().
   shutdown() {
     this.stopped = true;
     this.destroy();
+    this.signal = 'connecting';
+    this.error = '';
+    this.phoneInfo = null;
+    this.hold = false;
+    this.stats = {};
+    this.prevStats = null;
+  }
+
+  // Registers (again) under the room code. A code another window of this
+  // browser held until a moment ago can still read as taken for an instant,
+  // so the first attempts after a start retry quickly and do not count
+  // towards moving to a new code.
+  resume() {
+    if (!this.stopped) return;
+    this.stopped = false;
+    this.taken = false;
+    this.takenCount = 0;
+    this.failures = 0;
+    this.resumedAt = performance.now();
+    this.open();
   }
 
   // Called when the room code or signaling server changes.
@@ -198,7 +241,10 @@ export class PhoneLink {
     const now = performance.now();
     const peer = this.peer;
     if (!peer || peer.destroyed) {
-      if (now - this.openedAt > 3000) this.open();
+      if (now - this.openedAt > (this.handoverRetry ? 400 : 3000)) {
+        this.handoverRetry = false;
+        this.open();
+      }
       return;
     }
     // Some networks swallow the connection without refusing it: no error ever

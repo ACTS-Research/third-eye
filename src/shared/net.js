@@ -1,6 +1,6 @@
 // Pairing and signaling configuration shared by all three pages.
 //
-// The room code names the PeerJS id of the output window. `signal` is the URL
+// The room code names the PeerJS id of the window hosting the engine. `signal` is the URL
 // of a self-hosted PeerServer (for example wss://192.168.1.10:9000/); empty
 // means the public PeerJS cloud. Media never goes through either: only the
 // connection handshake does.

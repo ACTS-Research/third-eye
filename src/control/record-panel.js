@@ -1,5 +1,5 @@
 // Recording: the REC button in the top bar, and the list of finished
-// recordings on the setup screen. /output writes the files into the browser's
+// recordings on the setup screen. The engine writes the files into the browser's
 // private storage; from here they are saved to disk or deleted.
 
 import { runAction } from '../shared/actions.js';
@@ -98,7 +98,7 @@ export function mountRecordPanel(root, ui) {
       el('div', { class: 'row' }, [el('span', { class: 'caps', text: 'Format' }), format, el('button', { text: 'Refresh', onclick: refresh })]),
       list,
       note,
-      el('div', { class: 'dim small', text: 'Records exactly what the output shows, at the output size, with the audio input if it is on. Recording uses extra GPU and CPU: check that Output still reads 60 fps.' }),
+      el('div', { class: 'dim small', text: 'Records exactly what the output shows, at the output size (1280×720 while no output window is open), with the audio input if it is on. Opening or closing the output window stops a recording. Recording uses extra GPU and CPU: check that Output still reads 60 fps.' }),
     ]),
   );
   refresh();
