@@ -2,7 +2,7 @@
 
 import qrcode from 'qrcode-generator';
 import { normalizeRoom, phoneUrl, randomRoom } from '../shared/net.js';
-import { currentPalette } from '../shared/palette.js';
+import { currentDim, currentPalette } from '../shared/palette.js';
 import { CODECS } from '../shared/sdp.js';
 import { el } from '../shared/util.js';
 
@@ -108,9 +108,11 @@ export function mountPhonePanel(root, ui) {
   const sync = () => {
     const net = store.state.net;
     codec.value = net.codec;
-    // The phone opens in the same colours as this page.
+    // The phone opens in the same colours and dimmer as this page; once
+    // paired, /output keeps it in step.
     const link_ = new URL(phoneUrl(net));
     if (currentPalette() !== 'darkroom') link_.searchParams.set('pal', currentPalette());
+    if (currentDim() !== 100) link_.searchParams.set('dim', String(currentDim()));
     const url = link_.href;
     qr.width = 320;
     drawQr(qr, url);

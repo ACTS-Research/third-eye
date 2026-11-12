@@ -60,6 +60,18 @@ try {
   check('media is direct, not relayed', s.phone.route !== 'relayed', s.phone.route);
   check('output shows the phone picture', (await outputStats(output)).mean > 5);
   check('phone shows LIVE', (await phone.locator('#state').textContent()).startsWith('LIVE'));
+  // Palette and dimmer changed on the Mac reach a paired phone without a rescan.
+  const look = () => phone.evaluate(() => `${document.documentElement.dataset.palette ?? 'darkroom'} ${document.documentElement.style.getPropertyValue('--dim') || '100%'}`);
+  await control.evaluate(() => {
+    localStorage.setItem('thirdeye.palette', 'ice');
+    localStorage.setItem('thirdeye.dim', '40');
+  });
+  check('the phone follows the palette and dimmer live', await waitFor(async () => (await look()) === 'ice 40%', { label: 'look', timeout: 8000 }).then(() => true, () => false), await look());
+  await control.evaluate(() => {
+    localStorage.setItem('thirdeye.palette', 'darkroom');
+    localStorage.setItem('thirdeye.dim', '100');
+  });
+  check('and back', await waitFor(async () => (await look()) === 'darkroom 100%', { label: 'look back', timeout: 8000 }).then(() => true, () => false), await look());
 
   await control.locator('#pills .pill').nth(2).click();
   const stepText = await control.locator('#pairing-pop .steps').textContent();

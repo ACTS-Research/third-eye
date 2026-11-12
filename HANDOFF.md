@@ -59,7 +59,7 @@ Three static pages built by Vite, no framework. About 7,800 lines in `src/`.
 | `src/engine/` | Everything that runs in `/output`: the WebGL2 pipeline (`pipeline.js`), inputs, the host side of the phone link (`remote.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop |
 | `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js`, `edit.js` (+ `chain.js`, `mod-panel.js`), and the Setup panels. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts |
 | `src/phone/` | The iPhone page: `main.js`, `link.js` (reconnect watchdog), `sensors.js`, `camera-controls.js` |
-| `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js`, `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `sources.js`, `palette.js` + `theme.css` |
+| `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js`, `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `sources.js`, `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; `/output` forwards them to the phone) |
 | `src/effects/` | One file per effect; `index.js` is the registry, `common.glsl.js` the shared GLSL |
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot) |
@@ -128,7 +128,7 @@ Three static pages built by Vite, no framework. About 7,800 lines in `src/`.
 ### Never run on real hardware (all unconfirmed)
 
 Measure real latency against a projector (only the Mac's own screen so
-far, H.264 only); whether H.264 beats VP8 / VP9; the corrected Latency
+far, H.264 only); the dimmer on the iPhone, live and from the QR link; whether H.264 beats VP8 / VP9; the corrected Latency
 estimate and the stray-flash note on the result line;
 recordings longer than a few seconds; MIDI map with a physical controller;
 fullscreen placement on a second display; MediaPipe on the Mac's GPU; the

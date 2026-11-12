@@ -104,7 +104,10 @@ npm run preview
 
 The coloured dot at the top right opens the interface palettes (red, amber,
 bone, lime, ice, magenta). All are a single ink on black so the laptop does
-not light the stage; the phone opens in the same palette.
+not light the stage. The **Dim** strip under them turns the whole page down,
+from full to a quarter of the light: drag it, use the arrow keys, or
+double-click for full. The phone opens in the same palette and dimmer, and
+follows any change while it is paired.
 
 The output window shows only the picture. A small "click for fullscreen" hint
 appears while it is windowed and fades after four seconds; nothing is ever
@@ -562,9 +565,9 @@ npm test
 | --- | --- |
 | `tests/smoke.mjs` | Pipeline, control ↔ output sync, keys, resize, reloads, lost GL context |
 | `tests/layout.mjs` | No overlaps at six window widths on every screen; nothing moves when the information changes; the palette pop-over |
-| `tests/control-ui.mjs` | The three screens, palettes, perform faders, preset editing, fades, reordering, the pop-out output |
+| `tests/control-ui.mjs` | The three screens, palettes and the dimmer, perform faders, preset editing, fades, reordering, the pop-out output |
 | `tests/offline.mjs` | Reloading every page with the server gone; tap tempo and tempo-synced LFOs |
-| `tests/phone.mjs` | Real WebRTC against a local PeerServer: pairing, live video, hold on stall, every reconnect path, a second output window, a taken room code, Restart output, local camera |
+| `tests/phone.mjs` | Real WebRTC against a local PeerServer: pairing, live video, palette and dimmer following live, hold on stall, every reconnect path, a second output window, a taken room code, Restart output, local camera |
 | `tests/record-latency.mjs` | Recording to WebM and MP4, saving and deleting; the latency measurement; switching codec |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |

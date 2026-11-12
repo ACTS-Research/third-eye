@@ -5,7 +5,8 @@
 // Three screens: Perform (the show), Edit (one preset), Setup (everything
 // you do once before the show).
 
-import { PALETTES, applyPalette, restorePalette } from '../shared/palette.js';
+import { PALETTES, applyDim, applyPalette, currentDim, restorePalette } from '../shared/palette.js';
+import { DIM_MIN } from '../shared/look.js';
 import './control.css';
 import { createBus } from '../shared/bus.js';
 import { installKeys } from '../shared/keys.js';
@@ -123,6 +124,55 @@ const paletteDot = el('button', { title: 'Colour palette', 'aria-label': 'Colour
 const paletteMenu = el('div', { id: 'palette-menu', role: 'menu', hidden: true });
 paletteHost.append(paletteDot);
 document.body.append(paletteMenu);
+// Dimmer: a strip under the palettes that works as a sideways fader. Left
+// end is 25 % of the light, right end full. Double-click for full.
+const dimFill = el('div', { class: 'fill' });
+const dimText = () => [el('span', { text: 'Dim' }), el('span', { class: 'value' })];
+const dimBack = el('div', { class: 'label' }, dimText());
+const dimFront = el('div', { class: 'label on' }, dimText());
+const dimmer = el('div', {
+  id: 'dimmer',
+  role: 'slider',
+  tabindex: '0',
+  'aria-label': 'Dim the control page and the phone',
+  'aria-valuemin': String(DIM_MIN),
+  'aria-valuemax': '100',
+  title: 'Drag to dim this page and the phone. Double-click for full brightness.',
+}, [dimFill, dimBack, dimFront]);
+function drawDim(dim) {
+  const frac = `${((dim - DIM_MIN) / (100 - DIM_MIN)) * 100}%`;
+  dimFill.style.width = frac;
+  dimFront.style.clipPath = `inset(0 calc(100% - ${frac}) 0 0)`;
+  for (const v of dimmer.querySelectorAll('.value')) v.textContent = `${dim}%`;
+  dimmer.setAttribute('aria-valuenow', String(dim));
+}
+function setDim(value, done = false) {
+  drawDim(applyDim(value));
+  if (done) for (const fn of ui.paletteListeners) fn();
+}
+const dimAt = (e) => {
+  const r = dimmer.getBoundingClientRect();
+  return DIM_MIN + Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * (100 - DIM_MIN);
+};
+dimmer.addEventListener('pointerdown', (e) => {
+  dimmer.setPointerCapture(e.pointerId);
+  setDim(dimAt(e));
+});
+dimmer.addEventListener('pointermove', (e) => {
+  if (dimmer.hasPointerCapture(e.pointerId)) setDim(dimAt(e));
+});
+dimmer.addEventListener('pointerup', (e) => setDim(dimAt(e), true));
+dimmer.addEventListener('dblclick', () => setDim(100, true));
+dimmer.addEventListener('keydown', (e) => {
+  const step = { ArrowLeft: -5, ArrowDown: -5, ArrowRight: 5, ArrowUp: 5 }[e.key];
+  if (step) {
+    e.preventDefault();
+    setDim(currentDim() + step, true);
+  } else if (e.key === 'Home' || e.key === 'End') {
+    e.preventDefault();
+    setDim(e.key === 'Home' ? DIM_MIN : 100, true);
+  }
+});
 function drawPalette(active) {
   paletteMenu.replaceChildren(
     ...Object.entries(PALETTES).map(([key, p]) =>
@@ -137,6 +187,7 @@ function drawPalette(active) {
         },
       }, [el('i', { style: `background:${p.ink}` }), p.label]),
     ),
+    dimmer,
   );
 }
 paletteDot.addEventListener('click', () => {
@@ -152,6 +203,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') paletteMenu.hidden = true;
 });
 drawPalette(restorePalette());
+drawDim(currentDim());
 
 installKeys(store, {
   e: () => ui.setView(ui.view === 'edit' ? 'perform' : 'edit'),

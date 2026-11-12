@@ -1,7 +1,7 @@
 // /phone: the iPhone sender. Streams the camera to the Mac and (from Phase 3)
 // acts as a motion and touch controller.
 
-import { applyPalette } from '../shared/palette.js';
+import { applyDim, applyPalette } from '../shared/palette.js';
 import './phone.css';
 import { DEFAULT_QUALITY, QUALITY, normalizeRoom, parsePhoneParams } from '../shared/net.js';
 import { el, readJSON, writeJSON } from '../shared/util.js';
@@ -15,8 +15,10 @@ const $ = (id) => document.getElementById(id);
 const PREFS_KEY = 'thirdeye.phone.v1';
 
 const params = parsePhoneParams();
-// The pairing link carries the palette chosen on the Mac.
+// The pairing link carries the palette and dimmer chosen on the Mac; once
+// paired, the Mac sends any change.
 applyPalette(new URLSearchParams(location.search).get('pal'), { save: false });
+applyDim(new URLSearchParams(location.search).get('dim'), { save: false });
 const prefs = { quality: DEFAULT_QUALITY, facing: 'environment', ...readJSON(PREFS_KEY, {}) };
 if (!QUALITY[prefs.quality]) prefs.quality = DEFAULT_QUALITY;
 
@@ -92,6 +94,10 @@ async function start() {
     onDataOpen: sendInfo,
     onMessage: (msg) => {
       if (msg.t === 'labels') sensors.setTriggerLabels(msg.triggers ?? []);
+      else if (msg.t === 'look') {
+        applyPalette(msg.palette, { save: false });
+        applyDim(msg.dim, { save: false });
+      }
     },
   });
   setInterval(() => app.link.sendSensors(sensors.next()), 1000 / SENSOR_HZ);

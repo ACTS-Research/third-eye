@@ -11,6 +11,7 @@ import { randomRoom } from '../shared/net.js';
 import { TRIGGER_COUNT } from '../shared/protocol.js';
 import { InputManager } from './inputs.js';
 import { LatencyProbe } from './latency-probe.js';
+import { LOOK_KEYS, readLook } from '../shared/look.js';
 import { Recorder } from './recorder.js';
 import { Modulation } from './modulation.js';
 import { PhoneSensors } from './phone-sensors.js';
@@ -67,7 +68,13 @@ export class Engine {
     this.link.onOpenData = () => {
       this.sendTriggerLabels();
       this.link.send({ t: 'config', codec: this.store.state.net.codec });
+      this.link.send({ t: 'look', ...readLook() });
     };
+    // Palette and dimmer are set on /control and kept in this browser's
+    // storage; a change there fires here, and the phone follows.
+    window.addEventListener('storage', (e) => {
+      if (e.key === LOOK_KEYS.palette || e.key === LOOK_KEYS.dim) this.link.send({ t: 'look', ...readLook() });
+    });
     this.link.getCodec = () => this.store.state.net.codec;
     this.link.onRoomTaken = () => {
       const old = this.store.state.net.room;

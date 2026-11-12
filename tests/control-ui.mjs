@@ -61,7 +61,7 @@ try {
   await control.click('#pairing-pop >> text=Close');
 
   console.log('palettes');
-  const ink = () => control.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ink').trim());
+  const ink = () => control.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ink-full').trim());
   const red = await ink();
   await control.click('#palette > button');
   await control.click('#palette-menu button[aria-label="Palette: Amber"]');
@@ -75,6 +75,36 @@ try {
   check('the palette is remembered', await settle(async () => (await ink()) === '#ffb347', 'palette restored'));
   await control.click('#palette > button');
   await control.click('#palette-menu button[aria-label="Palette: Darkroom red"]');
+
+  console.log('dimmer');
+  const dot = () => control.evaluate(() => getComputedStyle(document.querySelector('#palette > button')).backgroundColor);
+  const full = await dot();
+  await control.click('#palette > button');
+  const strip = control.locator('#dimmer');
+  check('the dimmer sits under the palettes and reads 100 %', (await strip.isVisible()) && (await strip.getAttribute('aria-valuenow')) === '100' && (await strip.textContent()).includes('100%'));
+  const stripBox = await strip.boundingBox();
+  await control.mouse.move(stripBox.x + stripBox.width * 0.6, stripBox.y + stripBox.height / 2);
+  await control.mouse.down();
+  await control.mouse.move(stripBox.x - 40, stripBox.y + stripBox.height / 2, { steps: 4 });
+  await control.mouse.up();
+  check('dragging past the left end stops at 25 %', (await strip.getAttribute('aria-valuenow')) === '25', await strip.getAttribute('aria-valuenow'));
+  check('the menu stays open while dimming', await control.locator('#palette-menu').isVisible());
+  check('the page dims', (await dot()) !== full, `${full} -> ${await dot()}`);
+  check('the pairing link carries the dimmer', (await control.locator('#phone-link').getAttribute('href')).includes('dim=25'));
+  const dimPhone = await context.newPage();
+  await dimPhone.goto(await control.locator('#phone-link').getAttribute('href'));
+  check('the phone page opens dimmed', (await dimPhone.evaluate(() => document.documentElement.style.getPropertyValue('--dim'))) === '25%');
+  await dimPhone.close();
+  await control.reload();
+  check('the dimmer is remembered', await settle(async () => (await control.locator('#dimmer').getAttribute('aria-valuenow')) === '25', 'dim restored'));
+  await control.click('#palette > button');
+  await control.locator('#dimmer').focus();
+  await control.keyboard.press('ArrowRight');
+  check('arrow keys step it by 5', (await control.locator('#dimmer').getAttribute('aria-valuenow')) === '30');
+  await control.locator('#dimmer').dblclick();
+  check('double-click returns to full', (await control.locator('#dimmer').getAttribute('aria-valuenow')) === '100' && (await dot()) === full);
+  check('at full the link carries no dimmer', !(await control.locator('#phone-link').getAttribute('href')).includes('dim='));
+  await control.keyboard.press('Escape');
 
   console.log('presets: load, fade, edit');
   check('factory presets on the strip', (await names()).length === 9, (await names()).join(', '));
