@@ -143,6 +143,20 @@ try {
   console.log('perform faders');
   const faderCount = await control.locator('.fader').count();
   check('faders show the first parameters of the chain', faderCount === 7 && (await control.locator('.fader .name').first().textContent()) === 'zoom', `${faderCount} faders`);
+  // A modulated fader shows a hatched band from its setting to the live value.
+  const band = await waitFor(() => control.evaluate(() => {
+    for (const f of document.querySelectorAll('.fader')) {
+      const live = f.querySelector('.live');
+      if (live.hidden) continue;
+      const fill = f.querySelector('.fill').getBoundingClientRect();
+      const r = live.getBoundingClientRect();
+      const dir = live.classList.contains('up') ? 'up' : live.classList.contains('down') ? 'down' : '';
+      const edge = dir === 'up' ? r.bottom : r.top; // the band's end that should sit on the top of the fill
+      return { name: f.querySelector('.name').textContent, dir, h: r.height, gap: Math.abs(edge - fill.top) };
+    }
+    return null;
+  }), { label: 'modulation band', timeout: 15000 }).catch(() => null);
+  check('a modulated fader shows a band from its setting to the live value', !!band && band.dir && band.h > 0 && band.gap < 2, JSON.stringify(band));
   const track = await control.locator('.fader .track').first().boundingBox();
   await control.mouse.move(track.x + track.width / 2, track.y + track.height * 0.5);
   await control.mouse.down();

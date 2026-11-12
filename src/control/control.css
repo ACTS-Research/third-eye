@@ -131,7 +131,9 @@ main { flex: 1; min-height: 0; }
 .fader .track { flex: 1; width: 100%; min-height: 70px; border: 1px solid var(--ink); position: relative; }
 .fader .fill { position: absolute; left: 0; right: 0; bottom: 0; background: var(--ink); }
 /* Where modulation has the parameter right now. */
-.fader .live { position: absolute; left: -4px; right: -4px; border-top: 2px dashed #fff; mix-blend-mode: difference; pointer-events: none; }
+.fader .live { position: absolute; left: 0; right: 0; pointer-events: none; }
+.fader .live.up { background: repeating-linear-gradient(135deg, var(--ink) 0 2px, transparent 2px 6px); border-top: 2px solid var(--ink); }
+.fader .live.down { background: repeating-linear-gradient(135deg, var(--bg) 0 2px, transparent 2px 6px); border-bottom: 2px solid var(--bg); }
 .fader .val { font: 700 24px/1 var(--display); font-variant-numeric: tabular-nums; }
 .fader .name { font: 700 12px/1.1 var(--display); letter-spacing: 0.03em; width: 100%; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: uppercase; }
 .mini { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }

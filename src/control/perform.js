@@ -176,14 +176,22 @@ export function mountPerform(root, ui) {
         meter.fill.style.width = `${Math.max(0, Math.min(1, value)) * 100}%`;
       }
     }
-    // Dashed line: where modulation has each fader's parameter right now.
+    // Hatched band from the fader's setting to where modulation has the
+    // parameter right now: ink stripes above the fill, dark ones cut into it.
     const macros = resolveMacros(store.state);
     for (const f of faders) {
       const level = m.macros?.[f.i];
       const macro = macros[f.i];
-      const moved = level !== null && level !== undefined && macro && Math.abs(level - macroUnit(macro, macro.value)) > 0.01;
+      const set = macro ? Math.min(1, Math.max(0, macroUnit(macro, macro.value))) : 0;
+      const live = Math.min(1, Math.max(0, level ?? 0));
+      const moved = level !== null && level !== undefined && macro && Math.abs(live - set) > 0.01;
       f.live.hidden = !moved;
-      if (moved) f.live.style.bottom = `${Math.min(1, Math.max(0, level)) * 100}%`;
+      if (moved) {
+        f.live.classList.toggle('up', live > set);
+        f.live.classList.toggle('down', live < set);
+        f.live.style.bottom = `${Math.min(set, live) * 100}%`;
+        f.live.style.height = `${Math.abs(live - set) * 100}%`;
+      }
     }
   });
 

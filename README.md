@@ -329,8 +329,9 @@ per preset.
 By default they are the first parameters of its chain; on the Edit screen,
 **Perform faders** pins the ones you want, in order. Dragging a fader changes
 the parameter for now without altering the saved preset; double-click resets
-it. A dashed line on a fader shows where modulation is currently pushing the
-parameter.
+it. When modulation moves a fader's parameter, a hatched band runs from the
+fader's setting to where the parameter is right now: stripes above the fill
+when it is pushed up, dark stripes cut into the fill when it is pulled down.
 
 ## MIDI, audio and vision
 
