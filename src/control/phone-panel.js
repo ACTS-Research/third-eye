@@ -40,6 +40,8 @@ export function mountPhonePanel(root, ui) {
   const popQr = el('canvas', { width: 320, height: 320 });
   const popCode = el('div', { class: 'pop-code' });
   const popState = el('div', { class: 'small' });
+  // The connection as four steps, so a failure names the step it is at.
+  const popSteps = el('ol', { class: 'steps' });
   const popLink = el('div', { class: 'small dim', style: 'word-break:break-all' });
   const pop = el('div', { id: 'pairing-pop', hidden: true, role: 'dialog', 'aria-label': 'Pair the phone' }, [
     popQr,
@@ -47,6 +49,7 @@ export function mountPhonePanel(root, ui) {
       el('div', { class: 'caps dim', text: 'Room code' }),
       popCode,
       popState,
+      popSteps,
       popLink,
       el('div', { class: 'row wrap', style: 'margin-top:8px' }, [
         el('button', { text: 'Restart output', title: 'Close every output window in this browser and open a new one', onclick: () => ui.restartOutput?.() }),
@@ -146,6 +149,23 @@ export function mountPhonePanel(root, ui) {
     else text = 'Connecting to the pairing server…';
     state.textContent = text;
     popState.textContent = text;
+
+    const paired = p?.phone === 'connected';
+    const video = paired && p.media === 'connected';
+    const steps = [
+      ['Output window open', !!p, 'Open it: it is what the phone connects to.'],
+      ['Mac reached the pairing server', p?.signal === 'open' || paired, p?.signal === 'error' ? 'Room code taken elsewhere.' : 'No answer yet. The network may block it.'],
+      ['Phone found the Mac', paired, 'Scan the code and tap START on the phone. If the phone says "Mac not found", the code is wrong or stale.'],
+      [`Video link${video && p.route ? `: ${p.route}` : ''}`, video, p?.info?.controllerOnly ? 'The phone\'s camera is off (controller only).' : 'Phone and Mac cannot reach each other directly on this network.'],
+      ['Picture arriving', video && status.input.kind === 'phone' && status.input.state === 'live', status?.input.kind === 'phone' ? 'Connected, but no frames yet.' : 'Select the iPhone input (key 1).'],
+    ];
+    popSteps.replaceChildren();
+    let failed = false;
+    for (const [label, ok, help] of steps) {
+      const state = ok ? 'done' : failed ? 'todo' : 'stuck';
+      popSteps.append(el('li', { class: state }, [el('b', { text: ok ? 'OK' : failed ? '··' : 'HERE' }), el('span', { text: !ok && !failed ? `${label}. ${help}` : label })]));
+      if (!ok) failed = true;
+    }
   });
 
   root.append(

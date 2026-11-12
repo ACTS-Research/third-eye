@@ -9,10 +9,12 @@ measurement. On home Wi-Fi it pairs and streams end to end with a real iPhone;
 on a coffee-shop network and on the iPhone's Personal Hotspot it did not, and
 that was never diagnosed on the current version.
 
-**Next step.** Reproduce the Personal Hotspot failure on the current build:
-join the Mac to the hotspot, reload `/control`, use Restart output, pair, and
-read the line under the room code in the pairing pop-over (click the phone
-status in the top bar). That line says which step fails.
+**Next step.** Try the Personal Hotspot once on the current build: join the
+Mac to the hotspot, reload `/control`, use Restart output, pair. Click the
+phone status in the top bar: the pop-over lists the five connection steps and
+marks the one it is stuck at. The earlier hotspot failure was probably the
+room-code clash that has since been fixed (the phone did report "streaming"
+over the hotspot), but that is unconfirmed until this is tried.
 
 **Decisions only you can make.**
 

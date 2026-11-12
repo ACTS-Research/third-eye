@@ -60,6 +60,10 @@ kbd { font: inherit; opacity: 0.8; }
 .pill[role='button'] { cursor: pointer; }
 #pairing-pop { position: fixed; z-index: 20; width: min(540px, calc(100vw - 16px)); display: flex; gap: 14px; align-items: flex-start; padding: 14px; background: var(--bg); border: 2px solid var(--ink); }
 #pairing-pop canvas { width: 180px; height: 180px; image-rendering: pixelated; flex-shrink: 0; }
+.steps { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 11px; }
+.steps li { display: grid; grid-template-columns: 40px 1fr; gap: 6px; }
+.steps li.todo { color: var(--soft); }
+.steps li.stuck b { background: var(--ink); color: var(--on-ink); text-align: center; }
 .pop-code { font: 800 44px/1 var(--display); letter-spacing: 0.14em; margin-bottom: 6px; }
 .pill.warn { border-bottom: 1px dashed var(--ink); }
 .pill.bad { background: var(--ink); color: var(--on-ink); padding: 2px 8px; font-weight: 700; animation: blink 0.8s steps(2) infinite; }

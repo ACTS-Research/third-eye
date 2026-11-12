@@ -61,6 +61,11 @@ try {
   check('output shows the phone picture', (await outputStats(output)).mean > 5);
   check('phone shows LIVE', (await phone.locator('#state').textContent()).startsWith('LIVE'));
 
+  await control.locator('#pills .pill').nth(2).click();
+  const stepText = await control.locator('#pairing-pop .steps').textContent();
+  check('pairing pop-over shows every connection step as done', (await control.locator('#pairing-pop .steps li.done').count()) === 5 && stepText.includes('direct'), stepText);
+  await control.keyboard.press('Escape');
+
   console.log('phone controls');
   await phone.selectOption('#tools select', '360p30');
   s = await waitStatus(control, (st) => st.input.width === 640 && st.input.state === 'live', 'quality change');
@@ -121,6 +126,9 @@ try {
   await phone.close();
   s = await waitStatus(control, (st) => st.input.state === 'stalled', 'stall detected');
   check('stall detected', true);
+  await control.locator('#pills .pill').nth(2).click();
+  check('with the phone gone, the pop-over points at the step that broke', await waitFor(async () => (await control.locator('#pairing-pop .steps li.stuck').textContent()).includes('Phone found the Mac'), { label: 'stuck step', timeout: 15000 }).then(() => true, () => false), await control.locator('#pairing-pop .steps li.stuck').textContent());
+  await control.keyboard.press('Escape');
   check('stall alert on control', await control.evaluate(() => [...document.querySelectorAll('#alerts .alert')].some((a) => a.textContent.includes('holding the last frame'))));
   await control.keyboard.press('x');
   await sleep(1200);
