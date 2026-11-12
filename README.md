@@ -574,11 +574,11 @@ npm test
 | File | Covers |
 | --- | --- |
 | `tests/smoke.mjs` | Pipeline, control ↔ output sync, keys, resize, reloads, lost GL context |
-| `tests/layout.mjs` | No overlaps at six window widths on every screen; nothing moves when the information changes; the palette pop-over |
-| `tests/control-ui.mjs` | The three screens, palettes and the dimmer, perform faders, preset editing, fades, reordering, the pop-out output |
+| `tests/layout.mjs` | No overlaps at six window widths on every screen; the fader column (names whole, nothing overlapping) for every factory preset at five window sizes; nothing moves when the information changes; alert strips (fix buttons, ×, closing and returning); the palette pop-over |
+| `tests/control-ui.mjs` | The three screens, palettes and the dimmer (and that the phone page is really inked), perform faders and the modulation band, preset editing, fades, reordering, the pop-out output, Reload both pages |
 | `tests/offline.mjs` | Reloading every page with the server gone; tap tempo and tempo-synced LFOs |
-| `tests/phone.mjs` | Real WebRTC against a local PeerServer: pairing, live video, palette and dimmer following live, hold on stall, every reconnect path, a second output window, a taken room code, Restart output, local camera |
-| `tests/record-latency.mjs` | Recording to WebM and MP4, saving and deleting; the latency measurement; switching codec |
+| `tests/phone.mjs` | Real WebRTC against a local PeerServer: pairing, live video, palette and dimmer following live, the room-code strip clearing once the phone pairs, hold on stall, every reconnect path, a second output window, a taken room code, Restart output, local camera |
+| `tests/record-latency.mjs` | Recording to WebM and MP4, saving and deleting; the latency measurement, including a stray late flash; switching codec |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |
