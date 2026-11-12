@@ -63,4 +63,5 @@ export const QUALITY = {
   '1080p30': { label: '1080p · 30 fps', width: 1920, height: 1080, fps: 30, kbps: 7000 },
   '1080p60': { label: '1080p · 60 fps', width: 1920, height: 1080, fps: 60, kbps: 10000 },
 };
-export const DEFAULT_QUALITY = '720p30';
+// 60 fps measured about 33 ms faster glass-to-glass than 30 on a real iPhone.
+export const DEFAULT_QUALITY = '720p60';

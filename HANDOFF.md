@@ -8,9 +8,17 @@ the iPhone's Personal Hotspot. The control page is the "Darkroom" redesign
 (Perform / Edit / Setup) with MIDI map, recording, tap tempo, offline reload
 and self-healing pairing.
 
-**Next step.** On the real setup, run Measure real latency (Setup → Status)
-once per codec and at 720p60 versus 720p30, with the phone pointed at the
-output. It has only ever seen a simulated camera.
+**Latency, measured on the real phone** (H.264, home Wi-Fi, output in a
+window on the Mac's screen): 200 ms at 720p · 30, 167 ms at 720p · 60, with
+one stray flash at 817 ms. So 720p · 60 is now the phone's default, the
+Latency estimate allows one camera frame for capture, and the result line
+names a stray flash instead of folding it into the range. Numbers are in the
+README under Latency.
+
+**Next step.** Run Measure real latency once more with the output fullscreen
+on the projector at 720p · 60, to see what the projector adds. Check that the
+Latency line now reads close to the measured number, and whether a stray
+flash shows up again.
 
 **Decisions only you can make.**
 
@@ -119,7 +127,9 @@ Three static pages built by Vite, no framework. About 7,800 lines in `src/`.
 
 ### Never run on real hardware (all unconfirmed)
 
-Measure real latency against a projector; whether H.264 beats VP8 / VP9;
+Measure real latency against a projector (only the Mac's own screen so
+far, H.264 only); whether H.264 beats VP8 / VP9; the corrected Latency
+estimate and the stray-flash note on the result line;
 recordings longer than a few seconds; MIDI map with a physical controller;
 fullscreen placement on a second display; MediaPipe on the Mac's GPU; the
 direction of Rotate / Counter-rotate. Tap tempo, offline reload, and the

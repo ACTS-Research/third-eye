@@ -341,7 +341,10 @@ export class Engine {
   // Approximate glass-to-glass delay of the active live input. With a capture
   // timestamp (local cameras; WebRTC once sender reports arrive) it is
   // measured; otherwise it is receive->display plus an allowance for the
-  // phone's capture, encode and half the network round trip.
+  // phone's capture, encode and half the network round trip. Capture takes
+  // about one camera frame (waiting for the next exposure, then exposing and
+  // reading it out), so the allowance grows at lower frame rates. Checked on
+  // a real iPhone, H.264, LAN: 200 ms measured at 30 fps, 167 ms at 60.
   updateLatency() {
     const feed = this.inputs.feed;
     const delay = feed?.takeDelay();
@@ -351,7 +354,10 @@ export class Engine {
     }
     const frameMs = 1000 / Math.max(this.renderFps, 1);
     let ms = delay.ms + frameMs;
-    if (!delay.fromCapture) ms += 45 + (this.link.stats.rttMs ?? 0) / 2;
+    if (!delay.fromCapture) {
+      const cameraFrameMs = 1000 / Math.max(this.inputFps, 15);
+      ms += 45 + cameraFrameMs + (this.link.stats.rttMs ?? 0) / 2;
+    }
     const prev = this.latency?.ms;
     this.latency = { ms: prev ? prev * 0.6 + ms * 0.4 : ms, measured: delay.fromCapture };
   }

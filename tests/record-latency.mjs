@@ -104,6 +104,19 @@ try {
     return p.status();
   });
   check('at 60 Hz a 150 ms loop measures within one frame of 150 ms', exact.state === 'done' && exact.ms >= 150 && exact.ms < 167, `${exact.ms?.toFixed(1)} ms (${exact.message})`);
+  // One flash arriving 800 ms late (as seen on a real iPhone) must not set the
+  // result, and is named on its own instead of stretching the range.
+  const stray = await output.evaluate(() => {
+    const p = window.thirdEye.engine.probe;
+    const sample = p.sample;
+    p.sample = () => (p.state === 'running' && p.phase === 'flash' && p.lastNow >= p.flashAt + (p.trial === 3 ? 800 : 150) ? 0.9 : 0.05);
+    p.state = 'idle';
+    p.start();
+    for (let now = 1000; p.state === 'running' && now < 60000; now += 1000 / 60) p.frame(now, 1000 / 60);
+    p.sample = sample;
+    return p.status();
+  });
+  check('a single late flash is called a stray and does not move the result', stray.state === 'done' && stray.ms < 167 && /one stray at 8\d\d ms/.test(stray.message) && !/–8\d\d/.test(stray.message), `${stray.ms?.toFixed(1)} ms (${stray.message})`);
   await sleep(700);
   check('the result is shown on the setup screen', (await control.locator('#latency-note').textContent()).includes('Measured'));
   check('the picture returns afterwards', await settle(async () => {

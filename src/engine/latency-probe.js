@@ -8,6 +8,9 @@ const TRIALS = 5;
 const DARK_MS = 600;
 const TIMEOUT_MS = 1500;
 const RISE = 0.12; // brightness jump (0..1) that counts as "the flash arrived"
+// A flash this much later than the median is a stray (a camera hiccup, a
+// frozen frame) and is reported on its own rather than stretching the range.
+const STRAY_MS = 100;
 
 export class LatencyProbe {
   constructor(sample) {
@@ -76,10 +79,14 @@ export class LatencyProbe {
     }
     this.state = 'done';
     this.ms = r[Math.floor(r.length / 2)];
-    this.message = `${r.length} of ${TRIALS} flashes seen, ${r[0].toFixed(0)}–${r.at(-1).toFixed(0)} ms`;
+    const kept = r.filter((ms) => Math.abs(ms - this.ms) <= STRAY_MS);
+    const strays = r.filter((ms) => Math.abs(ms - this.ms) > STRAY_MS);
+    const range = kept[0] === kept.at(-1) ? `${kept[0].toFixed(0)} ms each` : `${kept[0].toFixed(0)}–${kept.at(-1).toFixed(0)} ms`;
+    this.message = `${r.length} of ${TRIALS} flashes seen, ${range}`;
+    if (strays.length) this.message += `; ${strays.length === 1 ? 'one stray' : `${strays.length} strays`} at ${strays.map((ms) => ms.toFixed(0)).join(', ')} ms left out`;
   }
 
   status() {
-    return { state: this.state, ms: this.ms, message: this.message };
+    return { state: this.state, ms: this.ms, message: this.message, flashes: this.results.map((ms) => Math.round(ms)) };
   }
 }

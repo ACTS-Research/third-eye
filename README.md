@@ -141,7 +141,7 @@ On the phone:
 | --- | --- |
 | Flip | Front / rear camera |
 | Torch, Zoom, Exposure, Focus, Lock … | Shown only when the active camera reports the capability |
-| Quality | 360p / 720p / 1080p at 30 or 60 fps (default 720p · 30) |
+| Quality | 360p / 720p / 1080p at 30 or 60 fps (default 720p · 60) |
 | Camera on / off | Off = controller only: sensors and touch keep working, the output holds the last frame |
 | XY pad | Two modulation sources, plus "pad touched" |
 | Four buttons | Triggers; labelled with whatever action they are bound to |
@@ -192,7 +192,7 @@ only to *re*-pair after the peer-to-peer link itself has broken, so load
 everything and pair before doors open. All code, the MediaPipe runtime and its
 models are served from the site itself; nothing is fetched from a CDN.
 
-For the lowest latency: use 720p · 30 or 720p · 60, keep the phone close to
+For the lowest latency: use 720p · 60 (the default), keep the phone close to
 the access point, and close other tabs on the Mac.
 
 ## Keyboard shortcuts
@@ -469,8 +469,9 @@ Three things to tune, all under **Setup**:
   own choice are there to compare. Changing it restarts the phone's video for
   a moment. **Status → Stream** shows the codec actually in use and, when
   Chrome reports it, whether decoding is in hardware.
-- **Quality** (on the phone). 720p · 60 halves the time between frames
-  compared with 720p · 30, at a higher bitrate.
+- **Quality** (on the phone). 720p · 60, the default, halves the time
+  between frames compared with 720p · 30, at a higher bitrate and more heat
+  on the phone. The phone remembers the last quality chosen on it.
 - **Network.** See [Show networking](#show-networking); a cable beats Wi-Fi.
 
 To see what a change really did, use **Status → Measure real latency**. Point
@@ -480,6 +481,25 @@ long each flash takes to come back through the camera. The result is the
 whole loop the audience sees (projector, camera, phone, network, Mac), which
 the **Latency** line above it can only estimate. Run it before the show, not
 during: it takes over the output for about ten seconds.
+
+The result is the median of the five flashes. A flash that comes back far
+later than the others (a camera hiccup or a frozen frame) is named as a
+stray and left out of the range; if strays turn up on every run, look for
+dropped frames.
+
+Measured on a real iPhone over home Wi-Fi with H.264, the phone pointed at
+the output in a window on the Mac's screen (no projector):
+
+| Phone quality | Frames arriving | Measured | Estimate then (Latency line) |
+| --- | --- | --- | --- |
+| 720p · 30 | 26 fps | 200 ms (167–217) | ≈ 160 ms |
+| 720p · 60 | 54 fps | 167 ms (one stray at 817) | ≈ 152 ms |
+
+The network round trip was 8–14 ms, so nearly all of the delay is the camera,
+encoding, decoding and display. A projector adds its own lag on top; a game
+or low-latency picture mode helps. The estimate now allows one camera frame
+for capture; worked out from these runs it would have read about 198 and
+170 ms, but it has not been seen on the phone since the change.
 
 ## Sending the output to other software (Syphon, NDI)
 
@@ -555,13 +575,15 @@ npm test
 **On real devices** (a Mac, an iPhone, home Wi-Fi and the iPhone's Personal
 Hotspot): pairing by QR code through the public PeerJS server, live video
 into the effects chain over a direct link with H.264, the control screens,
-and the output window. A coffee-shop network did not work; it was not retried
+the output window, and Measure real latency with H.264 at 30 and 60 fps
+against the Mac's own screen (see [Latency](#latency)). A coffee-shop network did not work; it was not retried
 after the pairing fixes that followed.
 
 **Only in headless Chromium**, with a fake camera and microphone: everything
 else. Check these the first time you use them:
 
-- **Measure real latency.** It has only seen a simulated camera.
+- **Measure real latency** through a projector, and with VP8 or VP9. It
+  has only been run against the Mac's screen, with H.264.
 - Recordings longer than a few seconds.
 - MIDI map with a physical controller.
 - Fullscreen placement on a projector through the Window Management

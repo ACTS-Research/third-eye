@@ -104,6 +104,7 @@ try {
     streaming.phone = { ...real.phone, phone: 'connected', media: 'connected', route: 'direct (LAN)', rttMs: 5, kbps: 14000, codec: 'H264', jitterBufferMs: 34, info: { controllerOnly: false, hidden: false } };
     streaming.input = { kind: 'phone', state: 'live', width: 1280, height: 720, fps: 30 };
     streaming.latency = { ms: 145, measured: false };
+    streaming.latencyTest = { state: 'done', ms: 166.7, message: '5 of 5 flashes seen, 167–200 ms; 2 strays at 817, 1017 ms left out' };
     streaming.sensors = { live: true, hz: 60, orientation: true, motion: true };
     return { real, trouble, streaming };
   });

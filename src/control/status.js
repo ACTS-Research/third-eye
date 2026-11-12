@@ -142,7 +142,7 @@ export function mountStatus(root, ui) {
     testButton.disabled = !status || t?.state === 'running';
     if (!t || t.state === 'idle') return;
     if (t.state === 'running') testNote.textContent = 'Measuring… the output is flashing.';
-    else if (t.state === 'done') testNote.textContent = `Measured ${t.ms.toFixed(0)} ms from the output lighting up to the Mac seeing it (${t.message}). That is the whole loop: projector, camera, phone, network, Mac.`;
+    else if (t.state === 'done') testNote.textContent = `Measured ${t.ms.toFixed(0)} ms, output to Mac: ${t.message}.`;
     else testNote.textContent = t.message;
   });
 
