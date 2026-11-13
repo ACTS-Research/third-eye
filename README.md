@@ -48,6 +48,7 @@ moves it there; closing that window moves it back.
 - [Recording](#recording)
 - [Latency](#latency)
 - [Sending the output to other software](#sending-the-output-to-other-software-syphon-ndi)
+- [Icon](#icon)
 - [Deploying to GitHub Pages](#deploying-to-github-pages)
 - [Self-hosting the signaling server](#self-hosting-the-signaling-server)
 - [Tests](#tests)
@@ -176,14 +177,15 @@ The phone's screen is always laid out horizontally, like a camera held on
 its side, and the picture it sends is always horizontal too. If you hold the
 phone upright the screen is simply drawn on its side; it does not flip. That
 keeps the picture on the projector from jumping between tall and wide when
-the phone tilts. For the most room on screen, switch on iOS's Portrait
+the phone tilts. The buttons stay where they are, as on a camera, and what is
+written on them turns to read upright however the phone is held. For the most room on screen, switch on iOS's Portrait
 Orientation Lock (Control Centre): the page then never turns at all.
 
 | On the screen | What it does |
 | --- | --- |
 | The preview | What the Mac receives, as large as it will go. It is also the XY pad: a finger on the picture moves the dot, giving two modulation sources plus "pad touched" |
-| First row of buttons | Triggers, labelled with whatever action they are bound to. A trigger bound to previous or next preset is left out: the row below does that job |
-| Second row | One button per preset, the live one lit. Tap to load it; drag the row sideways for more |
+| Triggers | Labelled with whatever action they are bound to. **Freeze** is a switch, as on the control page: tap to freeze, tap again to release, and the button stays lit meanwhile. A trigger bound to previous or next preset is left out: the preset buttons do that job |
+| Presets | A bank of six preset buttons, all on screen, the live one lit. Tap to load one. With more than six presets, **Next** steps to the following bank; a preset loaded on the Mac brings its bank up |
 | Zoom | The tall fader down the right edge, when the camera offers zoom |
 | **Rotate** | Turns the screen and the picture half a turn, for holding the phone the other way round |
 | **Camera** | Opens a panel with Flip, Torch, Quality (360p / 720p / 1080p at 30 or 60 fps, default 720p · 60), Camera on / off, any exposure, focus and lock controls the camera reports, and **Scan the Mac's code** |
@@ -418,7 +420,8 @@ the value* (the source sweeps the whole range). Wet / dry can be a target too.
 **Triggers.** Any source rising through its halfway point can fire an action:
 blackout, freeze, bypass, next / previous preset, next input, glitch burst.
 With **hold** ticked, blackout / freeze / bypass stay on only while the
-trigger is held. Defaults: phone buttons 1–4 are glitch, freeze (hold),
+trigger is held. Defaults: phone buttons 1–4 are glitch, freeze (a switch,
+as on the control page: tap on, tap off, and the phone's button stays lit),
 previous preset, next preset. Triggers are global; they do not change with
 presets, so "next preset" keeps working whatever preset you land on.
 
@@ -666,6 +669,17 @@ the usual route is to capture it:
 Capture adds a little latency and depends on the window staying visible. A
 native wrapper (an Electron build with a Syphon add-on) would be the way to a
 true Syphon server; it is not part of this project yet.
+
+## Icon
+
+The browser-tab and Home Screen icon is a compact camera with an upright eye,
+in the app's red on its black. `scripts/make-icons.mjs` draws it and writes
+the files in `public/` (`icon.svg`, `icon-32.png`, `icon-180.png`,
+`icon-512.png`); change the drawing there and run it again.
+
+```bash
+node scripts/make-icons.mjs
+```
 
 ## Deploying to GitHub Pages
 

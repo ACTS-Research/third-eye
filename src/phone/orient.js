@@ -14,10 +14,16 @@
 //   - `manual`: half a turn added to both by the Rotate button, for holding
 //     the phone the other way round.
 //
+//   - `label`: degrees the words and icons on the buttons are turned, inside
+//     that screen, so they read upright however the phone is actually held.
+//     The buttons stay where they are, as on a camera; only what is written
+//     on them turns. It follows gravity when the motion sensors are on (which
+//     also works with iOS's rotation lock), otherwise the page's own turn.
+//
 // With these the picture is fixed to the phone like a camcorder's: it never
 // flips by itself, whatever the page does.
 
-export const orient = { ui: 0, picture: 0, manual: 0, angle: 0 };
+export const orient = { ui: 0, picture: 0, manual: 0, angle: 0, label: 0, held: null };
 
 const listeners = new Set();
 export const onOrient = (fn) => listeners.add(fn);
@@ -29,6 +35,20 @@ function pageAngle() {
   return Number.isFinite(raw) ? (((Math.round(raw / 90) * 90) % 360) + 360) % 360 : 0;
 }
 
+// From the motion sensors: which edge of the phone is up, as 0 (top), 90
+// (its right edge), 180, 270. Left alone while the phone lies flat or sits
+// between two holds, so the labels do not flutter.
+export function setGravity(beta, gamma) {
+  const rad = Math.PI / 180;
+  const ux = -Math.cos(beta * rad) * Math.sin(gamma * rad);
+  const uy = Math.sin(beta * rad);
+  if (Math.hypot(ux, uy) < 0.5) return;
+  const theta = ((Math.atan2(ux, uy) / rad) + 360) % 360;
+  const nearest = (Math.round(theta / 90) * 90) % 360;
+  const off = Math.abs(((theta - nearest + 540) % 360) - 180);
+  if (off < 30) orient.held = nearest;
+}
+
 export function measure(video) {
   const angle = pageAngle();
   // The two sideways holds differ by half a turn.
@@ -37,8 +57,10 @@ export function measure(video) {
   const uprightFrame = !!video && video.videoHeight > video.videoWidth;
   const ui = ((uprightPage ? 90 : other) + orient.manual) % 360;
   const picture = ((uprightFrame ? 90 : other) + orient.manual) % 360;
-  if (ui === orient.ui && picture === orient.picture && angle === orient.angle) return false;
-  Object.assign(orient, { ui, picture, angle });
+  // Up for the phone, minus up for the screen as drawn.
+  const label = ((((orient.held ?? angle) - angle - ui) % 360) + 360) % 360;
+  if (ui === orient.ui && picture === orient.picture && angle === orient.angle && label === orient.label) return false;
+  Object.assign(orient, { ui, picture, angle, label });
   for (const fn of listeners) fn(orient);
   return true;
 }

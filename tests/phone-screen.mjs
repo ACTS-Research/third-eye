@@ -60,19 +60,30 @@ try {
     const t = document.getElementById('trigs').getBoundingClientRect();
     const p = document.getElementById('presets').getBoundingClientRect();
     const s = document.getElementById('stage').getBoundingClientRect();
-    return document.querySelectorAll('.preset').length >= 8 && t.left > s.right && p.top > t.bottom - 1 && [...document.querySelectorAll('.trig')].filter((b) => !b.hidden).length === 2;
+    return document.querySelectorAll('.preset:not(:disabled)').length === 6 && t.left > s.right && p.top > t.bottom - 1 && [...document.querySelectorAll('.trig')].filter((b) => !b.hidden).length === 2;
   }), 'rows'));
-  const names = await phone.locator('.preset span').allTextContents();
+  const names = await phone.locator('.preset .pname').allTextContents();
   check('the preset buttons carry the Mac\'s preset names', names[1] === 'Tunnel', names.slice(0, 4).join(', '));
   const third = await box('.preset >> nth=2');
   await phone.mouse.click(third.x + third.width / 2, third.y + third.height / 2);
   check('tapping one loads it on the Mac, and it lights up', await settle(async () => (await mac(() => window.thirdEye.store.state.presetIndex)) === 2 && (await phone.evaluate(() => document.querySelector('.preset.on')?.dataset.index)) === '2', 'preset 3'));
-  const row = await box('#presets');
-  await phone.mouse.move(row.x + row.width - 20, row.y + row.height / 2);
-  await phone.mouse.down();
-  await phone.mouse.move(row.x + 20, row.y + row.height / 2, { steps: 6 });
-  await phone.mouse.up();
-  check('dragging the row brings more presets into view without loading one', (await phone.evaluate(() => document.getElementById('presets').scrollLeft)) > 60 && (await mac(() => window.thirdEye.store.state.presetIndex)) === 2);
+  check('six presets are on screen at once, nothing to scroll', await phone.evaluate(() => {
+    const bank = document.querySelector('.bank').getBoundingClientRect();
+    return [...document.querySelectorAll('.preset')].every((b) => {
+      const r = b.getBoundingClientRect();
+      return r.left >= bank.left - 1 && r.right <= bank.right + 1 && r.top >= bank.top - 1 && r.bottom <= bank.bottom + 1 && r.width > 40 && r.height > 30;
+    }) && document.querySelector('.bank').scrollWidth <= document.querySelector('.bank').clientWidth + 1;
+  }));
+  check('with more than six, a button steps to the next bank', (await phone.locator('.bank-next').textContent()) === 'Next 7–9' && (await phone.locator('.bank-next').getAttribute('aria-label')).includes('1–6 of 9'), await phone.locator('.bank-next').textContent());
+  await phone.locator('.bank-next').dispatchEvent('click');
+  check('the next bank shows the rest without loading anything', (await phone.locator('.preset .pname').allTextContents()).length === 3 && (await phone.locator('.preset b').first().textContent()) === '7' && (await mac(() => window.thirdEye.store.state.presetIndex)) === 2);
+  await control.keyboard.press('[');
+  check('a preset loaded on the Mac brings its bank back and lights it', await settle(() => phone.evaluate(() => document.querySelector('.preset.on')?.dataset.index === '1' && document.querySelector('.preset b').textContent === '1'), 'bank follows'));
+  const freezeBox = await box('.trig >> nth=1');
+  await phone.mouse.click(freezeBox.x + freezeBox.width / 2, freezeBox.y + freezeBox.height / 2);
+  check('Freeze latches: one tap freezes, and the button stays lit', await settle(async () => (await mac(() => window.thirdEye.store.state.globals.freeze)) === true && (await phone.evaluate(() => document.querySelectorAll('.trig')[1].classList.contains('on'))), 'frozen'));
+  await phone.mouse.click(freezeBox.x + freezeBox.width / 2, freezeBox.y + freezeBox.height / 2);
+  check('a second tap releases it', await settle(async () => (await mac(() => window.thirdEye.store.state.globals.freeze)) === false, 'released'));
   await mac(() => {
     const { store } = window.thirdEye;
     store.dispatch({ op: 'set', key: 'actions', value: store.state.actions.map((b) => (b.source === 'trig.3' ? { ...b, action: 'blackout' } : b)) });
@@ -94,6 +105,22 @@ try {
   check('held upright, the screen is drawn on its side so it stays horizontal', await settle(async () => (await turn()) === 90, 'turn 90'));
   stage = await box('#stage');
   check('and the preview is still large', stage.height > 844 * 0.5 && stage.width > 390 * 0.55, `${Math.round(stage.width)}×${Math.round(stage.height)} of 390×844`);
+  // The buttons stay where they are; what is written on them turns upright.
+  const labelTurn = () => phone.evaluate(() => document.getElementById('root').dataset.label);
+  const readsUpright = () => phone.evaluate(() => {
+    // A label reads upright when its text box, as drawn, is wider than tall.
+    const r = document.querySelector('.trig .lbl').getBoundingClientRect();
+    const m = new DOMMatrix(getComputedStyle(document.querySelector('.trig .lbl')).transform);
+    const net = (Number(document.getElementById('root').dataset.turn) + Math.round((Math.atan2(m.b, m.a) * 180) / Math.PI) + 360) % 360;
+    return net === 0 && r.width > 0;
+  });
+  check('held upright, the button labels read upright', (await settle(async () => (await labelTurn()) === '270', 'labels turned')) && (await settle(readsUpright, 'upright')), await labelTurn());
+  // With iOS's rotation lock the page stays upright while the phone is held
+  // sideways: the motion sensors say so, and the labels follow them.
+  await phone.evaluate(() => window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 0, gamma: -90 })));
+  check('held sideways with the page locked upright, the labels follow gravity', await settle(async () => (await labelTurn()) === '0', 'labels by gravity'), await labelTurn());
+  await phone.evaluate(() => window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 90, gamma: 0 })));
+  check('and turn back when the phone is stood up again', await settle(async () => (await labelTurn()) === '270', 'labels back'), await labelTurn());
   await press(0.2, 0.9);
   check('the pad follows the turned screen', await settle(async () => Math.abs((await source('pad.x')) - 0.2) < 0.03 && Math.abs((await source('pad.y')) - 0.1) < 0.03, 'pad upright'), `x ${(await source('pad.x')).toFixed(2)}, y ${(await source('pad.y')).toFixed(2)}`);
   await phone.mouse.up();

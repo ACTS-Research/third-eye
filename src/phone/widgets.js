@@ -8,10 +8,11 @@ export function fader({ label, min, max, step, value, vertical = false, format =
   const fill = el('div', { class: 'fill' });
   const track = el('div', { class: 'track' }, [fill]);
   const val = el('span', { class: 'val' });
+  // Name and value sit together in one square block, so it can be turned
+  // to read upright without disturbing the layout.
   const node = el('div', { class: `fader${vertical ? ' v' : ''}`, role: 'slider', 'aria-label': label, 'aria-valuemin': String(min), 'aria-valuemax': String(max) }, [
     track,
-    el('span', { class: 'name', text: label }),
-    val,
+    el('span', { class: 'cap' }, [el('span', { class: 'name', text: label }), val]),
   ]);
   let current = value ?? min;
   const draw = () => {

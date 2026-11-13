@@ -99,7 +99,7 @@ try {
 
   const labels = await phone.locator('.trig').allTextContents();
   check('trigger buttons are labelled with their actions', labels[0] === 'Glitch burst' && labels[3] === 'Next preset', labels.join(' | '));
-  check('the two preset-stepping triggers give way to the preset row', await settle(() => phone.evaluate(() => [...document.querySelectorAll('.trig')].map((b) => b.hidden).join() === 'false,false,true,true' && document.querySelectorAll('.preset').length >= 8), 'preset row'));
+  check('the two preset-stepping triggers give way to the preset row', await settle(() => phone.evaluate(() => [...document.querySelectorAll('.trig')].map((b) => b.hidden).join() === 'false,false,true,true' && document.querySelectorAll('.preset:not(:disabled)').length === 6), 'preset bank'));
 
   console.log('mappings');
   await setChain(['feedback']);
@@ -152,11 +152,21 @@ try {
   check('control highlights the active preset', (await control.locator('.tile.on .name').textContent()).includes('Tunnel'));
 
   const t2 = await trig(2);
+  await phone.mouse.click(t2.x + t2.width / 2, t2.y + t2.height / 2);
+  check('a tap on Freeze freezes and stays frozen, as on the control page', await settle(() => state(() => window.thirdEye.store.state.globals.freeze === true), 'freeze on'));
+  check('the phone\'s button stays lit while frozen', await settle(() => phone.evaluate(() => document.querySelectorAll('.trig')[1].classList.contains('on')), 'lit'));
+  await phone.mouse.click(t2.x + t2.width / 2, t2.y + t2.height / 2);
+  check('a second tap releases it', await settle(() => state(() => window.thirdEye.store.state.globals.freeze === false), 'freeze off') && (await settle(() => phone.evaluate(() => !document.querySelectorAll('.trig')[1].classList.contains('on')), 'unlit')));
+  // With "hold" ticked for it, the same button freezes only while held.
+  await control.evaluate(() => {
+    const { store } = window.thirdEye;
+    store.dispatch({ op: 'set', key: 'actions', value: store.state.actions.map((b) => (b.source === 'trig.2' ? { ...b, momentary: true } : b)) });
+  });
   await phone.mouse.move(t2.x + t2.width / 2, t2.y + t2.height / 2);
   await phone.mouse.down();
-  check('held trigger freezes while down', await settle(() => state(() => window.thirdEye.store.state.globals.freeze === true), 'freeze on'));
+  check('with hold ticked it freezes while down', await settle(() => state(() => window.thirdEye.store.state.globals.freeze === true), 'freeze held'));
   await phone.mouse.up();
-  check('and releases on up', await settle(() => state(() => window.thirdEye.store.state.globals.freeze === false), 'freeze off'));
+  check('and releases on up', await settle(() => state(() => window.thirdEye.store.state.globals.freeze === false), 'freeze released'));
 
   await control.keyboard.press(']');
   check('] key loads the next preset', await settle(() => state(() => window.thirdEye.store.state.presetIndex === 2), 'key preset'));

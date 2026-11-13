@@ -110,10 +110,14 @@ async function start() {
     room: app.room,
     signal: app.signal,
     onChange: renderState,
-    onDataOpen: sendInfo,
+    onDataOpen: () => {
+      sendInfo();
+      askForState();
+    },
     directFirst: !!offer,
     onMessage: (msg) => {
-      if (msg.t === 'labels') sensors.setTriggerLabels(msg.triggers ?? [], msg.actions ?? []);
+      if (msg.t === 'presets') greeted = true;
+      if (msg.t === 'labels') sensors.setTriggerLabels(msg.triggers ?? [], msg.actions ?? [], msg.on ?? []);
       else if (msg.t === 'presets') sensors.setPresets(msg.names ?? [], msg.current);
       else if (msg.t === 'look') {
         applyPalette(msg.palette, { save: false });
@@ -146,6 +150,11 @@ function layout() {
   root.style.transform = `translate(-50%, -50%) rotate(${orient.ui}deg)`;
   root.classList.toggle('tall', width / Math.max(1, height) < 1.5);
   root.dataset.turn = String(orient.ui);
+  // What is written on the buttons turns to read upright however the phone
+  // is held; the buttons themselves stay put.
+  root.style.setProperty('--label-turn', `${orient.label > 180 ? orient.label - 360 : orient.label}deg`);
+  root.dataset.label = String(orient.label);
+  root.classList.toggle('labels-quarter', orient.label % 180 !== 0);
   const stage = $('stage');
   stage.style.setProperty('--turn', `${-orient.picture}deg`);
   stage.classList.toggle('turned', orient.picture % 180 !== 0);
@@ -417,6 +426,16 @@ function syncTools() {
 }
 
 // -------------------------------------------------------------- status ---
+
+// Asked again after a moment if the Mac's first messages have not shown up.
+let greeted = false;
+function askForState() {
+  greeted = false;
+  app.link?.send({ t: 'hello' });
+  setTimeout(() => {
+    if (!greeted) app.link?.send({ t: 'hello' });
+  }, 1500);
+}
 
 function sendInfo() {
   const settings = app.track?.getSettings?.() ?? {};

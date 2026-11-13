@@ -8,7 +8,7 @@ import { clamp } from '../shared/util.js';
 import { AudioInput } from './audio.js';
 import { LocalCamera } from './camera.js';
 import { MidiInput } from './midi.js';
-import { describeAction } from '../shared/actions.js';
+import { TOGGLE_ACTIONS, describeAction } from '../shared/actions.js';
 import { PRESETS_KEY, applyPreset, loadPresets } from '../shared/presets.js';
 import { macroUnit, resolveMacros } from '../shared/macros.js';
 import { randomRoom } from '../shared/net.js';
@@ -83,10 +83,7 @@ export class Engine {
       // /control and the output window the phone sees a new one, and calls
       // again at once instead of waiting to notice its old call went dead.
       this.link.send({ t: 'host', session: this.session });
-      this.sendTriggerLabels();
-      this.sendPresets();
-      this.link.send({ t: 'config', codec: this.store.state.net.codec });
-      this.sendLook();
+      this.greetPhone();
     };
     // Palette and dimmer are set on /control and kept in this browser's
     // storage; a change there fires here, and the phone follows. (No storage
@@ -278,8 +275,9 @@ export class Engine {
           if ('codec' in op.patch) this.link.send({ t: 'config', codec: state.net.codec });
         } else if (op.key === 'midi' || op.key === 'audio' || op.key === 'vision') {
           this.housekeeping();
-        } else if (op.key === 'globals' && 'renderScale' in op.patch) {
-          this.applySize();
+        } else if (op.key === 'globals') {
+          if ('renderScale' in op.patch) this.applySize();
+          if (Object.keys(TOGGLE_ACTIONS).some((key) => key in op.patch)) this.sendTriggerLabels();
         }
         break;
       default:
@@ -301,7 +299,18 @@ export class Engine {
     this.vision.configure(this.store.state.vision);
   }
 
+  // Everything a phone needs to draw its screen. Sent when its link opens,
+  // and again whenever the phone asks (`hello`), so a phone that missed the
+  // first lot is never left with blank buttons.
+  greetPhone() {
+    this.sendTriggerLabels();
+    this.sendPresets();
+    this.link.send({ t: 'config', codec: this.store.state.net.codec });
+    this.sendLook();
+  }
+
   onPhoneMessage(msg) {
+    if (msg?.t === 'hello') return this.greetPhone();
     if (msg?.t === 'intro-answer') this.bus.send('intro-answer', { to: msg.to, token: msg.token });
     // A preset button on the phone.
     else if (msg?.t === 'preset' && Number.isInteger(msg.index) && this.running) applyPreset(this.store, msg.index);
@@ -361,12 +370,17 @@ export class Engine {
   sendTriggerLabels() {
     const labels = [];
     const actions = [];
+    // Which buttons are switches that are on now (freeze, blackout, bypass):
+    // the phone lights them.
+    const on = [];
+    const { globals } = this.store.state;
     for (let i = 1; i <= TRIGGER_COUNT; i++) {
       const bound = this.store.state.actions.find((b) => b.source === `trig.${i}`);
       labels.push(bound ? describeAction(bound.action) : `Trigger ${i}`);
       actions.push(bound?.action ?? '');
+      on.push(!!globals[TOGGLE_ACTIONS[bound?.action]]);
     }
-    this.link.send({ t: 'labels', triggers: labels, actions });
+    this.link.send({ t: 'labels', triggers: labels, actions, on });
   }
 
   // The phone wears the palette and dimmer of the control page.

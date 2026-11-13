@@ -15,6 +15,10 @@ import { sanitizeActions, sanitizeScene, sanitizeState } from './state.js';
 import { debounce, readJSON, writeJSON } from './util.js';
 
 const SESSION_KEY = 'thirdeye.session.v1';
+// Set once the stored session has had its Freeze trigger changed from "hold"
+// to a switch (2026-11-13): the phone's Freeze button now latches like the
+// one on the control page. Ticking "hold" again afterwards is respected.
+const FREEZE_LATCH_KEY = 'thirdeye.migrated.freeze-latch';
 
 export class Store {
   constructor(bus) {
@@ -22,6 +26,12 @@ export class Store {
     this.listeners = new Set();
     this.eventListeners = new Set();
     this.state = sanitizeState(readJSON(SESSION_KEY, null));
+    if (!readJSON(FREEZE_LATCH_KEY, false)) {
+      for (const b of this.state.actions) if (b.source === 'trig.2' && b.action === 'freeze') b.momentary = false;
+      // Written at once, so a second window loading now reads the same.
+      writeJSON(SESSION_KEY, this.state);
+      writeJSON(FREEZE_LATCH_KEY, true);
+    }
     this.save = debounce(() => writeJSON(SESSION_KEY, this.state), 250);
 
     bus.on('op', (m) => this.apply(m.op, true));

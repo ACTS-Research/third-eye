@@ -18,9 +18,6 @@ could only be imitated in the tests.
 
 **Decisions only you can make.**
 
-- Pick an icon: eight options, lettered A to H, are at
-  https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo (private to you). Name
-  a letter and it becomes the browser tab and Home Screen icon.
 - Say whether 1280×720 is the right size for the picture (and recordings)
   while no output window is open. It is fixed so recordings do not depend on
   the size of the monitor on the page.
@@ -108,6 +105,15 @@ Nothing is waiting to be merged; everything is pushed.
 - **The preview is the XY pad.** Preset buttons come from the Mac
   (`presets` message; `preset` back). Triggers bound to previous / next
   preset are hidden on the phone while the preset row is filled.
+- **Labels turn, buttons do not.** What is written on a button sits in a
+  `.lbl` block that is turned by `--label-turn` (`orient.label`), following
+  gravity when the motion sensors are on, so it reads upright however the
+  phone is held. Anything new with words on it needs a `.lbl`.
+- **Presets are a bank of six**, no scrolling; **Freeze latches** by default
+  (a one-time change to stored sessions, flagged in `store.js`), and the Mac
+  tells the phone which switch triggers are on so it can light them.
+- **The phone asks for its state** (`hello`) when its link opens; the Mac
+  answers with labels, presets, codec and palette (`greetPhone`).
 - **Reconnect** redials (`HostLink.restart`); for a phone paired by code it
   scans the Mac's code inside the page (jsQR, loaded on demand).
 
@@ -185,7 +191,7 @@ Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
 | `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js`, `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `direct.js` (pairing with no server), `qr.js`, `sources.js`, `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; the engine forwards them to the phone) |
 | `src/effects/` | One file per effect; `index.js` is the registry, `common.glsl.js` the shared GLSL |
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
-| `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot) |
+| `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon, option D2 from the sheet at https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo) |
 | `tests/` | Fifteen headless suites and `lib.mjs` |
 
 ### Rules that are easy to break

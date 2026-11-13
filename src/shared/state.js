@@ -57,7 +57,7 @@ export function makeActionBinding(source, action, momentary = false) {
 export function defaultActions() {
   return [
     makeActionBinding('trig.1', 'glitch'),
-    makeActionBinding('trig.2', 'freeze', true),
+    makeActionBinding('trig.2', 'freeze'),
     makeActionBinding('trig.3', 'presetPrev'),
     makeActionBinding('trig.4', 'presetNext'),
   ];
