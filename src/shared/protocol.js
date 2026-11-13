@@ -29,7 +29,12 @@ export const P = Object.freeze({
   PAD_DOWN: 14,
   TRIG_MASK: 15, // bit n set while trigger n is held
   TRIG_COUNT: 16, // 16..19: presses so far, so a tap between packets is not lost
-  LENGTH: 20,
+  // Degrees (0, 90, 180, 270) the Mac must turn the camera frames
+  // anticlockwise so the picture stays horizontal however the phone's page
+  // is turned. Older phone pages do not send it; it then counts as 0.
+  TURN: 20,
+  LENGTH: 21,
+  MIN_LENGTH: 20,
 });
 
 export const FLAG_ORIENTATION = 1;

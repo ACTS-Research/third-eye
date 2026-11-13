@@ -1,15 +1,19 @@
 // Torch, zoom, exposure and focus controls. Each one is shown only when the
-// running track's getCapabilities() reports it; nothing is assumed.
+// running track's getCapabilities() reports it; nothing is assumed. Zoom gets
+// the tall fader at the side of the screen; the rest live in the camera
+// panel.
 
 import { el } from '../shared/util.js';
+import { fader } from './widgets.js';
 
 function hasRange(cap) {
   return cap && typeof cap.min === 'number' && typeof cap.max === 'number' && cap.max > cap.min;
 }
 
 export class CameraControls {
-  constructor(root, onError) {
+  constructor(root, zoomRoot, onError) {
     this.root = root;
+    this.zoomRoot = zoomRoot;
     this.onError = onError;
     this.track = null;
     this.hasTorch = false;
@@ -21,6 +25,8 @@ export class CameraControls {
     this.hasTorch = false;
     this.torchOn = false;
     this.root.replaceChildren();
+    this.zoomRoot.replaceChildren();
+    this.zoomRoot.hidden = true;
     if (!track || typeof track.getCapabilities !== 'function') return;
 
     let caps = {};
@@ -34,14 +40,21 @@ export class CameraControls {
     this.caps = caps;
     this.hasTorch = caps.torch === true || (Array.isArray(caps.torch) && caps.torch.includes(true));
 
-    if (hasRange(caps.zoom)) this.addSlider('Zoom', 'zoom', caps.zoom, settings.zoom);
-    if (hasRange(caps.exposureCompensation)) this.addSlider('Exposure', 'exposureCompensation', caps.exposureCompensation, settings.exposureCompensation);
+    if (hasRange(caps.zoom)) {
+      this.zoomRoot.append(this.slider('Zoom', 'zoom', caps.zoom, settings.zoom, { vertical: true, format: (v) => `${v.toFixed(1)}×` }));
+      this.zoomRoot.hidden = false;
+    }
+    if (hasRange(caps.exposureCompensation)) this.root.append(this.slider('Exposure', 'exposureCompensation', caps.exposureCompensation, settings.exposureCompensation));
     if (hasRange(caps.focusDistance)) {
-      this.addSlider('Focus', 'focusDistance', caps.focusDistance, settings.focusDistance, (c) => {
-        // A manual distance only applies in manual focus mode.
-        if (caps.focusMode?.includes('manual')) c.focusMode = 'manual';
-        this.setLock('focusMode', true);
-      });
+      this.root.append(
+        this.slider('Focus', 'focusDistance', caps.focusDistance, settings.focusDistance, {
+          extend: (c) => {
+            // A manual distance only applies in manual focus mode.
+            if (caps.focusMode?.includes('manual')) c.focusMode = 'manual';
+            this.setLock('focusMode', true);
+          },
+        }),
+      );
     }
 
     const locks = el('div', { class: 'locks' });
@@ -67,20 +80,21 @@ export class CameraControls {
     this.lockButtons?.[key]?.classList.toggle('on', locked);
   }
 
-  addSlider(label, key, cap, value, extend) {
-    const input = el('input', {
-      type: 'range',
-      min: String(cap.min),
-      max: String(cap.max),
-      step: String(cap.step || (cap.max - cap.min) / 100),
-      value: String(value ?? cap.min),
-      oninput: () => {
-        const constraint = { [key]: Number(input.value) };
+  slider(label, key, cap, value, { vertical = false, format, extend } = {}) {
+    return fader({
+      label,
+      min: cap.min,
+      max: cap.max,
+      step: cap.step || (cap.max - cap.min) / 100,
+      value: value ?? cap.min,
+      vertical,
+      format,
+      onInput: (v) => {
+        const constraint = { [key]: v };
         extend?.(constraint);
         this.apply(constraint);
       },
     });
-    this.root.append(el('label', {}, [label, input]));
   }
 
   async apply(constraint) {

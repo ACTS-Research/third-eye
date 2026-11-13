@@ -29,6 +29,7 @@ export class PhoneSensors {
     this.angles = [0, 0, 0]; // smoothed, fed to shaders as uPhone
     this.hasOrientation = false;
     this.hasMotion = false;
+    this.turn = 0; // quarter turns the phone asks for, 0..3
   }
 
   // Opens the unreliable sensor channel on a new data connection.
@@ -39,7 +40,7 @@ export class PhoneSensors {
       const channel = pc.createDataChannel(SENSOR_CHANNEL.label, SENSOR_CHANNEL.options);
       channel.binaryType = 'arraybuffer';
       channel.onmessage = (e) => {
-        if (e.data instanceof ArrayBuffer && e.data.byteLength >= P.LENGTH * 4) this.onPacket(new Float32Array(e.data));
+        if (e.data instanceof ArrayBuffer && e.data.byteLength >= P.MIN_LENGTH * 4) this.onPacket(new Float32Array(e.data));
       };
       this.channel = channel;
       this.lastSeq = -1;
@@ -59,6 +60,7 @@ export class PhoneSensors {
     this.packets++;
     const mod = this.mod;
     const flags = f[P.FLAGS];
+    this.turn = f.length > P.TURN ? ((Math.round(f[P.TURN] / 90) % 4) + 4) % 4 : 0;
     this.hasOrientation = !!(flags & FLAG_ORIENTATION);
     this.hasMotion = !!(flags & FLAG_MOTION);
 
@@ -71,8 +73,8 @@ export class PhoneSensors {
       const ux = -Math.cos(beta) * Math.sin(gamma);
       const uy = Math.sin(beta);
       const uz = Math.cos(beta) * Math.cos(gamma);
-      // Roll about the camera axis, relative to how iOS has already rotated
-      // the picture (screen orientation).
+      // Roll about the camera axis, relative to which way is up in the
+      // picture as it is shown here (the phone works that out and sends it).
       const roll = wrapPi(Math.atan2(ux, uy) - f[P.SCREEN] * DEG);
       const pitch = Math.asin(clamp(uz, -1, 1));
       const yaw = wrapPi(f[P.ALPHA] * DEG);

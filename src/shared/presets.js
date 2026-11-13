@@ -5,7 +5,8 @@ import { factoryPresets } from './factory-presets.js';
 import { sanitizeScene, sceneOf } from './state.js';
 import { readJSON, writeJSON } from './util.js';
 
-const KEY = 'thirdeye.presets.v1';
+export const PRESETS_KEY = 'thirdeye.presets.v1';
+const KEY = PRESETS_KEY;
 const FILE_TAG = 'third-eye-cam-presets';
 
 export const MAX_FADE = 30;

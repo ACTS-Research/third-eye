@@ -98,6 +98,15 @@ export class HostLink {
     });
   }
 
+  // The Reconnect button: a fresh start for the signaling side and an
+  // immediate redial. (A direct link that is still up is left alone.)
+  restart() {
+    this.makePeer();
+    this.connTriedAt = -1e9;
+    this.callTriedAt = -1e9;
+    this.changed();
+  }
+
   // Start (or stop, with null) sending a camera stream.
   setStream(stream, quality) {
     this.stream = stream;

@@ -119,7 +119,9 @@ export async function openSession(browser, site, peerServer, errors, { start = t
   await waitFor(() => control.evaluate(() => window.thirdEye.ui.status?.phone.signal === 'open'), { label: 'host signaling', timeout: 20000 });
   const url = await control.locator('#phone-link').getAttribute('href');
   const phone = await context.newPage();
-  await phone.setViewportSize({ width: 390, height: 844 });
+  // Sideways, the way the live screen is laid out, so positions on the page
+  // read as they do on the screen. (tests/phone-screen.mjs covers upright.)
+  await phone.setViewportSize({ width: 844, height: 390 });
   watch(phone, 'phone', errors);
   await phone.goto(url);
   if (start) {
@@ -129,13 +131,12 @@ export async function openSession(browser, site, peerServer, errors, { start = t
   return { context, control, output, phone, url };
 }
 
-// Stands in for the Mac's camera on /control: a video stream showing
-// whatever picture showToMac() last gave it, on a plain background. The
-// phone's code is drawn at about the size it has in a 720p webcam frame when
-// the phone is held a hand's length away.
-export async function fakeMacCamera(context) {
-  await context.addInitScript(() => {
-    if (!location.pathname.includes('/control/')) return;
+// Stands in for a camera on one kind of page: a video stream showing
+// whatever picture __show() last gave it, on a plain background, `size`
+// pixels across in a 1280x720 frame.
+async function fakeCamera(context, path, size) {
+  await context.addInitScript(({ path, size }) => {
+    if (!location.pathname.includes(path)) return;
     const canvas = document.createElement('canvas');
     canvas.width = 1280;
     canvas.height = 720;
@@ -144,7 +145,7 @@ export async function fakeMacCamera(context) {
     setInterval(() => {
       ctx.fillStyle = '#3a4652';
       ctx.fillRect(0, 0, 1280, 720);
-      if (image) ctx.drawImage(image, 500, 220, 280, 280);
+      if (image) ctx.drawImage(image, (1280 - size) / 2, (720 - size) / 2, size, size);
     }, 100);
     window.__show = (dataUrl) => {
       if (!dataUrl) {
@@ -159,8 +160,14 @@ export async function fakeMacCamera(context) {
     };
     const real = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
     navigator.mediaDevices.getUserMedia = async (constraints) => (constraints?.video ? canvas.captureStream(15) : real(constraints));
-  });
+  }, { path, size });
 }
+
+// The Mac's camera on /control: the phone's code at about the size it has in
+// a 720p webcam frame when the phone is held a hand's length away.
+export const fakeMacCamera = (context) => fakeCamera(context, '/control/', 280);
+// The phone's camera on /phone, pointed at the Mac's screen.
+export const fakePhoneCamera = (context) => fakeCamera(context, '/phone/', 520);
 
 // The picture of the code the phone is showing (a data URL), and holding a
 // picture up to the Mac's camera (null takes it away).

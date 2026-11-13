@@ -172,16 +172,30 @@ connection as five steps (picture running, pairing server reached, phone
 found, video link, picture arriving) with the one it is stuck at marked. It also has
 **Restart output** and **New room code**.
 
-On the phone:
+The phone's screen is always laid out horizontally, like a camera held on
+its side, and the picture it sends is always horizontal too. If you hold the
+phone upright the screen is simply drawn on its side; it does not flip. That
+keeps the picture on the projector from jumping between tall and wide when
+the phone tilts. For the most room on screen, switch on iOS's Portrait
+Orientation Lock (Control Centre): the page then never turns at all.
 
-| Control | What it does |
+| On the screen | What it does |
 | --- | --- |
-| Flip | Front / rear camera |
-| Torch, Zoom, Exposure, Focus, Lock … | Shown only when the active camera reports the capability |
-| Quality | 360p / 720p / 1080p at 30 or 60 fps (default 720p · 60) |
-| Camera on / off | Off = controller only: sensors and touch keep working, the output holds the last frame |
-| XY pad | Two modulation sources, plus "pad touched" |
-| Four buttons | Triggers; labelled with whatever action they are bound to |
+| The preview | What the Mac receives, as large as it will go. It is also the XY pad: a finger on the picture moves the dot, giving two modulation sources plus "pad touched" |
+| First row of buttons | Triggers, labelled with whatever action they are bound to. A trigger bound to previous or next preset is left out: the row below does that job |
+| Second row | One button per preset, the live one lit. Tap to load it; drag the row sideways for more |
+| Zoom | The tall fader down the right edge, when the camera offers zoom |
+| **Rotate** | Turns the screen and the picture half a turn, for holding the phone the other way round |
+| **Camera** | Opens a panel with Flip, Torch, Quality (360p / 720p / 1080p at 30 or 60 fps, default 720p · 60), Camera on / off, any exposure, focus and lock controls the camera reports, and **Scan the Mac's code** |
+| **Reconnect** | Appears in the top line whenever the link is down. It redials; if the phone was paired by code it reads **Scan code** and scans the Mac's code again |
+
+Camera off means controller only: sensors and touch keep working and the
+output holds the last frame.
+
+**Coming back.** The phone remembers the last room it joined, so opening
+the phone page again (from a bookmark, or the Home Screen) fills the room
+code in; tap START. There is no need to scan the QR code again unless the
+room code has changed.
 
 Tick **Controller only** before START to join without ever opening the camera.
 
@@ -236,6 +250,11 @@ make a Wi-Fi network with no internet behind it:
 The Mac's Wi-Fi is then busy being the network, so the Mac is offline until
 you turn Internet Sharing off again. A small travel router does the same job
 without tying up the Mac.
+
+**Pairing by code again** does not need the Camera app: on the phone, tap
+**Scan code** in the top line (or **Camera → Scan the Mac's code**) and point
+it at the code on the Mac. The phone reads it through the camera it already
+has open.
 
 What is different:
 
@@ -701,6 +720,7 @@ npm test
 | `tests/offline.mjs` | Reloading every page with the server gone; tap tempo and tempo-synced LFOs |
 | `tests/phone.mjs` | Real WebRTC against a local PeerServer: pairing, live video, palette and dimmer following live, the room-code strip clearing once the phone pairs, hold on stall, every reconnect path, a second output window, a taken room code, Restart output, local camera |
 | `tests/record-latency.mjs` | Recording to WebM and MP4, saving and deleting; the latency measurement, including a stray late flash; switching codec |
+| `tests/phone-screen.mjs` | The phone's live screen: the large preview that is also the XY pad, the trigger and preset rows, Rotate, the screen drawn on its side when held upright, upright frames turned back on the Mac, Reconnect, the remembered room, scanning the Mac's code inside the page |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |
@@ -727,6 +747,11 @@ else. Check these the first time you use them:
   network, and the
   phone following the picture between windows. Only Chromium talking to
   Chromium has been tried.
+- **The phone's new screen**, on a real iPhone: that the picture stays
+  horizontal when the phone is turned (Safari turning the camera frames is
+  only imitated in the tests), the brief moment when the page itself turns,
+  the sideways screen under your thumb, dragging the preset row, the zoom
+  fader, and scanning the Mac's code from inside the page.
 - **Running with no output window, and moving the picture** by opening and
   closing it: that the iPhone reconnects by itself each time and how long it
   takes (1.5–2.5 s in the tests), that the monitor on `/control` holds 60 fps,

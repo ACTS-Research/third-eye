@@ -11,6 +11,7 @@ import { CameraControls } from './camera-controls.js';
 import { SENSOR_HZ } from '../shared/protocol.js';
 import { HostLink } from './link.js';
 import { enableOffline } from '../shared/offline.js';
+import { measure, onOrient, orient, setManual } from './orient.js';
 import { Sensors } from './sensors.js';
 
 const $ = (id) => document.getElementById(id);
@@ -21,8 +22,11 @@ const params = parsePhoneParams();
 // paired, the Mac sends any change.
 applyPalette(new URLSearchParams(location.search).get('pal'), { save: false });
 applyDim(new URLSearchParams(location.search).get('dim'), { save: false });
-const prefs = { quality: DEFAULT_QUALITY, facing: 'environment', ...readJSON(PREFS_KEY, {}) };
+// `room`: the last room joined, so the page can be reopened without the
+// QR code. `flip`: the Rotate button's half turn.
+const prefs = { quality: DEFAULT_QUALITY, facing: 'environment', room: '', flip: false, ...readJSON(PREFS_KEY, {}) };
 if (!QUALITY[prefs.quality]) prefs.quality = DEFAULT_QUALITY;
+setManual(prefs.flip ? 180 : 0);
 
 // "Pair without internet" on the Mac puts its half of the handshake in the
 // link, after the #. This page answers it and shows its own half as a QR
@@ -30,9 +34,10 @@ if (!QUALITY[prefs.quality]) prefs.quality = DEFAULT_QUALITY;
 const offer = new URLSearchParams(location.hash.slice(1)).get(OFFER_KEY);
 
 const app = {
-  room: params.room,
+  room: params.room || normalizeRoom(prefs.room),
   signal: params.signal,
   offer,
+  byCode: !!offer, // paired by code: a lost link needs a new scan, not a redial
   pairToken: '',
   started: false,
   controllerOnly: false,
@@ -69,6 +74,8 @@ async function start() {
     return;
   }
   app.room = room;
+  prefs.room = room;
+  savePrefs();
   app.controllerOnly = $('controller-only').checked;
   $('start').disabled = true;
   $('join-error').textContent = '';
@@ -93,8 +100,11 @@ async function start() {
   $('room-label').textContent = app.room;
   buildTools();
   syncTools();
-  sensors.mountPad($('perform'));
-  sensors.mountTriggers($('perform'));
+  $('stage').classList.toggle('off', app.controllerOnly);
+  sensors.mountPad($('stage'));
+  sensors.mountTriggers($('trigs'));
+  sensors.mountPresets($('presets'), (index) => app.link?.send({ t: 'preset', index }));
+  layout();
 
   app.link = new HostLink({
     room: app.room,
@@ -103,7 +113,8 @@ async function start() {
     onDataOpen: sendInfo,
     directFirst: !!offer,
     onMessage: (msg) => {
-      if (msg.t === 'labels') sensors.setTriggerLabels(msg.triggers ?? []);
+      if (msg.t === 'labels') sensors.setTriggerLabels(msg.triggers ?? [], msg.actions ?? []);
+      else if (msg.t === 'presets') sensors.setPresets(msg.names ?? [], msg.current);
       else if (msg.t === 'look') {
         applyPalette(msg.palette, { save: false });
         applyDim(msg.dim, { save: false });
@@ -115,14 +126,50 @@ async function start() {
   app.link.start();
   requestWakeLock();
   renderState(app.link.state);
-  if (offer) showPairCode();
+  if (offer) showPairCode(offer);
 }
+
+// ------------------------------------------------------------- layout ---
+
+// Sizes and turns the live screen so it is horizontal whichever way the
+// page is turned, and turns the preview the way the Mac turns the picture.
+function layout() {
+  if (!app.started) return;
+  measure($('self'));
+  const frame = $('frame');
+  const root = $('root');
+  const sideways = orient.ui % 180 !== 0;
+  const width = sideways ? frame.clientHeight : frame.clientWidth;
+  const height = sideways ? frame.clientWidth : frame.clientHeight;
+  root.style.width = `${width}px`;
+  root.style.height = `${height}px`;
+  root.style.transform = `translate(-50%, -50%) rotate(${orient.ui}deg)`;
+  root.classList.toggle('tall', width / Math.max(1, height) < 1.5);
+  root.dataset.turn = String(orient.ui);
+  const stage = $('stage');
+  stage.style.setProperty('--turn', `${-orient.picture}deg`);
+  stage.classList.toggle('turned', orient.picture % 180 !== 0);
+}
+window.addEventListener('resize', layout);
+window.addEventListener('orientationchange', layout);
+$('self').addEventListener('resize', layout);
+setInterval(layout, 500);
+onOrient(() => sendInfo());
+
+$('rotate').addEventListener('click', () => {
+  prefs.flip = !prefs.flip;
+  savePrefs();
+  setManual(prefs.flip ? 180 : 0);
+  layout();
+});
 
 // ------------------------------------------- pairing without internet ---
 
-async function showPairCode() {
+async function showPairCode(packed) {
+  // Normal pairing waits while this phone is pairing by code.
+  if (app.link.state.data !== 'open') app.link.directFirst = true;
   try {
-    const { token } = await app.link.answerOffer(offer);
+    const { token } = await app.link.answerOffer(packed);
     app.pairToken = token;
     drawQr($('pair-qr'), ANSWER_PREFIX + token, { level: 'L', size: 640 });
     $('pair').hidden = false;
@@ -153,13 +200,14 @@ function syncMotionAsk() {
   if (button) return;
   button = el('button', {
     id: 'motion-ask',
-    text: 'Enable motion sensors',
+    text: 'Motion',
+    title: 'Enable the motion sensors',
     onclick: () => sensors.requestPermission().then((result) => {
       syncMotionAsk();
       if (result === 'denied') setNote('Motion access is blocked. In iOS Settings → Safari, allow Motion & Orientation Access, then reload.');
     }),
   });
-  $('note').after(button);
+  $('rotate').before(button);
 }
 
 function cameraErrorText(err) {
@@ -169,9 +217,75 @@ function cameraErrorText(err) {
   return `Camera error: ${err.message || err.name}`;
 }
 
+// Reads the code on the Mac's screen through the camera this page already
+// has open, so pairing by code again does not need the Camera app and a new
+// tab.
+let scanTimer = 0;
+let jsQR = null;
+const scanFrame = document.createElement('canvas');
+
+function stopScan(note = '') {
+  clearInterval(scanTimer);
+  scanTimer = 0;
+  $('scan').textContent = 'Scan the Mac\'s code';
+  setNote(note);
+  renderState(app.link?.state);
+}
+
+async function startScan() {
+  if (scanTimer) return stopScan();
+  setPanel(false);
+  if (!app.stream) {
+    setNote('Turn the camera on first: it is what reads the code on the Mac.');
+    return;
+  }
+  setNote('Point the camera at the code on the Mac (Pair without internet)…');
+  try {
+    jsQR ??= await import('jsqr').then((m) => m.default ?? m);
+  } catch {
+    setNote('The code reader could not be loaded.');
+    return;
+  }
+  const video = $('self');
+  const until = Date.now() + 60000;
+  $('scan').textContent = 'Stop scanning';
+  scanTimer = setInterval(() => {
+    if (Date.now() > until) return stopScan('No code seen. On the Mac, open Pair without internet, then scan again.');
+    if (!video.videoWidth) return;
+    const scale = Math.min(1, 960 / video.videoWidth);
+    scanFrame.width = Math.round(video.videoWidth * scale);
+    scanFrame.height = Math.round(video.videoHeight * scale);
+    const ctx = scanFrame.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(video, 0, 0, scanFrame.width, scanFrame.height);
+    const image = ctx.getImageData(0, 0, scanFrame.width, scanFrame.height);
+    const text = jsQR(image.data, image.width, image.height)?.data ?? '';
+    const found = new URLSearchParams(text.split('#')[1] ?? '').get(OFFER_KEY);
+    if (!found) return;
+    stopScan();
+    showPairCode(found);
+  }, 250);
+  renderState(app.link?.state);
+}
+$('scan').addEventListener('click', startScan);
+
+// The bar's button: redial, or scan again if this phone was paired by code.
+$('reconnect').addEventListener('click', () => {
+  if (scanTimer) return stopScan();
+  if (app.byCode) startScan();
+  else app.link?.restart();
+});
+
 // -------------------------------------------------------------- camera ---
 
-const cameraControls = new CameraControls($('adjust'), (msg) => setNote(msg));
+const cameraControls = new CameraControls($('adjust'), $('zoom'), (msg) => setNote(msg));
+
+function setPanel(open) {
+  $('panel').hidden = !open;
+  $('panel-toggle').setAttribute('aria-expanded', String(open));
+  $('panel-toggle').classList.toggle('on', open);
+}
+$('panel-toggle').addEventListener('click', () => setPanel($('panel').hidden));
+$('panel-close').addEventListener('click', () => setPanel(false));
 
 async function startCamera() {
   const q = QUALITY[prefs.quality];
@@ -197,6 +311,7 @@ async function startCamera() {
   $('self').srcObject = stream;
   $('stage').classList.remove('off');
   cameraControls.attach(track);
+  layout();
   syncTools();
   return stream;
 }
@@ -326,6 +441,11 @@ function renderState(state) {
   let level = 'warn';
   let text = 'Connecting…';
   if (state.data === 'open') $('pair').hidden = true;
+  if (state.direct) app.byCode = true;
+  // Offered whenever the link is down: redial, or scan the Mac's code again
+  // if that is how this phone was paired.
+  $('reconnect').hidden = state.data === 'open' && !scanTimer;
+  $('reconnect').textContent = scanTimer ? 'Stop scanning' : app.byCode ? 'Scan code' : 'Reconnect';
   if (!$('pair').hidden) text = 'Show the code to the Mac';
   else if (state.data === 'open') {
     if (app.controllerOnly) {

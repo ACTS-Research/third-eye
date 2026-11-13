@@ -79,6 +79,8 @@ try {
   await control.keyboard.press('Escape');
 
   console.log('phone controls');
+  // Flip, quality and camera on / off live in the camera panel.
+  await phone.locator('#panel-toggle').dispatchEvent('click');
   await phone.selectOption('#tools select', '360p30');
   s = await waitStatus(control, (st) => st.input.width === 640 && st.input.state === 'live', 'quality change');
   check('quality preset changes the stream', true, `${s.input.width}x${s.input.height}`);
@@ -98,7 +100,7 @@ try {
   await waitStatus(control, (st) => st.input.state === 'live' && st.phone.info?.facing === 'user', 'flip');
   check('flip keeps the stream alive', true);
   const caps = await phone.evaluate(() => ({
-    sliders: document.querySelectorAll('#adjust input[type=range]').length,
+    sliders: document.querySelectorAll('#adjust .fader, #zoom .fader').length,
     reported: Object.keys(window.thirdEyePhone.track.getCapabilities()).filter((k) => ['zoom', 'torch', 'exposureCompensation', 'focusDistance'].includes(k)),
   }));
   check('camera controls match reported capabilities', caps.sliders === caps.reported.filter((k) => k !== 'torch').length, `capabilities: ${caps.reported.join(', ') || 'none'}; sliders: ${caps.sliders}`);

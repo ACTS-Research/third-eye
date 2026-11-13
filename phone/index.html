@@ -22,14 +22,38 @@
     </div>
 
     <div id="live" hidden>
-      <div id="bar"><span id="dot"></span><span id="state">Starting…</span><span class="room" id="room-label"></span></div>
-      <div id="note"></div>
-      <div id="side">
-        <div id="stage"><video id="self" playsinline muted autoplay></video></div>
-        <div id="tools"></div>
-        <div id="adjust"></div>
+      <!-- #root is the whole live screen. It is always laid out horizontally
+           and drawn turned inside the page when the page is upright. -->
+      <div id="frame">
+        <div id="root">
+          <div id="bar">
+            <span id="dot"></span><span id="state">Starting…</span>
+            <button id="reconnect" hidden>Reconnect</button>
+            <span class="room" id="room-label"></span>
+            <button id="rotate" title="Turn the screen and the picture half a turn">Rotate</button>
+            <button id="panel-toggle" aria-expanded="false">Camera</button>
+          </div>
+          <div id="main">
+            <div id="stage-cell">
+              <div id="note"></div>
+              <div id="stage"><video id="self" playsinline muted autoplay></video><span id="stage-label">Camera off</span></div>
+            </div>
+            <div id="controls">
+              <div id="trigs"></div>
+              <div id="presets"></div>
+            </div>
+            <div id="zoom" hidden></div>
+            <div id="panel" hidden>
+              <div id="tools"></div>
+              <div id="adjust"></div>
+              <div class="panel-row">
+                <button id="scan">Scan the Mac's code</button>
+                <button id="panel-close">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div id="perform"></div>
     </div>
 
     <div id="pair" hidden>

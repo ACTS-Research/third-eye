@@ -239,7 +239,11 @@ export function installHost(ui) {
   ui.onView(() => {
     if (host.state === 'local') changed();
   });
-  // No storage event reaches the page that changed the palette or dimmer.
+  // No storage event reaches the page that changed the palette, the dimmer
+  // or the presets.
+  ui.presets.onChange(() => {
+    if (engine?.running) engine.sendPresets();
+  });
   ui.onPalette(() => engine?.sendLook());
   ui.lookChanged = () => engine?.sendLook();
 

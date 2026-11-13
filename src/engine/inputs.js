@@ -92,6 +92,18 @@ export class InputManager {
     this.width = 0;
     this.height = 0;
     this.hasFrame = false;
+    // Quarter turns (anticlockwise) applied to the phone's frames so its
+    // picture stays horizontal. The engine sets it; see Engine.updateTurn.
+    this.turn = 0;
+  }
+
+  get quarter() {
+    return this.kind === 'phone' ? this.turn : 0;
+  }
+
+  // The picture's size as shown, after any turn.
+  size() {
+    return this.quarter % 2 ? [this.height, this.width] : [this.width, this.height];
   }
 
   initGL(gl) {

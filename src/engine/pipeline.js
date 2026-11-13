@@ -295,7 +295,7 @@ export class Pipeline {
   }
 
   fitScale(fit) {
-    const { width: iw, height: ih } = this.inputs;
+    const [iw, ih] = this.inputs.size();
     if (!iw || !ih) return [1, 1];
     const r = this.width / this.height / (iw / ih);
     if (fit === 'stretch') return [1, 1];
@@ -319,7 +319,7 @@ export class Pipeline {
     if (!(uploaded || this.srcDirty) || !inputs.hasFrame) return;
     const [sx, sy] = this.fitScale(input.fit);
     this.src.bind();
-    this.sourceProgram.use().tex('uTex', 0, inputs.tex).v2('uFit', sx, sy).f('uMirror', input.mirror ? 1 : 0);
+    this.sourceProgram.use().tex('uTex', 0, inputs.tex).v2('uFit', sx, sy).f('uMirror', input.mirror ? 1 : 0).f('uTurn', inputs.quarter);
     drawFullscreen(gl);
     this.srcDirty = false;
   }

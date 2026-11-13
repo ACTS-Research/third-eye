@@ -5,18 +5,22 @@
 **Where things stand.** Two things were built this session and both are
 live on GitHub Pages from `main`. The output window is optional: `/control`
 runs the whole instrument by itself. And the phone can be paired with no
-internet, by QR code both ways ("Pair without internet"). All fourteen test
+internet, by QR code both ways ("Pair without internet"). All fifteen test
 suites pass in headless Chromium. On the real Mac and iPhone only normal
 pairing over the hotspot has been confirmed (it works); the university Wi-Fi
 could not reach the pairing server, which is what the new pairing is for.
 
-**Next step.** Try Pair without internet on the real Mac and iPhone, on the
-iPhone's hotspot: scan the Mac's code, show the phone's code to the Mac's
-camera, then open and close the output window. Report what happens at each
-step; none of it has run on Safari yet.
+**Next step.** Try the phone's new screen on the real iPhone: hold it
+upright and sideways and check the Mac's picture stays horizontal and the
+right way up, try Rotate, the preset row, the zoom fader, and Reconnect.
+Report anything that comes out turned the wrong way; that is the part that
+could only be imitated in the tests.
 
 **Decisions only you can make.**
 
+- Pick an icon: eight options, lettered A to H, are at
+  https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo (private to you). Name
+  a letter and it becomes the browser tab and Home Screen icon.
 - Say whether 1280×720 is the right size for the picture (and recordings)
   while no output window is open. It is fixed so recordings do not depend on
   the size of the monitor on the page.
@@ -83,6 +87,29 @@ Nothing is waiting to be merged; everything is pushed.
   only when the dialog opens) whenever that finds nothing. The tests give
   `/control` a stand-in camera showing a picture of the phone's code
   (`fakeMacCamera` in `tests/lib.mjs`), read by jsQR.
+
+### The phone's live screen (rebuilt 2026-11-13)
+
+- **Always horizontal.** `src/phone/orient.js` works out two turns: `ui`
+  (how the live screen, `#root`, is drawn inside the page; a quarter turn
+  while the page is upright) and `picture` (how far the Mac must turn the
+  camera frames back). The page cannot lock orientation and Safari turns
+  camera frames with the page, so the picture's turn follows the shape of
+  the frames themselves. Read the header of that file before touching it.
+- **The Mac turns the frames back** in the source shader (`uTurn`), from
+  `P.TURN` in the sensor packet. `Engine.updateTurn` waits for the frames to
+  change shape before applying a quarter turn, because the packet outruns
+  the video. Vision gets the turned picture too. `P.SCREEN` now carries
+  which way is up in the picture as shown, for roll.
+- **Touches are read with `localXY`** (`orient.js`), never straight from
+  `clientX` / `getBoundingClientRect`, or they break when the screen is
+  drawn turned. Sliders are the `fader` in `src/phone/widgets.js` for the
+  same reason; do not use a native range input on the live screen.
+- **The preview is the XY pad.** Preset buttons come from the Mac
+  (`presets` message; `preset` back). Triggers bound to previous / next
+  preset are hidden on the phone while the preset row is filled.
+- **Reconnect** redials (`HostLink.restart`); for a phone paired by code it
+  scans the Mac's code inside the page (jsQR, loaded on demand).
 
 ### This session, in short
 
@@ -159,7 +186,7 @@ Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
 | `src/effects/` | One file per effect; `index.js` is the registry, `common.glsl.js` the shared GLSL |
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot) |
-| `tests/` | Fourteen headless suites and `lib.mjs` |
+| `tests/` | Fifteen headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 
@@ -264,7 +291,11 @@ Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
 
 ### Never run on real hardware (all unconfirmed)
 
-Pair without internet, every step: Safari answering the offer, the Mac's
+The phone's rebuilt screen: the picture staying horizontal when the phone
+turns (Safari turning camera frames with the page is only imitated in the
+tests, by asking the fake camera for upright frames), which sideways hold
+comes up by default, the moment the page itself turns, the zoom fader, the
+preset row under a thumb, scanning the Mac's code inside the page. Pair without internet, every step: Safari answering the offer, the Mac's
 real camera reading the phone's real screen, the rebuilt answer being accepted between
 Chrome and Safari, the hotspot or a Mac-made network carrying it, and the
 phone following the picture between windows. Whether iOS still has the

@@ -82,9 +82,9 @@ try {
   check('the phone follows the palette over the direct link', await settle(() => phone.evaluate(() => document.documentElement.dataset.palette === 'ice'), 'palette'));
 
   console.log('camera off and on, no new handshake');
-  await phone.click('text=Camera on');
+  await phone.locator('#tools button:has-text("Camera on")').dispatchEvent('click');
   check('camera off holds the picture', await settle(async () => (await status()).phone.info?.controllerOnly === true && (await status()).input.state === 'paused', 'paused'), (await status()).input.state);
-  await phone.click('text=Camera off');
+  await phone.locator('#tools button:has-text("Camera off")').dispatchEvent('click');
   check('camera on brings it back on the same link', await settle(async () => (await status()).input.state === 'live' && (await status()).phone.direct, 'live again', 20000), (await status()).input.state);
 
   console.log('an old code');

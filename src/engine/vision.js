@@ -96,8 +96,10 @@ export class Vision {
     if (msg.mask) this.pendingMask = msg.mask;
   }
 
-  // Called every rendered frame with the active input's <video> (or null).
-  frame(now, video) {
+  // Called every rendered frame with the active input's <video> (or null)
+  // and the quarter turns (anticlockwise) the picture is shown with, so the
+  // models see faces and hands the same way up as the audience does.
+  frame(now, video, quarter = 0) {
     if (!this.worker || !this.enabled) return;
     if (this.busy && now - this.sentAt > BUSY_TIMEOUT_MS) this.busy = false;
     if (this.busy || now - this.sentAt < MIN_INTERVAL_MS) return;
@@ -107,7 +109,21 @@ export class Vision {
     this.sentAt = now;
     const width = Math.min(FRAME_WIDTH, video.videoWidth);
     const height = Math.max(1, Math.round((width * video.videoHeight) / video.videoWidth));
-    createImageBitmap(video, { resizeWidth: width, resizeHeight: height, resizeQuality: 'low' })
+    let grab;
+    if (quarter) {
+      const odd = quarter % 2 === 1;
+      this.turner ??= new OffscreenCanvas(1, 1);
+      this.turner.width = odd ? height : width;
+      this.turner.height = odd ? width : height;
+      const ctx = this.turner.getContext('2d');
+      ctx.translate(this.turner.width / 2, this.turner.height / 2);
+      ctx.rotate((-quarter * Math.PI) / 2);
+      ctx.drawImage(video, -width / 2, -height / 2, width, height);
+      grab = createImageBitmap(this.turner);
+    } else {
+      grab = createImageBitmap(video, { resizeWidth: width, resizeHeight: height, resizeQuality: 'low' });
+    }
+    grab
       .then((bitmap) => {
         if (this.worker) this.worker.postMessage({ t: 'frame', bitmap }, [bitmap]);
         else bitmap.close();

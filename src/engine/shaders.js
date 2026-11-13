@@ -11,9 +11,16 @@ export const SOURCE_FRAG = HEAD + /* glsl */ `
 uniform sampler2D uTex;
 uniform vec2 uFit;
 uniform float uMirror;
+uniform float uTurn;   // quarter turns anticlockwise, 0..3
 void main() {
   vec2 uv = (vUv - 0.5) * uFit + 0.5;
   if (uMirror > 0.5) uv.x = 1.0 - uv.x;
+  // Where in the frame this point of the turned picture comes from.
+  vec2 p = uv - 0.5;
+  if (uTurn > 2.5) p = vec2(-p.y, p.x);
+  else if (uTurn > 1.5) p = -p;
+  else if (uTurn > 0.5) p = vec2(p.y, -p.x);
+  uv = p + 0.5;
   vec2 inside = step(vec2(0.0), uv) * step(uv, vec2(1.0));
   outColor = vec4(texture(uTex, uv).rgb * inside.x * inside.y, 1.0);
 }

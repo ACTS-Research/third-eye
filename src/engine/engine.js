@@ -9,6 +9,7 @@ import { AudioInput } from './audio.js';
 import { LocalCamera } from './camera.js';
 import { MidiInput } from './midi.js';
 import { describeAction } from '../shared/actions.js';
+import { PRESETS_KEY, applyPreset, loadPresets } from '../shared/presets.js';
 import { macroUnit, resolveMacros } from '../shared/macros.js';
 import { randomRoom } from '../shared/net.js';
 import { TRIGGER_COUNT } from '../shared/protocol.js';
@@ -83,6 +84,7 @@ export class Engine {
       // again at once instead of waiting to notice its old call went dead.
       this.link.send({ t: 'host', session: this.session });
       this.sendTriggerLabels();
+      this.sendPresets();
       this.link.send({ t: 'config', codec: this.store.state.net.codec });
       this.sendLook();
     };
@@ -92,6 +94,8 @@ export class Engine {
     // engine it calls sendLook() itself.)
     window.addEventListener('storage', (e) => {
       if (e.key === LOOK_KEYS.palette || e.key === LOOK_KEYS.dim) this.sendLook();
+      // Presets edited in /control (another window): the phone's row follows.
+      else if (e.key === PRESETS_KEY) this.sendPresets();
     });
     this.link.getCodec = () => this.store.state.net.codec;
     this.link.onRoomTaken = () => {
@@ -238,6 +242,7 @@ export class Engine {
   resync() {
     const state = this.store.state;
     this.sendTriggerLabels();
+    this.sendPresets();
     this.pipeline.setChain(state.chain, 0, performance.now());
     this.inputs.setKind(state.input.kind);
     this.pipeline.srcDirty = true;
@@ -252,6 +257,10 @@ export class Engine {
     switch (op.op) {
       case 'scene':
         this.pipeline.setChain(state.chain, op.fade ?? 0, performance.now());
+        this.sendPresets();
+        break;
+      case 'presetIndex':
+        this.sendPresets();
         break;
       case 'set':
         if (op.key === 'actions') this.sendTriggerLabels();
@@ -294,6 +303,36 @@ export class Engine {
 
   onPhoneMessage(msg) {
     if (msg?.t === 'intro-answer') this.bus.send('intro-answer', { to: msg.to, token: msg.token });
+    // A preset button on the phone.
+    else if (msg?.t === 'preset' && Number.isInteger(msg.index) && this.running) applyPreset(this.store, msg.index);
+  }
+
+  // The phone shows a row of preset buttons: their names, and which is live.
+  sendPresets() {
+    this.link.send({ t: 'presets', names: loadPresets().map((p) => p.name), current: this.store.state.presetIndex });
+  }
+
+  // The phone turns its camera frames with its page; this turns them back
+  // so the picture stays horizontal. The phone's word travels faster than
+  // the video it describes, so a change waits for the frames to change shape
+  // to match (upright frames mean a quarter turn), or for a moment when the
+  // shape stays the same.
+  updateTurn(now) {
+    const want = this.sensors.turn;
+    const inputs = this.inputs;
+    if (want === inputs.turn) {
+      this.turnSince = 0;
+      return;
+    }
+    this.turnSince ||= now;
+    const video = inputs.feeds.phone.video;
+    const upright = video.videoHeight > video.videoWidth;
+    const waited = now - this.turnSince;
+    const ready = want % 2 !== inputs.turn % 2 ? upright === (want % 2 === 1) : waited > 150;
+    if (!ready && waited < 1000) return;
+    inputs.turn = want;
+    this.turnSince = 0;
+    this.pipeline.srcDirty = true;
   }
 
   // Asks whichever window has the phone on a direct link to introduce this
@@ -321,11 +360,13 @@ export class Engine {
   // The phone labels its trigger buttons with whatever they are bound to.
   sendTriggerLabels() {
     const labels = [];
+    const actions = [];
     for (let i = 1; i <= TRIGGER_COUNT; i++) {
       const bound = this.store.state.actions.find((b) => b.source === `trig.${i}`);
       labels.push(bound ? describeAction(bound.action) : `Trigger ${i}`);
+      actions.push(bound?.action ?? '');
     }
-    this.link.send({ t: 'labels', triggers: labels });
+    this.link.send({ t: 'labels', triggers: labels, actions });
   }
 
   // The phone wears the palette and dimmer of the control page.
@@ -382,7 +423,8 @@ export class Engine {
     }
 
     this.inputs.feeds.phone.gated = this.link.hold;
-    this.vision.frame(now, this.inputs.feed?.video ?? null);
+    if (!this.lost) this.updateTurn(now);
+    this.vision.frame(now, this.inputs.feed?.video ?? null, this.inputs.quarter);
     if (!this.lost) {
       const state = this.store.state;
       const g = state.globals;
@@ -439,7 +481,8 @@ export class Engine {
     else if (feed.lastFrameAt && now - feed.lastFrameAt < STALL_MS) state = 'live';
     else if (inputs.kind === 'phone' && this.link.phoneInfo?.controllerOnly && this.link.conn?.open) state = 'paused';
     else if (inputs.hasFrame && feed.lastFrameAt) state = 'stalled';
-    return { kind: inputs.kind, state, width: feed.video.videoWidth, height: feed.video.videoHeight };
+    const turned = inputs.quarter % 2 === 1;
+    return { kind: inputs.kind, state, width: turned ? feed.video.videoHeight : feed.video.videoWidth, height: turned ? feed.video.videoWidth : feed.video.videoHeight };
   }
 
   sendStatus(now) {

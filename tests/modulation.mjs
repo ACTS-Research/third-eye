@@ -99,6 +99,7 @@ try {
 
   const labels = await phone.locator('.trig').allTextContents();
   check('trigger buttons are labelled with their actions', labels[0] === 'Glitch burst' && labels[3] === 'Next preset', labels.join(' | '));
+  check('the two preset-stepping triggers give way to the preset row', await settle(() => phone.evaluate(() => [...document.querySelectorAll('.trig')].map((b) => b.hidden).join() === 'false,false,true,true' && document.querySelectorAll('.preset').length >= 8), 'preset row'));
 
   console.log('mappings');
   await setChain(['feedback']);
@@ -136,11 +137,15 @@ try {
   const presetCount = await tileCount();
   check('factory presets listed', presetCount >= 8, `${presetCount} presets`);
   const trig = (n) => phone.locator('.trig').nth(n - 1).boundingBox();
-  const t4 = await trig(4);
+  const tapPreset = async (n) => {
+    const b = await phone.locator('.preset').nth(n - 1).boundingBox();
+    await phone.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
+  };
   await control.evaluate(() => window.thirdEye.store.merge('globals', { fadeTime: 1.5 }));
-  await phone.mouse.click(t4.x + t4.width / 2, t4.y + t4.height / 2);
-  check('trigger 4 steps to the next preset', await settle(() => state(() => window.thirdEye.store.state.presetIndex === 0), 'preset 0'), JSON.stringify(await state(() => ({ index: window.thirdEye.store.state.presetIndex, counts: window.thirdEye.engine.sensors.counts, trig4: window.thirdEye.engine.mod.get('trig.4'), chain: window.thirdEye.store.state.chain.map((c) => c.type) }))));
-  await phone.mouse.click(t4.x + t4.width / 2, t4.y + t4.height / 2);
+  await tapPreset(1);
+  check('a preset button on the phone loads that preset', await settle(() => state(() => window.thirdEye.store.state.presetIndex === 0), 'preset 0'), JSON.stringify(await state(() => ({ index: window.thirdEye.store.state.presetIndex, chain: window.thirdEye.store.state.chain.map((c) => c.type) }))));
+  check('the phone lights the live preset', await settle(() => phone.evaluate(() => document.querySelector('.preset.on')?.dataset.index === '0'), 'lit'));
+  await tapPreset(2);
   check('crossfade runs two chains at once', await settle(() => state(() => !!window.thirdEye.engine.pipeline.prev && window.thirdEye.store.state.presetIndex === 1), 'crossfade'));
   check('crossfade finishes and frees the old chain', await settle(() => state(() => window.thirdEye.engine.pipeline.prev === null), 'fade done', 8000));
   check('preset brought its mappings', await state(() => window.thirdEye.store.state.mappings.length === 3 && window.thirdEye.store.state.chain[0].type === 'feedback'));
