@@ -1,0 +1,179 @@
+<title>Third Eye Icons</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  /* Layout: a contact sheet. Each icon gets one frame: the home-screen size
+     on the app's black, then the two tab sizes on a dark and a light tab. */
+  :root {
+    --bg: #060303;
+    --panel: #0e0a09;
+    --line: #2a1d1b;
+    --fg: #f3e9e6;
+    --soft: #a58f8a;
+    --ink: #ff6b5e;      /* the app's ink; the swatches below change it */
+    --cut: #060303;      /* what shows through a cut-out */
+    --tab-dark: #2b2a2e;
+    --tab-light: #eeeef0;
+    --tab-light-fg: #2a2a2e;
+    --display: 'Big Shoulders Display', 'Arial Narrow', Impact, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+    color-scheme: dark;
+  }
+  body { background: var(--bg); color: var(--fg); font: 400 14px/1.5 var(--mono); padding-block: 28px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .wrap { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+  h1 { font: 800 44px/1 var(--display); letter-spacing: 0.1em; text-transform: uppercase; margin: 0; color: var(--ink); text-wrap: balance; }
+  p { margin: 0; max-width: 65ch; color: var(--soft); }
+  h3 { margin: 10px 0 0; font: 800 24px/1 var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg); }
+  .inks { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .inks span { color: var(--soft); text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; margin-right: 4px; }
+  .inks button { font: 500 12px var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--fg); background: none; border: 1px solid var(--line); padding: 7px 10px; display: flex; gap: 8px; align-items: center; cursor: pointer; }
+  .inks button i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+  .inks button[aria-pressed="true"] { border-color: var(--ink); }
+  .inks button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .sheet { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+  .frame { border: 1px solid var(--line); background: var(--panel); padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .frame h2 { margin: 0; font: 800 26px/1 var(--display); letter-spacing: 0.06em; text-transform: uppercase; display: flex; gap: 10px; align-items: baseline; }
+  .frame h2 b { color: var(--ink); }
+  .frame .note { font-size: 12px; color: var(--soft); min-height: 3em; }
+  .big { align-self: center; width: 132px; height: 132px; border-radius: 29px; background: var(--cut); border: 1px solid var(--line); display: grid; place-items: center; }
+  .big svg { width: 100px; height: 100px; }
+  .tabs { display: flex; flex-direction: column; gap: 6px; }
+  .tab { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px 8px 0 0; font: 500 12px/1 system-ui, sans-serif; white-space: nowrap; overflow: hidden; }
+  .tab.dark { background: var(--tab-dark); color: #e6e6ea; }
+  .tab.light { background: var(--tab-light); color: var(--tab-light-fg); }
+  .tab .fav { width: 16px; height: 16px; border-radius: 3px; background: var(--cut); flex: none; display: grid; place-items: center; }
+  .tab .fav svg { width: 14px; height: 14px; }
+  .tab .fav32 { width: 32px; height: 32px; border-radius: 7px; background: var(--cut); flex: none; display: grid; place-items: center; }
+  .tab .fav32 svg { width: 26px; height: 26px; }
+  .tab .fav.bare, .tab .fav32.bare { background: none; border-radius: 0; }
+  .tab .fav.bare svg { width: 16px; height: 16px; }
+  .tab .fav32.bare svg { width: 32px; height: 32px; }
+  svg { color: var(--ink); display: block; }
+  .foot { font-size: 12px; }
+</style>
+
+<div class="wrap">
+  <h1>Third Eye icons</h1>
+  <p>Each icon is shown at home-screen size, then at 32 and 16 pixels the way it sits in a browser tab, dark and light. Tell me which one, or what to change.</p>
+  <div class="inks" id="inks"><span>Ink</span></div>
+  <h3>Third round: the upright eye alone, with a therefore sign</h3>
+  <p>Drawn for the browser tab first: one bold shape and three dots, nothing finer. The tab sizes are shown with no tile behind them where the icon is meant to sit straight on the tab.</p>
+  <div class="sheet" id="sheet3"></div>
+  <h3>Second round: D as a camera, eye upright</h3>
+  <div class="sheet" id="sheet2"></div>
+  <h3>First round</h3>
+  <div class="sheet" id="sheet"></div>
+  <p class="foot">Drawn on a 64-unit grid in one ink on the app's black, so the icon follows whichever palette you settle on. The small sizes are the real test: an icon that is only legible large will not work in a tab.</p>
+</div>
+
+<script>
+  const EYE = 'M12 32 Q32 13 52 32 Q32 51 12 32Z';
+  const CORNERS = 'M5 19V5h14 M45 5h14v14 M59 45v14H45 M19 59H5V45';
+  const S = 'fill="none" stroke="currentColor" stroke-linejoin="miter"';
+  const icons = [
+    { id: 'A', name: 'Viewfinder', note: 'Four corner marks and a plain eye. The closest to what you described.',
+      svg: () => `<path d="${CORNERS}" ${S} stroke-width="5"/><path d="${EYE}" ${S} stroke-width="4"/><circle cx="32" cy="32" r="6.5" fill="currentColor"/>` },
+    { id: 'B', name: 'Lens', note: 'A closed frame; the iris is a lens ring with a pupil.',
+      svg: () => `<rect x="5" y="5" width="54" height="54" rx="11" ${S} stroke-width="5"/><path d="${EYE}" ${S} stroke-width="4"/><circle cx="32" cy="32" r="8" ${S} stroke-width="3.5"/><circle cx="32" cy="32" r="2.8" fill="currentColor"/>` },
+    { id: 'C', name: 'Camera', note: 'A camera body whose lens is the eye. Reads as "camera" first.',
+      svg: () => `<path d="M21 17l4-8h14l4 8h12a4 4 0 0 1 4 4v30a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V21a4 4 0 0 1 4-4z" ${S} stroke-width="4.5"/><path d="M14 36 Q32 22 50 36 Q32 50 14 36Z" ${S} stroke-width="3.5"/><circle cx="32" cy="36" r="5.5" fill="currentColor"/>` },
+    { id: 'D', name: 'Solid', note: 'Filled tile with the eye cut out. The strongest at 16 pixels.',
+      svg: () => `<rect x="3" y="3" width="58" height="58" rx="13" fill="currentColor"/><path d="M10 32 Q32 11 54 32 Q32 53 10 32Z" fill="var(--cut)"/><circle cx="32" cy="32" r="8.5" fill="currentColor"/><circle cx="32" cy="32" r="3" fill="var(--cut)"/>` },
+    { id: 'E', name: 'Third eye', note: 'The eye stands upright, as a third eye is drawn, inside the frame marks.',
+      svg: () => `<path d="${CORNERS}" ${S} stroke-width="5"/><path d="M32 11 Q51 32 32 53 Q13 32 32 11Z" ${S} stroke-width="4"/><circle cx="32" cy="32" r="6.5" fill="currentColor"/>` },
+    { id: 'F', name: 'Aperture', note: 'The iris is a six-blade aperture. More detail; softer when tiny.',
+      svg: () => {
+        const pts = [...Array(6)].map((_, i) => { const a = (Math.PI / 3) * i - Math.PI / 2; return [32 + 9.5 * Math.cos(a), 32 + 9.5 * Math.sin(a)]; });
+        const blades = pts.map(([x, y], i) => { const [nx, ny] = pts[(i + 2) % 6]; return `M${x.toFixed(1)} ${y.toFixed(1)}L${((x + nx) / 2).toFixed(1)} ${((y + ny) / 2).toFixed(1)}`; }).join('');
+        return `<path d="${CORNERS}" ${S} stroke-width="5"/><path d="M9 32 Q32 9 55 32 Q32 55 9 32Z" ${S} stroke-width="4"/><path d="M${pts.map((p) => p.map((v) => v.toFixed(1)).join(' ')).join('L')}Z" ${S} stroke-width="3"/><path d="${blades}" ${S} stroke-width="2.4"/>`;
+      } },
+    { id: 'G', name: 'Recording', note: 'Three frame marks; the fourth corner is a record light.',
+      svg: () => `<path d="M5 19V5h14 M59 45v14H45 M19 59H5V45" ${S} stroke-width="5"/><circle cx="53" cy="11" r="6" fill="currentColor"/><path d="${EYE}" ${S} stroke-width="4"/><circle cx="32" cy="32" r="6.5" fill="currentColor"/>` },
+    { id: 'H', name: 'Scan lines', note: 'The eye is built from video scan lines. A nod to the effects.',
+      svg: (uid) => `<defs><clipPath id="e${uid}"><path d="M8 32 Q32 8 56 32 Q32 56 8 32Z"/></clipPath></defs><path d="${CORNERS}" ${S} stroke-width="5"/><g clip-path="url(#e${uid})">${[...Array(7)].map((_, i) => `<rect x="6" y="${12.5 + i * 6}" width="52" height="3.4" fill="currentColor"/>`).join('')}</g><circle cx="32" cy="32" r="9" fill="var(--cut)"/><circle cx="32" cy="32" r="6" fill="currentColor"/>` },
+  ];
+  const INKS = [['Red', '#ff6b5e', '#060303'], ['Amber', '#ffb347', '#070502'], ['Bone', '#e8e4dc', '#050505'], ['Lime', '#d6ff3f', '#050702'], ['Ice', '#7ce3ff', '#02060a'], ['Magenta', '#ff7ad9', '#080308']];
+
+  // Second round: D as a camera, with the same cut-out eye stood upright.
+  const UP_EYE = 'M32 18 Q50 37 32 56 Q14 37 32 18Z';
+  const upEye = `<path d="${UP_EYE}" fill="var(--cut)"/><circle cx="32" cy="37" r="7" fill="currentColor"/><circle cx="32" cy="37" r="2.6" fill="var(--cut)"/>`;
+  const round2 = [
+    { id: 'D1', name: 'Prism', note: 'A camera body with the viewfinder hump in the middle. The clearest "camera".',
+      svg: () => `<path d="M12 15H21L25 7H39L43 15H52A9 9 0 0 1 61 24V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V24A9 9 0 0 1 12 15Z" fill="currentColor"/>${upEye}` },
+    { id: 'D2', name: 'Compact', note: 'A flat-topped body with a shutter button and a small flash window.',
+      svg: () => `<path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z" fill="currentColor"/><rect x="9" y="20" width="9" height="5" rx="1.5" fill="var(--cut)"/>${upEye}` },
+    { id: 'D3', name: 'Tile with hump', note: 'Closest to D: the same rounded tile, with just a hump on top to say camera.',
+      svg: () => `<path d="M16 11H22L25 5H39L42 11H48A13 13 0 0 1 61 24V48A13 13 0 0 1 48 61H16A13 13 0 0 1 3 48V24A13 13 0 0 1 16 11Z" fill="currentColor"/><path d="M32 16 Q51 36 32 56 Q13 36 32 16Z" fill="var(--cut)"/><circle cx="32" cy="36" r="7.5" fill="currentColor"/><circle cx="32" cy="36" r="2.8" fill="var(--cut)"/>` },
+    { id: 'D4', name: 'Offset', note: 'The hump sits to one side, like a rangefinder, with a record light opposite.',
+      svg: () => `<path d="M12 15H13L16 8H30L33 15H52A9 9 0 0 1 61 24V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V24A9 9 0 0 1 12 15Z" fill="currentColor"/><circle cx="51" cy="24" r="3.2" fill="var(--cut)"/>${upEye}` },
+  ];
+
+  // Third round: the upright eye alone with a therefore sign. Cut-outs are
+  // real holes (masks), so these sit on any tab colour with no tile.
+  const eye = (half, top = 2, bottom = 62) => `M32 ${top}Q${32 + half * 2} 32 32 ${bottom}Q${32 - half * 2} 32 32 ${top}Z`;
+  const dots = (r, cy = 32, spread = 1) => `<circle cx="32" cy="${cy - 9 * spread}" r="${r}"/><circle cx="${32 - 8.5 * spread}" cy="${cy + 6.5 * spread}" r="${r}"/><circle cx="${32 + 8.5 * spread}" cy="${cy + 6.5 * spread}" r="${r}"/>`;
+  const holed = (uid, shape, holes) => `<defs><mask id="m${uid}"><rect width="64" height="64" fill="#fff"/><g fill="#000">${holes}</g></mask></defs><g mask="url(#m${uid})" fill="currentColor">${shape}</g>`;
+  const round3 = [
+    { id: 'T1', name: 'Solid eye', bare: true, note: 'A filled eye with the three dots cut through it. The boldest in a tab.',
+      svg: (uid) => holed(uid, `<path d="${eye(20)}"/>`, dots(4.8)) },
+    { id: 'T2', name: 'Outline', bare: true, note: 'The eye as a heavy outline, the dots solid inside it.',
+      svg: () => `<path d="${eye(19, 4, 60)}" ${S} stroke-width="5.5"/><g fill="currentColor">${dots(4.6)}</g>` },
+    { id: 'T3', name: 'Big dots', bare: true, note: 'A lighter outline so the therefore sign carries the icon.',
+      svg: () => `<path d="${eye(21, 3, 61)}" ${S} stroke-width="3.6"/><g fill="currentColor">${dots(5.8, 33, 1.12)}</g>` },
+    { id: 'T4', name: 'Tile', note: 'The solid eye on the app\'s black tile. What the iPhone Home Screen needs anyway.',
+      svg: () => `<rect width="64" height="64" rx="13" fill="var(--cut)"/><path d="${eye(17, 7, 57)}" fill="currentColor"/><g fill="var(--cut)">${dots(4.2, 32, 0.9)}</g>` },
+    { id: 'T5', name: 'Inverse tile', bare: true, note: 'A filled tile with the eye cut out of it and the dots left standing.',
+      svg: (uid) => holed(uid, `<rect x="2" y="2" width="60" height="60" rx="13"/>`, `<path d="${eye(18, 7, 57)}"/>`) + `<g fill="currentColor">${dots(4.3, 32, 0.92)}</g>` },
+    { id: 'T6', name: 'Iris', bare: true, note: 'A solid eye with a round iris cut out and the dots inside it. More to look at; busier when tiny.',
+      svg: (uid) => holed(uid, `<path d="${eye(21)}"/>`, `<circle cx="32" cy="32" r="14.5"/>`) + `<g fill="currentColor">${dots(3.5, 32.5, 0.72)}</g>` },
+    { id: 'T7', name: 'Sharp', bare: true, note: 'A harder, more pointed eye, like a lens seen edge on, with the dots cut through.',
+      svg: (uid) => holed(uid, `<path d="M32 1L51 32L32 63L13 32Z" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>`, dots(4.6)) },
+  ];
+
+  let n = 0;
+  const draw = (icon) => `<svg viewBox="0 0 64 64" role="img" aria-label="Icon ${icon.id}, ${icon.name}">${icon.svg(`${icon.id}${n++}`)}</svg>`;
+  document.getElementById('sheet3').innerHTML = round3.map((icon) => `
+    <section class="frame">
+      <h2><b>${icon.id}</b>${icon.name}</h2>
+      <div class="big">${draw(icon)}</div>
+      <div class="tabs">
+        <div class="tab dark"><span class="fav32${icon.bare ? ' bare' : ''}">${draw(icon)}</span><span class="fav${icon.bare ? ' bare' : ''}">${draw(icon)}</span>Third Eye Cam</div>
+        <div class="tab light"><span class="fav32${icon.bare ? ' bare' : ''}">${draw(icon)}</span><span class="fav${icon.bare ? ' bare' : ''}">${draw(icon)}</span>Third Eye Cam</div>
+      </div>
+      <div class="note">${icon.note}</div>
+    </section>`).join('');
+  document.getElementById('sheet2').innerHTML = round2.map((icon) => `
+    <section class="frame">
+      <h2><b>${icon.id}</b>${icon.name}</h2>
+      <div class="big">${draw(icon)}</div>
+      <div class="tabs">
+        <div class="tab dark"><span class="fav32">${draw(icon)}</span><span class="fav">${draw(icon)}</span>Third Eye Cam</div>
+        <div class="tab light"><span class="fav32">${draw(icon)}</span><span class="fav">${draw(icon)}</span>Third Eye Cam</div>
+      </div>
+      <div class="note">${icon.note}</div>
+    </section>`).join('');
+  document.getElementById('sheet').innerHTML = icons.map((icon) => `
+    <section class="frame">
+      <h2><b>${icon.id}</b>${icon.name}</h2>
+      <div class="big">${draw(icon)}</div>
+      <div class="tabs">
+        <div class="tab dark"><span class="fav32">${draw(icon)}</span><span class="fav">${draw(icon)}</span>Third Eye Cam</div>
+        <div class="tab light"><span class="fav32">${draw(icon)}</span><span class="fav">${draw(icon)}</span>Third Eye Cam</div>
+      </div>
+      <div class="note">${icon.note}</div>
+    </section>`).join('');
+
+  const inks = document.getElementById('inks');
+  INKS.forEach(([label, ink, cut], i) => {
+    const b = document.createElement('button');
+    b.id = `ink-${label.toLowerCase()}`;
+    b.setAttribute('aria-pressed', String(i === 0));
+    b.innerHTML = `<i style="background:${ink}"></i>${label}`;
+    b.addEventListener('click', () => {
+      document.documentElement.style.setProperty('--ink', ink);
+      document.documentElement.style.setProperty('--cut', cut);
+      for (const other of inks.querySelectorAll('button')) other.setAttribute('aria-pressed', String(other === b));
+    });
+    inks.append(b);
+  });
+</script>

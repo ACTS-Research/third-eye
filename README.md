@@ -694,6 +694,9 @@ the files in `public/` (`icon.svg`, `icon-32.png`, `icon-180.png`,
 node scripts/make-icons.mjs
 ```
 
+The other options that were considered are in `design/third-eye-icons.html`
+(open the file in a browser).
+
 ## Deploying to GitHub Pages
 
 `.github/workflows/pages.yml` builds on every push and deploys from the
@@ -760,7 +763,11 @@ into the effects chain over a direct link with H.264, the control screens,
 the output window, and Measure real latency with H.264 at 30 and 60 fps
 against the Mac's own screen (see [Latency](#latency)). At a coffee shop the
 Mac on the iPhone's hotspot works (the iPhone itself on the shop's Wi-Fi);
-the Mac and the phone both on the shop's Wi-Fi do not.
+the Mac and the phone both on the shop's Wi-Fi do not. On a university
+network the Mac could not reach the public pairing server at all. The
+iPhone's camera offers zoom, a torch and a white-balance lock, and the
+phone's rebuilt screen draws correctly in Safari; its last rework has not
+been tried there yet.
 
 **Only in headless Chromium**, with a fake camera and microphone: everything
 else. Check these the first time you use them:
@@ -771,8 +778,7 @@ else. Check these the first time you use them:
 - **Pair without internet**, all of it: Safari answering the Mac's code, the
   Mac's real camera reading the phone's real screen (the tests show jsQR a
   clean picture of the code), the link forming on a hotspot or a Mac-made
-  network, and the
-  phone following the picture between windows. Only Chromium talking to
+  network, and the phone following the picture between windows. Only Chromium talking to
   Chromium has been tried.
 - **The phone's screen**, on a real iPhone: the two layouts, the preview
   showing the same band of an upright frame that the Mac shows, Rotate, the

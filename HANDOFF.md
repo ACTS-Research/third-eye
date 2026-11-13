@@ -1,32 +1,36 @@
 # Handoff
 
-## 2026-11-13 (third session, continued)
+## 2026-11-13 (third session)
 
-**Where things stand.** Two things were built this session and both are
-live on GitHub Pages from `main`. The output window is optional: `/control`
-runs the whole instrument by itself. And the phone can be paired with no
-internet, by QR code both ways ("Pair without internet"). All fifteen test
-suites pass in headless Chromium. On the real Mac and iPhone only normal
-pairing over the hotspot has been confirmed (it works); the university Wi-Fi
-could not reach the pairing server, which is what the new pairing is for.
+**Where things stand.** Three things were built this session and all are
+live on GitHub Pages from `main`: the output window is optional (`/control`
+runs the whole instrument by itself); the phone can be paired with no
+internet, by QR code both ways ("Pair without internet"); and the phone's
+live screen was rebuilt around a large horizontal preview. All fifteen test
+suites pass in headless Chromium. The phone screen's last rework and the
+Freeze fix have not been tried on the real iPhone yet.
 
-**Next step.** Try the phone's reworked screen on the real iPhone: upright
-and on its side, check the Mac's picture is horizontal with the world the
-right way up, that the preview shows the same picture, and that Freeze
-freezes on one tap and releases on the next.
+**Next step.** On the real iPhone, with every page reloaded: hold the phone
+upright and on its side and check the picture on the Mac and in the preview
+is horizontal with the world the right way up, then tap Freeze twice (it
+should freeze, light up, and release).
 
 **Decisions only you can make.**
 
+- Say whether the browser-tab icon is good enough. You kept option D2 (the
+  camera) after saying it is hard to read at tab size; seven bolder
+  alternatives (T1–T7, an upright eye with a therefore sign) are on the icon
+  sheet if you change your mind.
+- Say whether the app should be renamed. A rename to "3rdEyeCam" was started
+  and you stopped it; the name is Third Eye Cam until you say otherwise.
 - Say whether 1280×720 is the right size for the picture (and recordings)
   while no output window is open. It is fixed so recordings do not depend on
   the size of the monitor on the page.
-- Decide whether to allow a relay (TURN) fallback. The hotspot route works
-  everywhere tried so far; only the Mac and the phone both on venue Wi-Fi
-  fails, and that is the case a relay would cover. A relay costs latency and
-  depends on someone's server.
-- Decide whether to run your own pairing server instead of the public PeerJS
-  one. The public one works; it comes with no guarantees. It is now also
-  needed each time the output window opens or closes with a phone paired.
+- Decide whether to rent a small server (about $5 a month) for your own
+  pairing server and a relay on port 443. That is the only way to make the
+  university Wi-Fi work without the hotspot; Pair without internet covers
+  the hotspot and a Mac-made network, not a network that keeps the phone and
+  the Mac apart.
 - Pick the default recording format. It is WebM because Chrome writes it to
   disk every second; MP4 opens in more players but is written in large pieces.
 - Say whether the board cover should stay the design prototype
@@ -35,8 +39,11 @@ freezes on one tap and releases on the next.
   under Settings → Environments → `github-pages` if listed:
   `claude/affectionate-gates-x6ngzx` and `claude/affectionate-tesla-hj7oki`.
   Both are fully contained in `main`; a cloud session cannot delete them.
-- Export your presets (Setup → Preset library → Export presets) if you care
-  about them. They live only in your browser, not in this repo.
+- Export your presets (Setup → Preset library → Export presets). They live
+  only in your browser; nothing in this repo or on GitHub backs them up, and
+  the same goes for recordings.
+- If you had ticked **hold** on any trigger under Setup, tick it again: hold
+  settings saved before 13 November are no longer read.
 
 **When you are next in the studio.** Open the output window before the
 show, then: measure real latency fullscreen on the projector at 720p · 60 (so
@@ -44,10 +51,52 @@ far only against the Mac's own screen: 200 ms at 30 fps, 167 ms at 60), check
 the Latency line reads close to it, move the Dim strip with the phone paired
 to see the phone follow, and cover or minimise the output window for a few
 seconds to see `/control` say it is not drawing (it must not take the picture
-over).
+over). Try making a closed network on the Mac (README, Pairing without
+internet) and pairing by code on it.
 
 **Branch.** Work is on `main`, the default branch and the one that deploys.
 Nothing is waiting to be merged; everything is pushed.
+
+### Seen on the real iPhone and Mac this session
+
+- Normal pairing and streaming with the Mac on the iPhone's hotspot (the
+  phone on cellular): works.
+- University Wi-Fi: the Mac could not reach the public pairing server.
+- The owner reported "it works" after Pair without internet shipped, with
+  the phone live; which route was used was not said.
+- The rebuilt phone screen draws correctly in Safari, the Mac's preset names
+  and trigger labels arrive, and the iPhone's camera offers zoom, torch and a
+  white-balance lock.
+- The screen wake lock was refused on the owner's iPhone (the message
+  appeared; the battery was low, so Low Power Mode is a guess).
+- The first rebuild's sideways picture was rejected (see below). Freeze from
+  the phone was reported not working twice; the fix that followed (every tap
+  its own press) is not yet confirmed.
+
+### This session, in short
+
+- **Optional output window.** The engine moves between windows; `/control`
+  hosts it when no output is open. Details below.
+- **Pair without internet.** QR code both ways, no server; the picture moves
+  between windows without a new scan. jsQR added with the owner's approval.
+- **The phone's live screen.** Rebuilt twice in one evening; what stands is
+  below.
+- **Top bar.** Each readout is a button with its own job: output opens the
+  output window, input goes to Setup → Input, phone shows pairing.
+- **Icon.** Option D2 (a compact camera with an upright eye), eye a little
+  right of centre; `scripts/make-icons.mjs` draws it. The sheet with all
+  three rounds is in `design/third-eye-icons.html` and at
+  https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo (private to the owner).
+- **Fixed on the way:** a video call left open on the Mac when the phone link
+  was shut down (PeerJS skips connections on destroy); two quick taps on a
+  trigger read as one press.
+- **Two mistakes worth knowing about.** A function was deleted with a
+  scripted edit and went live for about fifteen minutes because only four
+  suites had finished; and a rename the owner had stopped was pushed because
+  it was sitting uncommitted. Both are now rules under "Working in the cloud
+  sandbox".
+- **Suites added:** `handover`, `standalone`, `offline-pair`,
+  `offline-pair-online`, `offline-handover`, `phone-screen`.
 
 ### Pair without internet (built 2026-11-13)
 
@@ -120,18 +169,6 @@ right way up. What stands now:
 - **Reconnect** redials (`HostLink.restart`); for a phone paired by code it
   scans the Mac's code inside the page (jsQR, loaded on demand).
 
-### This session, in short
-
-- The engine moves between windows (plan A). Details under
-  [Optional output window](#optional-output-window-built-2026-11-12-third-session).
-- Top bar: `Output off · 60 fps` is calm and opens the output window when
-  clicked. An alert appears only if the output vanishes without warning or
-  stops drawing. Nothing covers the monitor any more.
-- Fixed on the way: a video call left open on the Mac when the phone link
-  was shut down (PeerJS skips connections on destroy).
-- New suites: `tests/handover.mjs`, `tests/standalone.mjs`; `smoke`,
-  `control-ui` and `layout` cover both modes.
-
 ### Second session (2026-11-12), in short
 
 - Latency measured on the real phone; 720p · 60 is the phone's default; the
@@ -190,17 +227,18 @@ rename anything unless asked.
 
 ### Shape of the code
 
-Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
+Three static pages built by Vite, no framework.
 
 | Path | What lives there |
 | --- | --- |
 | `src/engine/` | Everything live: the WebGL2 pipeline (`pipeline.js`), inputs, the host side of the phone link (`remote.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop. It runs in `/output` while an output window is open, otherwise in `/control` |
 | `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js`, `edit.js` (+ `chain.js`, `mod-panel.js`), and the Setup panels. `host.js` decides which window hosts the engine and owns the monitor canvas. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts |
-| `src/phone/` | The iPhone page: `main.js`, `link.js` (reconnect watchdog), `sensors.js`, `camera-controls.js` |
+| `src/phone/` | The iPhone page: `main.js`, `link.js` (reconnect watchdog, direct links), `sensors.js` (motion, the XY pad, triggers, presets), `camera-controls.js`, `orient.js` (page angle, the Rotate turn), `widgets.js` (the fader) |
 | `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js`, `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `direct.js` (pairing with no server), `qr.js`, `sources.js`, `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; the engine forwards them to the phone) |
 | `src/effects/` | One file per effect; `index.js` is the registry, `common.glsl.js` the shared GLSL |
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon, option D2 from the sheet at https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo) |
+| `design/` | `third-eye-icons.html`: the icon options shown to the owner (a page for a browser, not part of the site) |
 | `tests/` | Fifteen headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
@@ -275,6 +313,15 @@ Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
 - **To stage statuses on `/control`** (`tests/layout.mjs`), close the output,
   wait for `/control` to host, then `engine.stop()`; otherwise live status
   replaces the staged one.
+- **A stop hook asks for anything uncommitted to be committed and pushed.**
+  Before obeying, be sure you know where every change came from: run
+  `git status` at the start of a turn, and if a change is not yours and not
+  asked for in the conversation you can see, ask the owner instead of
+  pushing. Every push is live.
+- **Run all the suites before a push that touches `engine.js`, `remote.js`,
+  `host.js` or the phone's `link.js`**, not only the ones that seem related.
+  After removing code with a scripted edit, search for callers of everything
+  it removed.
 - **This Chromium has no MIDI backend** (`requestMIDIAccess` never settles);
   the MIDI test stubs a device.
 - Deleting a remote branch and changing repository settings are not possible
@@ -285,7 +332,11 @@ Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
 - The three design directions the redesign came from are on a design canvas:
   https://claude.ai/artifact/4bRZEX1Xp89CPKQF79ozx6 (private to the owner).
   Direction C, "Darkroom", was chosen.
-- Presets and recordings live in the owner's browser storage.
+- The icon sheet (three rounds) is at
+  https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo (private to the owner);
+  its source is kept in `design/third-eye-icons.html`.
+- Presets and recordings live in the owner's browser storage. Nothing here
+  backs them up.
 
 ### Known rough edges
 
@@ -306,31 +357,36 @@ Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
 
 ### Never run on real hardware (all unconfirmed)
 
-The phone's screen as it now stands: the upright layout, the preview's band
-matching the Mac's, Freeze with quick taps, Rotate, the camera icons. (The
-first version of the rebuild was tried on the iPhone and rejected; see
-above.) Pair without internet, every step: Safari answering the offer, the Mac's
-real camera reading the phone's real screen, the rebuilt answer being accepted between
-Chrome and Safari, the hotspot or a Mac-made network carrying it, and the
-phone following the picture between windows. Whether iOS still has the
-phone page saved after a week. Running with no output window; the phone reconnecting when the output opens
-or closes, and how long it takes; a covered or minimised output being
-reported as not drawing; audio, MIDI and recording on `/control`. Measure
-real latency against a projector (only the Mac's own screen so
-far, H.264 only); whether H.264 beats VP8 / VP9; the corrected Latency
-estimate and the stray-flash note on the result line; the dimmer on the
-iPhone, live and from the QR link; Reload both pages after a real deploy;
-recordings longer than a few seconds; MIDI map with a physical controller;
-fullscreen placement on a second display; MediaPipe on the Mac's GPU; the
-direction of Rotate / Counter-rotate. Tap tempo, offline reload, and the
-phone's sensors and touch controls have not been reported on either way.
+- **The phone's screen as it now stands:** the upright layout, the preview's
+  band matching the Mac's, Freeze with quick taps, Rotate, the three camera
+  icons, messages over the status line.
+- **Pair without internet, every step:** Safari answering the offer, the
+  Mac's real camera reading the phone's real screen, the rebuilt answer
+  being accepted between Chrome and Safari, a Mac-made network carrying it,
+  the phone following the picture between windows, scanning the Mac's code
+  from inside the phone page. Whether iOS still has the phone page saved
+  after a week.
+- **No output window:** the monitor holding 60 fps; the phone reconnecting
+  when the output opens or closes, and how long it takes; a covered or
+  minimised output being reported as not drawing; audio, MIDI and recording
+  on `/control`.
+- **From earlier sessions:** real latency against a projector (only the
+  Mac's own screen so far, H.264 only); whether H.264 beats VP8 / VP9; the
+  corrected Latency estimate and the stray-flash note; the dimmer on the
+  iPhone; Reload both pages after a real deploy; recordings longer than a
+  few seconds; MIDI map with a physical controller; fullscreen placement on
+  a second display; MediaPipe on the Mac's GPU; the direction of Rotate /
+  Counter-rotate. Tap tempo and offline reload have not been reported on
+  either way.
 
 ### Ideas raised and not started
 
-Relay fallback; own pairing
-server; a cue list beyond per-preset fade and order; tempo from the audio
-beat; a native wrapper for a true Syphon output; a MIDI mapping for the
-dimmer.
+Own pairing server plus a relay on port 443 (the route to university Wi-Fi);
+a local program on the Mac that serves the pages and the pairing itself
+(option B when Pair without internet was chosen); presets beyond the sixth
+on the phone; a cue list beyond per-preset fade and order; tempo from the
+audio beat; a native wrapper for a true Syphon output; a MIDI mapping for
+the dimmer.
 
 ### Prompt to start a new session
 
