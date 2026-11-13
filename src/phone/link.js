@@ -23,7 +23,13 @@ function pcState(connection) {
 }
 
 export class HostLink {
-  constructor({ room, signal, onChange, onMessage, onDataOpen }) {
+  // directFirst: the page was opened from "Pair without internet". Normal
+  // pairing is then held back until the direct link is up (or the operator
+  // gives up on it), even if the pairing server happens to be reachable:
+  // otherwise the phone would pair the usual way a moment before showing
+  // its code, and never show it.
+  constructor({ room, signal, onChange, onMessage, onDataOpen, directFirst = false }) {
+    this.directFirst = directFirst;
     this.hostId = hostPeerId(room);
     this.signalUrl = signal;
     this.onChange = onChange;
@@ -343,6 +349,7 @@ export class HostLink {
     this.call = new DirectCall(p.pc);
     this.sensorChannel = p.sensor;
     this.direct = true;
+    this.directFirst = false;
     this.session = null;
     this.callSession = null;
     this.connBadSince = 0;
@@ -429,7 +436,7 @@ export class HostLink {
       }
     }
 
-    if (peer?.open) {
+    if (peer?.open && !this.directFirst) {
       if (!this.conn && now - this.connTriedAt > RETRY_MS) this.connectData();
       if (this.stream && !this.call && this.conn?.open && now - this.callTriedAt > RETRY_MS) this.callMedia();
     }

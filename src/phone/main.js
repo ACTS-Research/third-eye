@@ -101,6 +101,7 @@ async function start() {
     signal: app.signal,
     onChange: renderState,
     onDataOpen: sendInfo,
+    directFirst: !!offer,
     onMessage: (msg) => {
       if (msg.t === 'labels') sensors.setTriggerLabels(msg.triggers ?? []);
       else if (msg.t === 'look') {
@@ -128,12 +129,17 @@ async function showPairCode() {
     renderState(app.link.state);
   } catch (err) {
     console.warn('[phone] could not answer the offer', err);
+    app.link.directFirst = false;
     setNote('The code from the Mac could not be used. Ask for a new one there: Pair without internet.');
   }
 }
 $('pair-hide').addEventListener('click', () => {
   $('pair').hidden = true;
-  if (app.pairToken && app.link?.state.data !== 'open') setNote('Not paired yet. Scan the code on the Mac again to get a new one.');
+  if (!app.link || app.link.state.data === 'open') return;
+  // Giving up on the code: normal pairing may try again, if it can.
+  app.link.directFirst = false;
+  app.link.tick();
+  setNote('Not paired by code. Trying the pairing server instead; to pair without internet, scan the code on the Mac again.');
 });
 
 // If the motion prompt was refused or never appeared, offer it again: a tap
