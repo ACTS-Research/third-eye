@@ -193,7 +193,7 @@ try {
     check('switching a feature off zeroes its sources', await s.settle(async () => (await s.source('gesture.thumbUp')) === 0 && (await s.source('hand.present')) === 0, 'sources reset', 5000));
     await s.control.evaluate(() => {
       const { store } = window.thirdEye;
-      store.dispatch({ op: 'set', key: 'actions', value: [{ id: 'g1', source: 'gesture.victory', action: 'freeze', momentary: false }, { id: 'g2', source: 'gesture.thumbUp', action: 'blackout', momentary: true }] });
+      store.dispatch({ op: 'set', key: 'actions', value: [{ id: 'g1', source: 'gesture.victory', action: 'freeze', hold: false }, { id: 'g2', source: 'gesture.thumbUp', action: 'blackout', momentary: true }] });
     });
     await sleep(500);
     await s.control.evaluate(() => window.thirdEye.store.merge('vision', { gesture: true }));

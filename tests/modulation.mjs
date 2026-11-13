@@ -160,7 +160,7 @@ try {
   // With "hold" ticked for it, the same button freezes only while held.
   await control.evaluate(() => {
     const { store } = window.thirdEye;
-    store.dispatch({ op: 'set', key: 'actions', value: store.state.actions.map((b) => (b.source === 'trig.2' ? { ...b, momentary: true } : b)) });
+    store.dispatch({ op: 'set', key: 'actions', value: store.state.actions.map((b) => (b.source === 'trig.2' ? { ...b, hold: true } : b)) });
   });
   await phone.mouse.move(t2.x + t2.width / 2, t2.y + t2.height / 2);
   await phone.mouse.down();

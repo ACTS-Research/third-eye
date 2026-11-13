@@ -92,8 +92,8 @@ export class InputManager {
     this.width = 0;
     this.height = 0;
     this.hasFrame = false;
-    // Quarter turns (anticlockwise) applied to the phone's frames so its
-    // picture stays horizontal. The engine sets it; see Engine.updateTurn.
+    // Quarter turns (anticlockwise) applied to the phone's frames, asked for
+    // with the phone's Rotate button. The engine sets it.
     this.turn = 0;
   }
 

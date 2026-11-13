@@ -73,13 +73,16 @@ select { padding: 12px 10px; }
 #join-error { color: var(--bad); font-weight: 600; min-height: 1.4em; }
 
 /* Live screen ---------------------------------------------------------
-   Always laid out horizontally. #root is sized and turned by main.js so it
-   fills the page whichever way the page itself is turned. */
+   Two layouts, chosen by how the page is turned (main.js sets .upright):
+   on its side, the preview on the left with the buttons beside it and zoom
+   down the right edge; upright, the preview across the top with the presets,
+   the two triggers and zoom underneath. */
 #live { position: fixed; inset: 0; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
 #frame { position: relative; width: 100%; height: 100%; overflow: hidden; }
-#root { position: absolute; left: 50%; top: 50%; display: flex; flex-direction: column; transform-origin: center; }
+#root { width: 100%; height: 100%; display: flex; flex-direction: column; }
 
 #bar {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -89,8 +92,9 @@ select { padding: 12px 10px; }
   flex: none;
 }
 #bar button { padding: 6px 10px; font-size: 12px; flex: none; }
-#bar button.icon { width: 40px; height: 32px; padding: 0; display: grid; place-items: center; }
-#bar button.icon svg { width: 20px; height: 20px; transform: rotate(var(--label-turn, 0deg)); transition: transform 0.25s; }
+button.icon { padding: 0; display: grid; place-items: center; }
+button.icon svg { width: 22px; height: 22px; }
+#bar button.icon { width: 40px; height: 32px; }
 /* One ink: state is shape, not hue. Hollow = connecting, solid = live,
    inverted and blinking = trouble. */
 #dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--ink); flex-shrink: 0; }
@@ -100,35 +104,38 @@ select { padding: 12px 10px; }
 #bar.bad .room { color: var(--on-ink); }
 #state { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #bar .room { font: 700 14px var(--mono); color: var(--dim); letter-spacing: 0.15em; }
-/* Messages float over the top of the preview: they must not take its room. */
-#note { position: absolute; left: 0; top: 0; z-index: 4; max-width: 100%; padding: 4px 8px; color: var(--warn); background: color-mix(in srgb, var(--bg) 82%, transparent); font-size: 12px; pointer-events: none; }
+/* A passing message lies over the status line; it never takes room from the
+   preview, and goes by itself. */
+#note { position: absolute; inset: 0; z-index: 3; display: flex; align-items: center; padding: 0 10px; background: var(--ink); color: var(--on-ink); font-size: 12px; line-height: 1.15; font-weight: 600; overflow: hidden; }
 #note:empty { display: none; }
 #motion-ask { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
 
-/* The preview on the left, as large as it will go; beside it the two rows
-   (triggers, presets); zoom down the right edge. On a screen that is nearly
-   square the rows go under the preview instead. */
 #main {
   position: relative;
   flex: 1;
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) auto;
-  grid-template-rows: minmax(0, 1fr);
-  grid-template-areas: 'stage controls zoom';
+  grid-template-rows: minmax(0, 2fr) minmax(0, 3fr);
+  grid-template-areas: 'stage trigs zoom' 'stage presets zoom';
   gap: 8px;
   padding: 8px;
 }
-#root.tall #main { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: 'stage zoom' 'controls zoom'; }
+#root.upright #main {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: 'stage stage stage' 'presets trigs zoom';
+}
 
-/* The preview: as large as fits, in the shape of the picture the Mac shows.
-   It is also the XY pad. The camera frame is turned back inside it by the
-   same amount the Mac turns it, so the two always match. */
-#stage-cell { position: relative; grid-area: stage; container-type: size; display: grid; place-items: center; min-width: 0; min-height: 0; }
+/* The preview: always a horizontal picture, the one the Mac shows, as large
+   as fits. From an upright camera frame it shows the middle band. It is
+   also the XY pad. */
+#stage-cell { grid-area: stage; container-type: size; display: grid; place-items: center; min-width: 0; min-height: 0; }
+#root.upright #stage-cell { container-type: inline-size; }
 #stage { position: relative; width: min(100cqw, 100cqh * 16 / 9); aspect-ratio: 16 / 9; background: #000; overflow: hidden; container-type: size; touch-action: none; border: 1px solid var(--line); }
-#self { position: absolute; left: 50%; top: 50%; width: 100%; height: 100%; object-fit: contain; transform: translate(-50%, -50%) rotate(var(--turn, 0deg)); display: block; pointer-events: none; }
+#root.upright #stage { width: 100%; }
+#self { position: absolute; left: 50%; top: 50%; width: 100%; height: 100%; object-fit: cover; transform: translate(-50%, -50%) rotate(var(--turn, 0deg)); display: block; pointer-events: none; }
 #stage.turned #self { width: 100cqh; height: 100cqw; }
-#stage-label > span { transform: rotate(var(--label-turn, 0deg)); transition: transform 0.25s; }
 #stage-label { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: var(--dim); font: 700 18px var(--display); letter-spacing: 0.1em; text-transform: uppercase; pointer-events: none; }
 #stage.off #self { display: none; }
 #stage.off #stage-label { display: flex; }
@@ -136,57 +143,54 @@ select { padding: 12px 10px; }
 .pad-dot { position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; border: 3px solid var(--ink); opacity: 0.55; pointer-events: none; box-shadow: 0 0 0 1px #000; }
 .pad.down .pad-dot { opacity: 1; background: color-mix(in srgb, var(--ink) 35%, transparent); }
 
-/* What is written on a button sits in a block of its own that turns to read
-   upright however the phone is held. Turned a quarter, the block takes the
-   button's height as its width, so the words still wrap inside the button. */
-.lbl {
-  position: absolute; left: 50%; top: 50%; width: 100cqw; height: 100cqh; padding: 4px;
-  display: flex; align-items: center; justify-content: center; text-align: center;
-  transform: translate(-50%, -50%) rotate(var(--label-turn, 0deg)); transition: transform 0.25s; pointer-events: none;
-}
-#root.labels-quarter .lbl { width: 100cqh; height: 100cqw; }
+.lbl { display: flex; align-items: center; justify-content: center; text-align: center; width: 100%; height: 100%; padding: 4px; pointer-events: none; }
 
-#controls { grid-area: controls; display: grid; grid-template-rows: minmax(0, 2fr) minmax(0, 3fr); gap: 8px; min-width: 0; min-height: 0; }
-#root.tall #controls { grid-template-rows: 64px 150px; }
-.triggers { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; min-width: 0; min-height: 0; }
+/* Triggers: side by side when the page is on its side, stacked when upright. */
+#trigs { grid-area: trigs; }
+.triggers { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; min-width: 0; min-height: 0; }
+#root.upright .triggers { grid-auto-flow: row; grid-auto-rows: minmax(0, 1fr); }
 .trig {
-  position: relative; container-type: size; height: 100%; padding: 0; font: 700 22px/1 var(--display); letter-spacing: 0.02em;
+  height: 100%; padding: 0; font: 700 22px/1 var(--display); letter-spacing: 0.02em;
   border: 2px solid var(--ink); touch-action: none; text-transform: uppercase; overflow: hidden; min-width: 0;
 }
 .trig.down, .trig.on { background: var(--ink); color: var(--on-ink); }
-/* A bank of six presets, all on screen; a slim button steps to the next. */
-.presets { display: flex; flex-direction: column; gap: 6px; min-width: 0; min-height: 0; }
+
+/* Six presets, numbered across then down: three by two on its side, two by
+   three upright. Under them, the camera switches used mid-show. */
+#presets-cell { grid-area: presets; display: flex; flex-direction: column; gap: 6px; min-width: 0; min-height: 0; }
 .bank { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 6px; }
-.preset { position: relative; container-type: size; padding: 0; overflow: hidden; min-width: 0; touch-action: manipulation; }
+#root.upright .bank { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); }
+.preset { padding: 0; overflow: hidden; min-width: 0; touch-action: manipulation; }
 .preset:disabled { opacity: 0.25; }
 .preset .lbl { flex-direction: column; gap: 2px; }
-.preset b { font: 800 22px/1 var(--display); }
+.preset b { font: 800 24px/1 var(--display); }
 .preset .pname { font-size: 9px; line-height: 1.1; letter-spacing: 0.04em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .preset.on { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
-.bank-next { position: relative; container-type: size; flex: none; height: 30px; padding: 0; font-size: 10px; letter-spacing: 0.02em; overflow: hidden; }
-.bank-next .lbl { padding: 0; }
 .bank:empty::after { content: 'Presets appear here once the Mac is linked.'; grid-column: 1 / -1; color: var(--dim); font-size: 12px; align-self: center; text-transform: none; }
+#quick { flex: none; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; height: 36px; }
+#quick button { height: 100%; }
+#quick button:disabled { opacity: 0.3; }
 
-/* Faders: a bar that fills, like the ones on the control page. */
+/* Faders: a bar that fills, like the ones on the control page. Zoom is a
+   bare bar down the right edge. */
 #zoom { grid-area: zoom; display: flex; }
 .fader { position: relative; touch-action: none; display: flex; gap: 6px; align-items: center; }
 .fader .track { position: relative; background: var(--panel); border: 1px solid var(--ink); overflow: hidden; }
 .fader .fill { position: absolute; left: 0; bottom: 0; background: var(--ink); }
 .fader .name { font: 700 12px/1 var(--display); letter-spacing: 0.06em; text-transform: uppercase; }
-.fader .cap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
-.fader.v .cap { width: 48px; height: 48px; flex: none; transform: rotate(var(--label-turn, 0deg)); transition: transform 0.25s; }
 .fader .val { font-size: 12px; font-variant-numeric: tabular-nums; }
+.fader .cap { display: flex; align-items: center; gap: 8px; }
 .fader.v { flex-direction: column; width: 56px; height: 100%; }
 .fader.v .track { flex: 1; width: 100%; min-height: 0; }
 .fader.v .fill { width: 100%; }
 .fader:not(.v) { display: grid; grid-template-columns: 96px 1fr; }
 .fader:not(.v) .track { height: 30px; grid-column: 2; grid-row: 1; }
-.fader:not(.v) .cap { grid-column: 1; grid-row: 1; flex-direction: row; justify-content: flex-start; gap: 8px; }
+.fader:not(.v) .cap { grid-column: 1; grid-row: 1; }
 .fader:not(.v) .fill { top: 0; height: 100%; }
 
 /* Camera panel: everything set once, out of the way of the preview. */
 #panel { position: absolute; inset: 8px; z-index: 5; background: var(--bg); border: 2px solid var(--ink); padding: 10px; display: flex; flex-direction: column; gap: 10px; overflow: auto; }
-#tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+#tools { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 #tools > * { min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14px; }
 #adjust { display: flex; flex-direction: column; gap: 8px; }
 #adjust:empty { display: none; }

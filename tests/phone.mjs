@@ -92,7 +92,7 @@ try {
       darkest = Math.min(darkest, (await outputStats(output)).mean);
     } catch { /* page busy */ }
   }, 60);
-  await phone.click('text=Flip');
+  await phone.locator('#quick-flip').dispatchEvent('click');
   await sleep(2500);
   clearInterval(sampler);
   await control.keyboard.press('x');

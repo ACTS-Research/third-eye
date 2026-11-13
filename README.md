@@ -173,23 +173,35 @@ connection as five steps (picture running, pairing server reached, phone
 found, video link, picture arriving) with the one it is stuck at marked. It also has
 **Restart output** and **New room code**.
 
-The phone's screen is always laid out horizontally, like a camera held on
-its side, and the picture it sends is always horizontal too. If you hold the
-phone upright the screen is simply drawn on its side; it does not flip. That
-keeps the picture on the projector from jumping between tall and wide when
-the phone tilts. The buttons stay where they are, as on a camera, and what is
-written on them turns to read upright however the phone is held. For the most room on screen, switch on iOS's Portrait
-Orientation Lock (Control Centre): the page then never turns at all.
+The picture the Mac shows is always horizontal, and so is the preview on the
+phone. The page lays itself out for how the phone is held:
+
+- **On its side:** the preview on the left, as large as it will go; beside it
+  the triggers, six presets and three camera icons; zoom down the right edge.
+- **Upright:** the preview across the top; under it the six presets (1 2 / 3 4
+  / 5 6) with the camera icons, the triggers stacked beside them, and zoom on
+  the right.
+
+Held upright, the iPhone's camera frames are upright too. Nothing is laid on
+its side: the Mac fills its horizontal picture from the middle band of the
+frame (with **Fill**, the default under Setup → Input), the world stays the
+right way up, and the preview shows that same band. Hold the phone on its side
+to use the whole sensor.
 
 | On the screen | What it does |
 | --- | --- |
-| The preview | What the Mac receives, as large as it will go. It is also the XY pad: a finger on the picture moves the dot, giving two modulation sources plus "pad touched" |
+| The preview | The picture the Mac shows. It is also the XY pad: a finger on the picture moves the dot, giving two modulation sources plus "pad touched" |
 | Triggers | Labelled with whatever action they are bound to. **Freeze** is a switch, as on the control page: tap to freeze, tap again to release, and the button stays lit meanwhile. A trigger bound to previous or next preset is left out: the preset buttons do that job |
-| Presets | A bank of six preset buttons, all on screen, the live one lit. Tap to load one. With more than six presets, **Next** steps to the following bank; a preset loaded on the Mac brings its bank up |
-| Zoom | The tall fader down the right edge, when the camera offers zoom |
-| **Rotate** | Turns the screen and the picture half a turn, for holding the phone the other way round |
-| **Camera** | Opens a panel with Flip, Torch, Quality (360p / 720p / 1080p at 30 or 60 fps, default 720p · 60), Camera on / off, any exposure, focus and lock controls the camera reports, and **Scan the Mac's code** |
+| Presets | The first six presets, all on screen, the live one lit. Tap to load one. Later presets are loaded from the Mac |
+| The three icons | Flip between the front and rear camera; torch; lock the white balance. Torch and the lock appear only when the camera offers them |
+| Zoom | The bare bar down the right, when the camera offers zoom |
+| Rotate (the circling arrow, top right) | Turns the picture a quarter turn, on the Mac and in the preview, each time it is pressed |
+| Camera (top right) | Opens a panel with Quality (360p / 720p / 1080p at 30 or 60 fps, default 720p · 60), Camera on / off, any exposure and focus controls the camera reports, and **Scan the Mac's code** |
 | **Reconnect** | Appears in the top line whenever the link is down. It redials; if the phone was paired by code it reads **Scan code** and scans the Mac's code again |
+
+A message (a camera that refused a setting, a screen that will not stay awake)
+lies over the top line for a few seconds and goes; it never takes room from
+the preview. Tap it to dismiss it sooner.
 
 Camera off means controller only: sensors and touch keep working and the
 output holds the last frame.
@@ -420,7 +432,8 @@ the value* (the source sweeps the whole range). Wet / dry can be a target too.
 **Triggers.** Any source rising through its halfway point can fire an action:
 blackout, freeze, bypass, next / previous preset, next input, glitch burst.
 With **hold** ticked, blackout / freeze / bypass stay on only while the
-trigger is held. Defaults: phone buttons 1–4 are glitch, freeze (a switch,
+trigger is held. (Hold settings saved before 13 November 2026 are no longer
+read: every trigger is a switch until you tick hold for it again.) Defaults: phone buttons 1–4 are glitch, freeze (a switch,
 as on the control page: tap on, tap off, and the phone's button stays lit),
 previous preset, next preset. Triggers are global; they do not change with
 presets, so "next preset" keeps working whatever preset you land on.
@@ -734,7 +747,7 @@ npm test
 | `tests/offline.mjs` | Reloading every page with the server gone; tap tempo and tempo-synced LFOs |
 | `tests/phone.mjs` | Real WebRTC against a local PeerServer: pairing, live video, palette and dimmer following live, the room-code strip clearing once the phone pairs, hold on stall, every reconnect path, a second output window, a taken room code, Restart output, local camera |
 | `tests/record-latency.mjs` | Recording to WebM and MP4, saving and deleting; the latency measurement, including a stray late flash; switching codec |
-| `tests/phone-screen.mjs` | The phone's live screen: the large preview that is also the XY pad, the trigger and preset rows, Rotate, the screen drawn on its side when held upright, upright frames turned back on the Mac, Reconnect, the remembered room, scanning the Mac's code inside the page |
+| `tests/phone-screen.mjs` | The phone's live screen in both layouts: the horizontal preview that is also the XY pad, triggers, six presets numbered across then down, the camera icons, the bare zoom bar, Freeze as a switch (including two quick taps and a session saved with the old hold setting), Rotate, upright frames staying upright on the Mac, messages that leave the preview alone, Reconnect, the remembered room, scanning the Mac's code inside the page |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |
@@ -761,11 +774,10 @@ else. Check these the first time you use them:
   network, and the
   phone following the picture between windows. Only Chromium talking to
   Chromium has been tried.
-- **The phone's new screen**, on a real iPhone: that the picture stays
-  horizontal when the phone is turned (Safari turning the camera frames is
-  only imitated in the tests), the brief moment when the page itself turns,
-  the sideways screen under your thumb, dragging the preset row, the zoom
-  fader, and scanning the Mac's code from inside the page.
+- **The phone's screen**, on a real iPhone: the two layouts, the preview
+  showing the same band of an upright frame that the Mac shows, Rotate, the
+  three camera icons, the zoom bar. The upright layout and the tap handling
+  for Freeze were reworked after the last time it was tried on the phone.
 - **Running with no output window, and moving the picture** by opening and
   closing it: that the iPhone reconnects by itself each time and how long it
   takes (1.5–2.5 s in the tests), that the monitor on `/control` holds 60 fps,

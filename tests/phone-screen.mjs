@@ -1,7 +1,8 @@
-// The phone's live screen: always horizontal, the preview large and doubling
-// as the XY pad, a row of preset buttons, Rotate, Reconnect, the remembered
-// room, the picture kept horizontal on the Mac, and scanning the Mac's code
-// from inside the page.
+// The phone's live screen in both layouts (on its side and upright): the
+// horizontal preview that is also the XY pad, the triggers, six presets, the
+// camera icons, the bare zoom bar, latching Freeze, Rotate, upright frames
+// staying upright on the Mac, messages that leave the preview alone,
+// Reconnect, the remembered room, and scanning the Mac's code in the page.
 //   node tests/phone-screen.mjs
 
 import { benignError, check, failureCount, fakeMacCamera, fakePhoneCamera, launch, phoneCode, showToMac, startPeerServer, startSite, stopPeerServer, waitFor, watch } from './lib.mjs';
@@ -16,6 +17,19 @@ try {
   // ------------------------------------------------ with a real (fake) camera
   const context = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   await context.grantPermissions(['camera', 'microphone']);
+  // An iPhone's camera offers zoom, a torch and a white-balance lock; the
+  // test browser's does not, so say it does.
+  await context.addInitScript(() => {
+    if (!location.pathname.includes('/phone/')) return;
+    const caps = MediaStreamTrack.prototype.getCapabilities;
+    MediaStreamTrack.prototype.getCapabilities = function () {
+      return { ...caps.call(this), zoom: { min: 1, max: 5, step: 0.1 }, torch: true, whiteBalanceMode: ['manual', 'continuous'] };
+    };
+    const apply = MediaStreamTrack.prototype.applyConstraints;
+    MediaStreamTrack.prototype.applyConstraints = function (c) {
+      return c?.advanced ? Promise.resolve() : apply.call(this, c);
+    };
+  });
   const control = await context.newPage();
   watch(control, 'control', errors);
   await control.goto(`${site.url}/control/`);
@@ -34,21 +48,26 @@ try {
   await control.keyboard.press('1');
   await waitFor(async () => (await status()).phone.media === 'connected' && (await status()).input.state === 'live', { label: 'live', timeout: 30000 });
   const box = (sel) => phone.locator(sel).boundingBox();
-  const turn = () => phone.evaluate(() => Number(document.getElementById('root').dataset.turn));
-  // Presses a point given in the preview's own terms (0..1 across, 0..1 down),
-  // whichever way the live screen is drawn.
+  // Presses a point on the preview, 0..1 across and 0..1 down.
   const press = async (lx, ly) => {
     const r = await box('#stage');
-    const t = await turn();
-    const [u, v] = t === 90 ? [1 - ly, lx] : t === 180 ? [1 - lx, 1 - ly] : t === 270 ? [ly, 1 - lx] : [lx, ly];
-    await phone.mouse.move(r.x + u * r.width, r.y + v * r.height);
+    await phone.mouse.move(r.x + lx * r.width, r.y + ly * r.height);
     await phone.mouse.down();
   };
+  // Where the pieces of the screen sit, for checking each layout.
+  const places = () => phone.evaluate(() => {
+    const r = (sel) => {
+      const b = document.querySelector(sel)?.getBoundingClientRect();
+      return b ? { l: b.left, t: b.top, r: b.right, b: b.bottom, w: b.width, h: b.height } : null;
+    };
+    const presets = [...document.querySelectorAll('.preset')].map((b) => b.getBoundingClientRect()).map((b) => ({ l: b.left, t: b.top }));
+    const trigs = [...document.querySelectorAll('.trig')].filter((b) => !b.hidden).map((b) => b.getBoundingClientRect()).map((b) => ({ l: b.left, t: b.top, r: b.right, b: b.bottom }));
+    return { stage: r('#stage'), zoom: r('#zoom .fader'), quick: r('#quick'), bank: r('#presets'), presets, trigs, numbers: [...document.querySelectorAll('.preset b')].map((n) => n.textContent).join('') };
+  });
 
-  console.log('sideways');
-  let stage = await box('#stage');
-  check('the preview is the largest thing on the screen', stage.width > 844 * 0.5 && stage.height > 390 * 0.65 && Math.abs(stage.width / stage.height - 16 / 9) < 0.05, `${Math.round(stage.width)}×${Math.round(stage.height)} of 844×390`);
-  check('the screen is drawn the right way up', (await turn()) === 0);
+  console.log('on its side');
+  let at = await places();
+  check('the preview is the largest thing on the screen, and horizontal', at.stage.w > 844 * 0.5 && at.stage.h > 390 * 0.65 && Math.abs(at.stage.w / at.stage.h - 16 / 9) < 0.05, `${Math.round(at.stage.w)}×${Math.round(at.stage.h)} of 844×390`);
   await press(0.8, 0.25);
   check('a finger on the preview is the XY pad', await settle(async () => (await source('pad.touch')) === 1 && Math.abs((await source('pad.x')) - 0.8) < 0.03 && Math.abs((await source('pad.y')) - 0.75) < 0.03, 'pad'), `x ${(await source('pad.x')).toFixed(2)}, y ${(await source('pad.y')).toFixed(2)}`);
   check('the dot sits under the finger', await phone.evaluate(() => {
@@ -56,82 +75,94 @@ try {
     return Math.abs(parseFloat(d.style.left) - 80) < 3 && Math.abs(parseFloat(d.style.top) - 25) < 3;
   }));
   await phone.mouse.up();
-  check('two rows beside it: triggers, then presets', await settle(() => phone.evaluate(() => {
-    const t = document.getElementById('trigs').getBoundingClientRect();
-    const p = document.getElementById('presets').getBoundingClientRect();
-    const s = document.getElementById('stage').getBoundingClientRect();
-    return document.querySelectorAll('.preset:not(:disabled)').length === 6 && t.left > s.right && p.top > t.bottom - 1 && [...document.querySelectorAll('.trig')].filter((b) => !b.hidden).length === 2;
-  }), 'rows'));
+  await settle(() => phone.evaluate(() => document.querySelectorAll('.preset:not(:disabled)').length === 6), 'presets');
+  at = await places();
+  check('beside it: two triggers side by side, six presets under them', at.trigs.length === 2 && at.trigs[0].l > at.stage.r && at.trigs[1].l > at.trigs[0].r - 1 && Math.abs(at.trigs[0].t - at.trigs[1].t) < 2 && at.bank.t > at.trigs[0].b - 1);
+  check('the presets are numbered across then down, three to a row', at.numbers === '123456' && at.presets[1].l > at.presets[0].l && at.presets[2].l > at.presets[1].l && at.presets[3].t > at.presets[0].t && Math.abs(at.presets[3].l - at.presets[0].l) < 2);
+  check('all six are on screen, and there is no button for more', (await phone.locator('.bank-next').count()) === 0 && at.presets.length === 6 && (await phone.evaluate(() => document.getElementById('presets').scrollWidth <= document.getElementById('presets').clientWidth + 1)));
+  check('under the presets: flip, torch and white-balance lock, as icons', await phone.evaluate(() => ['quick-flip', 'quick-torch', 'quick-wb'].every((id) => {
+    const b = document.getElementById(id);
+    return !b.hidden && b.querySelector('svg') && !b.textContent.trim() && b.getAttribute('aria-label');
+  })) && at.quick.t > at.bank.b - 1);
+  check('zoom is a bare bar the full height of the right edge', at.zoom && at.zoom.l > at.trigs[1].r - 1 && at.zoom.h > at.stage.h * 0.9 && (await phone.evaluate(() => document.getElementById('zoom').textContent.trim() === '')), at.zoom ? `${Math.round(at.zoom.w)}×${Math.round(at.zoom.h)}` : 'no zoom');
   const names = await phone.locator('.preset .pname').allTextContents();
   check('the preset buttons carry the Mac\'s preset names', names[1] === 'Tunnel', names.slice(0, 4).join(', '));
   const third = await box('.preset >> nth=2');
   await phone.mouse.click(third.x + third.width / 2, third.y + third.height / 2);
   check('tapping one loads it on the Mac, and it lights up', await settle(async () => (await mac(() => window.thirdEye.store.state.presetIndex)) === 2 && (await phone.evaluate(() => document.querySelector('.preset.on')?.dataset.index)) === '2', 'preset 3'));
-  check('six presets are on screen at once, nothing to scroll', await phone.evaluate(() => {
-    const bank = document.querySelector('.bank').getBoundingClientRect();
-    return [...document.querySelectorAll('.preset')].every((b) => {
-      const r = b.getBoundingClientRect();
-      return r.left >= bank.left - 1 && r.right <= bank.right + 1 && r.top >= bank.top - 1 && r.bottom <= bank.bottom + 1 && r.width > 40 && r.height > 30;
-    }) && document.querySelector('.bank').scrollWidth <= document.querySelector('.bank').clientWidth + 1;
-  }));
-  check('with more than six, a button steps to the next bank', (await phone.locator('.bank-next').textContent()) === 'Next 7–9' && (await phone.locator('.bank-next').getAttribute('aria-label')).includes('1–6 of 9'), await phone.locator('.bank-next').textContent());
-  await phone.locator('.bank-next').dispatchEvent('click');
-  check('the next bank shows the rest without loading anything', (await phone.locator('.preset .pname').allTextContents()).length === 3 && (await phone.locator('.preset b').first().textContent()) === '7' && (await mac(() => window.thirdEye.store.state.presetIndex)) === 2);
-  await control.keyboard.press('[');
-  check('a preset loaded on the Mac brings its bank back and lights it', await settle(() => phone.evaluate(() => document.querySelector('.preset.on')?.dataset.index === '1' && document.querySelector('.preset b').textContent === '1'), 'bank follows'));
   const freezeBox = await box('.trig >> nth=1');
   await phone.mouse.click(freezeBox.x + freezeBox.width / 2, freezeBox.y + freezeBox.height / 2);
   check('Freeze latches: one tap freezes, and the button stays lit', await settle(async () => (await mac(() => window.thirdEye.store.state.globals.freeze)) === true && (await phone.evaluate(() => document.querySelectorAll('.trig')[1].classList.contains('on'))), 'frozen'));
+  check('the picture really is frozen on the Mac', await mac(() => window.thirdEye.engine.pipeline && window.thirdEye.store.state.globals.freeze === true));
   await phone.mouse.click(freezeBox.x + freezeBox.width / 2, freezeBox.y + freezeBox.height / 2);
   check('a second tap releases it', await settle(async () => (await mac(() => window.thirdEye.store.state.globals.freeze)) === false, 'released'));
+  // Settings saved before this change had Freeze on "hold", under a name
+  // that is no longer read: such a session must still give a switch.
+  await mac(() => {
+    const { store } = window.thirdEye;
+    store.dispatch({ op: 'set', key: 'actions', value: store.state.actions.map((b) => (b.source === 'trig.2' ? { ...b, momentary: true } : b)) });
+  });
+  await phone.mouse.click(freezeBox.x + freezeBox.width / 2, freezeBox.y + freezeBox.height / 2);
+  check('a session saved with the old hold setting still latches', await settle(async () => (await mac(() => window.thirdEye.store.state.globals.freeze)) === true, 'frozen again'));
+  await phone.mouse.click(freezeBox.x + freezeBox.width / 2, freezeBox.y + freezeBox.height / 2);
+  await settle(async () => (await mac(() => window.thirdEye.store.state.globals.freeze)) === false, 'released again');
   await mac(() => {
     const { store } = window.thirdEye;
     store.dispatch({ op: 'set', key: 'actions', value: store.state.actions.map((b) => (b.source === 'trig.3' ? { ...b, action: 'blackout' } : b)) });
   });
   check('a trigger bound to something else comes back as a button', await settle(() => phone.evaluate(() => [...document.querySelectorAll('.trig')].filter((b) => !b.hidden).map((b) => b.textContent).join() === 'Glitch burst,Freeze frame,Blackout'), 'trigger 3'), (await phone.locator('.trig').allTextContents()).join(' | '));
+  await mac(() => {
+    const { store } = window.thirdEye;
+    store.dispatch({ op: 'set', key: 'actions', value: store.state.actions.map((b) => (b.source === 'trig.3' ? { ...b, action: 'presetPrev' } : b)) });
+  });
+  const before = await box('#stage');
+  await phone.evaluate(() => {
+    document.getElementById('note').textContent = 'Could not keep the screen awake. Set Auto-Lock to Never in iOS Settings → Display & Brightness.';
+  });
+  const during = await box('#stage');
+  check('a message lies over the status line and takes nothing from the preview', before.width === during.width && before.height === during.height && before.y === during.y && (await phone.evaluate(() => {
+    const n = document.getElementById('note').getBoundingClientRect();
+    const b = document.getElementById('bar').getBoundingClientRect();
+    return n.top >= b.top - 1 && n.bottom <= b.bottom + 1;
+  })));
+  await phone.evaluate(() => {
+    document.getElementById('note').textContent = '';
+  });
 
   console.log('rotate');
   await phone.locator('#rotate').dispatchEvent('click');
-  check('Rotate turns the screen half a turn', (await turn()) === 180);
-  check('and the Mac turns the picture with it', await settle(() => mac(() => window.thirdEye.engine.inputs.turn === 2), 'turn 2'));
+  check('Rotate turns the picture a quarter turn, in the preview and on the Mac', (await phone.evaluate(() => document.getElementById('stage').dataset.turn)) === '90' && (await settle(() => mac(() => window.thirdEye.engine.inputs.turn === 1), 'turn 1')));
   await press(0.8, 0.25);
   check('the pad still reads the same place on the picture', await settle(async () => Math.abs((await source('pad.x')) - 0.8) < 0.03 && Math.abs((await source('pad.y')) - 0.75) < 0.03, 'pad turned'), `x ${(await source('pad.x')).toFixed(2)}, y ${(await source('pad.y')).toFixed(2)}`);
   await phone.mouse.up();
-  await phone.locator('#rotate').dispatchEvent('click');
-  await settle(() => mac(() => window.thirdEye.engine.inputs.turn === 0), 'turn 0');
+  for (let i = 0; i < 3; i++) await phone.locator('#rotate').dispatchEvent('click');
+  check('four presses bring it back', await settle(() => mac(() => window.thirdEye.engine.inputs.turn === 0), 'turn 0'));
 
   console.log('upright');
   await phone.setViewportSize({ width: 390, height: 844 });
-  check('held upright, the screen is drawn on its side so it stays horizontal', await settle(async () => (await turn()) === 90, 'turn 90'));
-  stage = await box('#stage');
-  check('and the preview is still large', stage.height > 844 * 0.5 && stage.width > 390 * 0.55, `${Math.round(stage.width)}×${Math.round(stage.height)} of 390×844`);
-  // The buttons stay where they are; what is written on them turns upright.
-  const labelTurn = () => phone.evaluate(() => document.getElementById('root').dataset.label);
-  const readsUpright = () => phone.evaluate(() => {
-    // A label reads upright when its text box, as drawn, is wider than tall.
-    const r = document.querySelector('.trig .lbl').getBoundingClientRect();
-    const m = new DOMMatrix(getComputedStyle(document.querySelector('.trig .lbl')).transform);
-    const net = (Number(document.getElementById('root').dataset.turn) + Math.round((Math.atan2(m.b, m.a) * 180) / Math.PI) + 360) % 360;
-    return net === 0 && r.width > 0;
-  });
-  check('held upright, the button labels read upright', (await settle(async () => (await labelTurn()) === '270', 'labels turned')) && (await settle(readsUpright, 'upright')), await labelTurn());
-  // With iOS's rotation lock the page stays upright while the phone is held
-  // sideways: the motion sensors say so, and the labels follow them.
-  await phone.evaluate(() => window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 0, gamma: -90 })));
-  check('held sideways with the page locked upright, the labels follow gravity', await settle(async () => (await labelTurn()) === '0', 'labels by gravity'), await labelTurn());
-  await phone.evaluate(() => window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 90, gamma: 0 })));
-  check('and turn back when the phone is stood up again', await settle(async () => (await labelTurn()) === '270', 'labels back'), await labelTurn());
+  await settle(() => phone.evaluate(() => document.getElementById('root').classList.contains('upright')), 'upright layout');
+  at = await places();
+  check('held upright, the preview is still horizontal, across the top', at.stage.w > 390 * 0.9 && Math.abs(at.stage.w / at.stage.h - 16 / 9) < 0.05 && at.stage.t < 120, `${Math.round(at.stage.w)}×${Math.round(at.stage.h)} of 390×844`);
+  check('the presets are numbered across then down, two to a row', at.numbers === '123456' && at.presets[1].l > at.presets[0].l && Math.abs(at.presets[1].t - at.presets[0].t) < 2 && at.presets[2].t > at.presets[0].t && Math.abs(at.presets[2].l - at.presets[0].l) < 2 && at.presets[4].t > at.presets[2].t);
+  check('glitch and freeze are stacked beside them, with zoom to their right', at.trigs[0].l > at.presets[1].l && at.trigs[1].t > at.trigs[0].b - 1 && Math.abs(at.trigs[0].l - at.trigs[1].l) < 2 && at.zoom.l > at.trigs[0].r - 1 && at.zoom.t >= at.stage.b - 1 && (await phone.evaluate(() => document.getElementById('zoom').textContent.trim() === '')));
+  check('everything reads upright: nothing on the screen is drawn turned', await phone.evaluate(() => [...document.querySelectorAll('#root, #root *')].every((n) => n.id === 'self' || !/rotate|matrix\((?!1, 0, 0, 1)/.test(getComputedStyle(n).transform))));
   await press(0.2, 0.9);
-  check('the pad follows the turned screen', await settle(async () => Math.abs((await source('pad.x')) - 0.2) < 0.03 && Math.abs((await source('pad.y')) - 0.1) < 0.03, 'pad upright'), `x ${(await source('pad.x')).toFixed(2)}, y ${(await source('pad.y')).toFixed(2)}`);
+  check('the pad works on the horizontal preview', await settle(async () => Math.abs((await source('pad.x')) - 0.2) < 0.03 && Math.abs((await source('pad.y')) - 0.1) < 0.03, 'pad upright'), `x ${(await source('pad.x')).toFixed(2)}, y ${(await source('pad.y')).toFixed(2)}`);
   await phone.mouse.up();
   // What Safari does when the page is upright: the camera frames arrive
-  // upright too. The Mac must lay them back on their side.
+  // upright. Nothing is turned; the Mac shows the middle band of them, the
+  // world the right way up, and the phone's preview shows the same band.
   await phone.evaluate(() => window.thirdEyePhone.track.applyConstraints({ width: { exact: 360 }, height: { exact: 640 } }));
-  check('upright frames are turned back so the Mac\'s picture stays horizontal', await settle(async () => {
+  check('upright frames are not laid on their side on the Mac', await settle(async () => {
     const s = await status();
-    return (await mac(() => window.thirdEye.engine.inputs.turn)) === 1 && s.input.width > s.input.height;
-  }, 'turned back', 20000), JSON.stringify(await mac(() => ({ turn: window.thirdEye.engine.inputs.turn, want: window.thirdEye.engine.sensors.turn, video: [window.thirdEye.engine.inputs.feeds.phone.video.videoWidth, window.thirdEye.engine.inputs.feeds.phone.video.videoHeight] }))));
-  check('the phone\'s preview is turned the same way', await phone.evaluate(() => document.getElementById('stage').classList.contains('turned') && getComputedStyle(document.getElementById('stage')).getPropertyValue('--turn').trim() === '-90deg'));
+    return s.input.height > s.input.width && (await mac(() => window.thirdEye.engine.inputs.turn)) === 0;
+  }, 'upright frames', 20000), JSON.stringify(await mac(() => ({ turn: window.thirdEye.engine.inputs.turn, video: [window.thirdEye.engine.inputs.feeds.phone.video.videoWidth, window.thirdEye.engine.inputs.feeds.phone.video.videoHeight] }))));
+  check('the Mac fills its horizontal picture from them (Fill)', await settle(() => mac(() => window.thirdEye.store.state.input.fit === 'cover' && window.thirdEye.engine.pipeline.fitScale('cover')[1] < 1), 'fill'));
+  check('the phone\'s preview shows the same horizontal band, not a tall picture', await phone.evaluate(() => {
+    const stage = document.getElementById('stage').getBoundingClientRect();
+    const video = document.getElementById('self');
+    return video.videoHeight > video.videoWidth && stage.width > stage.height && getComputedStyle(video).objectFit === 'cover' && !document.getElementById('stage').classList.contains('turned');
+  }));
   await phone.setViewportSize({ width: 844, height: 390 });
 
   console.log('reconnecting');

@@ -10,11 +10,10 @@ suites pass in headless Chromium. On the real Mac and iPhone only normal
 pairing over the hotspot has been confirmed (it works); the university Wi-Fi
 could not reach the pairing server, which is what the new pairing is for.
 
-**Next step.** Try the phone's new screen on the real iPhone: hold it
-upright and sideways and check the Mac's picture stays horizontal and the
-right way up, try Rotate, the preset row, the zoom fader, and Reconnect.
-Report anything that comes out turned the wrong way; that is the part that
-could only be imitated in the tests.
+**Next step.** Try the phone's reworked screen on the real iPhone: upright
+and on its side, check the Mac's picture is horizontal with the world the
+right way up, that the preview shows the same picture, and that Freeze
+freezes on one tap and releases on the next.
 
 **Decisions only you can make.**
 
@@ -87,31 +86,35 @@ Nothing is waiting to be merged; everything is pushed.
 
 ### The phone's live screen (rebuilt 2026-11-13)
 
-- **Always horizontal.** `src/phone/orient.js` works out two turns: `ui`
-  (how the live screen, `#root`, is drawn inside the page; a quarter turn
-  while the page is upright) and `picture` (how far the Mac must turn the
-  camera frames back). The page cannot lock orientation and Safari turns
-  camera frames with the page, so the picture's turn follows the shape of
-  the frames themselves. Read the header of that file before touching it.
-- **The Mac turns the frames back** in the source shader (`uTurn`), from
-  `P.TURN` in the sensor packet. `Engine.updateTurn` waits for the frames to
-  change shape before applying a quarter turn, because the packet outruns
-  the video. Vision gets the turned picture too. `P.SCREEN` now carries
-  which way is up in the picture as shown, for roll.
-- **Touches are read with `localXY`** (`orient.js`), never straight from
-  `clientX` / `getBoundingClientRect`, or they break when the screen is
-  drawn turned. Sliders are the `fader` in `src/phone/widgets.js` for the
-  same reason; do not use a native range input on the live screen.
-- **The preview is the XY pad.** Preset buttons come from the Mac
-  (`presets` message; `preset` back). Triggers bound to previous / next
-  preset are hidden on the phone while the preset row is filled.
-- **Labels turn, buttons do not.** What is written on a button sits in a
-  `.lbl` block that is turned by `--label-turn` (`orient.label`), following
-  gravity when the motion sensors are on, so it reads upright however the
-  phone is held. Anything new with words on it needs a `.lbl`.
-- **Presets are a bank of six**, no scrolling; **Freeze latches** by default
-  (a one-time change to stored sessions, flagged in `store.js`), and the Mac
-  tells the phone which switch triggers are on so it can light them.
+Twice. The first attempt kept the screen horizontal by drawing it on its
+side when the phone was upright and laid upright camera frames on their side
+on the Mac. The owner rejected that on the iPhone: the picture must stay the
+right way up. What stands now:
+
+- **Two real layouts**, chosen by how the page is turned (`#root.upright`,
+  set in `layout()` in `src/phone/main.js`; the rest is `phone.css`). Nothing
+  on the live screen is drawn turned.
+- **The picture is always horizontal and the world always upright.** Upright
+  camera frames are not turned: the Mac's Fill takes their middle band and
+  the preview (`object-fit: cover` in a 16:9 box) shows the same band. Do not
+  bring back turning frames to "use the whole sensor".
+- **Rotate is the only turn**: quarter turns of the picture, sent as `P.TURN`
+  and applied in the source shader (`uTurn`); vision sees the turned picture.
+  `P.SCREEN` carries which way is up in the picture as shown, for roll.
+- **The preview is the XY pad.** Six preset buttons come from the Mac
+  (`presets` message; `preset` back); no banks, no scrolling. Triggers bound
+  to previous / next preset are hidden while the presets are shown.
+- **Every tap is its own press** (`queued` / `shown` in
+  `src/engine/phone-sensors.js`): two taps that reach the engine between two
+  frames used to read as one long press, so the second tap on Freeze did
+  nothing. Keep that if you touch the trigger path.
+- **Trigger "hold" is stored as `hold`**, not `momentary` as before
+  2026-11-13. The old name is ignored on purpose, so no stored session and no
+  stale window can bring the old default (Freeze on hold) back.
+- **Sliders are the `fader`** in `src/phone/widgets.js`; zoom is a bare one.
+  Flip, torch and the white-balance lock are icon buttons under the presets.
+- **Messages lie over the status line** for a few seconds (`setNote`); they
+  must never take room from the preview.
 - **The phone asks for its state** (`hello`) when its link opens; the Mac
   answers with labels, presets, codec and palette (`greetPhone`).
 - **Reconnect** redials (`HostLink.restart`); for a phone paired by code it
@@ -297,11 +300,10 @@ Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
 
 ### Never run on real hardware (all unconfirmed)
 
-The phone's rebuilt screen: the picture staying horizontal when the phone
-turns (Safari turning camera frames with the page is only imitated in the
-tests, by asking the fake camera for upright frames), which sideways hold
-comes up by default, the moment the page itself turns, the zoom fader, the
-preset row under a thumb, scanning the Mac's code inside the page. Pair without internet, every step: Safari answering the offer, the Mac's
+The phone's screen as it now stands: the upright layout, the preview's band
+matching the Mac's, Freeze with quick taps, Rotate, the camera icons. (The
+first version of the rebuild was tried on the iPhone and rejected; see
+above.) Pair without internet, every step: Safari answering the offer, the Mac's
 real camera reading the phone's real screen, the rebuilt answer being accepted between
 Chrome and Safari, the hotspot or a Mac-made network carrying it, and the
 phone following the picture between windows. Whether iOS still has the

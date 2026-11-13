@@ -50,8 +50,13 @@ export function defaultLfos() {
 }
 
 // Fires an action when a source rises through 0.5.
-export function makeActionBinding(source, action, momentary = false) {
-  return { id: uid(), source, action, momentary };
+// `hold`: for a switch action (freeze, blackout, bypass), on only while the
+// trigger is held instead of flipping on each press. (Before 2026-11-13 this
+// was stored as `momentary`, and Freeze had it on by default, so a tap on the
+// phone's Freeze button did nothing lasting. The old name is ignored on
+// purpose: every trigger is a switch again until hold is ticked for it.)
+export function makeActionBinding(source, action, hold = false) {
+  return { id: uid(), source, action, hold };
 }
 
 export function defaultActions() {
@@ -184,7 +189,7 @@ export function sanitizeActions(list, fallback) {
   if (!Array.isArray(list)) return fallback;
   return list
     .filter((b) => b && typeof b.source === 'string' && typeof b.action === 'string')
-    .map((b) => ({ id: typeof b.id === 'string' && b.id ? b.id : uid(), source: b.source, action: b.action, momentary: !!b.momentary }));
+    .map((b) => ({ id: typeof b.id === 'string' && b.id ? b.id : uid(), source: b.source, action: b.action, hold: !!b.hold }));
 }
 
 export function sanitizeState(raw) {

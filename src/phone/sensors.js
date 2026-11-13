@@ -2,9 +2,9 @@
 
 import { FLAG_MOTION, FLAG_ORIENTATION, P, TRIGGER_COUNT } from '../shared/protocol.js';
 import { el } from '../shared/util.js';
-import { localXY, orient, pictureUp, setGravity } from './orient.js';
+import { localXY, orient, pictureUp } from './orient.js';
 
-// Presets are shown six at a time.
+// The phone has room for the first six presets.
 const BANK = 6;
 
 // Trigger actions the preset row makes unnecessary.
@@ -50,7 +50,6 @@ export class Sensors {
       p[P.BETA] = e.beta;
       p[P.GAMMA] = e.gamma;
       this.flags |= FLAG_ORIENTATION;
-      setGravity(e.beta, e.gamma);
     });
     window.addEventListener('devicemotion', (e) => {
       const r = e.rotationRate;
@@ -153,50 +152,27 @@ export class Sensors {
     });
   }
 
-  // Preset buttons, a bank of six at a time, all on screen. The live one is
-  // lit. With more than six presets a slim button steps through the banks.
+  // Six preset buttons, all on screen: the first six presets, the live one
+  // lit. (Presets beyond the sixth are loaded from the Mac.)
   mountPresets(root, onPick) {
-    root.classList.add('presets');
-    this.presetGrid = el('div', { class: 'bank' });
-    this.bankButton = el('button', { class: 'bank-next', hidden: true, onclick: () => this.showBank(this.bank + 1) }, [el('span', { class: 'lbl' })]);
-    root.append(this.presetGrid, this.bankButton);
-    this.presetNames = [];
+    root.classList.add('bank');
+    this.presetGrid = root;
     this.presetCount = 0;
-    this.presetCurrent = -1;
-    this.bank = 0;
-    this.presetGrid.addEventListener('click', (e) => {
+    root.addEventListener('click', (e) => {
       const b = e.target.closest('.preset');
       if (b && !b.disabled) onPick(Number(b.dataset.index));
     });
   }
 
-  showBank(bank) {
-    const names = this.presetNames;
-    const banks = Math.max(1, Math.ceil(names.length / BANK));
-    this.bank = ((bank % banks) + banks) % banks;
-    const first = this.bank * BANK;
-    this.presetGrid.replaceChildren(
-      ...Array.from({ length: BANK }, (_, k) => {
-        const i = first + k;
-        const has = i < names.length;
-        return el('button', { class: `preset${i === this.presetCurrent ? ' on' : ''}`, 'data-index': String(i), disabled: !has }, has ? [el('span', { class: 'lbl' }, [el('b', { text: String(i + 1) }), el('span', { class: 'pname', text: names[i] })])] : []);
-      }),
-    );
-    this.bankButton.hidden = banks < 2;
-    // Says what the next tap shows; short enough to read either way up.
-    const next = ((this.bank + 1) % banks) * BANK;
-    this.bankButton.firstChild.textContent = `Next ${next + 1}–${Math.min(next + BANK, names.length)}`;
-    this.bankButton.setAttribute('aria-label', `Presets ${first + 1}–${Math.min(first + BANK, names.length)} of ${names.length} shown. Show the next bank.`);
-  }
-
   setPresets(names, current) {
     if (!this.presetGrid) return;
-    const moved = current !== this.presetCurrent;
-    this.presetNames = names;
     this.presetCount = names.length;
-    this.presetCurrent = current;
-    // Follow the live preset to its bank when it changes.
-    this.showBank(moved && current >= 0 ? Math.floor(current / BANK) : this.bank);
+    this.presetGrid.replaceChildren(
+      ...Array.from({ length: BANK }, (_, i) => {
+        const has = i < names.length;
+        return el('button', { class: `preset${i === current ? ' on' : ''}`, 'data-index': String(i), disabled: !has }, has ? [el('span', { class: 'lbl' }, [el('b', { text: String(i + 1) }), el('span', { class: 'pname', text: names[i] })])] : []);
+      }),
+    );
     this.setTriggerLabels(null);
   }
 }

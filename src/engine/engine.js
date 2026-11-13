@@ -321,39 +321,12 @@ export class Engine {
     this.link.send({ t: 'presets', names: loadPresets().map((p) => p.name), current: this.store.state.presetIndex });
   }
 
-  // The phone turns its camera frames with its page; this turns them back
-  // so the picture stays horizontal. The phone's word travels faster than
-  // the video it describes, so a change waits for the frames to change shape
-  // to match (upright frames mean a quarter turn), or for a moment when the
-  // shape stays the same.
-  updateTurn(now) {
+  // The phone's Rotate button turns the picture a quarter turn at a time.
+  updateTurn() {
     const want = this.sensors.turn;
-    const inputs = this.inputs;
-    if (want === inputs.turn) {
-      this.turnSince = 0;
-      return;
-    }
-    this.turnSince ||= now;
-    const video = inputs.feeds.phone.video;
-    const upright = video.videoHeight > video.videoWidth;
-    const waited = now - this.turnSince;
-    const ready = want % 2 !== inputs.turn % 2 ? upright === (want % 2 === 1) : waited > 150;
-    if (!ready && waited < 1000) return;
-    inputs.turn = want;
-    this.turnSince = 0;
+    if (want === this.inputs.turn) return;
+    this.inputs.turn = want;
     this.pipeline.srcDirty = true;
-  }
-
-  // Asks whichever window has the phone on a direct link to introduce this
-  // (stopped) engine, so it has a link of its own ready when it starts.
-  async prepareSpare() {
-    if (this.running) return;
-    try {
-      const made = await this.link.makeOffer(this.store.state.net.codec);
-      this.bus.send('intro', { from: this.host.id, offer: made.offer });
-    } catch (err) {
-      console.warn('[engine] could not ask for an introduction', err);
-    }
   }
 
   // Where modulation currently has each perform fader's parameter (0..1), so

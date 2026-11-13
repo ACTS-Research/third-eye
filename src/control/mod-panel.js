@@ -133,7 +133,7 @@ export function mountModPanel(roots, ui) {
       const act = el('select', { onchange: () => update({ action: act.value }) }, Object.entries(actionOptions()).map(([id, label]) => el('option', { value: id, text: label })));
       if (![...act.options].some((o) => o.value === b.action)) act.append(el('option', { value: b.action, text: describeAction(b.action) }));
       act.value = b.action;
-      const hold = el('input', { type: 'checkbox', checked: b.momentary, onchange: () => update({ momentary: hold.checked }) });
+      const hold = el('input', { type: 'checkbox', checked: b.hold, onchange: () => update({ hold: hold.checked }) });
       const holdLabel = el('label', { title: 'On only while the trigger is held' }, [hold, 'hold']);
       holdLabel.style.visibility = TOGGLE_ACTIONS[b.action] ? 'visible' : 'hidden';
       actionList.append(

@@ -21,7 +21,12 @@ export class PhoneSensors {
     this.packets = 0;
     this.rate = 0;
     this.counts = null;
-    this.tapped = new Array(TRIGGER_COUNT).fill(false);
+    // Presses not yet shown to a frame, per trigger, and what the last frame
+    // was shown. Every press must reach the frames as its own rise from off
+    // to on, however slowly frames come: two taps seen as one long "on"
+    // would fire a switch (Freeze) once instead of twice.
+    this.queued = new Array(TRIGGER_COUNT).fill(0);
+    this.shown = new Array(TRIGGER_COUNT).fill(false);
     this.held = 0;
     this.shake = 0;
     this.motion = 0;
@@ -103,14 +108,16 @@ export class PhoneSensors {
     mod.set('pad.y', clamp(f[P.PAD_Y], 0, 1));
     mod.set('pad.touch', f[P.PAD_DOWN] > 0.5 ? 1 : 0);
 
-    // Triggers: the mask says what is held now; the counters reveal taps
-    // that started and ended between two packets.
+    // Triggers: the mask says what is held now; the counters say how many
+    // presses there have been, including taps that started and ended between
+    // two packets.
     this.held = f[P.TRIG_MASK] | 0;
     const counts = [];
     for (let i = 0; i < TRIGGER_COUNT; i++) counts.push(f[P.TRIG_COUNT + i]);
     if (this.counts) {
       for (let i = 0; i < TRIGGER_COUNT; i++) {
-        if (counts[i] !== this.counts[i]) this.tapped[i] = true;
+        const presses = (counts[i] - this.counts[i] + 65536) % 65536;
+        if (presses > 0 && presses < 32) this.queued[i] = Math.min(8, this.queued[i] + presses);
       }
     }
     this.counts = counts;
@@ -124,8 +131,14 @@ export class PhoneSensors {
 
     // A tap is latched until a frame has seen it, however slow that frame is.
     for (let i = 0; i < TRIGGER_COUNT; i++) {
-      const on = (this.held >> i) & 1 || this.tapped[i];
-      this.tapped[i] = false;
+      let on = !!((this.held >> i) & 1);
+      if (this.queued[i] > 0) {
+        // A press is waiting. If the last frame already saw this trigger on,
+        // show one frame of off first, so the press reads as a new one.
+        on = !this.shown[i];
+        if (on) this.queued[i]--;
+      }
+      this.shown[i] = on;
       mod.set(`trig.${i + 1}`, on ? 1 : 0);
     }
     if (!alive) mod.set('pad.touch', 0);

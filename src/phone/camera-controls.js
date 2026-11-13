@@ -1,7 +1,8 @@
 // Torch, zoom, exposure and focus controls. Each one is shown only when the
 // running track's getCapabilities() reports it; nothing is assumed. Zoom gets
-// the tall fader at the side of the screen; the rest live in the camera
-// panel.
+// the tall fader at the side of the screen; torch and the white-balance lock
+// are buttons on the live screen (main.js draws them and asks here); the
+// rest live in the camera panel.
 
 import { el } from '../shared/util.js';
 import { fader } from './widgets.js';
@@ -24,6 +25,8 @@ export class CameraControls {
     this.track = track;
     this.hasTorch = false;
     this.torchOn = false;
+    this.hasWhiteLock = false;
+    this.whiteLocked = false;
     this.root.replaceChildren();
     this.zoomRoot.replaceChildren();
     this.zoomRoot.hidden = true;
@@ -41,7 +44,7 @@ export class CameraControls {
     this.hasTorch = caps.torch === true || (Array.isArray(caps.torch) && caps.torch.includes(true));
 
     if (hasRange(caps.zoom)) {
-      this.zoomRoot.append(this.slider('Zoom', 'zoom', caps.zoom, settings.zoom, { vertical: true, format: (v) => `${v.toFixed(1)}×` }));
+      this.zoomRoot.append(this.slider('Zoom', 'zoom', caps.zoom, settings.zoom, { vertical: true, bare: true }));
       this.zoomRoot.hidden = false;
     }
     if (hasRange(caps.exposureCompensation)) this.root.append(this.slider('Exposure', 'exposureCompensation', caps.exposureCompensation, settings.exposureCompensation));
@@ -57,11 +60,14 @@ export class CameraControls {
       );
     }
 
+    const canLock = (key) => Array.isArray(caps[key]) && caps[key].includes('manual') && caps[key].includes('continuous');
+    this.hasWhiteLock = canLock('whiteBalanceMode');
+    this.whiteLocked = settings.whiteBalanceMode === 'manual';
+
     const locks = el('div', { class: 'locks' });
     this.lockButtons = {};
-    for (const [key, label] of [['exposureMode', 'Lock exposure'], ['focusMode', 'Lock focus'], ['whiteBalanceMode', 'Lock white bal.']]) {
-      const modes = caps[key];
-      if (!Array.isArray(modes) || !modes.includes('manual') || !modes.includes('continuous')) continue;
+    for (const [key, label] of [['exposureMode', 'Lock exposure'], ['focusMode', 'Lock focus']]) {
+      if (!canLock(key)) continue;
       const button = el('button', {
         text: label,
         onclick: () => {
@@ -80,7 +86,7 @@ export class CameraControls {
     this.lockButtons?.[key]?.classList.toggle('on', locked);
   }
 
-  slider(label, key, cap, value, { vertical = false, format, extend } = {}) {
+  slider(label, key, cap, value, { vertical = false, bare = false, format, extend } = {}) {
     return fader({
       label,
       min: cap.min,
@@ -88,6 +94,7 @@ export class CameraControls {
       step: cap.step || (cap.max - cap.min) / 100,
       value: value ?? cap.min,
       vertical,
+      bare,
       format,
       onInput: (v) => {
         const constraint = { [key]: v };
@@ -106,6 +113,12 @@ export class CameraControls {
       this.onError?.(`Camera refused ${Object.keys(constraint).join(', ')}: ${err.message || err.name}`);
       return false;
     }
+  }
+
+  async toggleWhiteLock() {
+    if (!this.hasWhiteLock) return;
+    const next = !this.whiteLocked;
+    if (await this.apply({ whiteBalanceMode: next ? 'manual' : 'continuous' })) this.whiteLocked = next;
   }
 
   async toggleTorch() {

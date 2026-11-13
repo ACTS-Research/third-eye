@@ -4,13 +4,12 @@
 import { el } from '../shared/util.js';
 import { localXY } from './orient.js';
 
-export function fader({ label, min, max, step, value, vertical = false, format = (v) => v.toFixed(1), onInput }) {
+// `bare`: no name or value beside it, just the bar.
+export function fader({ label, min, max, step, value, vertical = false, bare = false, format = (v) => v.toFixed(1), onInput }) {
   const fill = el('div', { class: 'fill' });
   const track = el('div', { class: 'track' }, [fill]);
   const val = el('span', { class: 'val' });
-  // Name and value sit together in one square block, so it can be turned
-  // to read upright without disturbing the layout.
-  const node = el('div', { class: `fader${vertical ? ' v' : ''}`, role: 'slider', 'aria-label': label, 'aria-valuemin': String(min), 'aria-valuemax': String(max) }, [
+  const node = el('div', { class: `fader${vertical ? ' v' : ''}`, role: 'slider', title: label, 'aria-label': label, 'aria-valuemin': String(min), 'aria-valuemax': String(max) }, bare ? [track] : [
     track,
     el('span', { class: 'cap' }, [el('span', { class: 'name', text: label }), val]),
   ]);

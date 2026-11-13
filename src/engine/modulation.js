@@ -165,7 +165,7 @@ export class Modulation {
       this.gates.set(b.id, on);
       if (was === undefined || on === was) continue;
       const toggleKey = TOGGLE_ACTIONS[b.action];
-      if (b.momentary && toggleKey) {
+      if (b.hold && toggleKey) {
         // Held: on while pressed, off on release.
         if (state.globals[toggleKey] !== on) runAction(this.store, b.action);
       } else if (on) {

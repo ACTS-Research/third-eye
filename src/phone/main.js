@@ -11,7 +11,7 @@ import { CameraControls } from './camera-controls.js';
 import { SENSOR_HZ } from '../shared/protocol.js';
 import { HostLink } from './link.js';
 import { enableOffline } from '../shared/offline.js';
-import { measure, onOrient, orient, setManual } from './orient.js';
+import { measure, onOrient, orient, setTurn } from './orient.js';
 import { Sensors } from './sensors.js';
 
 const $ = (id) => document.getElementById(id);
@@ -23,10 +23,10 @@ const params = parsePhoneParams();
 applyPalette(new URLSearchParams(location.search).get('pal'), { save: false });
 applyDim(new URLSearchParams(location.search).get('dim'), { save: false });
 // `room`: the last room joined, so the page can be reopened without the
-// QR code. `flip`: the Rotate button's half turn.
-const prefs = { quality: DEFAULT_QUALITY, facing: 'environment', room: '', flip: false, ...readJSON(PREFS_KEY, {}) };
+// QR code. `turn`: how far the Rotate button has turned the picture.
+const prefs = { quality: DEFAULT_QUALITY, facing: 'environment', room: '', turn: 0, ...readJSON(PREFS_KEY, {}) };
 if (!QUALITY[prefs.quality]) prefs.quality = DEFAULT_QUALITY;
-setManual(prefs.flip ? 180 : 0);
+setTurn(Number(prefs.turn) || 0);
 
 // "Pair without internet" on the Mac puts its half of the handshake in the
 // link, after the #. This page answers it and shows its own half as a QR
@@ -135,40 +135,26 @@ async function start() {
 
 // ------------------------------------------------------------- layout ---
 
-// Sizes and turns the live screen so it is horizontal whichever way the
-// page is turned, and turns the preview the way the Mac turns the picture.
+// Picks the layout for how the page is turned (phone.css does the rest),
+// and turns the preview the way the Rotate button has turned the picture.
 function layout() {
   if (!app.started) return;
-  measure($('self'));
-  const frame = $('frame');
-  const root = $('root');
-  const sideways = orient.ui % 180 !== 0;
-  const width = sideways ? frame.clientHeight : frame.clientWidth;
-  const height = sideways ? frame.clientWidth : frame.clientHeight;
-  root.style.width = `${width}px`;
-  root.style.height = `${height}px`;
-  root.style.transform = `translate(-50%, -50%) rotate(${orient.ui}deg)`;
-  root.classList.toggle('tall', width / Math.max(1, height) < 1.5);
-  root.dataset.turn = String(orient.ui);
-  // What is written on the buttons turns to read upright however the phone
-  // is held; the buttons themselves stay put.
-  root.style.setProperty('--label-turn', `${orient.label > 180 ? orient.label - 360 : orient.label}deg`);
-  root.dataset.label = String(orient.label);
-  root.classList.toggle('labels-quarter', orient.label % 180 !== 0);
+  measure();
+  $('root').classList.toggle('upright', window.innerHeight > window.innerWidth);
   const stage = $('stage');
   stage.style.setProperty('--turn', `${-orient.picture}deg`);
   stage.classList.toggle('turned', orient.picture % 180 !== 0);
+  stage.dataset.turn = String(orient.picture);
 }
 window.addEventListener('resize', layout);
 window.addEventListener('orientationchange', layout);
-$('self').addEventListener('resize', layout);
 setInterval(layout, 500);
 onOrient(() => sendInfo());
 
 $('rotate').addEventListener('click', () => {
-  prefs.flip = !prefs.flip;
+  prefs.turn = (orient.picture + 90) % 360;
   savePrefs();
-  setManual(prefs.flip ? 180 : 0);
+  setTurn(prefs.turn);
   layout();
 });
 
@@ -248,7 +234,7 @@ async function startScan() {
     setNote('Turn the camera on first: it is what reads the code on the Mac.');
     return;
   }
-  setNote('Point the camera at the code on the Mac (Pair without internet)…');
+  setNote('Point the camera at the code on the Mac (Pair without internet)…', { stay: true });
   try {
     jsQR ??= await import('jsqr').then((m) => m.default ?? m);
   } catch {
@@ -401,28 +387,33 @@ async function setControllerOnly(on) {
 
 const tools = {};
 
+// Flip, torch and the white-balance lock are on the live screen, as icons.
+$('quick-flip').addEventListener('click', () => flip());
+$('quick-torch').addEventListener('click', () => cameraControls.toggleTorch().then(syncTools));
+$('quick-wb').addEventListener('click', () => cameraControls.toggleWhiteLock().then(syncTools));
+
 function buildTools() {
-  tools.flip = el('button', { text: 'Flip', onclick: flip });
-  tools.torch = el('button', { text: 'Torch', hidden: true, onclick: () => cameraControls.toggleTorch().then(syncTools) });
   tools.quality = el(
     'select',
     { onchange: () => setQuality(tools.quality.value) },
     Object.entries(QUALITY).map(([key, q]) => el('option', { value: key, text: q.label })),
   );
   tools.camera = el('button', { text: 'Camera', onclick: () => setControllerOnly(!app.controllerOnly) });
-  $('tools').replaceChildren(tools.flip, tools.torch, tools.quality, tools.camera);
+  $('tools').replaceChildren(tools.quality, tools.camera);
 }
 
 function syncTools() {
-  if (!tools.flip) return;
+  if (!tools.quality) return;
   const camOn = !app.controllerOnly;
-  tools.flip.disabled = !camOn;
   tools.quality.disabled = !camOn;
   tools.quality.value = prefs.quality;
   tools.camera.classList.toggle('on', camOn);
   tools.camera.textContent = camOn ? 'Camera on' : 'Camera off';
-  tools.torch.hidden = !camOn || !cameraControls.hasTorch;
-  tools.torch.classList.toggle('on', cameraControls.torchOn);
+  $('quick-flip').disabled = !camOn;
+  $('quick-torch').hidden = !camOn || !cameraControls.hasTorch;
+  $('quick-torch').classList.toggle('on', cameraControls.torchOn);
+  $('quick-wb').hidden = !camOn || !cameraControls.hasWhiteLock;
+  $('quick-wb').classList.toggle('on', cameraControls.whiteLocked);
 }
 
 // -------------------------------------------------------------- status ---
@@ -492,9 +483,16 @@ function renderState(state) {
   $('state').textContent = text;
 }
 
-function setNote(text) {
+// A passing message. It lies over the status line and goes after a few
+// seconds (or a tap), so it never takes room from the preview. `stay` keeps
+// it up until it is replaced or cleared.
+let noteTimer = 0;
+function setNote(text, { stay = false } = {}) {
+  clearTimeout(noteTimer);
   $('note').textContent = text ?? '';
+  if (text && !stay) noteTimer = setTimeout(() => setNote(''), 7000);
 }
+$('note').addEventListener('click', () => setNote(''));
 
 // ---------------------------------------------- wake lock & visibility ---
 

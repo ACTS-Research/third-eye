@@ -16,7 +16,7 @@ export const ACTIONS = {
   presetPrev: 'Previous preset',
 };
 
-// Actions that flip a switch: a momentary trigger turns them on while held.
+// Actions that flip a switch: a trigger set to hold turns them on while held.
 export const TOGGLE_ACTIONS = { blackout: 'blackout', freeze: 'freeze', bypassAll: 'bypassAll' };
 
 // Actions can carry an argument after a colon: "preset:3" loads the fourth
