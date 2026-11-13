@@ -3,7 +3,9 @@
 
 import { applyDim, applyPalette } from '../shared/palette.js';
 import './phone.css';
+import { ANSWER_PREFIX, OFFER_KEY } from '../shared/direct.js';
 import { DEFAULT_QUALITY, QUALITY, normalizeRoom, parsePhoneParams } from '../shared/net.js';
+import { drawQr } from '../shared/qr.js';
 import { el, readJSON, writeJSON } from '../shared/util.js';
 import { CameraControls } from './camera-controls.js';
 import { SENSOR_HZ } from '../shared/protocol.js';
@@ -22,9 +24,16 @@ applyDim(new URLSearchParams(location.search).get('dim'), { save: false });
 const prefs = { quality: DEFAULT_QUALITY, facing: 'environment', ...readJSON(PREFS_KEY, {}) };
 if (!QUALITY[prefs.quality]) prefs.quality = DEFAULT_QUALITY;
 
+// "Pair without internet" on the Mac puts its half of the handshake in the
+// link, after the #. This page answers it and shows its own half as a QR
+// code for the Mac's camera.
+const offer = new URLSearchParams(location.hash.slice(1)).get(OFFER_KEY);
+
 const app = {
   room: params.room,
   signal: params.signal,
+  offer,
+  pairToken: '',
   started: false,
   controllerOnly: false,
   stream: null,
@@ -105,7 +114,27 @@ async function start() {
   app.link.start();
   requestWakeLock();
   renderState(app.link.state);
+  if (offer) showPairCode();
 }
+
+// ------------------------------------------- pairing without internet ---
+
+async function showPairCode() {
+  try {
+    const { token } = await app.link.answerOffer(offer);
+    app.pairToken = token;
+    drawQr($('pair-qr'), ANSWER_PREFIX + token, { level: 'L', size: 640 });
+    $('pair').hidden = false;
+    renderState(app.link.state);
+  } catch (err) {
+    console.warn('[phone] could not answer the offer', err);
+    setNote('The code from the Mac could not be used. Ask for a new one there: Pair without internet.');
+  }
+}
+$('pair-hide').addEventListener('click', () => {
+  $('pair').hidden = true;
+  if (app.pairToken && app.link?.state.data !== 'open') setNote('Not paired yet. Scan the code on the Mac again to get a new one.');
+});
 
 // If the motion prompt was refused or never appeared, offer it again: a tap
 // on this button is a fresh gesture.
@@ -290,7 +319,9 @@ function renderState(state) {
   const bar = $('bar');
   let level = 'warn';
   let text = 'Connecting…';
-  if (state.data === 'open') {
+  if (state.data === 'open') $('pair').hidden = true;
+  if (!$('pair').hidden) text = 'Show the code to the Mac';
+  else if (state.data === 'open') {
     if (app.controllerOnly) {
       level = 'good';
       text = 'CONTROLLER — linked';
@@ -367,4 +398,7 @@ $('warning-ok').addEventListener('click', () => {
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 document.addEventListener('dblclick', (e) => e.preventDefault());
 
-enableOffline();
+// Without internet the page only opens if this phone has kept its copy.
+enableOffline().then((state) => {
+  $('offline-note').textContent = state === 'ready' ? 'Saved on this phone: this page opens without internet.' : '';
+});

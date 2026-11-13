@@ -6,7 +6,15 @@
 // Existing peer-to-peer connections are never torn down just because the
 // signaling server went away.
 
+//
+// There is a second way in that needs no signaling server: a direct link,
+// whose handshake travels by QR code (makeOffer / acceptAnswer; see
+// src/shared/direct.js) or, between two windows of this browser, over a link
+// that already exists (an introduction). A direct link fills the same two
+// slots, `conn` and `call`, as a PeerJS one, so everything else is unaware.
+
 import { Peer } from 'peerjs';
+import { DirectCall, DirectConn, MAIN_CHANNEL, buildAnswer, packOffer, randomId, restrictCodecs, slimOffer, unpackAnswer } from '../shared/direct.js';
 import { hostPeerId, peerOptions } from '../shared/net.js';
 import { preferCodec } from '../shared/sdp.js';
 
@@ -40,13 +48,19 @@ export class PhoneLink {
     this.key = '';
     this.onData = null; // a data connection arrived (not yet open)
     this.onOpenData = null;
+    // A direct link being set up: offered, perhaps answered, not yet in use.
+    this.pending = null;
+    this.direct = false; // the link in use is a direct one
+    this.lostDirect = false; // ...and it broke: only a new handshake brings it back
     // Nothing is registered until resume(): the engine decides when.
     this.stopped = true;
     setInterval(() => this.tick(), TICK_MS);
   }
 
   open() {
-    this.destroy();
+    // Only the signaling side starts over: a direct link does not depend on
+    // it and must outlive every retry.
+    this.destroy({ keepDirect: true });
     const net = this.getNet();
     this.key = `${net.room}|${net.signal}`;
     // After a failed attempt keep saying "unreachable" while retrying, rather
@@ -110,31 +124,40 @@ export class PhoneLink {
     });
   }
 
-  destroy() {
-    const { peer, call, conn } = this;
+  destroy({ keepDirect = false } = {}) {
+    const { peer } = this;
     this.peer = null;
-    this.call = null;
-    this.conn = null;
     // Closed by hand first: PeerJS skips every other connection of a peer
     // when it is destroyed, which would leave the video call open and still
     // decoding in a window that no longer shows it.
-    for (const c of [call, conn]) {
-      const pc = c?.peerConnection;
-      try {
-        c?.close();
-      } catch {
-        /* already closed */
-      }
-      try {
-        pc?.close();
-      } catch {
-        /* already closed */
-      }
+    for (const key of ['call', 'conn']) {
+      const c = this[key];
+      if (!c || (keepDirect && c.direct)) continue;
+      this[key] = null;
+      this.closeLink(c);
+    }
+    if (!keepDirect) {
+      this.dropPending();
+      this.direct = false;
     }
     try {
       peer?.destroy();
     } catch {
       /* already gone */
+    }
+  }
+
+  closeLink(c) {
+    const pc = c?.peerConnection;
+    try {
+      c?.close();
+    } catch {
+      /* already closed */
+    }
+    try {
+      pc?.close();
+    } catch {
+      /* already closed */
     }
   }
 
@@ -146,6 +169,7 @@ export class PhoneLink {
     this.error = '';
     this.phoneInfo = null;
     this.hold = false;
+    this.lostDirect = false;
     this.stats = {};
     this.prevStats = null;
   }
@@ -161,7 +185,106 @@ export class PhoneLink {
     this.takenCount = 0;
     this.failures = 0;
     this.resumedAt = performance.now();
+    // A direct link made while this engine was stopped (an introduction) is
+    // ready to use the moment it starts.
+    const spare = this.pending?.main.readyState === 'open' ? this.pending : null;
     this.open();
+    if (spare) this.adopt(spare);
+  }
+
+  // ------------------------------------------------------ direct links ---
+
+  // First half of a direct handshake. Returns the offer to hand to the phone
+  // (by QR code, or through an introduction).
+  async makeOffer(codec) {
+    this.dropPending();
+    const pc = new RTCPeerConnection({ iceServers: [] });
+    const main = pc.createDataChannel(MAIN_CHANNEL.label, MAIN_CHANNEL.options);
+    const video = pc.addTransceiver('video', { direction: 'recvonly' });
+    restrictCodecs(video, codec);
+    const p = { id: randomId(), pc, main, video, slim: '', state: 'offered', madeAt: performance.now() };
+    this.pending = p;
+    // A stopped engine keeps the link in reserve; resume() takes it up.
+    main.onopen = () => {
+      if (this.pending === p && !this.stopped) this.adopt(p);
+    };
+    // The phone can answer an introduction over a link held in reserve.
+    main.onmessage = (e) => {
+      if (this.pending !== p) return;
+      try {
+        this.onMessage?.(JSON.parse(e.data));
+      } catch {
+        /* not ours */
+      }
+    };
+    await pc.setLocalDescription(await pc.createOffer());
+    p.slim = slimOffer(pc.localDescription.sdp);
+    return { id: p.id, offer: await packOffer(p.id, p.slim) };
+  }
+
+  // Second half: the phone's token. The link comes up by itself after this.
+  async acceptAnswer(token) {
+    const answer = unpackAnswer(token);
+    const p = this.pending;
+    if (!p || p.id !== answer.id) {
+      const err = new Error('That code belongs to an earlier attempt. Scan the code on the Mac again with the phone.');
+      err.stale = true;
+      throw err;
+    }
+    if (p.state !== 'offered') return; // the same code read twice
+    p.state = 'answered';
+    await p.pc.setRemoteDescription({ type: 'answer', sdp: buildAnswer(p.slim, answer) });
+  }
+
+  dropPending() {
+    const p = this.pending;
+    this.pending = null;
+    try {
+      p?.pc.close();
+    } catch {
+      /* already closed */
+    }
+  }
+
+  // Whether a link is waiting in reserve, connected and unused.
+  get spareReady() {
+    return this.pending?.main.readyState === 'open';
+  }
+
+  // Whether this window can reach the phone on a direct link, in use or in
+  // reserve, and so introduce another window to it.
+  get canIntroduce() {
+    return this.stopped ? this.spareReady : this.direct && !!this.conn?.open;
+  }
+
+  // Introductions. A direct link cannot be rebuilt through a server, so
+  // before the picture moves to another window of this browser, that window
+  // makes its own link to the phone: its offer travels here over the bus
+  // and on to the phone over a link this window has; the phone's answer
+  // comes back the same way. Returns false if this window has no such link.
+  relay(msg) {
+    if (!this.canIntroduce) return false;
+    if (this.stopped) this.pending.main.send(JSON.stringify(msg));
+    else this.conn.send(msg);
+    return true;
+  }
+
+  // Puts a finished direct link to use, in place of whatever was there.
+  adopt(p) {
+    this.pending = null;
+    for (const key of ['call', 'conn']) {
+      const old = this[key];
+      this[key] = null;
+      this.closeLink(old);
+    }
+    this.direct = true;
+    this.lostDirect = false;
+    const conn = new DirectConn(p.pc, p.main);
+    const call = new DirectCall(p.pc);
+    this.acceptData(conn);
+    this.watchCall(call);
+    call.emit('stream', new MediaStream([p.video.receiver.track]));
+    conn.emit('open');
   }
 
   // Called when the room code or signaling server changes.
@@ -176,6 +299,11 @@ export class PhoneLink {
   }
 
   acceptCall(call) {
+    this.watchCall(call);
+    call.answer(undefined, { sdpTransform: (sdp) => preferCodec(sdp, this.getCodec?.()) });
+  }
+
+  watchCall(call) {
     const old = this.call;
     this.call = call;
     this.prevStats = null;
@@ -199,7 +327,6 @@ export class PhoneLink {
       if (this.call === call) this.call = null;
     });
     call.on('error', (err) => console.warn('[phone] media error', err));
-    call.answer(undefined, { sdpTransform: (sdp) => preferCodec(sdp, this.getCodec?.()) });
   }
 
   acceptData(conn) {
@@ -232,11 +359,25 @@ export class PhoneLink {
     conn.on('error', (err) => console.warn('[phone] data error', err));
   }
 
+  // A direct link has no server to rebuild it through: once its messages
+  // stop, the video half goes with them and the operator is told.
+  checkDirect() {
+    const p = this.pending;
+    if (p && ['failed', 'closed'].includes(p.pc.connectionState)) this.dropPending();
+    if (!this.direct || this.conn) return;
+    const call = this.call;
+    this.call = null;
+    this.closeLink(call);
+    this.direct = false;
+    this.lostDirect = !this.stopped;
+  }
+
   send(msg) {
     if (this.conn?.open) this.conn.send(msg);
   }
 
   tick() {
+    this.checkDirect();
     if (this.stopped) return;
     const now = performance.now();
     const peer = this.peer;
@@ -335,6 +476,8 @@ export class PhoneLink {
       error: this.error,
       notice: this.notice ?? '',
       phone: alive ? 'connected' : dataOpen ? 'silent' : 'none',
+      direct: this.direct,
+      lostDirect: this.lostDirect,
       media: mediaState,
       info: alive ? this.phoneInfo : null,
       ...this.stats,

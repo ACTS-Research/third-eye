@@ -59,6 +59,19 @@ kbd { font: inherit; opacity: 0.8; }
 .pill { white-space: nowrap; font-variant-numeric: tabular-nums; padding: 2px 0; }
 .pill[role='button'] { cursor: pointer; }
 #pairing-pop { position: fixed; z-index: 20; width: min(540px, calc(100vw - 16px)); display: flex; gap: 14px; align-items: flex-start; padding: 14px; background: var(--bg); border: 2px solid var(--ink); }
+/* Pair without internet: a dialog over the page. The code is drawn large
+   and always black on white; the camera view is mirrored, like a mirror. */
+#offline-pair { position: fixed; z-index: 30; inset: 60px 0 auto 0; margin: 0 auto; width: min(920px, calc(100vw - 24px)); max-height: calc(100vh - 80px); overflow: auto; padding: 16px; background: var(--bg); border: 2px solid var(--ink); display: flex; flex-direction: column; gap: 12px; }
+.offline-head { display: flex; align-items: center; justify-content: space-between; }
+.offline-head h2 { margin: 0; }
+.offline-steps { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.offline-step { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+#offline-qr { width: 100%; max-width: 420px; height: auto; image-rendering: pixelated; align-self: center; }
+.offline-camera { background: #000; aspect-ratio: 4 / 3; border: 1px solid var(--line); overflow: hidden; }
+#offline-video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+#offline-state { font-weight: 700; }
+.tip { border-bottom: 1px dashed var(--ink); cursor: help; color: var(--ink); }
+@media (max-width: 700px) { .offline-steps { grid-template-columns: 1fr; } }
 #pairing-pop canvas { width: 180px; height: 180px; image-rendering: pixelated; flex-shrink: 0; }
 .steps { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 11px; }
 .steps li { display: grid; grid-template-columns: 40px 1fr; gap: 6px; }

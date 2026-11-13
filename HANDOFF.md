@@ -1,20 +1,27 @@
 # Handoff
 
-## 2026-11-12 (third session)
+## 2026-11-13 (third session, continued)
 
-**Where things stand.** The output window is now optional. `/control` runs
-the whole instrument by itself, with the live picture in its monitor; opening
-the output window moves the picture there and closing it moves it back.
-Everything is live on GitHub Pages from `main`. All eleven test suites pass
-in headless Chromium; none of the new behaviour has been tried on the real
-Mac and iPhone yet.
+**Where things stand.** Two things were built this session and both are
+live on GitHub Pages from `main`. The output window is optional: `/control`
+runs the whole instrument by itself. And the phone can be paired with no
+internet, by QR code both ways ("Pair without internet"). All thirteen test
+suites pass in headless Chromium. On the real Mac and iPhone only normal
+pairing over the hotspot has been confirmed (it works); the university Wi-Fi
+could not reach the pairing server, which is what the new pairing is for.
 
-**Next step.** Try it on the real Mac and iPhone: open `/control` alone and
-pair the phone, open the output window and watch the phone come back by
-itself, close it and watch again. Note how long each reconnect takes.
+**Next step.** Try Pair without internet on the real Mac and iPhone, on the
+iPhone's hotspot: scan the Mac's code, show the phone's code to the Mac's
+camera, then open and close the output window. Report what happens at each
+step; none of it has run on Safari yet.
 
 **Decisions only you can make.**
 
+- Say whether a QR-reading library (jsQR, Apache-2.0, about 130 KB) may be
+  added to the app. The Mac reads the phone's code with Chrome's built-in
+  barcode reader; with the library it would also work if that reader is
+  missing or struggles. Adding it was blocked in the cloud session, so it
+  needs your word.
 - Say whether 1280×720 is the right size for the picture (and recordings)
   while no output window is open. It is fixed so recordings do not depend on
   the size of the monitor on the page.
@@ -46,6 +53,31 @@ over).
 
 **Branch.** Work is on `main`, the default branch and the one that deploys.
 Nothing is waiting to be merged; everything is pushed.
+
+### Pair without internet (built 2026-11-13)
+
+- **What travels** is in the header of `src/shared/direct.js`: the Mac's
+  offer, slimmed, phrase-swapped and compressed, in the pairing link after
+  the `#`; the phone's half as a 108-character token. The Mac never sees the
+  phone's real answer: it rebuilds one from its own offer plus the token.
+  The offer carries no addresses of the Mac's, on purpose: the Mac makes the
+  first move, and a phone with nothing to try cannot time out while its code
+  is being shown.
+- **A direct link fills the same slots** as a PeerJS one (`conn`, `call`) on
+  both sides, through `DirectConn` / `DirectCall`. One RTCPeerConnection
+  carries video, the message channel (negotiated, id 1) and the sensor
+  channel (id 42).
+- **The phone keeps direct links in reserve** (`pendings` in
+  `src/phone/link.js`) and switches to one when the Mac's engine first
+  speaks on it (`host`).
+- **Introductions** move the picture without a re-scan: the window that
+  reaches the phone relays another window's offer to it and the answer back
+  (`PhoneLink.relay`, bus `intro` / `intro-answer`). An opening output is
+  told `engine-hold`, gets introduced, then says `engine-take`. While an
+  output hosts, `/control` keeps a link in reserve (`keepSpare` in
+  `host.js`), so closing or crashing the output needs no handshake.
+- **The dialog** is `src/control/offline-pair.js`. The Mac's camera reads the
+  phone's code with `BarcodeDetector`; the tests stand in for it.
 
 ### This session, in short
 
@@ -118,11 +150,11 @@ Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
 | `src/engine/` | Everything live: the WebGL2 pipeline (`pipeline.js`), inputs, the host side of the phone link (`remote.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop. It runs in `/output` while an output window is open, otherwise in `/control` |
 | `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js`, `edit.js` (+ `chain.js`, `mod-panel.js`), and the Setup panels. `host.js` decides which window hosts the engine and owns the monitor canvas. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts |
 | `src/phone/` | The iPhone page: `main.js`, `link.js` (reconnect watchdog), `sensors.js`, `camera-controls.js` |
-| `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js`, `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `sources.js`, `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; the engine forwards them to the phone) |
+| `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js`, `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `direct.js` (pairing with no server), `qr.js`, `sources.js`, `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; the engine forwards them to the phone) |
 | `src/effects/` | One file per effect; `index.js` is the registry, `common.glsl.js` the shared GLSL |
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot) |
-| `tests/` | Eleven headless suites and `lib.mjs` |
+| `tests/` | Thirteen headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 
@@ -139,6 +171,11 @@ Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
   by direct call, so it works in both modes. A page never gets a storage
   event for its own change: `/control` calls `ui.lookChanged()` for the
   palette and dimmer.
+- **A direct link must survive every signaling retry.** `PhoneLink.open()`
+  tears down only PeerJS connections (`destroy({ keepDirect: true })`), and
+  the phone never drops a direct link for being slow, only for being dead.
+- **Do not put the Mac's addresses back into the offer**, and do not make
+  the phone wait on anything before it shows its code (see above).
 - **Close a PeerJS connection yourself before destroying its peer.**
   `peer.destroy()` skips every other connection (it removes them from the
   list it is looping over); `PhoneLink.destroy()` works around it.
@@ -222,7 +259,11 @@ Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
 
 ### Never run on real hardware (all unconfirmed)
 
-Running with no output window; the phone reconnecting when the output opens
+Pair without internet, every step: Safari answering the offer, the Mac's
+camera reading the phone's code, the rebuilt answer being accepted between
+Chrome and Safari, the hotspot or a Mac-made network carrying it, and the
+phone following the picture between windows. Whether iOS still has the
+phone page saved after a week. Running with no output window; the phone reconnecting when the output opens
 or closes, and how long it takes; a covered or minimised output being
 reported as not drawing; audio, MIDI and recording on `/control`. Measure
 real latency against a projector (only the Mac's own screen so

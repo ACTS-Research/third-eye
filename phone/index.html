@@ -18,6 +18,7 @@
       <button id="start">START</button>
       <div id="join-error"></div>
       <p>Keep this page open and in front during the show. iOS stops the camera when Safari goes to the background.</p>
+      <p id="offline-note"></p>
     </div>
 
     <div id="live" hidden>
@@ -29,6 +30,13 @@
         <div id="adjust"></div>
       </div>
       <div id="perform"></div>
+    </div>
+
+    <div id="pair" hidden>
+      <strong>Show this to the Mac's camera</strong>
+      <canvas id="pair-qr" width="640" height="640"></canvas>
+      <span>Hold the phone up to the camera above the Mac's screen, about a hand's length away. This closes by itself once paired.</span>
+      <button id="pair-hide">Hide the code</button>
     </div>
 
     <div id="warning" hidden>

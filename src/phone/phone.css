@@ -114,6 +114,19 @@ select { padding: 12px 10px; }
 
 #perform { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 8px 10px 10px; }
 
+/* Pairing without internet: this phone's code for the Mac's camera. Always
+   black on white at full brightness, whatever the palette and dimmer. */
+#pair {
+  position: fixed; inset: 0; z-index: 40; background: #fff; color: #000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+  padding: 20px; text-align: center; filter: none;
+}
+#pair strong { font: 900 26px/1.1 var(--display); text-transform: uppercase; }
+#pair canvas { width: min(86vw, 60vh); height: auto; image-rendering: pixelated; }
+#pair span { font-size: 15px; max-width: 30em; }
+#pair button { background: #000; color: #fff; border: 0; font-size: 16px; padding: 12px 22px; }
+#offline-note { font-size: 13px; opacity: 0.8; min-height: 1.4em; }
+
 /* Loud interruption warning ------------------------------------------ */
 #warning {
   position: fixed;

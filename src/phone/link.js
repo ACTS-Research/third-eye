@@ -1,7 +1,14 @@
 // Phone side of the link to the Mac. One watchdog tick repairs whatever is
 // broken: signaling, the data connection, or the media call.
 
+//
+// Besides the PeerJS route there is a direct one whose handshake arrives by
+// QR code or over a link that already exists (src/shared/direct.js). A
+// direct link waits in `pendings` until the Mac's engine speaks on it, then
+// takes the place of whatever link was in use.
+
 import { Peer } from 'peerjs';
+import { DirectCall, DirectConn, MAIN_CHANNEL, gathered, packAnswer, unpackOffer } from '../shared/direct.js';
 import { hostPeerId, peerOptions } from '../shared/net.js';
 import { SENSOR_CHANNEL } from '../shared/protocol.js';
 import { DEFAULT_CODEC, preferCodec } from '../shared/sdp.js';
@@ -9,6 +16,7 @@ import { DEFAULT_CODEC, preferCodec } from '../shared/sdp.js';
 const TICK_MS = 1000;
 const RETRY_MS = 2500;
 const CONNECT_TIMEOUT_MS = 9000;
+const MAX_PENDING = 4;
 
 function pcState(connection) {
   return connection?.peerConnection?.connectionState ?? 'new';
@@ -39,6 +47,9 @@ export class HostLink {
     this.connBadSince = 0;
     this.session = null; // which run of the Mac's engine the data link reaches
     this.callSession = null; // and which one the video call was made to
+    this.pendings = new Map(); // direct links not yet in use, by handshake id
+    this.introduced = new Set(); // offers already answered
+    this.direct = false; // the link in use is a direct one
     this.timer = 0;
   }
 
@@ -54,8 +65,11 @@ export class HostLink {
     } catch {
       /* already gone */
     }
-    this.conn = null;
-    this.call = null;
+    // A direct link does not hang on the signaling peer.
+    if (!this.direct) {
+      this.conn = null;
+      this.call = null;
+    }
     this.madeAt = performance.now();
     this.signal = 'connecting';
     const peer = new Peer(peerOptions(this.signalUrl));
@@ -83,6 +97,7 @@ export class HostLink {
     this.stream = stream;
     this.quality = quality ?? this.quality;
     if (!stream) {
+      // (On a direct link detach() has already emptied the sender.)
       this.dropCall();
       this.changed();
       return;
@@ -104,7 +119,7 @@ export class HostLink {
   }
 
   videoSender() {
-    if (pcState(this.call) !== 'connected') return null;
+    if (pcState(this.call) !== 'connected' && !this.direct) return null;
     return this.call.peerConnection.getSenders().find((s) => s.track?.kind === 'video' || s.track === null) ?? null;
   }
 
@@ -153,7 +168,8 @@ export class HostLink {
   setCodec(codec) {
     if (!codec || codec === this.codec) return;
     this.codec = codec;
-    if (this.call) {
+    // A direct link's codec was settled in its handshake.
+    if (this.call && !this.direct) {
       this.dropCall();
       this.callTriedAt = -1e9;
       this.tick();
@@ -174,6 +190,8 @@ export class HostLink {
 
   dropCall() {
     const call = this.call;
+    // On a direct link the video shares the connection with the messages.
+    if (call?.direct) return;
     this.call = null;
     try {
       call?.close();
@@ -185,6 +203,11 @@ export class HostLink {
   dropConn() {
     const conn = this.conn;
     this.conn = null;
+    if (conn?.direct) {
+      this.call = null;
+      this.direct = false;
+      this.sensorChannel = null;
+    }
     try {
       conn?.close();
     } catch {
@@ -228,18 +251,116 @@ export class HostLink {
       this.changed();
       this.tick();
     });
-    conn.on('data', (msg) => {
-      if (conn !== this.conn || !msg) return;
-      if (msg.t === 'pong') this.rttMs = performance.now() - msg.ts;
-      else if (msg.t === 'config') this.setCodec(msg.codec);
-      else if (msg.t === 'host') this.onHostSession(msg.session);
-      else this.onMessage?.(msg);
-    });
+    conn.on('data', (msg) => this.onData(conn, msg));
     conn.on('close', () => {
       if (this.conn === conn) this.conn = null;
       this.changed();
     });
     conn.on('error', () => {});
+  }
+
+  onData(conn, msg) {
+    if (conn !== this.conn || !msg) return;
+    if (msg.t === 'pong') this.rttMs = performance.now() - msg.ts;
+    else if (msg.t === 'config') this.setCodec(msg.codec);
+    else if (msg.t === 'host') this.onHostSession(msg.session);
+    else if (msg.t === 'intro') this.introduce(msg, (reply) => this.send(reply));
+    else this.onMessage?.(msg);
+  }
+
+  // Another window of the Mac's browser wants its own link to this phone,
+  // ahead of the picture moving there. Its offer came over a link we have;
+  // the answer goes back the same way.
+  introduce(msg, reply) {
+    if (!msg.offer || this.introduced.has(msg.offer)) return;
+    this.introduced.add(msg.offer);
+    this.answerOffer(msg.offer)
+      .then(({ token }) => reply({ t: 'intro-answer', to: msg.from, token }))
+      .catch((err) => console.warn('[link] introduction failed', err));
+  }
+
+  // ------------------------------------------------------ direct links ---
+
+  // Answers an offer from the Mac. Returns the short token the Mac needs
+  // back. The link itself stays in reserve until the Mac's engine speaks on
+  // it (its first message is always `host`).
+  async answerOffer(packed) {
+    const { id, sdp } = await unpackOffer(packed);
+    const pc = new RTCPeerConnection({ iceServers: [] });
+    const main = pc.createDataChannel(MAIN_CHANNEL.label, MAIN_CHANNEL.options);
+    let sensor = null;
+    try {
+      sensor = pc.createDataChannel(SENSOR_CHANNEL.label, SENSOR_CHANNEL.options);
+    } catch (err) {
+      console.warn('[link] no sensor channel', err);
+    }
+    await pc.setRemoteDescription({ type: 'offer', sdp });
+    // Always agree to send video, camera or not: the camera can then come
+    // and go by swapping the track, with no second handshake.
+    const video = pc.getTransceivers().find((t) => t.receiver.track?.kind === 'video');
+    if (video) video.direction = 'sendonly';
+    await pc.setLocalDescription(await pc.createAnswer());
+    await gathered(pc);
+    const p = { id, pc, main, sensor, video, madeAt: performance.now() };
+    this.pendings.get(id)?.pc.close();
+    this.pendings.set(id, p);
+    main.onmessage = (e) => {
+      let msg;
+      try {
+        msg = JSON.parse(e.data);
+      } catch {
+        return;
+      }
+      if (!this.pendings.has(id)) return;
+      if (msg?.t === 'intro') {
+        this.introduce(msg, (reply) => main.send(JSON.stringify(reply)));
+      } else if (msg?.t === 'host') {
+        this.promote(p);
+        this.onData(this.conn, msg);
+      }
+    };
+    // Keep only a few in reserve, the newest ones.
+    while (this.pendings.size > MAX_PENDING) {
+      const [oldest, stale] = this.pendings.entries().next().value;
+      stale.pc.close();
+      this.pendings.delete(oldest);
+    }
+    return { id, token: packAnswer(id, pc.localDescription.sdp) };
+  }
+
+  // Makes a waiting direct link the one in use.
+  promote(p) {
+    this.pendings.delete(p.id);
+    this.dropCall();
+    this.dropConn();
+    const conn = new DirectConn(p.pc, p.main);
+    conn.on('data', (msg) => this.onData(conn, msg));
+    conn.on('close', () => {
+      if (this.conn === conn) this.dropConn();
+      this.changed();
+    });
+    this.conn = conn;
+    this.call = new DirectCall(p.pc);
+    this.sensorChannel = p.sensor;
+    this.direct = true;
+    this.session = null;
+    this.callSession = null;
+    this.connBadSince = 0;
+    this.callBadSince = 0;
+    this.error = '';
+    p.pc.addEventListener('connectionstatechange', () => this.changed());
+    const track = this.stream?.getVideoTracks()[0];
+    if (track && p.video) {
+      p.video.sender
+        .replaceTrack(track)
+        .then(() => {
+          this.send({ t: 'hold', on: false });
+          return this.tuneSender();
+        })
+        .catch((err) => console.warn('[link] could not start video on the direct link', err));
+    }
+    this.onDataOpen?.(conn);
+    this.changed();
   }
 
   callMedia() {
@@ -270,6 +391,9 @@ export class HostLink {
   isBad(connection, triedAt, sinceKey, now) {
     const state = pcState(connection);
     if (state === 'failed' || state === 'closed') return true;
+    // A direct link cannot be rebuilt without a new handshake, so it is
+    // given every chance to recover by itself.
+    if (connection.direct) return false;
     if (state === 'connected') {
       this[sinceKey] = 0;
       return false;
@@ -283,13 +407,11 @@ export class HostLink {
 
   tick() {
     const now = performance.now();
-    const peer = this.peer;
+    let peer = this.peer;
     if (!peer || peer.destroyed) {
       if (now - this.madeAt > RETRY_MS) this.makePeer();
-      this.changed();
-      return;
-    }
-    if (peer.disconnected && now - this.lastReconnectAt > RETRY_MS) {
+      peer = null;
+    } else if (peer.disconnected && now - this.lastReconnectAt > RETRY_MS) {
       this.lastReconnectAt = now;
       try {
         peer.reconnect();
@@ -300,8 +422,14 @@ export class HostLink {
 
     if (this.conn && this.isBad(this.conn, this.connTriedAt, 'connBadSince', now)) this.dropConn();
     if (this.call && this.isBad(this.call, this.callTriedAt, 'callBadSince', now)) this.dropCall();
+    for (const [id, p] of this.pendings) {
+      if (['failed', 'closed'].includes(p.pc.connectionState)) {
+        p.pc.close();
+        this.pendings.delete(id);
+      }
+    }
 
-    if (peer.open) {
+    if (peer?.open) {
       if (!this.conn && now - this.connTriedAt > RETRY_MS) this.connectData();
       if (this.stream && !this.call && this.conn?.open && now - this.callTriedAt > RETRY_MS) this.callMedia();
     }
@@ -312,7 +440,7 @@ export class HostLink {
   get state() {
     const data = this.conn?.open ? 'open' : this.conn ? 'connecting' : 'closed';
     const media = this.call ? pcState(this.call) : 'idle';
-    return { signal: this.signal, data, media, error: this.error, rttMs: this.rttMs };
+    return { signal: this.signal, data, media, error: this.error, rttMs: this.rttMs, direct: this.direct };
   }
 
   changed() {

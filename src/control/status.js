@@ -188,6 +188,12 @@ export function mountStatus(root, ui) {
     rows.sensors.textContent = sn?.live ? `${sn.hz.toFixed(0)} Hz${sn.orientation ? '' : ' · no orientation'}${sn.motion ? '' : ' · no motion'}` : '—';
     ui.setAlert('phone', info?.hidden ? 'Phone: Safari is in the background — the camera is paused until it returns' : p.phone === 'silent' ? 'Phone stopped responding — it will reconnect by itself when it can' : null, 'bad', ui.alertTo.pairing);
     ui.setAlert('camera', input.kind === 'camera' && status.camera.state === 'error' ? `Local camera: ${status.camera.error}` : null, 'warn', ui.alertTo.panel('input-panel', 'Go to Input'));
+    ui.setAlert(
+      'direct-lost',
+      p.lostDirect && p.phone !== 'connected' ? 'The link to the phone was lost, and it was paired without the pairing server. Pair again: the phone must scan a new code.' : null,
+      'bad',
+      { label: 'Pair without internet', run: () => ui.pairOffline?.() },
+    );
     ui.setAlert('relay', p.route === 'relayed' ? 'Phone video is being relayed, not direct — expect extra latency' : null);
   }
 

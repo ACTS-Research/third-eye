@@ -23,13 +23,18 @@ const bus = createBus();
 //    and answers engine-released;
 //  - nobody answers: start.
 const id = Math.random().toString(36).slice(2, 10);
-const alreadyRunning = await new Promise((resolve) => {
-  bus.on('output-pong', () => resolve(true));
-  bus.on('engine-released', () => resolve(false));
+//  - /control has the phone on a link made without the pairing server: it
+//    answers engine-hold and keeps going while this window is introduced to
+//    the phone (so no code has to be scanned again), then lets go when this
+//    window says engine-take.
+const claim = await new Promise((resolve) => {
+  bus.on('output-pong', () => resolve('standby'));
+  bus.on('engine-released', () => resolve('go'));
+  bus.on('engine-hold', () => resolve('hold'));
   bus.send('output-ping');
-  setTimeout(() => resolve(false), 400);
+  setTimeout(() => resolve('go'), 400);
 });
-if (alreadyRunning) {
+if (claim === 'standby') {
   document.getElementById('standby').hidden = false;
   hint.hidden = true;
   bus.on('output', (m) => {
@@ -45,6 +50,16 @@ bus.on('engine-who', () => bus.send('engine-here', { host: { role: 'output', id 
 
 const store = new Store(bus);
 const engine = new Engine(canvas, store, bus, { role: 'output', id });
+if (claim === 'hold') {
+  await engine.prepareSpare();
+  // Up to four seconds for the phone to answer and the link to come up.
+  for (let i = 0; i < 80 && !engine.link.spareReady; i++) await new Promise((r) => setTimeout(r, 50));
+  await new Promise((resolve) => {
+    bus.on('engine-released', resolve);
+    bus.send('engine-take');
+    setTimeout(resolve, 1000);
+  });
+}
 engine.start();
 
 // Going away (closed, reloaded, navigated): let go of the room code at once

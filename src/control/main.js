@@ -24,6 +24,7 @@ import { mountIoPanel } from './io-panel.js';
 import { mountLibraryPanel } from './library-panel.js';
 import { installMidiMap } from './midi-map.js';
 import { mountModPanel } from './mod-panel.js';
+import { mountOfflinePair } from './offline-pair.js';
 import { mountOutputPanel } from './output-panel.js';
 import { mountPerform } from './perform.js';
 import { mountPhonePanel } from './phone-panel.js';
@@ -135,6 +136,7 @@ mountShortcuts(setupC, ui);
 ui.refreshSlots();
 
 mountPerform(views.perform, ui);
+mountOfflinePair(ui);
 
 // Decides whether this page or an output window hosts the engine, and
 // delivers its status to the panels above.

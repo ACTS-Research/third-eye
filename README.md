@@ -36,6 +36,7 @@ moves it there; closing that window moves it back.
 - [Setup](#setup)
 - [Running a show](#running-a-show)
 - [Pairing the phone](#pairing-the-phone)
+- [Pairing without internet](#pairing-without-internet)
 - [Show networking](#show-networking)
 - [Keyboard shortcuts](#keyboard-shortcuts)
 - [Inputs](#inputs)
@@ -190,6 +191,45 @@ restarts the stream, and `/control` shows an alert for as long as the page is
 hidden. The page requests a screen wake lock; if that fails it says so, and
 you should set Auto-Lock to Never.
 
+## Pairing without internet
+
+Normal pairing sends a small handshake through a pairing server on the
+internet. When that server cannot be reached (no signal, a network that
+blocks it), pair by QR code in both directions instead. Nothing leaves the
+room; the phone and the Mac only have to be on the same local network.
+
+1. Put both on one network. Either join the iPhone's Personal Hotspot from
+   the Mac (it works as a private network even with no mobile signal), or
+   make a network on the Mac: **System Settings → General → Sharing →
+   Internet Sharing**, share to **Wi-Fi**, and join it from the iPhone. The
+   same hint is on the **How?** tooltip in the dialog.
+2. On `/control`, click **Pair without internet** (under the QR code in
+   **Setup → Phone**, or in the pop-over behind the phone readout). The Mac's
+   camera switches on; allow it the first time.
+3. Scan the large code with the iPhone's camera, open the link and tap
+   **START**. The phone now shows a code of its own.
+4. Hold the phone up to the camera above the Mac's screen until it is read.
+   The dialog closes by itself and the phone shows `LIVE`.
+
+After that everything is the same as with normal pairing, including opening
+and closing the output window: the window that has the phone introduces the
+other one to it, so no code is scanned again.
+
+What is different:
+
+- **If the link is lost completely** (the phone left the network, Safari was
+  closed), nothing can rebuild it by itself. `/control` says so, with **Pair
+  without internet** on the strip; scan both ways again. A short dropout
+  recovers by itself.
+- **The phone needs its saved copy of the page**, since it cannot download
+  it. Open the phone page once while online beforehand; its start screen then
+  reads "Saved on this phone". iOS can discard that copy after about a week
+  without use.
+- **The codec is fixed when you pair.** Changing **Codec** afterwards takes
+  effect at the next pairing.
+- **Chrome on the Mac is required**: reading the phone's code uses Chrome's
+  built-in barcode reader.
+
 ## Show networking
 
 Only the handshake goes through a server (the public PeerJS cloud by
@@ -199,8 +239,9 @@ other directly, pairing fails visibly rather than silently routing your show
 through the internet. `/control` shows the route (`direct (LAN)`), round-trip
 time, bitrate and jitter buffer under **Status**.
 
-The phone is meant to move freely, so the link is wireless. Recommended, in
-order:
+The phone is meant to move freely, so the link is wireless. With no usable
+internet at all, the same networks work with
+[Pair without internet](#pairing-without-internet). Recommended, in order:
 
 1. **iPhone Personal Hotspot over Wi-Fi.** The Mac joins the phone's hotspot.
    On the iPhone, leave Wi-Fi on (the hotspot uses it), turn **Auto-Join**
@@ -435,7 +476,8 @@ a passing state (a stall, a recovering graphics context) remove themselves.
 | Phone stream stalls or drops | The picture holds the last frame. `/control` shows a red alert. Phone and Mac each retry on their own until the stream is back |
 | Phone camera flips or restarts | Last frame is held; no black flash |
 | Safari goes to the background | `/control` alert while hidden; red warning on the phone when it returns; stream resumes |
-| Pairing server unreachable | A paired phone keeps streaming. Both sides keep retrying; the top bar says so |
+| Pairing server unreachable | A paired phone keeps streaming. Both sides keep retrying; the top bar says so. To pair anyway, use [Pair without internet](#pairing-without-internet) |
+| A phone paired without internet drops off completely | `/control` says the link was lost, with **Pair without internet** on the strip. Scan both ways again |
 | Room code taken by something else | The output moves to a new code after three tries and `/control` says to scan again, with the QR code a click away; the strip goes once the phone pairs |
 | The output window is closed | The picture returns to `/control` after about two seconds; the phone reconnects by itself. The top bar reads `Output off`; no alert |
 | The output window crashes or is killed | The same, and `/control` says the output stopped without warning, with **Open output window** on the strip |
@@ -627,6 +669,8 @@ npm test
 | --- | --- |
 | `tests/smoke.mjs` | Pipeline with no output window and with one, control ↔ output sync, keys, resize, reloads, lost GL context in either window, a video file following the picture back to `/control` |
 | `tests/handover.mjs` | The optional output window, with real WebRTC: `/control` renders alone and the phone pairs with it; opening the output hands over (state and room code kept, recording stopped, one engine only, phone reconnects); an output reload does not bounce; an output that stops drawing is not taken for gone; closing it hands back; one that vanishes raises the alert |
+| `tests/offline-pair.mjs` | Pairing with no pairing server, by QR code both ways: the dialog and its network tooltip, the size of both codes, video, sensors and palette over the direct link, camera off and on, a stale code, a lost link and its alert, a code read twenty seconds late |
+| `tests/offline-handover.mjs` | A phone paired that way while the output window opens, reloads, closes and vanishes: the phone follows each time with no code scanned again |
 | `tests/standalone.mjs` | With no output window at all: recording, the latency measurement, audio, MIDI and MIDI map, palette and dimmer reaching the phone; opening an output releases the microphone and MIDI |
 | `tests/layout.mjs` | No overlaps at six window widths on every screen; the fader column (names whole, nothing overlapping) for every factory preset at five window sizes; nothing moves when the information changes; alert strips (fix buttons, ×, closing and returning); the palette pop-over |
 | `tests/control-ui.mjs` | The three screens, the live monitor and the `Output off` readout that opens the output, palettes and the dimmer (and that the phone page is really inked), perform faders and the modulation band, preset editing, fades, reordering, the pop-out output, Reload both pages |
@@ -650,6 +694,11 @@ the Mac and the phone both on the shop's Wi-Fi do not.
 **Only in headless Chromium**, with a fake camera and microphone: everything
 else. Check these the first time you use them:
 
+- **Pair without internet**, all of it: Safari answering the Mac's code, the
+  Mac's camera reading the phone's code (the tests stand in for the barcode
+  reader), the link forming on a hotspot or a Mac-made network, and the
+  phone following the picture between windows. Only Chromium talking to
+  Chromium has been tried.
 - **Running with no output window, and moving the picture** by opening and
   closing it: that the iPhone reconnects by itself each time and how long it
   takes (1.5–2.5 s in the tests), that the monitor on `/control` holds 60 fps,

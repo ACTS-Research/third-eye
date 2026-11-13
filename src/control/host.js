@@ -15,6 +15,11 @@
 //                    hosting control page stops its engine and answers
 //                    engine-released; a running output answers output-pong
 //                    and the new window stands by.
+//   engine-hold      instead of engine-released, when this page reaches the
+//   engine-take      phone on a link made without the pairing server: the
+//                    output gets itself introduced to the phone first (see
+//                    "introductions" in src/engine/remote.js), then says
+//                    engine-take, and only then does this page let go.
 //   engine-gone      a host says goodbye as its page closes or reloads.
 //   status           every host's status carries `host: { role, id }`; two
 //                    hosts at once settle it by that (the output wins, then
@@ -159,11 +164,26 @@ export function installHost(ui) {
   bus.on('engine-who', (_m, local) => {
     if (!local && host.state === 'local') bus.send('engine-here', { host: { role: 'control', id } });
   });
+  // An output window is taking over. If this page can reach the phone on a
+  // link made without the pairing server, the output is first told to wait
+  // (engine-hold) and get introduced to the phone through this page; it
+  // says engine-take when it is ready.
+  let holding = false;
   bus.on('output-ping', () => {
-    if (host.state === 'local') {
-      stopLocal();
-      bus.send('engine-released');
-    }
+    holding = !!engine?.link.canIntroduce;
+    if (holding) bus.send('engine-hold');
+    else yieldToOutput(false);
+  });
+  bus.on('engine-take', () => {
+    yieldToOutput(holding);
+    holding = false;
+  });
+  // `answer`: the output is waiting to hear engine-released from this page
+  // even if it was not the one hosting.
+  function yieldToOutput(answer) {
+    const wasLocal = host.state === 'local';
+    if (wasLocal) stopLocal();
+    if (wasLocal || answer) bus.send('engine-released');
     lastHeardAt = performance.now();
     quietUntil = lastHeardAt + CLAIM_MS;
     probeAt = 0;
@@ -173,7 +193,7 @@ export function installHost(ui) {
     host.stalled = false;
     host.dropped = false;
     changed();
-  });
+  }
   bus.on('engine-gone', (m, local) => {
     if (local || host.state !== 'remote') return;
     if (host.hostId && m.host?.id && m.host.id !== host.hostId) return;
@@ -181,8 +201,26 @@ export function installHost(ui) {
     waitThenStart(m.reload ? RELOAD_GRACE_MS : GRACE_MS);
   });
 
+  // While an output window has the phone on such a link, this page keeps a
+  // link of its own in reserve, so the picture can come back here (when the
+  // output closes, or crashes) without a new code being scanned.
+  let spareAskedAt = -Infinity;
+  function keepSpare(now) {
+    const p = ui.status?.phone;
+    if (host.state !== 'remote' || host.role !== 'output' || !p?.direct || p.phone !== 'connected') return;
+    if (engine?.link.spareReady || now - spareAskedAt < 4000) return;
+    spareAskedAt = now;
+    try {
+      engine ??= new Engine(stage, store, bus, { role: 'control', id, size: LOCAL_SIZE });
+    } catch {
+      return;
+    }
+    engine.prepareSpare();
+  }
+
   setInterval(() => {
     const now = performance.now();
+    keepSpare(now);
     if (host.state === 'waiting') {
       if (now >= startAt) startLocal();
     } else if (host.state === 'remote' && now >= quietUntil && now - lastHeardAt > SILENT_MS) {

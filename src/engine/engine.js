@@ -161,6 +161,37 @@ export class Engine {
       if (m.file) this.inputs.feeds.file.setBlob(m.file);
       else this.inputs.feeds.file.clear();
     });
+    // Pairing without the pairing server: /control asks for an offer, shows
+    // it as a QR code, and passes back the code it reads off the phone.
+    bus.on('pair-offer', async (m) => {
+      if (!this.running) return;
+      try {
+        const made = await this.link.makeOffer(this.store.state.net.codec);
+        this.bus.send('pair-offer-ready', { req: m.req, ...made });
+      } catch (err) {
+        this.bus.send('pair-error', { req: m.req, message: `Could not prepare a code: ${err.message ?? err}` });
+      }
+    });
+    bus.on('pair-answer', async (m) => {
+      if (!this.running) return;
+      try {
+        await this.link.acceptAnswer(m.token);
+        this.bus.send('pair-accepted', {});
+      } catch (err) {
+        this.bus.send('pair-error', { message: err.stale ? err.message : 'That code could not be used. Scan the code on the Mac again with the phone.' });
+      }
+    });
+    bus.on('pair-cancel', () => {
+      if (this.running) this.link.dropPending();
+    });
+    // Introductions (see PhoneLink.relay): another window's offer for the
+    // phone, and the phone's answer on its way back to that window.
+    bus.on('intro', (m) => {
+      if (m.from !== this.host.id) this.link.relay({ t: 'intro', from: m.from, offer: m.offer });
+    });
+    bus.on('intro-answer', (m) => {
+      if (m.to === this.host.id) this.link.acceptAnswer(m.token).catch((err) => console.warn('[engine] introduction failed', err));
+    });
   }
 
   initGL() {
@@ -261,7 +292,21 @@ export class Engine {
     this.vision.configure(this.store.state.vision);
   }
 
-  onPhoneMessage(_msg) {}
+  onPhoneMessage(msg) {
+    if (msg?.t === 'intro-answer') this.bus.send('intro-answer', { to: msg.to, token: msg.token });
+  }
+
+  // Asks whichever window has the phone on a direct link to introduce this
+  // (stopped) engine, so it has a link of its own ready when it starts.
+  async prepareSpare() {
+    if (this.running) return;
+    try {
+      const made = await this.link.makeOffer(this.store.state.net.codec);
+      this.bus.send('intro', { from: this.host.id, offer: made.offer });
+    } catch (err) {
+      console.warn('[engine] could not ask for an introduction', err);
+    }
+  }
 
   // Where modulation currently has each perform fader's parameter (0..1), so
   // /control can draw it beside the dialled value.

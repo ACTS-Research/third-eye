@@ -1,31 +1,11 @@
 // Pairing: room code, QR code for the phone, and the signaling server setting.
 
-import qrcode from 'qrcode-generator';
 import { normalizeRoom, phoneUrl, randomRoom } from '../shared/net.js';
 import { currentDim, currentPalette } from '../shared/palette.js';
+import { drawQr } from '../shared/qr.js';
 import { CODECS } from '../shared/sdp.js';
 import { el } from '../shared/util.js';
-
-function drawQr(canvas, text) {
-  const qr = qrcode(0, 'M');
-  qr.addData(text);
-  qr.make();
-  const n = qr.getModuleCount();
-  const quiet = 3;
-  const scale = Math.max(2, Math.floor(canvas.width / (n + quiet * 2)));
-  const size = (n + quiet * 2) * scale;
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, size, size);
-  ctx.fillStyle = '#000';
-  for (let r = 0; r < n; r++) {
-    for (let c = 0; c < n; c++) {
-      if (qr.isDark(r, c)) ctx.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
-    }
-  }
-}
+import { PAIR_TIP } from './offline-pair.js';
 
 export function mountPhonePanel(root, ui) {
   const { store } = ui;
@@ -54,6 +34,7 @@ export function mountPhonePanel(root, ui) {
       el('div', { class: 'row wrap', style: 'margin-top:8px' }, [
         el('button', { text: 'Restart output', title: 'Close every output window in this browser and open a new one', onclick: () => ui.restartOutput?.() }),
         el('button', { text: 'New room code', title: 'The phone must scan again', onclick: () => store.merge('net', { room: randomRoom() }) }),
+        el('button', { class: 'pair-offline', text: 'Pair without internet', title: PAIR_TIP, onclick: () => { hidePop(); ui.pairOffline?.(); } }),
         el('button', { text: 'Pairing settings', onclick: () => { hidePop(); ui.setView('setup'); } }),
         el('button', { text: 'Close', onclick: () => hidePop() }),
       ]),
@@ -105,6 +86,10 @@ export function mountPhonePanel(root, ui) {
     onchange: () => store.merge('net', { codec: codec.value }),
   }, Object.entries(CODECS).map(([value, text]) => el('option', { value, text })));
 
+  let currentUrl = '';
+  // The pairing link as shown in the QR codes (room, palette, dimmer).
+  ui.phoneLink = () => currentUrl;
+
   const sync = () => {
     const net = store.state.net;
     codec.value = net.codec;
@@ -114,6 +99,7 @@ export function mountPhonePanel(root, ui) {
     if (currentPalette() !== 'darkroom') link_.searchParams.set('pal', currentPalette());
     if (currentDim() !== 100) link_.searchParams.set('dim', String(currentDim()));
     const url = link_.href;
+    currentUrl = url;
     qr.width = 320;
     drawQr(qr, url);
     popQr.width = 320;
@@ -147,7 +133,7 @@ export function mountPhonePanel(root, ui) {
     else if (p.signal === 'error') text = p.error;
     else if (p.phone === 'connected') text = p.media === 'connected' ? 'Phone paired and streaming.' : 'Phone paired.';
     else if (p.signal === 'open') text = 'Ready. Scan the code with the iPhone camera.';
-    else if (p.signal === 'disconnected') text = `Cannot reach the pairing server${p.error ? ` (${p.error})` : ''}; retrying. Public and guest Wi-Fi often block it: try the iPhone's Personal Hotspot. A phone that is already paired keeps working.`;
+    else if (p.signal === 'disconnected') text = `Cannot reach the pairing server${p.error ? ` (${p.error})` : ''}; retrying. Public and guest Wi-Fi often block it: try the iPhone's Personal Hotspot, or Pair without internet. A phone that is already paired keeps working.`;
     else text = 'Connecting to the pairing server…';
     state.textContent = text;
     popState.textContent = text;
@@ -156,7 +142,7 @@ export function mountPhonePanel(root, ui) {
     const video = paired && p.media === 'connected';
     const steps = [
       [`Picture running${p ? (status.host?.role === 'output' ? ': in the output window' : ': on this page') : ''}`, !!p, 'Starting. If this stays, reload this page.'],
-      ['Mac reached the pairing server', p?.signal === 'open' || paired, p?.signal === 'error' ? 'Room code taken elsewhere.' : 'No answer yet. The network may block it.'],
+      [p?.direct && paired ? 'Paired without the pairing server' : 'Mac reached the pairing server', p?.signal === 'open' || paired, p?.signal === 'error' ? 'Room code taken elsewhere.' : 'No answer yet. The network may block it: use Pair without internet.'],
       ['Phone found the Mac', paired, 'Scan the code and tap START on the phone. If the phone says "Mac not found", the code is wrong or stale.'],
       [`Video link${video && p.route ? `: ${p.route}` : ''}`, video, p?.info?.controllerOnly ? 'The phone\'s camera is off (controller only).' : 'Phone and Mac cannot reach each other directly on this network.'],
       ['Picture arriving', video && status.input.kind === 'phone' && status.input.state === 'live', status?.input.kind === 'phone' ? 'Connected, but no frames yet.' : 'Select the iPhone input (key 1).'],
@@ -181,6 +167,7 @@ export function mountPhonePanel(root, ui) {
           state,
         ]),
       ]),
+      el('div', { class: 'row' }, [el('button', { class: 'grow pair-offline', id: 'pair-offline', text: 'Pair without internet', title: PAIR_TIP, onclick: () => ui.pairOffline?.() })]),
       warn,
       el('div', { class: 'row' }, [el('span', { class: 'caps', text: 'Codec' }), codec]),
       el('div', { class: 'dim small', text: 'Changing it restarts the phone\'s video for a moment. Status below shows which codec is in use and whether it decodes in hardware.' }),
