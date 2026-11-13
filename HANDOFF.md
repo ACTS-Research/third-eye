@@ -17,11 +17,6 @@ step; none of it has run on Safari yet.
 
 **Decisions only you can make.**
 
-- Say whether a QR-reading library (jsQR, Apache-2.0, about 130 KB) may be
-  added to the app. The Mac reads the phone's code with Chrome's built-in
-  barcode reader; with the library it would also work if that reader is
-  missing or struggles. Adding it was blocked in the cloud session, so it
-  needs your word.
 - Say whether 1280×720 is the right size for the picture (and recordings)
   while no output window is open. It is fixed so recordings do not depend on
   the size of the monitor on the page.
@@ -77,7 +72,11 @@ Nothing is waiting to be merged; everything is pushed.
   output hosts, `/control` keeps a link in reserve (`keepSpare` in
   `host.js`), so closing or crashing the output needs no handshake.
 - **The dialog** is `src/control/offline-pair.js`. The Mac's camera reads the
-  phone's code with `BarcodeDetector`; the tests stand in for it.
+  phone's code with `BarcodeDetector` where Chrome has one, and with the
+  bundled jsQR library (added 2026-11-13 with the owner's approval; loaded
+  only when the dialog opens) whenever that finds nothing. The tests give
+  `/control` a stand-in camera showing a picture of the phone's code
+  (`fakeMacCamera` in `tests/lib.mjs`), read by jsQR.
 
 ### This session, in short
 
@@ -260,7 +259,7 @@ Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
 ### Never run on real hardware (all unconfirmed)
 
 Pair without internet, every step: Safari answering the offer, the Mac's
-camera reading the phone's code, the rebuilt answer being accepted between
+real camera reading the phone's real screen, the rebuilt answer being accepted between
 Chrome and Safari, the hotspot or a Mac-made network carrying it, and the
 phone following the picture between windows. Whether iOS still has the
 phone page saved after a week. Running with no output window; the phone reconnecting when the output opens

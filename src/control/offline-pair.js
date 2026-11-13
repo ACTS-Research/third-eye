@@ -7,6 +7,9 @@
 //   2. The phone opens it, and shows a code of its own.
 //   3. This Mac's camera reads that code; it goes to the engine, and the
 //      link comes up.
+//
+// The code is read by Chrome's own barcode reader where there is one, and
+// by the bundled jsQR library whenever that finds nothing (or is missing).
 
 import { ANSWER_PREFIX, OFFER_KEY } from '../shared/direct.js';
 import { drawQr } from '../shared/qr.js';
@@ -19,6 +22,9 @@ export const PAIR_TIP = `Pair by QR code, both ways, when the pairing server can
 
 const SCAN_MS = 150;
 const OFFER_RETRY_MS = 2500;
+// jsQR works on a copy of the frame no wider than this: plenty for the
+// phone's small code, and quick enough to run several times a second.
+const READ_WIDTH = 1280;
 
 export function mountOfflinePair(ui) {
   const { bus } = ui;
@@ -50,7 +56,24 @@ export function mountOfflinePair(ui) {
   ]);
   document.body.append(dialog);
 
+  // Loaded the first time the dialog opens; the page does not carry it
+  // otherwise.
+  let jsQR = null;
+  const frame = document.createElement('canvas');
+  function readFrame() {
+    if (!jsQR || !video.videoWidth) return '';
+    const scale = Math.min(1, READ_WIDTH / video.videoWidth);
+    frame.width = Math.round(video.videoWidth * scale);
+    frame.height = Math.round(video.videoHeight * scale);
+    const ctx = frame.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(video, 0, 0, frame.width, frame.height);
+    const image = ctx.getImageData(0, 0, frame.width, frame.height);
+    // The phone's code is always black on white: no need to try it inverted.
+    return jsQR(image.data, image.width, image.height, { inversionAttempts: 'dontInvert' })?.data ?? '';
+  }
+
   let open = false;
+  let scanning = false;
   let req = 0;
   let offerTimer = 0;
   let scanTimer = 0;
@@ -107,13 +130,19 @@ export function mountOfflinePair(ui) {
   ui.pairOfflineAnswer = answer;
 
   async function startCamera() {
-    if (!('BarcodeDetector' in window)) {
-      state.dataset.problem = '1';
-      say('This browser cannot read codes with the camera. Use Chrome on the Mac.');
-      return;
+    if (!jsQR) {
+      import('jsqr')
+        .then((m) => {
+          jsQR = m.default ?? m;
+        })
+        .catch((err) => console.warn('[pair] the code reader did not load', err));
     }
     try {
-      detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+      detector = 'BarcodeDetector' in window ? new window.BarcodeDetector({ formats: ['qr_code'] }) : null;
+    } catch {
+      detector = null;
+    }
+    try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } } });
     } catch (err) {
       state.dataset.problem = '1';
@@ -124,11 +153,20 @@ export function mountOfflinePair(ui) {
     video.srcObject = stream;
     video.play().catch(() => {});
     scanTimer = setInterval(async () => {
-      if (!open || done || video.readyState < 2) return;
+      if (!open || done || scanning || video.readyState < 2) return;
+      scanning = true;
       try {
-        for (const code of await detector.detect(video)) answer(code.rawValue ?? '');
+        let found = false;
+        for (const code of (await detector?.detect(video)) ?? []) {
+          if (!code.rawValue?.startsWith(ANSWER_PREFIX)) continue;
+          found = true;
+          answer(code.rawValue);
+        }
+        if (!found) answer(readFrame());
       } catch {
         /* a frame that could not be read; the next one will */
+      } finally {
+        scanning = false;
       }
     }, SCAN_MS);
   }

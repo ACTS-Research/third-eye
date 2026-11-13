@@ -129,4 +129,42 @@ export async function openSession(browser, site, peerServer, errors, { start = t
   return { context, control, output, phone, url };
 }
 
+// Stands in for the Mac's camera on /control: a video stream showing
+// whatever picture showToMac() last gave it, on a plain background. The
+// phone's code is drawn at about the size it has in a 720p webcam frame when
+// the phone is held a hand's length away.
+export async function fakeMacCamera(context) {
+  await context.addInitScript(() => {
+    if (!location.pathname.includes('/control/')) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = 1280;
+    canvas.height = 720;
+    const ctx = canvas.getContext('2d');
+    let image = null;
+    setInterval(() => {
+      ctx.fillStyle = '#3a4652';
+      ctx.fillRect(0, 0, 1280, 720);
+      if (image) ctx.drawImage(image, 500, 220, 280, 280);
+    }, 100);
+    window.__show = (dataUrl) => {
+      if (!dataUrl) {
+        image = null;
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        image = img;
+      };
+      img.src = dataUrl;
+    };
+    const real = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    navigator.mediaDevices.getUserMedia = async (constraints) => (constraints?.video ? canvas.captureStream(15) : real(constraints));
+  });
+}
+
+// The picture of the code the phone is showing (a data URL), and holding a
+// picture up to the Mac's camera (null takes it away).
+export const phoneCode = (phone) => phone.evaluate(() => document.getElementById('pair-qr').toDataURL());
+export const showToMac = (control, picture) => control.evaluate((p) => window.__show(p), picture);
+
 export const benignError = (e) => /peerjs|WebSocket|ERR_CONNECTION_REFUSED|Lost connection|server-error|socket/i.test(e);

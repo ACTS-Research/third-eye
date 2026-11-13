@@ -1,11 +1,12 @@
 // Pairing with no pairing server: the handshake goes by QR code, both ways.
 // Nothing here can reach a signaling server (the sandbox cannot reach the
-// public one, which is exactly the situation this feature is for). Headless
-// Chromium has no barcode reader, so a stand-in "reads" the phone's code off
-// the camera; everything else is the real path.
+// public one, which is exactly the situation this feature is for). The Mac's
+// camera is a stand-in showing a picture of the code on the phone's screen;
+// reading it (with jsQR: headless Chromium has no barcode reader of its
+// own) and everything after is the real path.
 //   node tests/offline-pair.mjs
 
-import { benignError, check, failureCount, launch, sleep, startSite, waitFor, watch } from './lib.mjs';
+import { benignError, check, failureCount, fakeMacCamera, launch, phoneCode, showToMac, sleep, startSite, waitFor, watch } from './lib.mjs';
 
 const site = await startSite();
 const browser = await launch();
@@ -14,14 +15,7 @@ const errors = [];
 try {
   const context = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   await context.grantPermissions(['camera', 'microphone']);
-  await context.addInitScript(() => {
-    window.__codes = [];
-    window.BarcodeDetector = class {
-      async detect() {
-        return window.__codes.map((rawValue) => ({ rawValue }));
-      }
-    };
-  });
+  await fakeMacCamera(context);
   const control = await context.newPage();
   watch(control, 'control', errors);
   await control.goto(`${site.url}/control/`);
@@ -49,16 +43,13 @@ try {
     await phone.locator('#start').dispatchEvent('click');
     await waitFor(() => phone.evaluate(() => !document.getElementById('pair').hidden && !!window.thirdEyePhone.pairToken), { label: 'phone shows its code' });
     const code = await phone.evaluate(() => `3EYE.${window.thirdEyePhone.pairToken}`);
-    return { phone, url, code };
+    return { phone, url, code, picture: await phoneCode(phone) };
   };
-  const show = (code) => control.evaluate((c) => {
-    window.__codes = [c];
-  }, code);
 
   console.log('the dialog');
   await control.evaluate(() => window.thirdEye.ui.setView('setup'));
   check('Setup offers Pair without internet, with the network tip', (await control.locator('#pair-offline').getAttribute('title')).includes('Internet Sharing'));
-  let { phone, url, code } = await begin(() => control.click('#pair-offline'));
+  let { phone, url, code, picture } = await begin(() => control.click('#pair-offline'));
   check('the dialog shows a code and the camera', await control.locator('#offline-pair').isVisible() && (await control.evaluate(() => document.getElementById('offline-video').srcObject?.getVideoTracks()[0]?.readyState === 'live')));
   check('it says how to make a network on the Mac', (await control.locator('#network-tip').getAttribute('title')).includes('System Settings → General → Sharing → Internet Sharing'));
   const modules = Number(await control.locator('#offline-qr').getAttribute('data-modules'));
@@ -74,8 +65,10 @@ try {
   check('the pairing server really is out of reach', (await status()).phone.signal !== 'open', (await status()).phone.signal);
 
   console.log('pairing');
-  await show(code);
-  check('the phone pairs and streams with no pairing server', await paired(), JSON.stringify((await status()).phone.error));
+  check('nothing is read while no code is in front of the camera', (await control.locator('#offline-state').textContent()).includes('Waiting'));
+  await showToMac(control, picture);
+  check('the Mac\'s camera reads the phone\'s code, and the phone pairs and streams with no pairing server', await paired(), JSON.stringify((await status()).phone.error));
+  await showToMac(control, null);
   check('the dialog closes by itself and the camera is let go', await settle(() => control.evaluate(() => document.getElementById('offline-pair').hidden && !document.getElementById('offline-video').srcObject), 'dialog closed'));
   check('the phone\'s code goes away', await settle(() => phone.evaluate(() => document.getElementById('pair').hidden), 'code hidden'));
   await control.keyboard.press('1');
@@ -97,12 +90,10 @@ try {
   console.log('an old code');
   await control.evaluate(() => window.thirdEye.ui.pairOffline());
   await waitFor(() => control.evaluate((old) => document.getElementById('offline-link').href !== old && document.getElementById('offline-link').href.includes('#o='), url), { label: 'new offer' });
-  await show(code);
+  await showToMac(control, picture);
   check('a code from an earlier attempt is refused, with what to do', await settle(async () => (await control.locator('#offline-state').textContent()).includes('earlier attempt'), 'refused'), await control.locator('#offline-state').textContent());
-  await control.evaluate(() => {
-    window.__codes = [];
-    window.thirdEye.ui.closePairOffline();
-  });
+  await showToMac(control, null);
+  await control.evaluate(() => window.thirdEye.ui.closePairOffline());
   check('and the phone stays paired', (await status()).phone.phone === 'connected' && (await status()).phone.direct);
 
   console.log('the link is lost');
@@ -110,12 +101,12 @@ try {
   check('the Mac says so, with the way back', await settle(async () => (await alertKeys()).includes('direct-lost'), 'alert', 20000) && (await control.locator('#alerts [data-key="direct-lost"] .act').textContent()).includes('Pair without internet'));
 
   console.log('pairing again, slowly');
-  ({ phone, url, code } = await begin(() => control.locator('#alerts [data-key="direct-lost"] .go').dispatchEvent('click')));
+  ({ phone, url, code, picture } = await begin(() => control.locator('#alerts [data-key="direct-lost"] .go').dispatchEvent('click')));
   // Twenty seconds between the phone showing its code and the Mac reading
   // it: longer than a handshake left hanging would survive if the phone
   // were trying to reach the Mac in the meantime.
   await sleep(20000);
-  await show(code);
+  await showToMac(control, picture);
   check('a code read twenty seconds later still pairs', await paired());
   check('the alert clears', await settle(async () => !(await alertKeys()).includes('direct-lost'), 'alert gone'));
   check('video arrives again', await settle(async () => (await status()).input.state === 'live', 'video live', 20000));

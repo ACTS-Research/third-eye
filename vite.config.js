@@ -42,7 +42,7 @@ export default defineConfig({
   worker: { format: 'es' },
   // Pre-bundle up front so the dev server never reloads a page mid-session
   // because it "discovered" a dependency late.
-  optimizeDeps: { include: ['tweakpane', 'peerjs', 'qrcode-generator', '@mediapipe/tasks-vision'] },
+  optimizeDeps: { include: ['tweakpane', 'peerjs', 'qrcode-generator', 'jsqr', '@mediapipe/tasks-vision'] },
   build: {
     target: 'es2022',
     rollupOptions: {

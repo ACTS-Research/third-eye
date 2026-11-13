@@ -5,7 +5,7 @@
 // moves with a pairing server).
 //   node tests/offline-handover.mjs
 
-import { benignError, check, failureCount, launch, startSite, waitFor, watch } from './lib.mjs';
+import { benignError, check, failureCount, fakeMacCamera, launch, phoneCode, showToMac, startSite, waitFor, watch } from './lib.mjs';
 
 const site = await startSite();
 const browser = await launch();
@@ -14,14 +14,7 @@ const errors = [];
 try {
   const context = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   await context.grantPermissions(['camera', 'microphone']);
-  await context.addInitScript(() => {
-    window.__codes = [];
-    window.BarcodeDetector = class {
-      async detect() {
-        return window.__codes.map((rawValue) => ({ rawValue }));
-      }
-    };
-  });
+  await fakeMacCamera(context);
   const control = await context.newPage();
   watch(control, 'control', errors);
   await control.goto(`${site.url}/control/`);
@@ -43,14 +36,10 @@ try {
   await phone.goto(await control.locator('#offline-link').getAttribute('href'));
   await phone.locator('#start').dispatchEvent('click');
   await waitFor(() => phone.evaluate(() => !!window.thirdEyePhone.pairToken), { label: 'phone shows its code' });
-  await control.evaluate((c) => {
-    window.__codes = [c];
-  }, await phone.evaluate(() => `3EYE.${window.thirdEyePhone.pairToken}`));
+  await showToMac(control, await phoneCode(phone));
   await control.keyboard.press('1');
   check('paired and streaming to the control page', await live('control', 'paired'));
-  await control.evaluate(() => {
-    window.__codes = [];
-  });
+  await showToMac(control, null);
   // From here on the phone must never be asked for a code again.
   const noRescan = async () => (await phone.evaluate(() => document.getElementById('pair').hidden)) && (await control.evaluate(() => document.getElementById('offline-pair').hidden)) && !(await control.evaluate(() => [...document.querySelectorAll('#alerts [role=alert]')].some((n) => n.dataset.key === 'direct-lost')));
 
