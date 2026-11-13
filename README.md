@@ -1,4 +1,4 @@
-# Third Eye Cam
+# 3rdEyeCam
 
 A live video instrument. An iPhone streams its camera over WebRTC to a Mac
 running Chrome, where a WebGL2 effects chain processes it. The picture shows

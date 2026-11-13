@@ -54,7 +54,8 @@ kbd { font: inherit; opacity: 0.8; }
   border-bottom: 1px solid var(--line);
   flex-wrap: wrap;
 }
-.wordmark { font: 800 24px/1 var(--display); letter-spacing: 0.12em; white-space: nowrap; }
+/* The name keeps its own capitals: 3rdEyeCam. */
+.wordmark { font: 800 24px/1 var(--display); letter-spacing: 0.08em; white-space: nowrap; text-transform: none; }
 #pills { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
 .pill { white-space: nowrap; font-variant-numeric: tabular-nums; padding: 2px 0; }
 .pill[role='button'] { cursor: pointer; }

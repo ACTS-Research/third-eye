@@ -2,7 +2,7 @@
   "name": "third-eye-cam",
   "version": "0.1.0",
   "private": true,
-  "description": "Live video instrument: iPhone camera over WebRTC into a WebGL2 effects chain on a second display.",
+  "description": "3rdEyeCam. Live video instrument: iPhone camera over WebRTC into a WebGL2 effects chain on a second display.",
   "type": "module",
   "scripts": {
     "assets": "node scripts/fetch-models.mjs",

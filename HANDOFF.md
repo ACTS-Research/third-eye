@@ -182,6 +182,17 @@ stops.
 Read `README.md` for what the app does and how it is used. This section is
 what the README does not say.
 
+### The name
+
+The app is called **3rdEyeCam** (renamed from "Third Eye Cam" on 2026-11-13)
+wherever a person reads it: page titles, the wordmark, the phone's start
+screen, the README. Names a person never reads keep the old spelling on
+purpose, because changing them would break things that are stored or agreed
+between pages: the repository (`third-eye`), the pairing id
+(`third-eye-cam-<room>-host`), the BroadcastChannel, storage keys
+(`thirdeye.*`), the preset file tag, recording file names, and the board
+screenshots (`screenshots/third-eye-*.png`).
+
 ### Shape of the code
 
 Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
@@ -329,7 +340,7 @@ dimmer.
 ### Prompt to start a new session
 
 ```
-You are picking up Third Eye Cam (repo ACTS-Research/third-eye, branch main).
+You are picking up 3rdEyeCam (repo ACTS-Research/third-eye, branch main).
 Read CLAUDE.md, then HANDOFF.md, then README.md before doing anything; the
 handoff says where things stand, the rules that are easy to break, how to
 work in the cloud sandbox, and the plan for this session.
