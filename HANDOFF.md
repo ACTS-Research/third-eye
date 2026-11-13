@@ -184,14 +184,9 @@ what the README does not say.
 
 ### The name
 
-The app is called **3rdEyeCam** (renamed from "Third Eye Cam" on 2026-11-13)
-wherever a person reads it: page titles, the wordmark, the phone's start
-screen, the README. Names a person never reads keep the old spelling on
-purpose, because changing them would break things that are stored or agreed
-between pages: the repository (`third-eye`), the pairing id
-(`third-eye-cam-<room>-host`), the BroadcastChannel, storage keys
-(`thirdeye.*`), the preset file tag, recording file names, and the board
-screenshots (`screenshots/third-eye-*.png`).
+The app is called **Third Eye Cam**. A rename to "3rdEyeCam" was started on
+2026-11-13 and the owner stopped it ("leave it as it was for now"). Do not
+rename anything unless asked.
 
 ### Shape of the code
 
@@ -340,7 +335,7 @@ dimmer.
 ### Prompt to start a new session
 
 ```
-You are picking up 3rdEyeCam (repo ACTS-Research/third-eye, branch main).
+You are picking up Third Eye Cam (repo ACTS-Research/third-eye, branch main).
 Read CLAUDE.md, then HANDOFF.md, then README.md before doing anything; the
 handoff says where things stand, the rules that are easy to break, how to
 work in the cloud sandbox, and the plan for this session.
