@@ -199,7 +199,9 @@ blocks it), pair by QR code in both directions instead. Nothing leaves the
 room; the phone and the Mac only have to be on the same local network.
 
 1. Put both on one network. The easiest is the iPhone's Personal Hotspot,
-   joined from the Mac. The alternative is a closed network made by the Mac
+   joined from the Mac. Leave mobile data on: turning it off switches the
+   hotspot off too. The hotspot only has to exist; it does not matter how
+   weak the signal is. The alternative is a closed network made by the Mac
    (see below). The same hint is on the **How?** tooltip in the dialog.
 2. On `/control`, click **Pair without internet** (under the QR code in
    **Setup → Phone**, or in the pop-over behind the phone readout). The Mac's
@@ -208,6 +210,11 @@ room; the phone and the Mac only have to be on the same local network.
    **START**. The phone now shows a code of its own.
 4. Hold the phone up to the camera above the Mac's screen until it is read.
    The dialog closes by itself and the phone shows `LIVE`.
+
+This works whether or not the internet is there, so it can be tried on a
+working hotspot. A phone opened from this code waits for the Mac to read its
+code even if the pairing server happens to be reachable; **Hide the code** on
+the phone gives up and lets normal pairing take over.
 
 After that everything is the same as with normal pairing, including opening
 and closing the output window: the window that has the phone introduces the
@@ -686,6 +693,7 @@ npm test
 | `tests/smoke.mjs` | Pipeline with no output window and with one, control ↔ output sync, keys, resize, reloads, lost GL context in either window, a video file following the picture back to `/control` |
 | `tests/handover.mjs` | The optional output window, with real WebRTC: `/control` renders alone and the phone pairs with it; opening the output hands over (state and room code kept, recording stopped, one engine only, phone reconnects); an output reload does not bounce; an output that stops drawing is not taken for gone; closing it hands back; one that vanishes raises the alert |
 | `tests/offline-pair.mjs` | Pairing with no pairing server, by QR code both ways: the dialog and its network tooltip, the size of both codes, the phone's code read from a camera picture, video, sensors and palette over the direct link, camera off and on, a stale code, a lost link and its alert, a code read twenty seconds late |
+| `tests/offline-pair-online.mjs` | The same pairing while the pairing server can be reached: the phone still shows its code and waits; Hide the code falls back to normal pairing and the Mac's dialog closes |
 | `tests/offline-handover.mjs` | A phone paired that way while the output window opens, reloads, closes and vanishes: the phone follows each time with no code scanned again |
 | `tests/standalone.mjs` | With no output window at all: recording, the latency measurement, audio, MIDI and MIDI map, palette and dimmer reaching the phone; opening an output releases the microphone and MIDI |
 | `tests/layout.mjs` | No overlaps at six window widths on every screen; the fader column (names whole, nothing overlapping) for every factory preset at five window sizes; nothing moves when the information changes; alert strips (fix buttons, ×, closing and returning); the palette pop-over |

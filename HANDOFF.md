@@ -5,7 +5,7 @@
 **Where things stand.** Two things were built this session and both are
 live on GitHub Pages from `main`. The output window is optional: `/control`
 runs the whole instrument by itself. And the phone can be paired with no
-internet, by QR code both ways ("Pair without internet"). All thirteen test
+internet, by QR code both ways ("Pair without internet"). All fourteen test
 suites pass in headless Chromium. On the real Mac and iPhone only normal
 pairing over the hotspot has been confirmed (it works); the university Wi-Fi
 could not reach the pairing server, which is what the new pairing is for.
@@ -71,6 +71,12 @@ Nothing is waiting to be merged; everything is pushed.
   told `engine-hold`, gets introduced, then says `engine-take`. While an
   output hosts, `/control` keeps a link in reserve (`keepSpare` in
   `host.js`), so closing or crashing the output needs no handshake.
+- **A phone page opened from the code pairs by code only** (`directFirst`
+  in `src/phone/link.js`) until the link is up or the operator taps Hide the
+  code. Without that, a reachable pairing server wins the race and the phone
+  never shows its code.
+- **The dialog never shows an earlier attempt's code**: it blanks the code
+  until the engine's fresh offer arrives.
 - **The dialog** is `src/control/offline-pair.js`. The Mac's camera reads the
   phone's code with `BarcodeDetector` where Chrome has one, and with the
   bundled jsQR library (added 2026-11-13 with the owner's approval; loaded
@@ -153,7 +159,7 @@ Three static pages built by Vite, no framework. About 8,600 lines in `src/`.
 | `src/effects/` | One file per effect; `index.js` is the registry, `common.glsl.js` the shared GLSL |
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot) |
-| `tests/` | Thirteen headless suites and `lib.mjs` |
+| `tests/` | Fourteen headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 

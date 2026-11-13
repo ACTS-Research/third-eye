@@ -32,7 +32,7 @@ try {
   // page once it shows its code.
   const begin = async (opener) => {
     await opener();
-    await waitFor(() => control.evaluate(() => document.getElementById('offline-link').href.includes('#o=')), { label: 'offer shown' });
+    await waitFor(() => control.evaluate(() => document.getElementById('offline-link').href.includes('#o=') && document.getElementById('offline-qr').style.visibility !== 'hidden'), { label: 'offer shown' });
     const url = await control.locator('#offline-link').getAttribute('href');
     const phone = await context.newPage();
     await phone.setViewportSize({ width: 390, height: 844 });

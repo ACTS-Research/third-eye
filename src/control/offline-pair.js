@@ -84,6 +84,7 @@ export function mountOfflinePair(ui) {
   let lastToken = '';
   let sent = false;
   let done = false;
+  let hadPhone = false; // a phone was already paired when the dialog opened
 
   const say = (text) => {
     state.textContent = text;
@@ -93,6 +94,10 @@ export function mountOfflinePair(ui) {
     clearTimeout(offerTimer);
     if (!open || done) return;
     req++;
+    // Never leave an earlier attempt's code on show: the phone would answer
+    // an offer nobody is waiting on.
+    qr.style.visibility = 'hidden';
+    link.removeAttribute('href');
     bus.send('pair-offer', { req });
     // No engine yet (the page is still starting, or the picture is moving
     // between windows): ask again shortly.
@@ -105,6 +110,7 @@ export function mountOfflinePair(ui) {
     const url = `${ui.phoneLink()}#${OFFER_KEY}=${m.offer}`;
     const modules = drawQr(qr, url, { level: 'L', size: 720 });
     qr.dataset.modules = String(modules);
+    qr.style.visibility = '';
     link.href = url;
     lastToken = '';
     sent = false;
@@ -186,6 +192,7 @@ export function mountOfflinePair(ui) {
     done = false;
     sent = false;
     lastToken = '';
+    hadPhone = ui.status?.phone.phone === 'connected';
     delete state.dataset.problem;
     dialog.hidden = false;
     say('Preparing the code…');
@@ -203,12 +210,19 @@ export function mountOfflinePair(ui) {
   }
 
   ui.onStatus((status) => {
-    if (!open || done || !sent) return;
+    if (!open || done) return;
     const p = status?.phone;
-    if (p?.direct && p.phone === 'connected') {
+    if (p?.phone !== 'connected') {
+      hadPhone = false;
+    } else if (p.direct && sent) {
       done = true;
       say('Paired.');
       setTimeout(close, 1200);
+    } else if (!p.direct && !hadPhone) {
+      // The phone got through to the pairing server after all.
+      done = true;
+      say('The phone paired through the pairing server instead.');
+      setTimeout(close, 2000);
     }
   });
   // The picture moved to another window: its engine needs to make the offer.

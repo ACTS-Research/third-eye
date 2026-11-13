@@ -25,11 +25,7 @@ try {
 
   const open = async () => {
     await control.evaluate(() => window.thirdEye.ui.pairOffline());
-    const before = await control.locator('#offline-link').getAttribute('href');
-    await waitFor(() => control.evaluate((old) => {
-      const href = document.getElementById('offline-link').href;
-      return href.includes('#o=') && href !== old;
-    }, before), { label: 'offer shown' });
+    await waitFor(() => control.evaluate(() => document.getElementById('offline-link').href.includes('#o=') && document.getElementById('offline-qr').style.visibility !== 'hidden'), { label: 'offer shown' });
     const phone = await context.newPage();
     await phone.setViewportSize({ width: 390, height: 844 });
     watch(phone, 'phone', errors);
@@ -62,7 +58,7 @@ try {
     const p = (await status()).phone;
     return p.phone === 'connected' && !p.direct;
   }, 'paired the normal way'), JSON.stringify((await status()).phone.direct));
-  await control.evaluate(() => window.thirdEye.ui.closePairOffline());
+  check('and the Mac\'s dialog says so and closes', await settle(() => control.evaluate(() => document.getElementById('offline-pair').hidden), 'dialog closed'), await control.locator('#offline-state').textContent());
 
   const real = errors.filter((e) => !benignError(e));
   check('no unexpected console errors', real.length === 0, real.slice(0, 3).join(' | '));

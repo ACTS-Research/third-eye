@@ -332,6 +332,9 @@ export class PhoneLink {
   acceptData(conn) {
     const old = this.conn;
     this.conn = conn;
+    // Whatever the last link was, this one says which kind is in use now.
+    this.direct = !!conn.direct;
+    if (!conn.direct) this.lostDirect = false;
     if (old && old !== conn) old.close();
     this.onData?.(conn);
     conn.on('open', () => {
