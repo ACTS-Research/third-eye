@@ -329,6 +329,18 @@ export class Engine {
     this.pipeline.srcDirty = true;
   }
 
+  // Asks whichever window has the phone on a direct link to introduce this
+  // (stopped) engine, so it has a link of its own ready when it starts.
+  async prepareSpare() {
+    if (this.running) return;
+    try {
+      const made = await this.link.makeOffer(this.store.state.net.codec);
+      this.bus.send('intro', { from: this.host.id, offer: made.offer });
+    } catch (err) {
+      console.warn('[engine] could not ask for an introduction', err);
+    }
+  }
+
   // Where modulation currently has each perform fader's parameter (0..1), so
   // /control can draw it beside the dialled value.
   macroLevels() {
