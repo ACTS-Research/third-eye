@@ -16,8 +16,10 @@ import { drawQr } from '../shared/qr.js';
 import { el } from '../shared/util.js';
 
 // How to get the two devices onto one network with no internet involved.
+// (Internet Sharing lists Wi-Fi as a destination only while the source is
+// something else; the source does not need to be connected to anything.)
 export const NETWORK_TIP =
-  'The phone and the Mac must be on the same network. Either join the iPhone\'s Personal Hotspot from the Mac, or make a network on the Mac: System Settings → General → Sharing → Internet Sharing, share to Wi-Fi, then join it from the iPhone.';
+  'The phone and the Mac must be on the same network. Easiest: join the iPhone\'s Personal Hotspot from the Mac. Or make a closed network on the Mac: System Settings → General → Sharing → Internet Sharing. Set "Share your connection from" to anything but Wi-Fi (Thunderbolt Bridge will do, with nothing plugged in), switch on Wi-Fi under "To devices using", turn Internet Sharing on, then join that network from the iPhone. It has no internet, which is fine.';
 export const PAIR_TIP = `Pair by QR code, both ways, when the pairing server cannot be reached. ${NETWORK_TIP}`;
 
 const SCAN_MS = 150;

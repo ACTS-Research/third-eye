@@ -198,11 +198,9 @@ internet. When that server cannot be reached (no signal, a network that
 blocks it), pair by QR code in both directions instead. Nothing leaves the
 room; the phone and the Mac only have to be on the same local network.
 
-1. Put both on one network. Either join the iPhone's Personal Hotspot from
-   the Mac (it works as a private network even with no mobile signal), or
-   make a network on the Mac: **System Settings → General → Sharing →
-   Internet Sharing**, share to **Wi-Fi**, and join it from the iPhone. The
-   same hint is on the **How?** tooltip in the dialog.
+1. Put both on one network. The easiest is the iPhone's Personal Hotspot,
+   joined from the Mac. The alternative is a closed network made by the Mac
+   (see below). The same hint is on the **How?** tooltip in the dialog.
 2. On `/control`, click **Pair without internet** (under the QR code in
    **Setup → Phone**, or in the pop-over behind the phone readout). The Mac's
    camera switches on; allow it the first time.
@@ -214,6 +212,23 @@ room; the phone and the Mac only have to be on the same local network.
 After that everything is the same as with normal pairing, including opening
 and closing the output window: the window that has the phone introduces the
 other one to it, so no code is scanned again.
+
+**A closed network from the Mac.** Apple removed "Create Network…" from the
+Wi-Fi menu; Internet Sharing is what is left, and despite its name it can
+make a Wi-Fi network with no internet behind it:
+
+1. **System Settings → General → Sharing → Internet Sharing** (click the ⓘ).
+2. Set **Share your connection from** to anything other than Wi-Fi, for
+   example Thunderbolt Bridge with nothing plugged in. While Wi-Fi is the
+   source it is not offered as a destination.
+3. Under **To devices using**, switch on **Wi-Fi**. **Wi-Fi Options…** sets
+   the network's name and password.
+4. Turn **Internet Sharing** on and join that network from the iPhone. The
+   phone will say it has no internet; that is expected.
+
+The Mac's Wi-Fi is then busy being the network, so the Mac is offline until
+you turn Internet Sharing off again. A small travel router does the same job
+without tying up the Mac.
 
 What is different:
 
@@ -695,6 +710,9 @@ the Mac and the phone both on the shop's Wi-Fi do not.
 **Only in headless Chromium**, with a fake camera and microphone: everything
 else. Check these the first time you use them:
 
+- **A closed network made by the Mac** with Internet Sharing and no internet
+  behind it. The steps are from how macOS is known to behave; they have not
+  been tried on your Mac.
 - **Pair without internet**, all of it: Safari answering the Mac's code, the
   Mac's real camera reading the phone's real screen (the tests show jsQR a
   clean picture of the code), the link forming on a hotspot or a Mac-made
