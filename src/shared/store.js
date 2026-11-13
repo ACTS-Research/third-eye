@@ -6,6 +6,8 @@
 //   { op: 'merge',   key, patch }             merge into a top-level object
 //   { op: 'set',     key, value }             replace a top-level list
 //   { op: 'scene',   scene, fade, presetIndex }  replace the scene
+//       with `cue` (a step of the running order) the order moves there;
+//       with `offList` a preset was picked by hand and the order keeps its place
 //   { op: 'presetIndex', index }              which preset is current (after a reorder)
 //   { op: 'replace', state }                  full sync (sent in reply to hello)
 //
@@ -96,6 +98,8 @@ export class Store {
       case 'scene': {
         Object.assign(s, sanitizeScene(structuredClone(op.scene)));
         if (Number.isInteger(op.presetIndex)) s.presetIndex = op.presetIndex;
+        if (Number.isInteger(op.cue)) s.order = { cue: op.cue, off: false };
+        else if (op.offList && s.order.cue >= 0) s.order.off = true;
         break;
       }
       case 'replace': {

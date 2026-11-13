@@ -1,7 +1,7 @@
 // Things a key, a button or (from Phase 3) a trigger can fire. They run in
 // whichever window initiated them and reach the other one through the store.
 
-import { applyPreset, stepPreset } from './presets.js';
+import { applyPreset, applyStep, stepShow } from './presets.js';
 import { INPUT_KINDS, INPUT_LABELS } from './state.js';
 
 export const ACTIONS = {
@@ -12,6 +12,7 @@ export const ACTIONS = {
   glitch: 'Glitch burst',
   tap: 'Tap tempo',
   record: 'Record on / off',
+  // With a running order these walk its steps; without one, the presets.
   presetNext: 'Next preset',
   presetPrev: 'Previous preset',
 };
@@ -20,12 +21,13 @@ export const ACTIONS = {
 export const TOGGLE_ACTIONS = { blackout: 'blackout', freeze: 'freeze', bypassAll: 'bypassAll' };
 
 // Actions can carry an argument after a colon: "preset:3" loads the fourth
-// preset, "input:camera" selects an input, "macro:2" (handled by the engine,
+// preset, "step:0" the first step of the running order, "input:camera" selects an input, "macro:2" (handled by the engine,
 // continuously) drives the third perform fader.
 export function describeAction(action) {
   if (ACTIONS[action]) return ACTIONS[action];
   const [kind, arg] = String(action).split(':');
   if (kind === 'preset') return `Preset ${Number(arg) + 1}`;
+  if (kind === 'step') return `Step ${Number(arg) + 1}`;
   if (kind === 'input') return `Input: ${INPUT_LABELS[arg] ?? arg}`;
   if (kind === 'macro') return `Fader ${Number(arg) + 1}`;
   if (kind === 'param') return 'Parameter';
@@ -65,13 +67,16 @@ export function runAction(store, name, arg) {
     case 'preset':
       applyPreset(store, Number(arg) || 0);
       break;
+    case 'step':
+      applyStep(store, Number(arg) || 0);
+      break;
     case 'macro':
       break; // continuous; the engine applies it every frame
     case 'presetNext':
-      stepPreset(store, 1);
+      stepShow(store, 1);
       break;
     case 'presetPrev':
-      stepPreset(store, -1);
+      stepShow(store, -1);
       break;
     default:
       console.warn('[actions] unknown action', name);

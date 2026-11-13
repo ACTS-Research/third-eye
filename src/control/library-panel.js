@@ -26,9 +26,20 @@ export function mountLibraryPanel(root, ui) {
       picker.value = '';
       if (!file) return;
       try {
-        const incoming = parsePresetFile(await file.text());
+        const { presets: incoming, order } = parsePresetFile(await file.text());
         presets.append(incoming);
-        note.textContent = `Imported ${incoming.length} preset${incoming.length === 1 ? '' : 's'}. They are at the end of the strip.`;
+        let text = `Imported ${incoming.length} preset${incoming.length === 1 ? '' : 's'}. They are at the end of the strip.`;
+        // The file's running order comes too, but never over one you have
+        // without asking.
+        if (order.length) {
+          if (!presets.steps.length || confirm(`This file has a running order of ${order.length} steps. Replace yours with it?`)) {
+            presets.setSteps(order);
+            text += ` Its running order (${order.length} steps) is now yours.`;
+          } else {
+            text += ' Your running order was kept.';
+          }
+        }
+        note.textContent = text;
       } catch (err) {
         note.textContent = `Could not import: ${err.message}`;
       }
@@ -36,7 +47,7 @@ export function mountLibraryPanel(root, ui) {
   });
 
   function download() {
-    const blob = new Blob([exportPresets(presets.list)], { type: 'application/json' });
+    const blob = new Blob([exportPresets(presets.list, presets.steps)], { type: 'application/json' });
     const a = el('a', { href: URL.createObjectURL(blob), download: 'third-eye-presets.json' });
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
@@ -60,10 +71,11 @@ export function mountLibraryPanel(root, ui) {
         el('button', {
           text: 'Restore factory set',
           onclick: () => {
-            if (!confirm('Replace every preset with the factory set?')) return;
+            if (!confirm('Replace every preset with the factory set? The running order is cleared too.')) return;
             resetPresets();
             presets.reload();
             store.dispatch({ op: 'presetIndex', index: -1 });
+            store.merge('order', { cue: -1, off: false });
             note.textContent = 'Factory presets restored.';
           },
         }),

@@ -13,7 +13,7 @@
     "prebuild": "node scripts/fetch-models.mjs --strict",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node tests/smoke.mjs && node tests/handover.mjs && node tests/standalone.mjs && node tests/offline-pair.mjs && node tests/offline-pair-online.mjs && node tests/offline-handover.mjs && node tests/control-ui.mjs && node tests/layout.mjs && node tests/offline.mjs && node tests/phone.mjs && node tests/phone-screen.mjs && node tests/record-latency.mjs && node tests/modulation.mjs && node tests/midi-audio.mjs && node tests/vision.mjs",
+    "test": "node tests/smoke.mjs && node tests/handover.mjs && node tests/standalone.mjs && node tests/offline-pair.mjs && node tests/offline-pair-online.mjs && node tests/offline-handover.mjs && node tests/control-ui.mjs && node tests/layout.mjs && node tests/offline.mjs && node tests/phone.mjs && node tests/phone-screen.mjs && node tests/record-latency.mjs && node tests/running-order.mjs && node tests/modulation.mjs && node tests/midi-audio.mjs && node tests/vision.mjs",
     "test:smoke": "node tests/smoke.mjs"
   },
   "dependencies": {

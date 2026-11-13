@@ -2,20 +2,29 @@
 
 ## 2026-11-13 (third session)
 
-**Where things stand.** Three things were built this session and all are
+**Where things stand.** Four things were built this session and all are
 live on GitHub Pages from `main`: the output window is optional (`/control`
 runs the whole instrument by itself); the phone can be paired with no
-internet, by QR code both ways ("Pair without internet"); and the phone's
-live screen was rebuilt around a large horizontal preview. All fifteen test
-suites pass in headless Chromium. The phone screen's last rework and the
-Freeze fix have not been tried on the real iPhone yet.
+internet, by QR code both ways ("Pair without internet"); the phone's live
+screen was rebuilt around a large horizontal preview; and there is a running
+order (steps that point at presets, on the preset strip). All sixteen test
+suites pass in headless Chromium. The phone screen's last rework, the Freeze
+fix and the running order have not been tried on the real iPhone yet.
 
 **Next step.** On the real iPhone, with every page reloaded: hold the phone
 upright and on its side and check the picture on the Mac and in the preview
 is horizontal with the world the right way up, then tap Freeze twice (it
-should freeze, light up, and release).
+should freeze, light up, and release). Then add a few steps with **+** on the
+preset strip and check the phone's six buttons show them.
 
 **Decisions only you can make.**
+
+- Try the running order and say what is missing. Left out of this first
+  version on purpose: several named shows (there is one running order),
+  steps timed against an audio track, and the phone reaching steps beyond
+  the sixth. The three designs it was chosen from are at
+  https://claude.ai/artifact/SiD1F7P89JLwXeC31BKhz4 (you chose A, the strip,
+  with "Next returns to the step you left").
 
 - Say whether the browser-tab icon is good enough. You kept option D2 (the
   camera) after saying it is hard to read at tab size; seven bolder
@@ -232,17 +241,25 @@ Three static pages built by Vite, no framework.
 | Path | What lives there |
 | --- | --- |
 | `src/engine/` | Everything live: the WebGL2 pipeline (`pipeline.js`), inputs, the host side of the phone link (`remote.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop. It runs in `/output` while an output window is open, otherwise in `/control` |
-| `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js`, `edit.js` (+ `chain.js`, `mod-panel.js`), and the Setup panels. `host.js` decides which window hosts the engine and owns the monitor canvas. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts |
+| `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js` (+ `strip.js`, the strip of presets and the running order), `edit.js` (+ `chain.js`, `mod-panel.js`), and the Setup panels. `host.js` decides which window hosts the engine and owns the monitor canvas. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts |
 | `src/phone/` | The iPhone page: `main.js`, `link.js` (reconnect watchdog, direct links), `sensors.js` (motion, the XY pad, triggers, presets), `camera-controls.js`, `orient.js` (page angle, the Rotate turn), `widgets.js` (the fader) |
-| `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js`, `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `direct.js` (pairing with no server), `qr.js`, `sources.js`, `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; the engine forwards them to the phone) |
+| `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js` (presets, each with a permanent id, and the running order: `loadOrder`, `orderView`, `applyStep`, `stepShow`), `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `direct.js` (pairing with no server), `qr.js`, `sources.js`, `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; the engine forwards them to the phone) |
 | `src/effects/` | One file per effect; `index.js` is the registry, `common.glsl.js` the shared GLSL |
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon, option D2 from the sheet at https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo) |
 | `design/` | `third-eye-icons.html`: the icon options shown to the owner (a page for a browser, not part of the site) |
-| `tests/` | Fifteen headless suites and `lib.mjs` |
+| `tests/` | Sixteen headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 
+- **A step of the running order points at a preset by id, never by place.**
+  Presets are still addressed by index everywhere else (`presetIndex`,
+  `preset:3`), so anything that creates a preset must give it an id
+  (`snapshotPreset` does; `loadPresets` mints and saves ids for old data).
+  Where the order is at lives in the shared state (`order: { cue, off }`),
+  not in `/control`, because the engine steps it with `/control` closed. A
+  `scene` op with `cue` moves the order; one with `offList` (a preset loaded
+  by hand, via `applyPreset`) leaves it where it was and marks it off.
 - **Whichever window hosts the engine owns everything live**: video, the
   phone connection, MIDI, audio, vision, recording. The output window hosts
   it when open, `/control` otherwise. Only one engine may run per browser:

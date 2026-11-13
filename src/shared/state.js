@@ -98,6 +98,9 @@ export function defaultState() {
       recFormat: 'webm',
     },
     presetIndex: -1,
+    // The running order: which step it is at (-1 = not started), and whether
+    // a preset picked by hand has taken the picture off the list meanwhile.
+    order: { cue: -1, off: false },
     actions: defaultActions(),
     ...defaultScene(),
   };
@@ -205,9 +208,11 @@ export function sanitizeState(raw) {
     vision: { ...base.vision, ...pick(raw.vision, base.vision) },
     globals: { ...base.globals, ...pick(raw.globals, base.globals) },
     presetIndex: Number.isInteger(raw.presetIndex) ? raw.presetIndex : -1,
+    order: { ...base.order, ...pick(raw.order, base.order) },
     actions: sanitizeActions(raw.actions, base.actions),
     ...(Array.isArray(raw.chain) ? sanitizeScene(raw) : defaultScene()),
   };
+  if (!Number.isInteger(state.order.cue) || state.order.cue < -1) state.order.cue = -1;
   if (!INPUT_KINDS.includes(state.input.kind)) state.input.kind = 'pattern';
   if (!CODECS[state.net.codec]) state.net.codec = DEFAULT_CODEC;
   state.tempo.bpm = clamp(Number(state.tempo.bpm) || 120, 30, 300);

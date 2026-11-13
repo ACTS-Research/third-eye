@@ -1,13 +1,14 @@
 // The perform screen: panic controls, the monitor, eight faders for the
-// current preset, and the preset strip. Everything here is MIDI-mappable.
+// current preset, and the strip of presets and the running order (strip.js).
+// Everything here is MIDI-mappable.
 
 import { runAction } from '../shared/actions.js';
 import { macroUnit, macroValue, resolveMacros } from '../shared/macros.js';
-import { applyPreset } from '../shared/presets.js';
 import { describeSource } from '../shared/sources.js';
 import { INPUT_KINDS, INPUT_LABELS } from '../shared/state.js';
 import { el } from '../shared/util.js';
 import { attachPreview } from './preview.js';
+import { mountStrip } from './strip.js';
 
 function format(value, step) {
   const digits = step >= 1 ? 0 : step >= 0.1 ? 1 : step >= 0.01 ? 2 : 3;
@@ -193,60 +194,9 @@ export function mountPerform(root, ui) {
   const side = el('aside', { class: 'side', 'aria-label': 'Faders' }, [el('div', { class: 'side-head' }, [el('span', { text: 'Faders' }), presetName]), faderGrid, faderNote, mini]);
 
   // ------------------------------------------------------ preset strip ---
-  const tiles = el('div', { class: 'tiles' });
-  let dragFrom = -1;
-
-  function buildTiles() {
-    tiles.replaceChildren();
-    presets.list.forEach((p, i) => {
-      const fade = p.fade ?? store.state.globals.fadeTime;
-      const tile = el('div', { class: `tile${i === presets.current ? ' on' : ''}`, draggable: true, 'data-index': String(i) }, [
-        el('button', { class: 'load', 'data-midi': `preset:${i}`, title: `Load with a ${fade.toFixed(1)} s fade. Drag to reorder.`, onclick: () => applyPreset(store, i) }, [
-          el('span', { class: 'num', text: String(i + 1) }),
-          el('span', { class: 'name', text: p.name }),
-        ]),
-        el('button', { class: 'edit', text: 'Edit', 'aria-label': `Edit preset ${i + 1}, ${p.name}`, onclick: () => ui.editPreset(i) }),
-      ]);
-      tile.addEventListener('dragstart', (e) => {
-        dragFrom = i;
-        tile.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', String(i));
-      });
-      tile.addEventListener('dragend', () => {
-        dragFrom = -1;
-        for (const t of tiles.children) t.classList.remove('dragging', 'drop-here');
-      });
-      tile.addEventListener('dragover', (e) => {
-        if (dragFrom < 0) return;
-        e.preventDefault();
-        tile.classList.toggle('drop-here', dragFrom !== i);
-      });
-      tile.addEventListener('dragleave', () => tile.classList.remove('drop-here'));
-      tile.addEventListener('drop', (e) => {
-        e.preventDefault();
-        if (dragFrom >= 0) presets.move(dragFrom, i);
-      });
-      tiles.append(tile);
-    });
-    tiles.append(
-      el('div', { class: 'tile new' }, [
-        el('button', { class: 'load', text: 'Save as new preset', title: 'Keeps what is live now as a new preset', onclick: () => ui.editPreset(presets.addFromLive()) }),
-      ]),
-    );
+  const { root: strip, build: buildTiles } = mountStrip(ui, () => {
     presetName.textContent = presets.list[presets.current]?.name ?? 'Unsaved';
-    ui.midiMap?.refresh();
-  }
-
-  const strip = el('footer', { class: 'strip', 'aria-label': 'Presets' }, [
-    el('div', { class: 'strip-head' }, [
-      el('span', { class: 'caps', text: 'Presets' }),
-      el('button', { 'data-midi': 'presetPrev', onclick: () => runAction(store, 'presetPrev') }, ['[ Prev']),
-      el('button', { 'data-midi': 'presetNext', onclick: () => runAction(store, 'presetNext') }, ['Next ]']),
-      el('span', { class: 'dim small', style: 'margin-left:auto', text: 'Click to load, drag to reorder' }),
-    ]),
-    tiles,
-  ]);
+  });
 
   // --------------------------------------------------------------- sync ---
   function syncState() {
@@ -276,7 +226,6 @@ export function mountPerform(root, ui) {
     glitch.classList.add('on');
     setTimeout(() => glitch.classList.remove('on'), 300);
   });
-  presets.onChange(buildTiles);
   ui.onStatus(syncMonitor);
   ui.onHost(syncMonitor);
 

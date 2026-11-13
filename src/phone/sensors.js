@@ -152,25 +152,29 @@ export class Sensors {
     });
   }
 
-  // Six preset buttons, all on screen: the first six presets, the live one
-  // lit. (Presets beyond the sixth are loaded from the Mac.)
+  // Six buttons, all on screen. With a running order on the Mac they are
+  // its first six steps (the live one lit, the one Next would load dashed);
+  // without one, the first six presets. The rest are reached from the Mac.
   mountPresets(root, onPick) {
     root.classList.add('bank');
     this.presetGrid = root;
     this.presetCount = 0;
+    this.presetOrder = false;
     root.addEventListener('click', (e) => {
       const b = e.target.closest('.preset');
-      if (b && !b.disabled) onPick(Number(b.dataset.index));
+      if (b && !b.disabled) onPick(Number(b.dataset.index), this.presetOrder);
     });
   }
 
-  setPresets(names, current) {
+  setPresets(names, current, next = -1, order = false) {
     if (!this.presetGrid) return;
     this.presetCount = names.length;
+    this.presetOrder = order;
     this.presetGrid.replaceChildren(
       ...Array.from({ length: BANK }, (_, i) => {
         const has = i < names.length;
-        return el('button', { class: `preset${i === current ? ' on' : ''}`, 'data-index': String(i), disabled: !has }, has ? [el('span', { class: 'lbl' }, [el('b', { text: String(i + 1) }), el('span', { class: 'pname', text: names[i] })])] : []);
+        const cls = `preset${i === current ? ' on' : ''}${i === next && i !== current ? ' next' : ''}`;
+        return el('button', { class: cls, 'data-index': String(i), disabled: !has }, has ? [el('span', { class: 'lbl' }, [el('b', { text: String(i + 1) }), el('span', { class: 'pname', text: names[i] })])] : []);
       }),
     );
     this.setTriggerLabels(null);

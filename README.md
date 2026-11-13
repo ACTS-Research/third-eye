@@ -100,7 +100,7 @@ npm run preview
 
 | Screen | For |
 | --- | --- |
-| **Perform** | The show: panic buttons, input select, the monitor, eight faders for the live preset, and the preset strip |
+| **Perform** | The show: panic buttons, input select, the monitor, eight faders for the live preset, and the strip of presets and the running order |
 | **Edit** | One preset: its name, fade-in time, effects chain, pinned faders and modulation |
 | **Setup** | Everything done once beforehand: output window, inputs, pairing, MIDI, audio, vision, triggers, preset files |
 
@@ -192,7 +192,7 @@ to use the whole sensor.
 | --- | --- |
 | The preview | The picture the Mac shows. It is also the XY pad: a finger on the picture moves the dot, giving two modulation sources plus "pad touched" |
 | Triggers | Labelled with whatever action they are bound to. **Freeze** is a switch, as on the control page: tap to freeze, tap again to release, and the button stays lit meanwhile. A trigger bound to previous or next preset is left out: the preset buttons do that job |
-| Presets | The first six presets, all on screen, the live one lit. Tap to load one. Later presets are loaded from the Mac |
+| The six buttons | With a running order on the Mac, its first six steps: the live one lit, the one Next would load dashed. Without one, the first six presets, the live one lit. Tap to load one. Later steps or presets are loaded from the Mac |
 | The three icons | Flip between the front and rear camera; torch; lock the white balance. Torch and the lock appear only when the camera offers them |
 | Zoom | The bare bar down the right, when the camera offers zoom |
 | Rotate (the circling arrow, top right) | Turns the picture a quarter turn, on the Mac and in the preview, each time it is pressed |
@@ -346,8 +346,8 @@ They work in both `/control` and `/output` (not while typing in a text field).
 | `Space` | Freeze frame: holds the current input frame; effects keep running on it |
 | `X` | Bypass all effects |
 | `G` | Glitch burst |
-| `]` or `→` | Next preset, with crossfade |
-| `[` or `←` | Previous preset, with crossfade |
+| `]` or `→` | Next step of the running order, with crossfade; next preset when there is no running order |
+| `[` or `←` | Previous step, or previous preset |
 | `1` | Input: iPhone |
 | `2` | Input: local camera |
 | `3` | Input: test pattern |
@@ -457,6 +457,29 @@ every preset to one JSON file and imports such files (added at the end;
 unknown effects are dropped and out-of-range values clamped). Presets live in
 the browser's local storage; export them to keep a copy.
 
+**The running order** is a list of steps for a show. Each step points at a
+preset, so one preset can come round as often as the show needs, and editing
+the preset changes every step that uses it. It is optional: with no steps the
+strip is the plain preset strip and none of this applies.
+
+- **Build it.** On a preset tile, **+** adds that preset to the end of the
+  running order. From the first step on, the strip has a switch: **Running
+  order** and **All presets**.
+- **Arrange it.** In Running order, drag a step to move it and **×** to take it
+  out (the preset is kept). **Note** opens the step's note (a line of text
+  shown on the tile) and a fade time of its own; left blank, the step uses
+  its preset's.
+- **Play it.** **Next** and **Prev** (`]` and `[`, a MIDI pad, a phone trigger)
+  walk the steps and stop at either end. The live step is lit and the one
+  Next will load has a dashed outline; the line at the right of the strip
+  says the same in words, with the next step's note.
+- **Leave it and come back.** Load any preset by hand (from All presets, a
+  MIDI pad, or the Edit screen) and the running order keeps its place: the
+  step you left is marked **Return**, and Next or Prev goes back to it.
+- **Keep it.** There is one running order. It lives in the browser's local
+  storage beside the presets, and **Export presets** writes it into the same
+  file. Importing a file that has one asks before replacing yours.
+
 **Tempo.** Tap `T` (or the **Tap** button, or a MIDI pad mapped to it) in
 time, at least twice; the last eight taps are averaged, and the button blinks
 on the beat. A single tap just moves the downbeat. The BPM can also be typed
@@ -483,7 +506,8 @@ move with it when the output window opens or closes.
 that can be mapped is outlined:
 
 - the panic buttons, the four input buttons, previous / next preset
-- every preset tile (a pad per preset; the pad stays with the slot)
+- every preset tile (a pad per preset; the pad stays with the slot) and every
+  step of the running order (a pad per step number)
 - the eight perform faders (the knob moves the parameter itself, so the
   on-screen fader follows the hardware, whatever preset is live)
 - any effect parameter: on the Edit screen, touch its slider
@@ -751,6 +775,7 @@ npm test
 | `tests/phone.mjs` | Real WebRTC against a local PeerServer: pairing, live video, palette and dimmer following live, the room-code strip clearing once the phone pairs, hold on stall, every reconnect path, a second output window, a taken room code, Restart output, local camera |
 | `tests/record-latency.mjs` | Recording to WebM and MP4, saving and deleting; the latency measurement, including a stray late flash; switching codec |
 | `tests/phone-screen.mjs` | The phone's live screen in both layouts: the horizontal preview that is also the XY pad, triggers, six presets numbered across then down, the camera icons, the bare zoom bar, Freeze as a switch (including two quick taps and a session saved with the old hold setting), Rotate, upright frames staying upright on the Mac, messages that leave the preview alone, Reconnect, the remembered room, scanning the Mac's code inside the page |
+| `tests/running-order.mjs` | The running order: building it with +, Next and Prev, the same preset twice, going off the list and returning, notes and fades, dragging and removing steps, deleting a preset that steps use, the phone's six buttons following it, the export file, stepping with `/control` closed and with no output window |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |

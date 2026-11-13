@@ -166,6 +166,8 @@ button.icon svg { width: 22px; height: 22px; }
 .preset b { font: 800 24px/1 var(--display); }
 .preset .pname { font-size: 9px; line-height: 1.1; letter-spacing: 0.04em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .preset.on { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
+/* The step of the running order that Next would load. */
+.preset.next { border: 2px dashed var(--ink); }
 .bank:empty::after { content: 'Presets appear here once the Mac is linked.'; grid-column: 1 / -1; color: var(--dim); font-size: 12px; align-self: center; text-transform: none; }
 #quick { flex: none; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; height: 36px; }
 #quick button { height: 100%; }

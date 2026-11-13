@@ -103,7 +103,7 @@ async function start() {
   $('stage').classList.toggle('off', app.controllerOnly);
   sensors.mountPad($('stage'));
   sensors.mountTriggers($('trigs'));
-  sensors.mountPresets($('presets'), (index) => app.link?.send({ t: 'preset', index }));
+  sensors.mountPresets($('presets'), (index, order) => app.link?.send({ t: 'preset', index, order }));
   layout();
 
   app.link = new HostLink({
@@ -118,7 +118,7 @@ async function start() {
     onMessage: (msg) => {
       if (msg.t === 'presets') greeted = true;
       if (msg.t === 'labels') sensors.setTriggerLabels(msg.triggers ?? [], msg.actions ?? [], msg.on ?? []);
-      else if (msg.t === 'presets') sensors.setPresets(msg.names ?? [], msg.current);
+      else if (msg.t === 'presets') sensors.setPresets(msg.names ?? [], msg.current, msg.next ?? -1, !!msg.order);
       else if (msg.t === 'look') {
         applyPalette(msg.palette, { save: false });
         applyDim(msg.dim, { save: false });

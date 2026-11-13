@@ -9,7 +9,7 @@ import { AudioInput } from './audio.js';
 import { LocalCamera } from './camera.js';
 import { MidiInput } from './midi.js';
 import { TOGGLE_ACTIONS, describeAction } from '../shared/actions.js';
-import { PRESETS_KEY, applyPreset, loadPresets } from '../shared/presets.js';
+import { ORDER_KEY, PRESETS_KEY, applyPreset, applyStep, loadPresets, orderView } from '../shared/presets.js';
 import { macroUnit, resolveMacros } from '../shared/macros.js';
 import { randomRoom } from '../shared/net.js';
 import { TRIGGER_COUNT } from '../shared/protocol.js';
@@ -92,7 +92,7 @@ export class Engine {
     window.addEventListener('storage', (e) => {
       if (e.key === LOOK_KEYS.palette || e.key === LOOK_KEYS.dim) this.sendLook();
       // Presets edited in /control (another window): the phone's row follows.
-      else if (e.key === PRESETS_KEY) this.sendPresets();
+      else if (e.key === PRESETS_KEY || e.key === ORDER_KEY) this.sendPresets();
     });
     this.link.getCodec = () => this.store.state.net.codec;
     this.link.onRoomTaken = () => {
@@ -275,6 +275,8 @@ export class Engine {
           if ('codec' in op.patch) this.link.send({ t: 'config', codec: state.net.codec });
         } else if (op.key === 'midi' || op.key === 'audio' || op.key === 'vision') {
           this.housekeeping();
+        } else if (op.key === 'order') {
+          this.sendPresets();
         } else if (op.key === 'globals') {
           if ('renderScale' in op.patch) this.applySize();
           if (Object.keys(TOGGLE_ACTIONS).some((key) => key in op.patch)) this.sendTriggerLabels();
@@ -312,13 +314,26 @@ export class Engine {
   onPhoneMessage(msg) {
     if (msg?.t === 'hello') return this.greetPhone();
     if (msg?.t === 'intro-answer') this.bus.send('intro-answer', { to: msg.to, token: msg.token });
-    // A preset button on the phone.
-    else if (msg?.t === 'preset' && Number.isInteger(msg.index) && this.running) applyPreset(this.store, msg.index);
+    // One of the six buttons on the phone: a step of the running order when
+    // that is what the phone was showing, a preset otherwise. (If the two
+    // disagree the list changed under the phone's thumb: show it again. A
+    // phone page from before the running order does not say which; it is
+    // showing whatever was sent last, so take that.)
+    else if (msg?.t === 'preset' && Number.isInteger(msg.index) && this.running) {
+      const steps = orderView(this.store.state).steps.length > 0;
+      if ((msg.order ?? steps) !== steps) this.sendPresets();
+      else if (steps) applyStep(this.store, msg.index);
+      else applyPreset(this.store, msg.index);
+    }
   }
 
-  // The phone shows a row of preset buttons: their names, and which is live.
+  // The phone shows six buttons: the steps of the running order when there
+  // is one (the live step, and the one Next would load), the presets if not.
   sendPresets() {
-    this.link.send({ t: 'presets', names: loadPresets().map((p) => p.name), current: this.store.state.presetIndex });
+    const presets = loadPresets();
+    const { steps, live, next } = orderView(this.store.state, presets);
+    if (steps.length) this.link.send({ t: 'presets', order: true, names: steps.map((s) => s.name), current: live, next });
+    else this.link.send({ t: 'presets', order: false, names: presets.map((p) => p.name), current: this.store.state.presetIndex, next: -1 });
   }
 
   // The phone's Rotate button turns the picture a quarter turn at a time.

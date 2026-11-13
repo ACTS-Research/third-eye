@@ -38,6 +38,9 @@ export function mountModPanel(roots, ui) {
     (ui.presets?.list ?? []).forEach((p, i) => {
       out[`preset:${i}`] = `Preset ${i + 1}: ${p.name}`;
     });
+    (ui.presets?.order.steps ?? []).forEach((step, i) => {
+      out[`step:${i}`] = `Step ${i + 1}: ${step.name}`;
+    });
     for (let i = 0; i < MACRO_COUNT; i++) out[`macro:${i}`] = `Fader ${i + 1} (continuous)`;
     return out;
   }
