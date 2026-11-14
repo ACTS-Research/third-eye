@@ -19,14 +19,11 @@ preset strip and check the phone's six buttons show them.
 
 **Decisions only you can make.**
 
-- Reminder you asked for on 14 November: make the phone's six buttons follow
-  along as you step through the running order (today they show steps 1–6
-  only, so a longer show runs off the end of the phone). Say go when you
-  want it built.
 - Try the running order and say what is missing. Left out of this first
   version on purpose: several named shows (there is one running order),
-  steps timed against an audio track, and the phone reaching steps beyond
-  the sixth. The three designs it was chosen from are at
+  and steps timed against an audio track. (Since 14 November the phone's
+  six buttons follow the show: `sendPresets` in `engine.js` sends the steps
+  from one before the live step.) The three designs it was chosen from are at
   https://claude.ai/artifact/SiD1F7P89JLwXeC31BKhz4 (you chose A, the strip,
   with "Next returns to the step you left").
 

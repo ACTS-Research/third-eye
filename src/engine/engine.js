@@ -24,6 +24,9 @@ import { PhoneLink } from './remote.js';
 import { Tempo } from './tempo.js';
 import { Vision } from './vision.js';
 
+// How many buttons the phone has for presets or steps.
+const PHONE_BANK = 6;
+
 const MAX_EDGE = 4096;
 const GLITCH_MS = 450;
 const STALL_MS = 1000;
@@ -322,18 +325,30 @@ export class Engine {
     else if (msg?.t === 'preset' && Number.isInteger(msg.index) && this.running) {
       const steps = orderView(this.store.state).steps.length > 0;
       if ((msg.order ?? steps) !== steps) this.sendPresets();
-      else if (steps) applyStep(this.store, msg.index);
+      // (A phone page from before the buttons followed the order counts
+      // from the first button it was shown.)
+      else if (steps) applyStep(this.store, msg.abs ? msg.index : msg.index + (this.bankStart ?? 0));
       else applyPreset(this.store, msg.index);
     }
   }
 
-  // The phone shows six buttons: the steps of the running order when there
-  // is one (the live step, and the one Next would load), the presets if not.
+  // The phone shows six buttons. With a running order they are the steps
+  // around where the show is, moving as it moves, so the next step is always
+  // under the thumb: the step before the one the order is at, that one, and
+  // the four after it. (Six steps or fewer all fit and never move.) Without
+  // a running order they are the first six presets.
   sendPresets() {
     const presets = loadPresets();
-    const { steps, live, next } = orderView(this.store.state, presets);
-    if (steps.length) this.link.send({ t: 'presets', order: true, names: steps.map((s) => s.name), current: live, next });
-    else this.link.send({ t: 'presets', order: false, names: presets.map((p) => p.name), current: this.store.state.presetIndex, next: -1 });
+    const { steps, cue, live, next } = orderView(this.store.state, presets);
+    if (steps.length) {
+      const start = steps.length > PHONE_BANK ? Math.max(0, cue - 1) : 0;
+      this.bankStart = start;
+      const at = (i) => (i >= start && i < start + PHONE_BANK ? i - start : -1);
+      this.link.send({ t: 'presets', order: true, start, names: steps.slice(start, start + PHONE_BANK).map((s) => s.name), current: at(live), next: at(next) });
+    } else {
+      this.bankStart = 0;
+      this.link.send({ t: 'presets', order: false, start: 0, names: presets.map((p) => p.name), current: this.store.state.presetIndex, next: -1 });
+    }
   }
 
   // The phone's Rotate button turns the picture a quarter turn at a time.

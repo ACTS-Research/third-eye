@@ -25,7 +25,7 @@ try {
   };
   const stepNames = () => control.locator('.tile.step .name').allTextContents();
   const statusText = () => control.locator('#strip-status').textContent();
-  const buttons = () => phone.evaluate(() => [...document.querySelectorAll('#presets .preset')].map((b) => ({ name: b.querySelector('.pname')?.textContent ?? '', on: b.classList.contains('on'), next: b.classList.contains('next'), off: b.disabled })));
+  const buttons = () => phone.evaluate(() => [...document.querySelectorAll('#presets .preset')].map((b) => ({ n: b.querySelector('b')?.textContent ?? '', name: b.querySelector('.pname')?.textContent ?? '', on: b.classList.contains('on'), next: b.classList.contains('next'), off: b.disabled })));
   const tap = (i) => phone.locator('#presets .preset').nth(i).dispatchEvent('click');
 
   console.log('with no running order the strip is the preset strip');
@@ -144,6 +144,32 @@ try {
   check('an import adds its presets and, when asked, takes its order', await settle(async () => (await stepNames()).join() === 'One,Two,One' && (await mac(() => window.thirdEye.ui.presets.list.length)) === before + 2, 'imported'), (await stepNames()).join());
   check('its note came too and the order starts over', (await control.locator('.tile.step').nth(0).locator('.note').textContent()) === 'Open' && (await order()).cue === -1);
   check('a file without presets ids still gets them here', await mac(() => window.thirdEye.ui.presets.list.every((p) => typeof p.id === 'string' && p.id.length >= 3)));
+
+  console.log('a show longer than the phone has buttons');
+  await mac(() => {
+    const { presets } = window.thirdEye.ui;
+    for (let i = 0; i < 7; i++) presets.addStep(i % presets.list.length);
+  });
+  const numbers = async () => (await buttons()).map((b) => b.n).join();
+  check('ten steps: before the start the phone shows 1 to 6', await settle(async () => (await numbers()) === '1,2,3,4,5,6', 'first six'), await numbers());
+  for (let i = 0; i < 4; i++) await control.keyboard.press(']');
+  check('on step 4 it shows 3 to 8, the live step second and the next one third', await settle(async () => {
+    const b = await buttons();
+    return (await numbers()) === '3,4,5,6,7,8' && b[1].on && b[2].next && !b[0].on;
+  }, 'window moved'), JSON.stringify((await buttons()).map((b) => [b.n, b.on, b.next])));
+  await tap(4);
+  check('a button means the step written on it (7)', await settle(() => at(6, false), 'step 7'), JSON.stringify(await order()));
+  check('and the buttons move on: 6 to 10, one left empty', await settle(async () => {
+    const b = await buttons();
+    return (await numbers()) === '6,7,8,9,10,' && b[1].on && b[5].off;
+  }, 'near the end'), await numbers());
+  for (let i = 0; i < 3; i++) await control.keyboard.press(']');
+  check('on the last step it shows 9 and 10', await settle(async () => (await numbers()) === '9,10,,,,' && (await buttons())[1].on, 'the end'), await numbers());
+  await mac(() => {
+    const { presets } = window.thirdEye.ui;
+    presets.setSteps(presets.steps.slice(0, 3));
+  });
+  check('six steps or fewer all fit and stay put', await settle(async () => (await numbers()) === '1,2,3,,,', 'short again'), await numbers());
 
   console.log('with /control closed');
   await control.close();

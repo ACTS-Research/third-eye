@@ -193,7 +193,7 @@ to use the whole sensor.
 | --- | --- |
 | The preview | The picture the Mac shows. It is also the XY pad: a finger on the picture moves the dot, giving two modulation sources plus "pad touched" |
 | Triggers | Labelled with whatever action they are bound to. **Freeze** is a switch, as on the control page: tap to freeze, tap again to release, and the button stays lit meanwhile. A trigger bound to previous or next preset is left out: the preset buttons do that job |
-| The six buttons | With a running order on the Mac, its first six steps: the live one lit, the one Next would load dashed. Without one, the first six presets, the live one lit. Tap to load one. Later steps or presets are loaded from the Mac |
+| The six buttons | With a running order on the Mac, its steps: the live one lit, the one Next would load dashed. A show of more than six steps moves through the buttons as it goes: they show the step before the live one, the live one (second button) and the four after it, each with its own step number, so the next step is always the third button. Without a running order, the first six presets, the live one lit; later presets are loaded from the Mac. Tap to load one |
 | The three icons | Flip between the front and rear camera; torch; lock the white balance. Torch and the lock appear only when the camera offers them |
 | Zoom | The bare bar down the right, when the camera offers zoom |
 | Rotate (the circling arrow, top right) | Turns the picture a quarter turn, on the Mac and in the preview, each time it is pressed |
