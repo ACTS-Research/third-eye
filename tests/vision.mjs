@@ -142,6 +142,7 @@ try {
     check('face sources get meters on control', await s.settle(() => s.control.evaluate(() => !!document.querySelector('.meter[title="face.smile"]')), 'meters', 5000));
 
     // Invert colours on: nothing / everything / person only / background only.
+    let before = null;
     const setTarget = async (target, bypass = false) => {
       await s.control.evaluate(({ target, bypass }) => {
         const { store } = window.thirdEye;
@@ -152,13 +153,39 @@ try {
         }
         store.patchItem('chain', store.state.chain[0].uid, { target, bypass });
       }, { target, bypass });
-      await sleep(1200);
-      return pixels(s.output);
+      // The change reaches the output when it reaches it: on a slow machine
+      // that can be well over a second. Wait until the picture is no longer
+      // the one before the change, then let it settle.
+      const start = Date.now();
+      await sleep(600);
+      while (before && Date.now() - start < 10000 && changedFraction(before, await pixels(s.output)) < 0.05) await sleep(300);
+      await sleep(600);
+      // A mask counts as fresh for 1.5 s. On a real Mac a new one arrives
+      // many times a second; here a pass takes about a second on the CPU and
+      // sometimes longer, and a picture read in such a gap has no mask (the
+      // effect then covers everything). Read one drawn with a mask.
+      return s.output.evaluate(async () => {
+        const { gl, pipeline, vision } = window.thirdEye.engine;
+        const until = performance.now() + 30000;
+        // A mask that has just arrived, then two frames drawn with it.
+        while (performance.now() - vision.maskAt > 400 && performance.now() < until) await new Promise((r) => setTimeout(r, 20));
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const { w, h } = pipeline.preview;
+        const px = new Uint8Array(w * h * 4);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, pipeline.preview.fbo);
+        gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        return Array.from(px);
+      });
     };
-    const clean = await setTarget('all', true);
-    const all = await setTarget('all');
-    const person = await setTarget('person');
-    const background = await setTarget('background');
+    const setTargetAfter = async (previous, target, bypass) => {
+      before = previous;
+      return setTarget(target, bypass);
+    };
+    const clean = await setTargetAfter(null, 'all', true);
+    const all = await setTargetAfter(clean, 'all');
+    const person = await setTargetAfter(all, 'person');
+    const background = await setTargetAfter(person, 'background');
     const fAll = changedFraction(clean, all);
     const fPerson = changedFraction(clean, person);
     const fBackground = changedFraction(clean, background);

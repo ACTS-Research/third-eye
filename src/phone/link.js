@@ -17,6 +17,12 @@ const TICK_MS = 1000;
 const RETRY_MS = 2500;
 const CONNECT_TIMEOUT_MS = 9000;
 const MAX_PENDING = 4;
+// The Mac answers a ping every second. This long without a word from it and
+// the link is dead, whatever the browser says about the connection.
+const SILENT_MS = 6000;
+// A direct link cannot be rebuilt without a new handshake, so it is given
+// longer before the pairing server is tried instead.
+const DIRECT_SILENT_MS = 10000;
 
 function pcState(connection) {
   return connection?.peerConnection?.connectionState ?? 'new';
@@ -56,7 +62,30 @@ export class HostLink {
     this.pendings = new Map(); // direct links not yet in use, by handshake id
     this.introduced = new Set(); // offers already answered
     this.direct = false; // the link in use is a direct one
+    this.heardAt = 0; // when the Mac last said anything on the link in use
+    this.silent = false; // the link is open but the Mac has stopped answering
+    this.notFound = false; // nothing is registered under this room code
+    this.misses = 0; // data connections in a row that never opened
     this.timer = 0;
+  }
+
+  // Joins another room (the code on the Mac changed, or it is another Mac).
+  // Whatever link there was is dropped.
+  setRoom(room, signal = this.signalUrl) {
+    this.hostId = hostPeerId(room);
+    this.signalUrl = signal;
+    this.directFirst = false;
+    this.dropCall();
+    this.dropConn();
+    this.restart();
+  }
+
+  // The page was asleep (Safari in the background, the phone locked): the
+  // clock ran on but nothing could be heard, so start counting silence afresh.
+  awake() {
+    this.heardAt = performance.now();
+    this.tickedAt = this.heardAt;
+    this.tick();
   }
 
   start() {
@@ -92,8 +121,15 @@ export class HostLink {
     });
     peer.on('error', (err) => {
       if (peer !== this.peer) return;
-      if (err.type === 'peer-unavailable') this.error = 'Mac not found. Is the control page open on the Mac, and is the room code right?';
-      else this.error = `Signaling: ${err.type ?? err}`;
+      if (err.type === 'peer-unavailable') {
+        this.error = 'Mac not found. Is the control page open on the Mac, and is the room code right?';
+        this.notFound = true;
+        // That attempt will never open: let the next one start on time
+        // instead of waiting for this one to time out.
+        if (this.conn && !this.conn.open && !this.conn.direct) this.dropConn();
+      } else {
+        this.error = `Signaling: ${err.type ?? err}`;
+      }
       this.changed();
     });
   }
@@ -104,6 +140,8 @@ export class HostLink {
     this.makePeer();
     this.connTriedAt = -1e9;
     this.callTriedAt = -1e9;
+    this.misses = 0;
+    this.notFound = false;
     this.changed();
   }
 
@@ -262,6 +300,10 @@ export class HostLink {
     conn.on('open', () => {
       if (conn !== this.conn) return;
       this.error = '';
+      this.notFound = false;
+      this.misses = 0;
+      this.heardAt = performance.now();
+      this.silent = false;
       this.onDataOpen?.(conn);
       this.changed();
       this.tick();
@@ -276,6 +318,8 @@ export class HostLink {
 
   onData(conn, msg) {
     if (conn !== this.conn || !msg) return;
+    this.heardAt = performance.now();
+    this.silent = false;
     if (msg.t === 'pong') this.rttMs = performance.now() - msg.ts;
     else if (msg.t === 'config') this.setCodec(msg.codec);
     else if (msg.t === 'host') this.onHostSession(msg.session);
@@ -364,6 +408,10 @@ export class HostLink {
     this.connBadSince = 0;
     this.callBadSince = 0;
     this.error = '';
+    this.notFound = false;
+    this.misses = 0;
+    this.heardAt = performance.now();
+    this.silent = false;
     p.pc.addEventListener('connectionstatechange', () => this.changed());
     const track = this.stream?.getVideoTracks()[0];
     if (track && p.video) {
@@ -423,6 +471,10 @@ export class HostLink {
 
   tick() {
     const now = performance.now();
+    // Ticks that stopped for a while mean the page was asleep. Nothing could
+    // be heard meanwhile, so that time does not count as silence.
+    if (now - (this.tickedAt ?? now) > 3 * TICK_MS) this.heardAt = now;
+    this.tickedAt = now;
     let peer = this.peer;
     if (!peer || peer.destroyed) {
       if (now - this.madeAt > RETRY_MS) this.makePeer();
@@ -436,8 +488,33 @@ export class HostLink {
       }
     }
 
-    if (this.conn && this.isBad(this.conn, this.connTriedAt, 'connBadSince', now)) this.dropConn();
+    if (this.conn && this.isBad(this.conn, this.connTriedAt, 'connBadSince', now)) {
+      // An attempt that hung without ever opening: after two in a row the
+      // signaling side is suspect too (a socket that died quietly while the
+      // phone slept still reads as open), so start that over as well.
+      if (!this.conn.open && !this.conn.direct && !this.notFound && ++this.misses >= 2) {
+        this.misses = 0;
+        this.makePeer();
+        peer = null;
+      } else {
+        this.dropConn();
+      }
+    }
     if (this.call && this.isBad(this.call, this.callTriedAt, 'callBadSince', now)) this.dropCall();
+    // An open link the Mac no longer answers on. One made through the
+    // pairing server is dropped and dialled again at once. A direct one is
+    // kept, in case it recovers, unless the pairing server can be reached:
+    // then that route is tried instead.
+    this.silent = !!this.conn?.open && now - this.heardAt > SILENT_MS;
+    if (this.silent && (!this.direct || (peer?.open && now - this.heardAt > DIRECT_SILENT_MS))) {
+      this.dropCall();
+      this.dropConn();
+      this.silent = false;
+      // The signaling side starts over too: whatever killed the link may
+      // have killed that socket without it showing.
+      this.restart();
+      peer = null;
+    }
     for (const [id, p] of this.pendings) {
       if (['failed', 'closed'].includes(p.pc.connectionState)) {
         p.pc.close();
@@ -456,7 +533,7 @@ export class HostLink {
   get state() {
     const data = this.conn?.open ? 'open' : this.conn ? 'connecting' : 'closed';
     const media = this.call ? pcState(this.call) : 'idle';
-    return { signal: this.signal, data, media, error: this.error, rttMs: this.rttMs, direct: this.direct };
+    return { signal: this.signal, data, media, error: this.error, rttMs: this.rttMs, direct: this.direct, silent: this.silent, notFound: this.notFound };
   }
 
   changed() {

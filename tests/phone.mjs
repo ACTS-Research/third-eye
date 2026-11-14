@@ -201,7 +201,12 @@ try {
   const stranger = await other.newPage();
   await stranger.goto(`${site.url}/output/`);
   await waitFor(() => stranger.evaluate(() => !!window.thirdEye?.store), { label: 'stranger up' });
-  await stranger.evaluate(({ room, signal }) => window.thirdEye.store.merge('net', { room, signal }), { room, signal: peerServer.signalUrl });
+  // (It waits over a minute before giving the code up, in case the
+  // registration is one of its own that is about to clear; not here.)
+  await stranger.evaluate(({ room, signal }) => {
+    window.thirdEye.engine.link.takenWaitMs = 6000;
+    window.thirdEye.store.merge('net', { room, signal });
+  }, { room, signal: peerServer.signalUrl });
   const moved = await waitFor(() => stranger.evaluate((taken) => {
     const st = window.thirdEye.engine.link.status(performance.now());
     return window.thirdEye.store.state.net.room !== taken && st.signal === 'open' ? st.notice : null;

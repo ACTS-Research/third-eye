@@ -24,6 +24,11 @@ const CONNECT_TIMEOUT_MS = 15000;
 // How long after a start "room code taken" is put down to the window that
 // just handed over, and simply tried again.
 const HANDOVER_MS = 4000;
+// How long a room code may read as taken before a new one is made. A
+// registration left behind by a reload or a dropped network is cleared by
+// the pairing server within a minute; a phone on the old code then finds
+// this Mac again by itself, which it never could on a new code.
+const ROOM_TAKEN_MS = 75000;
 
 export class PhoneLink {
   constructor(feed, getNet, onMessage) {
@@ -52,6 +57,7 @@ export class PhoneLink {
     this.pending = null;
     this.direct = false; // the link in use is a direct one
     this.lostDirect = false; // ...and it broke: only a new handshake brings it back
+    this.takenWaitMs = ROOM_TAKEN_MS;
     // Nothing is registered until resume(): the engine decides when.
     this.stopped = true;
     setInterval(() => this.tick(), TICK_MS);
@@ -101,17 +107,19 @@ export class PhoneLink {
           this.handoverRetry = true;
           return;
         }
+        const now = performance.now();
+        if (!this.taken) this.takenSince = now;
         this.taken = true;
-        this.takenCount = (this.takenCount ?? 0) + 1;
         // No other window in this browser holds it (only one hosts the
-        // engine), so it is a stale registration or another computer. Waiting rarely helps: move to a fresh code.
-        if (this.takenCount >= 3) {
-          this.takenCount = 0;
+        // engine), so it is a registration left behind (which clears by
+        // itself) or another computer (which does not).
+        if (now - this.takenSince > this.takenWaitMs) {
+          this.taken = false;
           this.onRoomTaken?.();
           return;
         }
         this.signal = 'error';
-        this.error = 'This room code is held by another window or computer. The phone is talking to that one, not this one. Checking again; if it stays taken a new room code is made automatically.';
+        this.error = 'This room code is still registered from before, or is in use on another computer. Trying again for about a minute; if it stays taken a new room code is made and the phone must scan it.';
       } else if (err.type !== 'peer-unavailable') {
         this.error = err.type ?? String(err);
       }
@@ -182,7 +190,6 @@ export class PhoneLink {
     if (!this.stopped) return;
     this.stopped = false;
     this.taken = false;
-    this.takenCount = 0;
     this.failures = 0;
     this.resumedAt = performance.now();
     // A direct link made while this engine was stopped (an introduction) is
@@ -292,7 +299,6 @@ export class PhoneLink {
     const net = this.getNet();
     if (this.key !== `${net.room}|${net.signal}`) {
       this.taken = false;
-      this.takenCount = 0;
       this.failures = 0;
       this.open();
     }

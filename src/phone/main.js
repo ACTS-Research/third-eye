@@ -216,6 +216,7 @@ function cameraErrorText(err) {
 // has open, so pairing by code again does not need the Camera app and a new
 // tab.
 let scanTimer = 0;
+let scanForLink = false;
 let jsQR = null;
 const scanFrame = document.createElement('canvas');
 
@@ -223,6 +224,7 @@ function stopScan(note = '') {
   clearInterval(scanTimer);
   scanTimer = 0;
   $('scan').textContent = 'Scan the Mac\'s code';
+  $('scan-hint').hidden = true;
   setNote(note);
   renderState(app.link?.state);
 }
@@ -234,7 +236,10 @@ async function startScan() {
     setNote('Turn the camera on first: it is what reads the code on the Mac.');
     return;
   }
-  setNote('Point the camera at the code on the Mac (Pair without internet)…', { stay: true });
+  setNote('');
+  // Started because the link was down: if it comes back by itself there is
+  // nothing left to scan for.
+  scanForLink = app.link?.state.data !== 'open';
   try {
     jsQR ??= await import('jsqr').then((m) => m.default ?? m);
   } catch {
@@ -244,8 +249,11 @@ async function startScan() {
   const video = $('self');
   const until = Date.now() + 60000;
   $('scan').textContent = 'Stop scanning';
+  // What to do is written on the preview, where the eyes are; the status
+  // line above stays readable.
+  $('scan-hint').hidden = false;
   scanTimer = setInterval(() => {
-    if (Date.now() > until) return stopScan('No code seen. On the Mac, open Pair without internet, then scan again.');
+    if (Date.now() > until) return stopScan('No code seen. Show the pairing code on the Mac (click Phone in its top bar), then scan again.');
     if (!video.videoWidth) return;
     const scale = Math.min(1, 960 / video.videoWidth);
     scanFrame.width = Math.round(video.videoWidth * scale);
@@ -254,19 +262,61 @@ async function startScan() {
     ctx.drawImage(video, 0, 0, scanFrame.width, scanFrame.height);
     const image = ctx.getImageData(0, 0, scanFrame.width, scanFrame.height);
     const text = jsQR(image.data, image.width, image.height)?.data ?? '';
+    if (!text) return;
+    // Either code on the Mac will do: the one from Pair without internet
+    // (its half of a handshake, after the #), or the ordinary pairing code
+    // (a link to this page with the room code in it).
     const found = new URLSearchParams(text.split('#')[1] ?? '').get(OFFER_KEY);
-    if (!found) return;
+    if (found) {
+      stopScan();
+      showPairCode(found);
+      return;
+    }
+    const link = pairingLink(text);
+    if (!link) return;
     stopScan();
-    showPairCode(found);
+    joinRoom(link.room, link.signal);
   }, 250);
   renderState(app.link?.state);
 }
 $('scan').addEventListener('click', startScan);
 
-// The bar's button: redial, or scan again if this phone was paired by code.
+// The room code (and pairing server, if a special one) in an ordinary
+// pairing link, or null if the text is something else.
+function pairingLink(text) {
+  try {
+    const url = new URL(text);
+    if (!url.pathname.includes('/phone')) return null;
+    const { room, signal } = parsePhoneParams(url.search);
+    return room.length >= 4 ? { room, signal } : null;
+  } catch {
+    return null;
+  }
+}
+
+// The ordinary pairing code was read: dial that room. If it is the room
+// this page is already in, that is a redial.
+function joinRoom(room, signal) {
+  $('pair').hidden = true;
+  app.byCode = false;
+  const state = app.link.state;
+  if (room === app.room && signal === app.signal && state.data === 'open' && !state.silent) return setNote(`Already linked to the Mac (room ${room}).`);
+  app.room = room;
+  app.signal = signal;
+  prefs.room = room;
+  savePrefs();
+  $('room-label').textContent = room;
+  app.link.setRoom(room, signal);
+  setNote(`Joining room ${room}…`);
+}
+
+// The bar's button, shown while the link is down. Normally a redial. If
+// this phone was paired by code, or the Mac is not there under this room
+// code (the code may have changed), it reads the code on the Mac instead.
+const wantsScan = (state) => app.byCode || !!state?.notFound;
 $('reconnect').addEventListener('click', () => {
   if (scanTimer) return stopScan();
-  if (app.byCode) startScan();
+  if (wantsScan(app.link?.state)) startScan();
   else app.link?.restart();
 });
 
@@ -452,12 +502,20 @@ function renderState(state) {
   let text = 'Connecting…';
   if (state.data === 'open') $('pair').hidden = true;
   if (state.direct) app.byCode = true;
-  // Offered whenever the link is down: redial, or scan the Mac's code again
-  // if that is how this phone was paired.
-  $('reconnect').hidden = state.data === 'open' && !scanTimer;
-  $('reconnect').textContent = scanTimer ? 'Stop scanning' : app.byCode ? 'Scan code' : 'Reconnect';
+  if (scanTimer && scanForLink && state.data === 'open') return stopScan();
+  // Offered whenever the link is down or the Mac has gone quiet: redial, or
+  // read the code on the Mac again (see wantsScan).
+  $('reconnect').hidden = state.data === 'open' && !state.silent && !scanTimer;
+  $('reconnect').textContent = scanTimer ? 'Stop scanning' : wantsScan(state) ? 'Scan code' : 'Reconnect';
+  // Upright the bar is narrow: with the button in it the words are kept
+  // short and the room code gives way (phone.css).
+  const tight = !$('reconnect').hidden && $('root').classList.contains('upright');
+  if (tight && scanTimer) $('reconnect').textContent = 'Stop';
   if (!$('pair').hidden) text = 'Show the code to the Mac';
-  else if (state.data === 'open') {
+  else if (state.silent) {
+    level = 'bad';
+    text = 'Mac not answering';
+  } else if (state.data === 'open') {
     if (app.controllerOnly) {
       level = 'good';
       text = 'CONTROLLER — linked';
@@ -470,7 +528,10 @@ function renderState(state) {
     if (state.rttMs !== null && level === 'good') text += ` · ${state.rttMs.toFixed(0)} ms`;
   } else if (state.signal === 'lost') {
     level = 'bad';
-    text = 'No signaling — check Wi-Fi';
+    text = tight ? 'No signaling' : 'No signaling — check Wi-Fi';
+  } else if (state.notFound) {
+    level = 'bad';
+    text = tight ? 'Mac not found' : `Mac not found under room ${app.room}. Is its control page open?`;
   } else if (state.error) {
     level = 'bad';
     text = state.error;
@@ -479,7 +540,7 @@ function renderState(state) {
     level = 'bad';
     text = app.cameraError;
   }
-  bar.className = level;
+  bar.className = tight ? `${level} tight` : level;
   $('state').textContent = text;
 }
 
@@ -529,7 +590,7 @@ document.addEventListener('visibilitychange', () => {
   requestWakeLock();
   if (app.track?.readyState === 'live' && !app.track.muted) app.link?.setStream(app.stream, QUALITY[prefs.quality]);
   else recoverCamera();
-  app.link?.tick();
+  app.link?.awake();
   sendInfo();
 });
 

@@ -104,6 +104,8 @@ button.icon svg { width: 22px; height: 22px; }
 #bar.bad .room { color: var(--on-ink); }
 #state { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #bar .room { font: 700 14px var(--mono); color: var(--dim); letter-spacing: 0.15em; }
+/* Upright, with the Reconnect button showing, the status needs the room. */
+#bar.tight .room { display: none; }
 /* A passing message lies over the status line; it never takes room from the
    preview, and goes by itself. */
 #note { position: absolute; inset: 0; z-index: 3; display: flex; align-items: center; padding: 0 10px; background: var(--ink); color: var(--on-ink); font-size: 12px; line-height: 1.15; font-weight: 600; overflow: hidden; }
@@ -139,6 +141,8 @@ button.icon svg { width: 22px; height: 22px; }
 #stage-label { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: var(--dim); font: 700 18px var(--display); letter-spacing: 0.1em; text-transform: uppercase; pointer-events: none; }
 #stage.off #self { display: none; }
 #stage.off #stage-label { display: flex; }
+/* While the page is reading a code: what to do, along the foot of the preview. */
+#scan-hint { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 6px 10px; background: var(--ink); color: var(--on-ink); font-size: 12px; font-weight: 700; text-align: center; pointer-events: none; }
 #stage.down { border-color: var(--ink); }
 .pad-dot { position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; border: 3px solid var(--ink); opacity: 0.55; pointer-events: none; box-shadow: 0 0 0 1px #000; }
 .pad.down .pad-dot { opacity: 1; background: color-mix(in srgb, var(--ink) 35%, transparent); }

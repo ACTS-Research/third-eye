@@ -7,7 +7,7 @@ live on GitHub Pages from `main`: the output window is optional (`/control`
 runs the whole instrument by itself); the phone can be paired with no
 internet, by QR code both ways ("Pair without internet"); the phone's live
 screen was rebuilt around a large horizontal preview; and there is a running
-order (steps that point at presets, on the preset strip). All sixteen test
+order (steps that point at presets, on the preset strip). All seventeen test
 suites pass in headless Chromium. The phone screen's last rework, the Freeze
 fix and the running order have not been tried on the real iPhone yet.
 
@@ -182,8 +182,27 @@ right way up. What stands now:
   must never take room from the preview.
 - **The phone asks for its state** (`hello`) when its link opens; the Mac
   answers with labels, presets, codec and palette (`greetPhone`).
-- **Reconnect** redials (`HostLink.restart`); for a phone paired by code it
-  scans the Mac's code inside the page (jsQR, loaded on demand).
+- **Reconnect** redials (`HostLink.restart`). It reads **Scan code** for a
+  phone paired by code, or when the pairing server says nothing is
+  registered under the room (`state.notFound`), and then reads a code on the
+  Mac inside the page (jsQR, loaded on demand): the Pair-without-internet
+  offer, or the ordinary pairing link (`joinRoom` → `HostLink.setRoom`).
+- **The phone does not trust the browser about a dead link** (added 14
+  November after the owner kept having to close the page and scan again;
+  which failure they hit is not known). `HostLink.tick` counts silence: the
+  Mac answers a ping a second, and six seconds with nothing heard drops the
+  link and starts signaling over too. Two data connections in a row that
+  never open also restart signaling. Time the page spent asleep is not
+  counted (`awake`, and the gap check at the top of `tick`). A direct link is
+  only dropped for silence when the pairing server can be reached.
+- **`tests/vision.mjs` and slow machines.** A person mask is fresh for 1.5 s
+  (`MASK_FRESH_MS`); in the cloud sandbox a segmentation pass takes about a
+  second on the CPU and sometimes longer, so a picture read at the wrong
+  moment has no mask. The mask test now reads a picture drawn just after a
+  mask arrived. It failed two runs in three before that, on older code too.
+- **The Mac holds on to its room code for 75 seconds** when it reads as
+  taken (`ROOM_TAKEN_MS` in `remote.js`), because a registration left by a
+  reload clears within a minute and a new code strands the phone.
 
 ### Second session (2026-11-12), in short
 
@@ -255,7 +274,7 @@ Three static pages built by Vite, no framework.
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon, option D2 from the sheet at https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo) |
 | `design/` | `third-eye-icons.html`: the icon options shown to the owner (a page for a browser, not part of the site) |
-| `tests/` | Sixteen headless suites and `lib.mjs` |
+| `tests/` | Seventeen headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 

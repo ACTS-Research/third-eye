@@ -198,7 +198,8 @@ to use the whole sensor.
 | Zoom | The bare bar down the right, when the camera offers zoom |
 | Rotate (the circling arrow, top right) | Turns the picture a quarter turn, on the Mac and in the preview, each time it is pressed |
 | Camera (top right) | Opens a panel with Quality (360p / 720p / 1080p at 30 or 60 fps, default 720p · 60), Camera on / off, any exposure and focus controls the camera reports, and **Scan the Mac's code** |
-| **Reconnect** | Appears in the top line whenever the link is down. It redials; if the phone was paired by code it reads **Scan code** and scans the Mac's code again |
+| **Reconnect** | Appears in the top line whenever the link is down. It redials. It reads **Scan code** instead when the phone was paired by code, or when no Mac is found under the phone's room code (the code may have changed): it then reads a code on the Mac's screen through the camera, without leaving the page. Either code works: the ordinary pairing code (click **Phone** in the Mac's top bar) or the one from Pair without internet. While it is reading, the instruction lies along the foot of the preview and the status line stays readable; it stops by itself if the link comes back |
+| By itself | The phone redials whenever the link drops, and also when the Mac has said nothing for six seconds, whatever the browser reports about the connection. After a Mac reload it is back in a few seconds with no tap |
 
 A message (a camera that refused a setting, a screen that will not stay awake)
 lies over the top line for a few seconds and goes; it never takes room from
@@ -561,7 +562,7 @@ a passing state (a stall, a recovering graphics context) remove themselves.
 | Safari goes to the background | `/control` alert while hidden; red warning on the phone when it returns; stream resumes |
 | Pairing server unreachable | A paired phone keeps streaming. Both sides keep retrying; the top bar says so. To pair anyway, use [Pair without internet](#pairing-without-internet) |
 | A phone paired without internet drops off completely | `/control` says the link was lost, with **Pair without internet** on the strip. Scan both ways again |
-| Room code taken by something else | The output moves to a new code after three tries and `/control` says to scan again, with the QR code a click away; the strip goes once the phone pairs |
+| Room code reads as taken | Usually the Mac's own registration left behind by a reload or a dropped network; the pairing server clears it within a minute and the phone then reconnects by itself. The Mac keeps trying for 75 seconds. Only if the code is still taken then (another computer has it) does it move to a new code; `/control` says to scan again, and the phone's **Scan code** button reads the new one |
 | The output window is closed | The picture returns to `/control` after about two seconds; the phone reconnects by itself. The top bar reads `Output off`; no alert |
 | The output window crashes or is killed | The same, and `/control` says the output stopped without warning, with **Open output window** on the strip |
 | The output window is minimised or covered | Chrome stops drawing it. `/control` says the output is not drawing and leaves the picture with it; bring the window back into view |
@@ -777,6 +778,7 @@ npm test
 | `tests/record-latency.mjs` | Recording to WebM and MP4, saving and deleting; the latency measurement, including a stray late flash; switching codec |
 | `tests/phone-screen.mjs` | The phone's live screen in both layouts: the horizontal preview that is also the XY pad, triggers, six presets numbered across then down, the camera icons, the bare zoom bar, Freeze as a switch (including two quick taps and a session saved with the old hold setting), Rotate, upright frames staying upright on the Mac, messages that leave the preview alone, Reconnect, the remembered room, scanning the Mac's code inside the page |
 | `tests/running-order.mjs` | The running order: building it with +, Next and Prev, the same preset twice, going off the list and returning, notes and fades, dragging and removing steps, deleting a preset that steps use, the phone's six buttons following it, the export file, stepping with `/control` closed and with no output window |
+| `tests/reconnect.mjs` | Getting the phone back without closing its page: a Mac that stops answering, a Mac reload, scanning that stops when the link returns, the ordinary pairing code read inside the page, a changed room code, Reconnect by hand |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |
