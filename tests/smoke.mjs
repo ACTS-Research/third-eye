@@ -140,13 +140,28 @@ try {
     const bytes = new Uint8Array(await new Blob(chunks).arrayBuffer());
     return Array.from(bytes);
   });
-  await control.setInputFiles('#input-panel input[type=file]', { name: 'clip.webm', mimeType: 'video/webm', buffer: Buffer.from(clip) });
+  // With no file loaded, input button 4 on the perform screen asks for one.
+  // (A file picker only opens for a real click, and a real click needs the
+  // page in front.)
+  await control.evaluate(() => window.thirdEye.ui.setView('perform'));
+  await control.bringToFront();
+  const [chooser] = await Promise.all([control.waitForEvent('filechooser'), control.locator('.inputs button').nth(3).click()]);
+  check('input button 4 opens the file picker when no file is loaded', !!chooser && (await control.evaluate(() => window.thirdEye.store.state.input.kind)) === 'file');
+  check('the line under the buttons offers to choose a file', await waitFor(async () => (await control.locator('#input-line').textContent()) === 'Video file · choose…', { label: 'choose line', timeout: 8000 }).then(() => true, () => false), await control.locator('#input-line').textContent());
+  const [chooser2] = await Promise.all([control.waitForEvent('filechooser'), control.locator('#input-line').click()]);
+  check('a click on that line opens the picker too, without leaving the perform screen', !!chooser2 && (await control.evaluate(() => window.thirdEye.ui.view)) === 'perform');
+  await chooser2.setFiles({ name: 'clip.webm', mimeType: 'video/webm', buffer: Buffer.from(clip) });
   const fileLive = await waitFor(() => control.evaluate(() => {
     const st = window.thirdEye.ui.status;
     return st?.input.kind === 'file' && st.input.state === 'live' && st.input.width === 320 ? st : null;
   }), { label: 'video file live', timeout: 8000 }).catch(() => null);
   check('local video file plays through the pipeline', !!fileLive, fileLive ? `${fileLive.input.width}x${fileLive.input.height}` : 'not live');
   check('file name shown on control', (await control.locator('#input-panel').textContent()).includes('clip.webm'));
+  check('with a file playing the line says so', await waitFor(async () => (await control.locator('#input-line').textContent()) === 'Video file · live', { label: 'file line', timeout: 8000 }).then(() => true, () => false), await control.locator('#input-line').textContent());
+  await control.keyboard.press('3');
+  const reopened = await Promise.race([control.waitForEvent('filechooser').then(() => true), control.locator('.inputs button').nth(3).click().then(() => new Promise((r) => setTimeout(() => r(false), 800)))]);
+  check('with a file loaded, button 4 just switches to it', !reopened && (await control.evaluate(() => window.thirdEye.store.state.input.kind)) === 'file');
+  await output.bringToFront();
   await control.keyboard.press('3');
 
   console.log('resilience');

@@ -40,6 +40,10 @@ export function mountInputPanel(root, ui) {
       runAction(store, 'input', 'file');
     },
   });
+  // The perform screen opens this picker directly (the input buttons and
+  // the line under them), so a file can be chosen without coming here.
+  ui.pickVideoFile = () => picker.click();
+  ui.hasVideoFile = () => !!file;
   const fileRow = el('div', { class: 'row' }, [
     el('button', { text: 'Load video file…', onclick: () => picker.click() }),
     fileName,

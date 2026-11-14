@@ -36,13 +36,19 @@ export function mountPerform(root, ui) {
       title: INPUT_LABELS[kind],
       'aria-label': `Input ${i + 1}, ${INPUT_LABELS[kind]}`,
       'data-midi': `input:${kind}`,
-      onclick: () => runAction(store, 'input', kind),
+      onclick: () => {
+        runAction(store, 'input', kind);
+        // Nothing to play yet: ask for the file here and now.
+        if (kind === 'file' && !ui.hasVideoFile?.()) ui.pickVideoFile?.();
+      },
     });
     inputs.append(inputButtons[kind]);
   });
   // Which input is selected and what it is doing, in few enough words to
   // stay on one line. A click goes to its settings.
-  const inputName = el('button', { class: 'input-line', id: 'input-line', title: 'Choose and set up the input (Setup → Input)', onclick: () => ui.goToPanel('input-panel') });
+  // (When the input is a video file and there is none, the click chooses one.)
+  let needsFile = false;
+  const inputName = el('button', { class: 'input-line', id: 'input-line', onclick: () => (needsFile ? ui.pickVideoFile?.() : ui.goToPanel('input-panel')) });
 
   // Tap tempo: the button blinks on the beat; the field takes a typed BPM.
   const bpm = el('input', {
@@ -210,7 +216,9 @@ export function mountPerform(root, ui) {
     // switch that is still the old one.
     const seen = ui.status?.input;
     const state = seen?.kind === kind ? seen.state : '';
-    inputName.textContent = `${INPUT_LABELS[kind]} · ${INPUT_STATE_TEXT[state] ?? (state || '—')}`;
+    needsFile = kind === 'file' && state === 'no-signal';
+    inputName.textContent = needsFile ? `${INPUT_LABELS[kind]} · choose…` : `${INPUT_LABELS[kind]} · ${INPUT_STATE_TEXT[state] ?? (state || '—')}`;
+    inputName.title = needsFile ? 'No video file is loaded. Click to choose one.' : 'Choose and set up the input (Setup → Input)';
     inputName.classList.toggle('warn', !!state && state !== 'live' && state !== 'stalled');
     inputName.classList.toggle('bad', state === 'stalled');
   }

@@ -126,6 +126,10 @@ the output readout opens the output window, and the phone readout shows the
 QR code and the connection steps. Which input is selected, and what it is
 doing (`iPhone · live`, `Video file · no signal`), is on the perform screen
 under the four input buttons; a click on that line goes to **Setup → Input**.
+With the video file input selected and no file loaded, the line reads
+`Video file · choose…` and a click on it, or on input button **4**, opens the
+file picker straight away (the same picker as **Setup → Input → Load video
+file…**).
 
 The coloured dot at the top right opens the interface palettes (red, amber,
 bone, lime, ice, magenta). All are a single ink on black so the laptop does
