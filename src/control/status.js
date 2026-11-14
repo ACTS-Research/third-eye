@@ -1,7 +1,6 @@
 import { INPUT_LABELS } from '../shared/state.js';
 import { el } from '../shared/util.js';
 
-const INPUT_STATE_TEXT = { live: 'live', stalled: 'STALLED — holding last frame', 'no-signal': 'no signal', paused: 'phone camera off — holding last frame' };
 
 export function mountStatus(root, ui) {
   const pills = document.getElementById('pills');
@@ -16,8 +15,9 @@ export function mountStatus(root, ui) {
   outPill.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') outClick();
   });
-  // Each readout is a button that goes to its own place: the input status
-  // to the Input panel, the phone status to the pairing details below it.
+  // Each readout is a button that goes to its own place. (What the input is
+  // doing is not up here: it is under the input buttons on the perform
+  // screen, in perform.js.)
   const button = (id, title, run) => {
     const pill = el('span', { class: 'pill', id, role: 'button', tabindex: '0', title });
     pill.addEventListener('click', () => run(pill));
@@ -26,9 +26,8 @@ export function mountStatus(root, ui) {
     });
     return pill;
   };
-  const inPill = button('in-pill', 'Choose and set up the input (Setup → Input)', () => ui.goToPanel('input-panel'));
   const phonePill = button('phone-pill', 'Show the QR code and connection details', (pill) => ui.togglePairing?.(pill));
-  pills.append(outPill, inPill, phonePill);
+  pills.append(outPill, phonePill);
 
   const rows = {};
   const list = el('dl', { class: 'stats' });
@@ -121,7 +120,6 @@ export function mountStatus(root, ui) {
       else if (h?.state === 'failed') setPill(outPill, 'bad', 'No picture');
       else setPill(outPill, '', h?.state === 'remote' ? 'Output …' : 'Starting…');
       outPill.title = '';
-      setPill(inPill, '', 'Input —');
       setPill(phonePill, '', 'Phone —');
       for (const key of Object.keys(rows)) if (key !== 'offline') rows[key].textContent = '—';
       for (const key of ['input', 'gl', 'phone', 'build', 'room']) ui.setAlert(key, null);
@@ -143,7 +141,6 @@ export function mountStatus(root, ui) {
 
     const input = status.input;
     const label = INPUT_LABELS[input.kind] ?? input.kind;
-    setPill(inPill, input.state === 'live' ? 'good' : input.state === 'stalled' ? 'bad' : 'warn', `${label}: ${INPUT_STATE_TEXT[input.state] ?? input.state}`);
     rows.input.textContent = input.width ? `${label} ${input.width}×${input.height}` : label;
     rows.inputFps.textContent = `${input.fps.toFixed(1)} fps`;
 

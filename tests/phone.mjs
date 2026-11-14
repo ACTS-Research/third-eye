@@ -73,7 +73,7 @@ try {
   });
   check('and back', await waitFor(async () => (await look()) === 'darkroom 100%', { label: 'look back', timeout: 8000 }).then(() => true, () => false), await look());
 
-  await control.locator('#pills .pill').nth(2).click();
+  await control.locator('#phone-pill').click();
   const stepText = await control.locator('#pairing-pop .steps').textContent();
   check('pairing pop-over shows every connection step as done', (await control.locator('#pairing-pop .steps li.done').count()) === 5 && stepText.includes('direct'), stepText);
   await control.keyboard.press('Escape');
@@ -140,7 +140,7 @@ try {
   await phone.close();
   s = await waitStatus(control, (st) => st.input.state === 'stalled', 'stall detected');
   check('stall detected', true);
-  await control.locator('#pills .pill').nth(2).click();
+  await control.locator('#phone-pill').click();
   check('with the phone gone, the pop-over points at the step that broke', await waitFor(async () => (await control.locator('#pairing-pop .steps li.stuck').textContent()).includes('Phone found the Mac'), { label: 'stuck step', timeout: 15000 }).then(() => true, () => false), await control.locator('#pairing-pop .steps li.stuck').textContent());
   await control.keyboard.press('Escape');
   check('stall alert on control', await control.evaluate(() => [...document.querySelectorAll('#alerts .alert')].some((a) => a.textContent.includes('holding the last frame'))));

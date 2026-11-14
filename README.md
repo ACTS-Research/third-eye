@@ -121,10 +121,11 @@ it moves the picture between the two windows: the phone reconnects by itself
 in a few seconds (it needs the pairing server for that), and a recording in
 progress stops.
 
-The three readouts at the top left are also buttons, each with its own
-job: the output readout opens the output window, the input readout goes to
-**Setup → Input**, and the phone readout shows the QR code and the connection
-steps.
+The two readouts at the top left are also buttons, each with its own job:
+the output readout opens the output window, and the phone readout shows the
+QR code and the connection steps. Which input is selected, and what it is
+doing (`iPhone · live`, `Video file · no signal`), is on the perform screen
+under the four input buttons; a click on that line goes to **Setup → Input**.
 
 The coloured dot at the top right opens the interface palettes (red, amber,
 bone, lime, ice, magenta). All are a single ink on black so the laptop does

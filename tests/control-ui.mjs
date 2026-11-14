@@ -46,8 +46,8 @@ try {
   console.log('pairing details from the top bar');
   // The sandbox cannot reach the public pairing server: the same situation
   // as a network that blocks it.
-  check('an unreachable pairing server is reported as such', await settle(async () => (await control.locator('#pills .pill').nth(2).textContent()).includes('unreachable'), 'unreachable', 25000), await control.locator('#pills .pill').nth(2).textContent());
-  await control.locator('#pills .pill').nth(2).click();
+  check('an unreachable pairing server is reported as such', await settle(async () => (await control.locator('#phone-pill').textContent()).includes('unreachable'), 'unreachable', 25000), await control.locator('#phone-pill').textContent());
+  await control.locator('#phone-pill').click();
   check('clicking the phone status opens the QR code and room code below it', await control.locator('#pairing-pop').isVisible() && (await control.locator('.pop-code').textContent()).length === 5 && (await control.evaluate(() => {
     const c = document.querySelector('#pairing-pop canvas');
     const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
@@ -59,8 +59,10 @@ try {
   if (process.env.SHOTS) await control.screenshot({ path: `${process.env.SHOTS}/pairing-pop.png` });
   await control.keyboard.press('Escape');
   check('Esc closes it', await control.locator('#pairing-pop').isHidden());
-  await control.locator('#pills .pill').nth(1).click();
-  check('the input status goes to the Input panel instead, and says so', (await control.evaluate(() => window.thirdEye.ui.view)) === 'setup' && (await control.locator('#input-panel').evaluate((n) => n.classList.contains('flash'))) && (await control.locator('#pairing-pop').isHidden()) && (await control.locator('#in-pill').getAttribute('title')) !== (await control.locator('#phone-pill').getAttribute('title')), await control.locator('#in-pill').getAttribute('title'));
+  check('the top bar has two readouts: the output and the phone', (await control.locator('#pills .pill').count()) === 2 && (await control.locator('#pills .pill').nth(1).getAttribute('id')) === 'phone-pill');
+  check('what the input is doing is under the input buttons', await settle(async () => (await control.locator('#input-line').textContent()) === 'Test pattern · live', 'input line'), await control.locator('#input-line').textContent());
+  await control.locator('#input-line').click();
+  check('a click on it goes to the Input panel, and says so', (await control.evaluate(() => window.thirdEye.ui.view)) === 'setup' && (await control.locator('#input-panel').evaluate((n) => n.classList.contains('flash'))) && (await control.locator('#pairing-pop').isHidden()) && (await control.locator('#input-line').getAttribute('title')) !== (await control.locator('#phone-pill').getAttribute('title')), await control.locator('#input-line').getAttribute('title'));
   await control.evaluate(() => window.thirdEye.ui.setView('perform'));
 
   console.log('palettes');

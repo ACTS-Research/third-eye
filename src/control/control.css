@@ -129,6 +129,11 @@ main { flex: 1; min-height: 0; }
 .tempo input { padding: 6px 4px; text-align: right; }
 .inputs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .inputs button { padding: 9px 0; position: relative; }
+/* Which input, and what it is doing. One line, always the same height. */
+.input-line { border: 0; border-bottom: 1px solid transparent; padding: 0; background: none; text-align: left; text-transform: none; letter-spacing: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+.input-line:hover { border-bottom-color: var(--ink); }
+.input-line.warn { border-bottom: 1px dashed var(--ink); }
+.input-line.bad { background: var(--ink); color: var(--on-ink); font-weight: 700; animation: blink 0.8s steps(2) infinite; }
 
 .monitor { position: relative; background: #000; min-height: 0; min-width: 0; display: grid; place-items: center; overflow: hidden; }
 .monitor canvas { width: 100%; height: 100%; object-fit: contain; display: block; }
@@ -301,10 +306,6 @@ body.midi-map [data-midi][data-midi-label]::after {
 .pill, .pill.bad { padding: 2px 8px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
 /* Wide enough for "Output off · 60 fps", the longest steady reading. */
 .pill:first-child { flex: 0 0 176px; }
-/* When the bar is tight the input status gives way first, all the way,
-   before the phone status loses a letter: its messages are long, and
-   "Phone: not paired" should stay readable. */
-#in-pill { flex-shrink: 100000; }
 #views { margin-left: 0; flex-shrink: 0; }
 #rec, #rec.on { flex: 0 0 104px; width: 104px; text-align: left; overflow: hidden; }
 #midi-map-toggle { flex-shrink: 0; }

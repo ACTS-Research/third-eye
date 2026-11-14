@@ -10,6 +10,9 @@ import { el } from '../shared/util.js';
 import { attachPreview } from './preview.js';
 import { mountStrip } from './strip.js';
 
+// What an input is doing, short enough for the line under the input buttons.
+const INPUT_STATE_TEXT = { live: 'live', stalled: 'stalled', 'no-signal': 'no signal', paused: 'camera off' };
+
 function format(value, step) {
   const digits = step >= 1 ? 0 : step >= 0.1 ? 1 : step >= 0.01 ? 2 : 3;
   return Number(value).toFixed(digits);
@@ -37,7 +40,9 @@ export function mountPerform(root, ui) {
     });
     inputs.append(inputButtons[kind]);
   });
-  const inputName = el('span');
+  // Which input is selected and what it is doing, in few enough words to
+  // stay on one line. A click goes to its settings.
+  const inputName = el('button', { class: 'input-line', id: 'input-line', title: 'Choose and set up the input (Setup → Input)', onclick: () => ui.goToPanel('input-panel') });
 
   // Tap tempo: the button blinks on the beat; the field takes a typed BPM.
   const bpm = el('input', {
@@ -199,13 +204,24 @@ export function mountPerform(root, ui) {
   });
 
   // --------------------------------------------------------------- sync ---
+  function syncInput() {
+    const kind = store.state.input.kind;
+    // The engine reports on the input it is showing; for a moment after a
+    // switch that is still the old one.
+    const seen = ui.status?.input;
+    const state = seen?.kind === kind ? seen.state : '';
+    inputName.textContent = `${INPUT_LABELS[kind]} · ${INPUT_STATE_TEXT[state] ?? (state || '—')}`;
+    inputName.classList.toggle('warn', !!state && state !== 'live' && state !== 'stalled');
+    inputName.classList.toggle('bad', state === 'stalled');
+  }
+
   function syncState() {
     const { globals, input } = store.state;
     blackout.classList.toggle('on', globals.blackout);
     freeze.classList.toggle('on', globals.freeze);
     bypass.classList.toggle('on', globals.bypassAll);
     for (const kind of INPUT_KINDS) inputButtons[kind].setAttribute('aria-pressed', String(input.kind === kind));
-    inputName.textContent = `Input: ${INPUT_LABELS[input.kind]}`;
+    syncInput();
     if (document.activeElement !== bpm) bpm.value = String(store.state.tempo.bpm);
     syncMonitor();
   }
@@ -227,6 +243,7 @@ export function mountPerform(root, ui) {
     setTimeout(() => glitch.classList.remove('on'), 300);
   });
   ui.onStatus(syncMonitor);
+  ui.onStatus(syncInput);
   ui.onHost(syncMonitor);
 
   root.append(panic, monitor, side, strip);

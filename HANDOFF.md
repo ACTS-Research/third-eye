@@ -95,7 +95,10 @@ Nothing is waiting to be merged; everything is pushed.
 - **The phone's live screen.** Rebuilt twice in one evening; what stands is
   below.
 - **Top bar.** Each readout is a button with its own job: output opens the
-  output window, input goes to Setup → Input, phone shows pairing.
+  output window, phone shows pairing. The input readout was taken out on 14
+  November at the owner's suggestion (it repeated the input buttons); the
+  input's state is now the line under those buttons on the perform screen,
+  and a click on it goes to Setup → Input.
 - **Icon.** Option D2 (a compact camera with an upright eye), eye a little
   right of centre; `scripts/make-icons.mjs` draws it. The sheet with all
   three rounds is in `design/third-eye-icons.html` and at
@@ -363,7 +366,8 @@ Three static pages built by Vite, no framework.
 
 - Several alerts at once stack over the top of the page; they are compact
   and each can be closed with its ×.
-- Below about 1000 px wide the top bar only has room for the output readout.
+- Below about 1000 px wide the top bar is tight: the phone readout is cut
+  short before anything else gives way.
 - The first reload after a deploy can show the previous version for a few
   seconds; `/control` warns when its version and the output's differ.
 - An early screenshot showed the output at 30 fps rather than 60; it read 60
