@@ -19,6 +19,10 @@ preset strip and check the phone's six buttons show them.
 
 **Decisions only you can make.**
 
+- Reminder you asked for on 14 November: make the phone's six buttons follow
+  along as you step through the running order (today they show steps 1–6
+  only, so a longer show runs off the end of the phone). Say go when you
+  want it built.
 - Try the running order and say what is missing. Left out of this first
   version on purpose: several named shows (there is one running order),
   steps timed against an audio track, and the phone reaching steps beyond
