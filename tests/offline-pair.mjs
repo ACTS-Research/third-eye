@@ -22,10 +22,10 @@ try {
   const status = () => control.evaluate(() => window.thirdEye.ui.status);
   const settle = (fn, label, timeout = 15000) => waitFor(fn, { label, timeout }).then(() => true, () => false);
   const alertKeys = () => control.evaluate(() => [...document.querySelectorAll('#alerts [role=alert]')].map((n) => n.dataset.key));
-  const paired = () => settle(async () => {
+  const paired = (timeout = 25000) => settle(async () => {
     const p = (await status())?.phone;
     return p?.direct && p.phone === 'connected' && p.media === 'connected';
-  }, 'paired', 25000);
+  }, 'paired', timeout);
   await waitFor(async () => (await status())?.host.role === 'control', { label: 'control hosting' });
 
   // Opens the dialog, opens the phone on its link, and returns the phone
@@ -107,7 +107,10 @@ try {
   // were trying to reach the Mac in the meantime.
   await sleep(20000);
   await showToMac(control, picture);
-  check('a code read twenty seconds later still pairs', await paired());
+  // (What is checked is that it pairs at all. How long the Mac page here
+  // takes to say so varies a great deal: by now it is reading a camera,
+  // decoding video and drawing with software graphics, on four cores.)
+  check('a code read twenty seconds later still pairs', await paired(60000));
   check('the alert clears', await settle(async () => !(await alertKeys()).includes('direct-lost'), 'alert gone'));
   check('video arrives again', await settle(async () => (await status()).input.state === 'live', 'video live', 20000));
 

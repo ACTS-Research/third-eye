@@ -141,6 +141,8 @@ button.icon svg { width: 22px; height: 22px; }
 #stage-label { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: var(--dim); font: 700 18px var(--display); letter-spacing: 0.1em; text-transform: uppercase; pointer-events: none; }
 #stage.off #self { display: none; }
 #stage.off #stage-label { display: flex; }
+/* The preview is showing the Mac's finished picture, not the camera. */
+#stage.output::after { content: 'MAC OUTPUT'; position: absolute; left: 6px; top: 6px; z-index: 2; padding: 2px 6px; background: var(--ink); color: var(--on-ink); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; pointer-events: none; }
 /* While the page is reading a code: what to do, along the foot of the preview. */
 #scan-hint { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 6px 10px; background: var(--ink); color: var(--on-ink); font-size: 12px; font-weight: 700; text-align: center; pointer-events: none; }
 #stage.down { border-color: var(--ink); }
@@ -197,6 +199,9 @@ button.icon svg { width: 22px; height: 22px; }
 /* Camera panel: everything set once, out of the way of the preview. */
 #panel { position: absolute; inset: 8px; z-index: 5; background: var(--bg); border: 2px solid var(--ink); padding: 10px; display: flex; flex-direction: column; gap: 10px; overflow: auto; }
 #tools { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+#preview-kind { grid-column: 1 / -1; }
+#preview-note, #adjust-note { font-size: 12px; line-height: 1.3; color: var(--dim); }
+#preview-note:empty, #adjust-note:empty { display: none; }
 #tools > * { min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14px; }
 #adjust { display: flex; flex-direction: column; gap: 8px; }
 #adjust:empty { display: none; }

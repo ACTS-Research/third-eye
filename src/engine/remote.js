@@ -17,6 +17,7 @@ import { Peer } from 'peerjs';
 import { DirectCall, DirectConn, MAIN_CHANNEL, buildAnswer, packOffer, randomId, restrictCodecs, slimOffer, unpackAnswer } from '../shared/direct.js';
 import { hostPeerId, peerOptions } from '../shared/net.js';
 import { preferCodec } from '../shared/sdp.js';
+import { RETURN_KBPS } from './return-feed.js';
 
 const TICK_MS = 1000;
 const PHONE_TIMEOUT_MS = 4000;
@@ -304,9 +305,32 @@ export class PhoneLink {
     }
   }
 
+  // The phone's call is answered with the small copy of the finished
+  // picture (return-feed.js), which stays silent until the phone asks to
+  // see it.
   acceptCall(call) {
     this.watchCall(call);
-    call.answer(undefined, { sdpTransform: (sdp) => preferCodec(sdp, this.getCodec?.()) });
+    call.answer(this.getReturnStream?.() ?? undefined, { sdpTransform: (sdp) => preferCodec(sdp, this.getCodec?.()) });
+    const pc = call.peerConnection;
+    pc?.addEventListener('connectionstatechange', () => {
+      if (pc.connectionState === 'connected') this.tuneReturn(pc);
+    });
+  }
+
+  // Keeps what goes back to the phone small: it shares the air with the
+  // camera picture coming the other way, which matters more.
+  async tuneReturn(pc) {
+    const sender = pc.getSenders().find((s) => s.track?.kind === 'video');
+    if (!sender) return;
+    try {
+      const params = sender.getParameters();
+      if (!params.encodings?.length) params.encodings = [{}];
+      params.encodings[0].maxBitrate = RETURN_KBPS * 1000;
+      params.encodings[0].maxFramerate = 15;
+      await sender.setParameters(params);
+    } catch (err) {
+      console.warn('[phone] could not tune the return picture', err);
+    }
   }
 
   watchCall(call) {

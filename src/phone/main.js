@@ -24,8 +24,10 @@ applyPalette(new URLSearchParams(location.search).get('pal'), { save: false });
 applyDim(new URLSearchParams(location.search).get('dim'), { save: false });
 // `room`: the last room joined, so the page can be reopened without the
 // QR code. `turn`: how far the Rotate button has turned the picture.
-const prefs = { quality: DEFAULT_QUALITY, facing: 'environment', room: '', turn: 0, ...readJSON(PREFS_KEY, {}) };
+// `preview`: what the preview shows, the camera or the Mac's finished picture.
+const prefs = { quality: DEFAULT_QUALITY, facing: 'environment', room: '', turn: 0, preview: 'camera', ...readJSON(PREFS_KEY, {}) };
 if (!QUALITY[prefs.quality]) prefs.quality = DEFAULT_QUALITY;
+if (prefs.preview !== 'output') prefs.preview = 'camera';
 setTurn(Number(prefs.turn) || 0);
 
 // "Pair without internet" on the Mac puts its half of the handshake in the
@@ -113,6 +115,7 @@ async function start() {
     onDataOpen: () => {
       sendInfo();
       askForState();
+      sendPreviewWish();
     },
     directFirst: !!offer,
     onMessage: (msg) => {
@@ -142,9 +145,57 @@ function layout() {
   measure();
   $('root').classList.toggle('upright', window.innerHeight > window.innerWidth);
   const stage = $('stage');
-  stage.style.setProperty('--turn', `${-orient.picture}deg`);
-  stage.classList.toggle('turned', orient.picture % 180 !== 0);
+  // (The Mac's output arrives already turned.)
+  const turn = stage.classList.contains('output') ? 0 : orient.picture;
+  stage.style.setProperty('--turn', `${-turn}deg`);
+  stage.classList.toggle('turned', turn % 180 !== 0);
   stage.dataset.turn = String(orient.picture);
+}
+
+// ------------------------------------------------- what the preview shows ---
+
+// The camera, or (a setting in the camera panel) the Mac's finished picture:
+// effects, Freeze and Blackout as the audience sees them, about a quarter of
+// a second behind the camera because it has been to the Mac and back. The
+// Mac sends it only while asked to.
+const wantsOutput = () => prefs.preview === 'output' && !app.controllerOnly;
+function sendPreviewWish() {
+  app.link?.send({ t: 'preview', on: wantsOutput() });
+}
+
+// Why the output cannot be shown just now, or '' if it can.
+function outputBlocked(state) {
+  if (app.controllerOnly) return 'It needs the camera on.';
+  if (state?.direct) return 'Not available when paired without internet; the preview shows the camera.';
+  if (!app.link?.remote || state?.media !== 'connected') return 'Waiting for the picture from the Mac; the preview shows the camera meanwhile.';
+  return '';
+}
+
+function syncPreview(state) {
+  // Reading a code needs the camera's own picture.
+  const output = wantsOutput() && !scanTimer && !outputBlocked(state);
+  const stream = output ? app.link.remote : app.stream;
+  const video = $('self');
+  if (video.srcObject !== (stream ?? null)) {
+    video.srcObject = stream ?? null;
+    video.play?.().catch(() => {});
+  }
+  if ($('stage').classList.contains('output') !== output) {
+    $('stage').classList.toggle('output', output);
+    layout();
+  }
+  if (tools.preview) {
+    tools.preview.textContent = prefs.preview === 'output' ? 'Preview: Mac output' : 'Preview: camera';
+    tools.preview.classList.toggle('on', prefs.preview === 'output');
+    $('preview-note').textContent = prefs.preview === 'output' ? outputBlocked(state) || 'Showing the Mac\'s finished picture, a moment behind the camera.' : 'Mac output shows effects and Freeze here, a moment behind the camera.';
+  }
+}
+
+function setPreview(kind) {
+  prefs.preview = kind;
+  savePrefs();
+  sendPreviewWish();
+  syncPreview(app.link?.state);
 }
 window.addEventListener('resize', layout);
 window.addEventListener('orientationchange', layout);
@@ -353,9 +404,9 @@ async function startCamera() {
   track.addEventListener('ended', () => {
     if (app.track === track) recoverCamera();
   });
-  $('self').srcObject = stream;
   $('stage').classList.remove('off');
   cameraControls.attach(track);
+  syncPreview(app.link?.state);
   layout();
   syncTools();
   return stream;
@@ -365,7 +416,7 @@ function stopCamera() {
   for (const track of app.stream?.getTracks() ?? []) track.stop();
   app.stream = null;
   app.track = null;
-  $('self').srcObject = null;
+  if (!$('stage').classList.contains('output')) $('self').srcObject = null;
   cameraControls.attach(null);
 }
 
@@ -449,7 +500,8 @@ function buildTools() {
     Object.entries(QUALITY).map(([key, q]) => el('option', { value: key, text: q.label })),
   );
   tools.camera = el('button', { text: 'Camera', onclick: () => setControllerOnly(!app.controllerOnly) });
-  $('tools').replaceChildren(tools.quality, tools.camera);
+  tools.preview = el('button', { id: 'preview-kind', text: 'Preview: camera', onclick: () => setPreview(prefs.preview === 'output' ? 'camera' : 'output') });
+  $('tools').replaceChildren(tools.quality, tools.camera, tools.preview);
 }
 
 function syncTools() {
@@ -460,10 +512,15 @@ function syncTools() {
   tools.camera.classList.toggle('on', camOn);
   tools.camera.textContent = camOn ? 'Camera on' : 'Camera off';
   $('quick-flip').disabled = !camOn;
-  $('quick-torch').hidden = !camOn || !cameraControls.hasTorch;
+  // A switch this camera does not have is dimmed, not removed: the row
+  // keeps its shape when the camera is flipped.
+  $('quick-torch').disabled = !camOn || !cameraControls.hasTorch;
   $('quick-torch').classList.toggle('on', cameraControls.torchOn);
-  $('quick-wb').hidden = !camOn || !cameraControls.hasWhiteLock;
+  $('quick-wb').disabled = !camOn || !cameraControls.hasWhiteLock;
   $('quick-wb').classList.toggle('on', cameraControls.whiteLocked);
+  $('adjust-note').textContent = camOn && !$('adjust').children.length ? 'This camera offers a web page no exposure or focus controls. Zoom, the torch and the white-balance lock are on the live screen.' : '';
+  sendPreviewWish();
+  syncPreview(app.link?.state);
 }
 
 // -------------------------------------------------------------- status ---
@@ -542,6 +599,7 @@ function renderState(state) {
   }
   bar.className = tight ? `${level} tight` : level;
   $('state').textContent = text;
+  syncPreview(state);
 }
 
 // A passing message. It lies over the status line and goes after a few

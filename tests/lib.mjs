@@ -142,11 +142,34 @@ async function fakeCamera(context, path, size) {
     canvas.height = 720;
     const ctx = canvas.getContext('2d');
     let image = null;
-    setInterval(() => {
+    // Every stream handed out, so each can be given its frames by hand. Left
+    // to itself a canvas stream gets a frame when the page next presents
+    // one, and its timer runs when the browser lets it: in a headless page
+    // that is not in front, either can stall for half a minute, and a
+    // picture held up to this camera is then simply not seen. A worker's
+    // timer is not held back, and requestFrame() does not wait for the page.
+    const tracks = new Set();
+    const draw = () => {
       ctx.fillStyle = '#3a4652';
       ctx.fillRect(0, 0, 1280, 720);
       if (image) ctx.drawImage(image, (1280 - size) / 2, (720 - size) / 2, size, size);
-    }, 100);
+      for (const track of tracks) {
+        if (track.readyState === 'live') track.requestFrame?.();
+        else tracks.delete(track);
+      }
+    };
+    try {
+      const clock = new Worker(URL.createObjectURL(new Blob(['setInterval(() => postMessage(0), 100)'], { type: 'text/javascript' })));
+      clock.onmessage = draw;
+    } catch {
+      setInterval(draw, 100);
+    }
+    const open = () => {
+      const stream = canvas.captureStream(0);
+      tracks.add(stream.getVideoTracks()[0]);
+      draw();
+      return stream;
+    };
     window.__show = (dataUrl) => {
       if (!dataUrl) {
         image = null;
@@ -159,7 +182,7 @@ async function fakeCamera(context, path, size) {
       img.src = dataUrl;
     };
     const real = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-    navigator.mediaDevices.getUserMedia = async (constraints) => (constraints?.video ? canvas.captureStream(15) : real(constraints));
+    navigator.mediaDevices.getUserMedia = async (constraints) => (constraints?.video ? open() : real(constraints));
   }, { path, size });
 }
 

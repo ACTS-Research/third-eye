@@ -17,6 +17,7 @@ import { InputManager } from './inputs.js';
 import { LatencyProbe } from './latency-probe.js';
 import { LOOK_KEYS, readLook } from '../shared/look.js';
 import { Recorder } from './recorder.js';
+import { ReturnFeed } from './return-feed.js';
 import { Modulation } from './modulation.js';
 import { PhoneSensors } from './phone-sensors.js';
 import { Pipeline } from './pipeline.js';
@@ -98,6 +99,9 @@ export class Engine {
       else if (e.key === PRESETS_KEY || e.key === ORDER_KEY) this.sendPresets();
     });
     this.link.getCodec = () => this.store.state.net.codec;
+    // The finished picture, small, for a phone that asks to see it.
+    this.returnFeed = new ReturnFeed(canvas);
+    this.link.getReturnStream = () => this.returnFeed.stream;
     this.link.onRoomTaken = () => {
       const old = this.store.state.net.room;
       this.link.notice = `Room code ${old} was in use somewhere else, so a new one was made. Scan the QR code again.`;
@@ -292,6 +296,9 @@ export class Engine {
 
   // Slow chores that must keep running even if rendering is paused.
   housekeeping() {
+    // No phone, nobody to draw the return picture for; a phone that comes
+    // back asks again.
+    if (!this.link.conn?.open) this.returnFeed.on = false;
     const input = this.store.state.input;
     // Once opened the camera stays warm so switching back to it is instant.
     if (input.kind === 'camera' || this.camera.stream) this.camera.ensure(input.cameraId);
@@ -316,6 +323,8 @@ export class Engine {
 
   onPhoneMessage(msg) {
     if (msg?.t === 'hello') return this.greetPhone();
+    // The phone's preview shows the Mac's output, or stopped showing it.
+    if (msg?.t === 'preview') this.returnFeed.on = !!msg.on;
     if (msg?.t === 'intro-answer') this.bus.send('intro-answer', { to: msg.to, token: msg.token });
     // One of the six buttons on the phone: a step of the running order when
     // that is what the phone was showing, a preset otherwise. (If the two
@@ -496,6 +505,7 @@ export class Engine {
         this.renderErrorLogged = true;
       }
       this.renderFrames++;
+      this.returnFeed.frame(now);
     }
 
     if (now - this.lastStatusAt >= STATUS_INTERVAL_MS) this.sendStatus(now);

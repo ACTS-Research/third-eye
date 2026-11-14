@@ -55,10 +55,10 @@
                 <button id="quick-flip" class="icon" title="Flip between the front and rear camera" aria-label="Flip camera">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9a8 8 0 0 1 14-3.5M20 15a8 8 0 0 1-14 3.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M19.5 1.5v5h-5zM4.5 22.5v-5h5z" fill="currentColor"/></svg>
                 </button>
-                <button id="quick-torch" class="icon" title="Torch" aria-label="Torch" hidden>
+                <button id="quick-torch" class="icon" title="Torch" aria-label="Torch" disabled>
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2L5 13.5h5.5L9.5 22 19 10h-6z" fill="currentColor"/></svg>
                 </button>
-                <button id="quick-wb" class="icon" title="Lock the white balance" aria-label="Lock white balance" hidden>
+                <button id="quick-wb" class="icon" title="Lock the white balance" aria-label="Lock white balance" disabled>
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8l2 9 2.2-6 2.2 6 2-9" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><rect x="13.5" y="11.5" width="8.5" height="7" rx="1" fill="currentColor"/><path d="M15.4 11.5V9.4a2.35 2.35 0 0 1 4.7 0v2.1" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
                 </button>
               </div>
@@ -66,7 +66,9 @@
             <div id="zoom" hidden></div>
             <div id="panel" hidden>
               <div id="tools"></div>
+              <div id="preview-note"></div>
               <div id="adjust"></div>
+              <div id="adjust-note"></div>
               <div class="panel-row">
                 <button id="scan">Scan the Mac's code</button>
                 <button id="panel-close">Close</button>

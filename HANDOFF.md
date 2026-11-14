@@ -7,7 +7,7 @@ live on GitHub Pages from `main`: the output window is optional (`/control`
 runs the whole instrument by itself); the phone can be paired with no
 internet, by QR code both ways ("Pair without internet"); the phone's live
 screen was rebuilt around a large horizontal preview; and there is a running
-order (steps that point at presets, on the preset strip). All seventeen test
+order (steps that point at presets, on the preset strip). All eighteen test
 suites pass in headless Chromium. The phone screen's last rework, the Freeze
 fix and the running order have not been tried on the real iPhone yet.
 
@@ -192,11 +192,34 @@ right way up. What stands now:
   never open also restart signaling. Time the page spent asleep is not
   counted (`awake`, and the gap check at the top of `tick`). A direct link is
   only dropped for silence when the pairing server can be reached.
+- **`tests/offline-pair.mjs` and slow machines.** From 14 November the
+  check "a code read twenty seconds later still pairs" failed about one run
+  in two in the cloud sandbox. Traced: once the phone's code reaches the
+  Mac's reader the app pairs in about 0.3 s every time; what crawls is the
+  sandbox (the Mac page's draw loop at 0 to 6 frames a second while it reads
+  a camera, decodes video and draws with software graphics), and the test's
+  stand-in camera, which left to itself can go half a minute without
+  delivering a frame. The stand-in camera (`fakeCamera` in `lib.mjs`) now
+  pushes its frames from a worker's clock, and that one check waits up to a
+  minute. Not settled: the suite passed 4 runs in 4 on the code from before
+  the reconnect change and failed about half the time after it, and no
+  cause was found in the code. If Pair without internet feels slower on the
+  real phone and Mac than it did, start there.
 - **`tests/vision.mjs` and slow machines.** A person mask is fresh for 1.5 s
   (`MASK_FRESH_MS`); in the cloud sandbox a segmentation pass takes about a
   second on the CPU and sometimes longer, so a picture read at the wrong
   moment has no mask. The mask test now reads a picture drawn just after a
   mask arrived. It failed two runs in three before that, on older code too.
+- **The phone's preview can show the Mac's output** (14 November; a setting
+  in the phone's camera panel, off by default). `engine/return-feed.js`
+  copies the finished frame to a 480-wide canvas about 15 times a second,
+  only while a phone has asked (`{ t: 'preview', on }`); `PhoneLink.acceptCall`
+  answers the phone's call with that canvas's stream, so nothing new is
+  negotiated. On the phone `HostLink.remote` is that stream and
+  `syncPreview` in `main.js` decides what the preview shows. Not done: a
+  phone paired without internet (the direct handshake is receive-only on the
+  Mac's side; its codes would have to change), and a phone with its camera
+  off (PeerJS will not make a call without a stream to send).
 - **The Mac holds on to its room code for 75 seconds** when it reads as
   taken (`ROOM_TAKEN_MS` in `remote.js`), because a registration left by a
   reload clears within a minute and a new code strands the phone.
@@ -271,7 +294,7 @@ Three static pages built by Vite, no framework.
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon, option D2 from the sheet at https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo) |
 | `design/` | `third-eye-icons.html`: the icon options shown to the owner (a page for a browser, not part of the site) |
-| `tests/` | Seventeen headless suites and `lib.mjs` |
+| `tests/` | Eighteen headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 

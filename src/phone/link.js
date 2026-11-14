@@ -62,6 +62,7 @@ export class HostLink {
     this.pendings = new Map(); // direct links not yet in use, by handshake id
     this.introduced = new Set(); // offers already answered
     this.direct = false; // the link in use is a direct one
+    this.remote = null; // the Mac's finished picture, when the call carries it
     this.heardAt = 0; // when the Mac last said anything on the link in use
     this.silent = false; // the link is open but the Mac has stopped answering
     this.notFound = false; // nothing is registered under this room code
@@ -104,6 +105,7 @@ export class HostLink {
     if (!this.direct) {
       this.conn = null;
       this.call = null;
+      this.remote = null;
     }
     this.madeAt = performance.now();
     this.signal = 'connecting';
@@ -246,6 +248,7 @@ export class HostLink {
     // On a direct link the video shares the connection with the messages.
     if (call?.direct) return;
     this.call = null;
+    this.remote = null;
     try {
       call?.close();
     } catch {
@@ -400,6 +403,7 @@ export class HostLink {
     });
     this.conn = conn;
     this.call = new DirectCall(p.pc);
+    this.remote = null;
     this.sensorChannel = p.sensor;
     this.direct = true;
     this.directFirst = false;
@@ -434,6 +438,13 @@ export class HostLink {
     if (!call) return;
     this.call = call;
     this.callSession = this.session;
+    // The Mac answers with a small copy of its finished picture, for the
+    // preview (it only moves when this phone has asked for it).
+    call.on('stream', (remote) => {
+      if (call !== this.call) return;
+      this.remote = remote;
+      this.changed();
+    });
     const pc = call.peerConnection;
     pc?.addEventListener('connectionstatechange', () => {
       if (call !== this.call) return;
@@ -444,7 +455,10 @@ export class HostLink {
       this.changed();
     });
     call.on('close', () => {
-      if (this.call === call) this.call = null;
+      if (this.call === call) {
+        this.call = null;
+        this.remote = null;
+      }
       this.changed();
     });
     call.on('error', () => {});
