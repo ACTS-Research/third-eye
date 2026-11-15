@@ -1,7 +1,7 @@
 // Recording the output, the latency measurement, and codec preference.
 //   node tests/record-latency.mjs
 
-import { benignError, check, failureCount, launch, openSession, outputStats, sleep, startPeerServer, startSite, stopPeerServer, waitFor } from './lib.mjs';
+import { benignError, check, failureCount, launch, openSession, outputStats, sleep, startPeerServer, startSite, stopPeerServer, waitFor, pickMenu } from './lib.mjs';
 
 const site = await startSite();
 const peerServer = await startPeerServer();
@@ -55,7 +55,7 @@ try {
   check('Delete removes it', await settle(async () => (await control.locator('.recording').count()) === 0, 'deleted'));
 
   // MP4 on request.
-  await control.selectOption('#record-panel select', 'mp4');
+  await pickMenu(control, '#rec-format', 'mp4');
   await control.keyboard.press('r');
   await settle(async () => (await status()).recording.active, 'mp4 recording');
   await sleep(2500);
@@ -68,7 +68,7 @@ try {
     return { size: f.size, tag: String.fromCharCode(...new Uint8Array(await f.slice(4, 8).arrayBuffer())) };
   }, mp4);
   check('MP4 can be chosen instead', mp4.endsWith('.mp4') && mp4Head.tag === 'ftyp' && mp4Head.size > 20000, `${mp4}, ${mp4Head.size} bytes`);
-  await control.selectOption('#record-panel select', 'webm');
+  await pickMenu(control, '#rec-format', 'webm');
 
   console.log('latency measurement');
   await control.keyboard.press('3');
@@ -127,9 +127,9 @@ try {
   console.log('codec preference');
   const first = (await waitFor(async () => (await status()).phone.codec, { label: 'codec', timeout: 15000 }));
   check('pairing works with H.264 preferred, falling back when the browser lacks it', !!first, `in use: ${first} (this Chromium build has no H.264)`);
-  await control.selectOption('#codec', 'vp9');
+  await pickMenu(control, '#codec', 'vp9');
   check('choosing VP9 renegotiates to VP9', await settle(async () => (await status()).phone.codec === 'VP9' && (await status()).input.state === 'live', 'vp9', 30000), (await status()).phone.codec);
-  await control.selectOption('#codec', 'vp8');
+  await pickMenu(control, '#codec', 'vp8');
   check('choosing VP8 renegotiates to VP8', await settle(async () => (await status()).phone.codec === 'VP8' && (await status()).input.state === 'live', 'vp8', 30000), (await status()).phone.codec);
   check('status shows the codec in use', await settle(() => control.evaluate(() => window.thirdEye.ui.statusRows.stream.textContent.startsWith('VP8')), 'stream row', 15000), await control.evaluate(() => window.thirdEye.ui.statusRows.stream.textContent));
 } catch (err) {

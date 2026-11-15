@@ -106,20 +106,20 @@ try {
   await control.locator('.tabs button[data-tab=lfos]').click();
   check('the LFOs have a tab of their own, the fourth', (await control.locator('.tabs button').allTextContents()).join('|') === 'Parameters|Faders · 0|Modulation · 3|LFOs' && (await control.locator('#lfo-panel .lfo').count()) === 4 && (await control.locator('#lfo-panel .lfo').first().isVisible()));
   const lfo = control.locator('#lfo-panel .lfo').first();
-  check('shape is a row of six small pictures, the current one marked', (await lfo.locator('.choice button').count()) === 6 && (await lfo.locator('.choice button svg path').count()) === 6 && (await lfo.locator('.choice button[aria-checked=true]').getAttribute('title')) === 'Sine');
-  await lfo.locator('.choice button[data-value="square"]').click();
-  check('a click on a picture chooses that shape', await settle(() => state(() => window.thirdEye.store.state.lfos[0].shape === 'square'), 'shape') && (await lfo.locator('.choice button[aria-checked=true]').getAttribute('title')) === 'Square');
+  check('shape is a row of six small pictures, the current one marked', (await lfo.locator('.choice.shape button').count()) === 6 && (await lfo.locator('.choice.shape button svg path').count()) === 6 && (await lfo.locator('.choice.shape button[aria-checked=true]').getAttribute('title')) === 'Sine');
+  await lfo.locator('.choice.shape button[data-value="square"]').click();
+  check('a click on a picture chooses that shape', await settle(() => state(() => window.thirdEye.store.state.lfos[0].shape === 'square'), 'shape') && (await lfo.locator('.choice.shape button[aria-checked=true]').getAttribute('title')) === 'Square');
   await lfo.locator('.bar-value').fill('2.5');
   await control.keyboard.press('Enter');
   check('rate is a bar with a number', await settle(() => state(() => window.thirdEye.store.state.lfos[0].rate === 2.5), 'rate'));
-  // A menu whose button is off the screen: clicking it scrolls it into view
-  // first, and the list must survive that.
-  await control.setViewportSize({ width: 1440, height: 420 });
-  await control.locator('#lfo-panel .lfo').nth(3).locator('.menu').click();
-  await control.locator('.menu-list .menu-item', { hasText: '1 bar' }).click();
-  check('tempo sync is chosen from a menu, though its button had to scroll into view first', await settle(() => state(() => window.thirdEye.store.state.lfos[3].sync === 4), 'sync'));
+  const sync = control.locator('#lfo-panel .lfo').nth(3).locator('.choice.sync');
+  check('tempo sync is the word Free and seven note values, each with a tooltip', (await sync.locator('button').count()) === 8 && (await sync.locator('button').first().textContent()) === 'Free' && (await sync.locator('button svg').count()) === 7 && (await sync.locator('button').evaluateAll((list) => list.every((b) => b.title.length > 5 && b.getAttribute('aria-label') === b.title))), (await sync.locator('button').evaluateAll((list) => list.map((b) => b.title))).join(' | '));
+  check('the quarter note says what it is', (await sync.locator('button[data-value="1"]').getAttribute('title')) === 'One cycle every 1 beat (a quarter note)');
+  await sync.locator('button[data-value="4"]').click();
+  check('a click on one locks the LFO to that length', await settle(() => state(() => window.thirdEye.store.state.lfos[3].sync === 4), 'sync') && (await sync.locator('button[aria-checked=true]').getAttribute('title')) === 'One cycle every 1 bar');
   check('a synced LFO\'s rate is dimmed: it is not used', await control.locator('#lfo-panel .lfo').nth(3).locator('.bar-field').evaluate((n) => n.classList.contains('idle')) && !(await lfo.locator('.bar-field').evaluate((n) => n.classList.contains('idle'))));
-  await control.setViewportSize({ width: 1440, height: 900 });
+  await sync.locator('button[data-value="0"]').click();
+  check('Free unlocks it again', await settle(() => state(() => window.thirdEye.store.state.lfos[3].sync === 0), 'free') && !(await control.locator('#lfo-panel .lfo').nth(3).locator('.bar-field').evaluate((n) => n.classList.contains('idle'))));
   check('each LFO has a meter that moves', await settle(() => lfo.locator('.mod-meter i').evaluate((i) => parseFloat(i.style.width) > 0), 'lfo meter'));
 
   console.log('it is saved');
@@ -127,6 +127,26 @@ try {
     const p = JSON.parse(localStorage.getItem('thirdeye.presets.v1'))[1];
     return p.scene.mappings[0].mode === 'set' && p.scene.mappings[0].enabled === false && p.scene.lfos[0].shape === 'square' && p.scene.chain[0].params.blend === 1;
   }), 'saved', 8000));
+
+  console.log('the setup screen');
+  await state(() => window.thirdEye.ui.setView('setup'));
+  check('no system menus or plain sliders anywhere on the page', await state(() => document.querySelectorAll('select').length === 0 && document.querySelectorAll('input[type=range]:not(.bar)').length === 0));
+  // A menu whose button is off the screen: clicking it scrolls it into view
+  // first, and the list must survive that.
+  await control.setViewportSize({ width: 1440, height: 420 });
+  await control.locator('#rec-format').click();
+  await control.locator('.menu-list .menu-item[data-value="mp4"]').click();
+  check('a menu whose button had to scroll into view still works', await settle(() => state(() => window.thirdEye.store.state.globals.recFormat === 'mp4'), 'format') && (await control.locator('#rec-format .menu-text').textContent()).startsWith('MP4'));
+  await state(() => window.thirdEye.store.merge('globals', { recFormat: 'webm' }));
+  check('and follows a change made elsewhere', await settle(async () => (await control.locator('#rec-format .menu-text').textContent()).startsWith('WebM'), 'follows'));
+  await control.setViewportSize({ width: 1440, height: 900 });
+  await control.locator('#library-panel .bar-value').fill('3.5');
+  await control.keyboard.press('Enter');
+  check('Default fade is a bar with a number', await settle(() => state(() => window.thirdEye.store.state.globals.fadeTime === 3.5), 'fade') && (await control.locator('#library-panel .bar-value').inputValue()) === '3.5 s');
+  await control.locator('#actions-panel .binding .menu').first().click();
+  check('a trigger\'s source is chosen from the grouped list', (await control.locator('.menu-list .menu-group').count()) > 3 && (await control.locator('.menu-list .menu-item.on').count()) === 1);
+  await control.keyboard.press('Escape');
+  await state(() => window.thirdEye.ui.setView('edit'));
 
   console.log('a narrow window');
   await control.setViewportSize({ width: 900, height: 900 });

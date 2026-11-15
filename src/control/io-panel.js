@@ -2,6 +2,7 @@
 // operator's screen; the engine then opens the devices without prompting.
 
 import { el } from '../shared/util.js';
+import { bar, menu } from './controls.js';
 
 export function mountIoPanel(root, ui) {
   const { store, bus } = ui;
@@ -31,18 +32,24 @@ export function mountIoPanel(root, ui) {
 
   // --------------------------------------------------------------- audio --
   const audioToggle = el('button', { text: 'Enable audio', onclick: toggleAudio });
-  const device = el('select', { class: 'grow', onchange: () => store.merge('audio', { deviceId: device.value }) });
-  const gain = el('input', { type: 'range', min: '0.2', max: '8', step: '0.1', class: 'grow', oninput: () => store.merge('audio', { gain: Number(gain.value) }) });
-  const sens = el('input', { type: 'range', min: '1.1', max: '4', step: '0.05', class: 'grow', oninput: () => store.merge('audio', { sensitivity: Number(sens.value) }) });
+  let devices = [];
+  const device = menu({
+    label: 'Audio input',
+    cls: 'grow',
+    options: () => [{ value: '', label: 'Default input' }, ...devices.map((d) => ({ value: d.deviceId, label: d.label }))],
+    value: '',
+    onChange: (v) => store.merge('audio', { deviceId: v }),
+  });
+  const gain = bar({ label: 'Input gain', min: 0.2, max: 8, step: 0.1, value: store.state.audio.gain, reset: 1, onInput: (v) => store.merge('audio', { gain: v }) });
+  const sens = bar({ label: 'Beat threshold', min: 1.1, max: 4, step: 0.05, value: store.state.audio.sensitivity, reset: 1.6, onInput: (v) => store.merge('audio', { sensitivity: v }) });
   const audioNote = el('div', { class: 'dim small keep-2', id: 'audio-note' });
 
   async function listDevices() {
     try {
       const inputs = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audioinput' && d.label);
-      device.replaceChildren(el('option', { value: '', text: 'Default input' }));
-      for (const d of inputs) device.append(el('option', { value: d.deviceId, text: d.label }));
+      devices = inputs;
       const wanted = store.state.audio.deviceId;
-      device.value = inputs.some((d) => d.deviceId === wanted) ? wanted : '';
+      device.set(inputs.some((d) => d.deviceId === wanted) ? wanted : '');
     } catch {
       /* no device access yet */
     }
@@ -71,9 +78,9 @@ export function mountIoPanel(root, ui) {
     midiToggle.textContent = midi.enabled ? 'MIDI on' : 'Enable MIDI';
     audioToggle.classList.toggle('on', audio.enabled);
     audioToggle.textContent = audio.enabled ? 'Audio on' : 'Enable audio';
-    gain.value = String(audio.gain);
-    sens.value = String(audio.sensitivity);
-    if ([...device.options].some((o) => o.value === audio.deviceId)) device.value = audio.deviceId;
+    gain.set(audio.gain);
+    sens.set(audio.sensitivity);
+    if (devices.some((d) => d.deviceId === audio.deviceId)) device.set(audio.deviceId);
   };
   store.subscribe((op) => {
     if (op.op === 'replace' || (op.op === 'merge' && (op.key === 'midi' || op.key === 'audio'))) sync();
@@ -102,9 +109,9 @@ export function mountIoPanel(root, ui) {
       el('h2', { text: 'MIDI and audio' }),
       el('div', { class: 'row wrap' }, [midiToggle]),
       midiNote,
-      el('div', { class: 'row', style: 'margin-top:10px' }, [audioToggle, device]),
-      el('div', { class: 'row' }, [el('span', { class: 'dim small', style: 'width:92px', text: 'Input gain' }), gain]),
-      el('div', { class: 'row' }, [el('span', { class: 'dim small', style: 'width:92px', text: 'Beat threshold' }), sens]),
+      el('div', { class: 'row', style: 'margin-top:10px' }, [audioToggle, device.node]),
+      el('div', { class: 'row' }, [el('span', { class: 'dim small', style: 'width:104px;flex-shrink:0', text: 'Input gain' }), gain.node]),
+      el('div', { class: 'row' }, [el('span', { class: 'dim small', style: 'width:104px;flex-shrink:0', text: 'Beat threshold' }), sens.node]),
       audioNote,
     ]),
   );

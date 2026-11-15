@@ -5,6 +5,7 @@ import { currentDim, currentPalette } from '../shared/palette.js';
 import { drawQr } from '../shared/qr.js';
 import { CODECS } from '../shared/sdp.js';
 import { el } from '../shared/util.js';
+import { menu } from './controls.js';
 import { PAIR_TIP } from './offline-pair.js';
 
 export function mountPhonePanel(root, ui) {
@@ -88,12 +89,14 @@ export function mountPhonePanel(root, ui) {
     },
   });
 
-  const codec = el('select', {
+  const codec = menu({
     id: 'codec',
-    class: 'grow',
-    'aria-label': 'Video codec',
-    onchange: () => store.merge('net', { codec: codec.value }),
-  }, Object.entries(CODECS).map(([value, text]) => el('option', { value, text })));
+    cls: 'grow',
+    label: 'Video codec',
+    options: Object.entries(CODECS).map(([value, label]) => ({ value, label })),
+    value: store.state.net.codec,
+    onChange: (v) => store.merge('net', { codec: v }),
+  });
 
   let currentUrl = '';
   // The pairing link as shown in the QR codes (room, palette, dimmer).
@@ -101,7 +104,7 @@ export function mountPhonePanel(root, ui) {
 
   const sync = () => {
     const net = store.state.net;
-    codec.value = net.codec;
+    codec.set(net.codec);
     // The phone opens in the same colours and dimmer as this page; once
     // paired, the engine keeps it in step.
     const link_ = new URL(phoneUrl(net));
@@ -184,7 +187,7 @@ export function mountPhonePanel(root, ui) {
       ]),
       el('div', { class: 'row' }, [el('button', { class: 'grow pair-offline', id: 'pair-offline', text: 'Pair without internet', title: PAIR_TIP, onclick: () => ui.pairOffline?.() })]),
       warn,
-      el('div', { class: 'row' }, [el('span', { class: 'caps', text: 'Codec' }), codec]),
+      el('div', { class: 'row' }, [el('span', { class: 'caps', text: 'Codec' }), codec.node]),
       el('div', { class: 'dim small', text: 'Changing it restarts the phone\'s video for a moment. Status below shows which codec is in use and whether it decodes in hardware.' }),
       el('details', {}, [
         el('summary', { class: 'dim small', text: 'Link and signaling' }),

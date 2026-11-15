@@ -253,15 +253,17 @@ export function toggle({ on = false, text = '', onText = text, label = '', onCha
 }
 
 // A few choices side by side, each a small picture: one is always chosen.
-// options: [{ value, label, icon }] where `icon` is the inside of an <svg>
-// drawn 32 by 16 (the label is what a screen reader and the tooltip say).
-// Returns { node, set(value) }.
-export function choice({ options, value, onChange, label = '' }) {
+// options: [{ value, label, icon, box?, text? }] where `icon` is the inside
+// of an <svg> drawn in `box` (default 32 by 16), or `text` is a word shown
+// instead of a picture. The label is the tooltip, and what a screen reader
+// says. Returns { node, set(value) }.
+export function choice({ options, value, onChange, label = '', cls = '' }) {
   let current = value;
-  const node = el('div', { class: 'choice', role: 'radiogroup', 'aria-label': label || null });
+  const node = el('div', { class: `choice${cls ? ` ${cls}` : ''}`, role: 'radiogroup', 'aria-label': label || null });
   const buttons = options.map((o) => {
     const b = el('button', { type: 'button', role: 'radio', title: o.label, 'aria-label': o.label, 'data-value': String(o.value) });
-    b.innerHTML = `<svg viewBox="0 0 32 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">${o.icon}</svg>`;
+    if (o.text) b.textContent = o.text;
+    else b.innerHTML = `<svg viewBox="${o.box ?? '0 0 32 16'}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">${o.icon}</svg>`;
     b.addEventListener('click', () => {
       if (o.value === current) return;
       current = o.value;

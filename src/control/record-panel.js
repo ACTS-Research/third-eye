@@ -4,6 +4,7 @@
 
 import { runAction } from '../shared/actions.js';
 import { el } from '../shared/util.js';
+import { menu } from './controls.js';
 
 const size = (bytes) => (bytes >= 1e9 ? `${(bytes / 1e9).toFixed(2)} GB` : `${(bytes / 1e6).toFixed(1)} MB`);
 const clock = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
@@ -20,11 +21,17 @@ export function mountRecordPanel(root, ui) {
 
   const list = el('div', { id: 'recordings' });
   const note = el('div', { class: 'dim small keep-2' });
-  const format = el('select', {
-    class: 'grow',
-    'aria-label': 'Recording format',
-    onchange: () => store.merge('globals', { recFormat: format.value }),
-  }, [el('option', { value: 'webm', text: 'WebM (written every second: safest)' }), el('option', { value: 'mp4', text: 'MP4 (opens anywhere, written in large pieces)' })]);
+  const format = menu({
+    id: 'rec-format',
+    cls: 'grow',
+    label: 'Recording format',
+    options: [
+      { value: 'webm', label: 'WebM (written every second: safest)' },
+      { value: 'mp4', label: 'MP4 (opens anywhere, written in large pieces)' },
+    ],
+    value: store.state.globals.recFormat,
+    onChange: (v) => store.merge('globals', { recFormat: v }),
+  });
 
   async function refresh() {
     list.replaceChildren();
@@ -88,14 +95,13 @@ export function mountRecordPanel(root, ui) {
     }
   });
   store.subscribe((op) => {
-    if (op.op === 'replace' || (op.op === 'merge' && op.key === 'globals')) format.value = store.state.globals.recFormat;
+    if (op.op === 'replace' || (op.op === 'merge' && op.key === 'globals')) format.set(store.state.globals.recFormat);
   });
-  format.value = store.state.globals.recFormat;
 
   root.append(
     el('div', { class: 'panel', id: 'record-panel' }, [
       el('h2', { text: 'Recordings' }),
-      el('div', { class: 'row' }, [el('span', { class: 'caps', text: 'Format' }), format, el('button', { text: 'Refresh', onclick: refresh })]),
+      el('div', { class: 'row' }, [el('span', { class: 'caps', text: 'Format' }), format.node, el('button', { text: 'Refresh', onclick: refresh })]),
       list,
       note,
       el('div', { class: 'dim small', text: 'Records exactly what the output shows, at the output size (1280×720 while no output window is open), with the audio input if it is on. Opening or closing the output window stops a recording. Recording uses extra GPU and CPU: check that Output still reads 60 fps.' }),

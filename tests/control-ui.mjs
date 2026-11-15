@@ -212,7 +212,9 @@ try {
   check('Delete removes it and returns to perform', await settle(async () => (await names()).length === 9 && !(await names()).includes('Vortex copy') && (await control.evaluate(() => window.thirdEye.ui.view)) === 'perform', 'deleted'));
 
   await view('setup');
-  const options = await control.locator('#actions-panel .binding select >> nth=1').locator('option').allTextContents();
+  await control.locator('#actions-panel .binding .menu').nth(1).click();
+  const options = await control.locator('.menu-list .menu-item').allTextContents();
+  await control.keyboard.press('Escape');
   check('triggers can target presets, inputs and faders', options.includes('Preset 5: Vortex') && options.includes('Input: Local camera') && options.includes('Fader 1 (continuous)'));
 
   check('output never shows any interface', await output.evaluate(() => document.body.innerText.trim() === '' || document.getElementById('hint').classList.contains('hidden') || document.body.innerText.includes('fullscreen')));

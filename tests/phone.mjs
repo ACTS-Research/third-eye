@@ -146,10 +146,15 @@ try {
   check('stall alert on control', await control.evaluate(() => [...document.querySelectorAll('#alerts .alert')].some((a) => a.textContent.includes('holding the last frame'))));
   await control.keyboard.press('x');
   await sleep(1200);
-  const h1 = await outputStats(output);
-  await sleep(500);
-  const h2 = await outputStats(output);
-  check('last frame held on stall', h1.mean > 5 && h1.hash === h2.hash);
+  // Two readings half a second apart must be the same picture. (On a slow
+  // machine the switch to bypass can still be settling at the first try.)
+  const held = await waitFor(async () => {
+    const h1 = await outputStats(output);
+    await sleep(500);
+    const h2 = await outputStats(output);
+    return h1.mean > 5 && h1.hash === h2.hash;
+  }, { label: 'frame held', timeout: 10000, interval: 300 }).then(() => true, () => false);
+  check('last frame held on stall', held);
   await control.keyboard.press('x');
   // As after a taken room code: the "scan again" notice is up while no phone is paired.
   await output.evaluate(() => {
@@ -233,7 +238,9 @@ try {
   await control.keyboard.press('2');
   s = await waitStatus(control, (st) => st.input.kind === 'camera' && st.input.state === 'live', 'local camera live');
   check('local camera feeds the pipeline', true, `${s.camera.label} ${s.input.width}x${s.input.height}`);
-  check('camera list populated', (await control.locator('#input-panel select').nth(1).locator('option').count()) > 1);
+  await control.locator('#camera-menu').dispatchEvent('click');
+  check('camera list populated', (await control.locator('.menu-list .menu-item').count()) > 1);
+  await control.locator('#camera-menu').dispatchEvent('click');
   await control.keyboard.press('1');
   await waitStatus(control, (st) => st.input.kind === 'phone' && st.input.state === 'live', 'back to phone');
   check('switching back to the phone is live', true);

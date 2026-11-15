@@ -2,20 +2,12 @@
 
 import { exportPresets, parsePresetFile, resetPresets } from '../shared/presets.js';
 import { el } from '../shared/util.js';
+import { bar } from './controls.js';
 
 export function mountLibraryPanel(root, ui) {
   const { store, presets } = ui;
   const note = el('div', { class: 'dim small keep-1', id: 'library-note' });
-  const fade = el('input', {
-    type: 'range',
-    min: '0',
-    max: '10',
-    step: '0.1',
-    class: 'grow',
-    'aria-label': 'Default fade',
-    oninput: () => store.merge('globals', { fadeTime: Number(fade.value) }),
-  });
-  const fadeLabel = el('span', { style: 'width:48px;text-align:right' });
+  const fade = bar({ label: 'Default fade', min: 0, max: 10, step: 0.1, value: store.state.globals.fadeTime, reset: 2, unit: ' s', onInput: (v) => store.merge('globals', { fadeTime: v }) });
 
   const picker = el('input', {
     type: 'file',
@@ -54,9 +46,7 @@ export function mountLibraryPanel(root, ui) {
   }
 
   const sync = () => {
-    const t = store.state.globals.fadeTime;
-    fade.value = String(t);
-    fadeLabel.textContent = `${t.toFixed(1)} s`;
+    fade.set(store.state.globals.fadeTime);
   };
   store.subscribe((op) => {
     if (op.op === 'replace' || (op.op === 'merge' && op.key === 'globals')) sync();
@@ -81,7 +71,7 @@ export function mountLibraryPanel(root, ui) {
         }),
         picker,
       ]),
-      el('div', { class: 'row' }, [el('span', { class: 'caps', text: 'Default fade' }), fade, fadeLabel]),
+      el('div', { class: 'row' }, [el('span', { class: 'caps', text: 'Default fade' }), fade.node]),
       el('div', { class: 'dim small', text: 'Used by presets that have no fade time of their own. Name, fade and order are set per preset: use Edit on a preset, and drag tiles on the perform screen.' }),
       note,
     ]),

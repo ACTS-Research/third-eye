@@ -455,7 +455,10 @@ touched last. Wet / dry can be moved too.
 
 **LFOs.** The fourth tab holds the four LFOs. Each has a meter showing what
 it is doing, its **shape** as a row of small pictures (sine, triangle, ramp
-up, square, random steps, drift), **tempo sync**, and **rate**. The rate
+up, square, random steps, drift), **tempo sync**, and **rate**. Tempo sync
+is a row of buttons: **Free**, then one cycle every 4, 2 or 1 bars (a
+numbered bar) or every 2, 1, ½ or ¼ beats (a half, quarter, eighth or
+sixteenth note); each says what it is when the pointer rests on it. The rate
 only counts while the LFO runs free; locked to the tempo it is dimmed.
 
 **Triggers.** Any source rising through its halfway point can fire an action:

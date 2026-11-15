@@ -334,6 +334,14 @@ input.bar-value:hover, input.bar-value:focus { border-color: var(--line); }
 .choice button { display: grid; place-items: center; height: 28px; padding: 0 3px; min-width: 0; }
 .choice button svg { width: 100%; max-width: 32px; height: 16px; display: block; }
 .choice button[aria-checked='true'] { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
+/* Tempo sync: the word Free, then seven note values. */
+.choice.sync { grid-auto-flow: row; grid-template-columns: minmax(0, 1.5fr) repeat(7, minmax(0, 1fr)); max-width: 330px; }
+.choice.sync button { height: 30px; font-size: 10px; letter-spacing: 0.02em; }
+.choice.sync button svg { max-width: 22px; height: 22px; }
+.binding .menu, .row .menu { min-width: 0; }
+/* (A wide button in a panel is made tall for its wrapped label; a menu is
+   one line whatever its width.) */
+.panel button.menu.grow { min-height: 0; white-space: nowrap; }
 
 /* MIDI map mode: every mappable control shows itself. */
 body.midi-map [data-midi] { outline: 2px dashed var(--ink); outline-offset: 2px; cursor: crosshair; }

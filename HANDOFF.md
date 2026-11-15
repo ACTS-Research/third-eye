@@ -19,16 +19,12 @@ preset strip and check the phone's six buttons show them.
 
 **Decisions only you can make.**
 
-- Choose how an LFO's tempo sync is set. It is a menu for now; three
-  alternatives (a strip of lengths, note values, a switch with halve and
-  double) are on the "LFO tempo sync" board at
-  https://claude.ai/artifact/UEbbvKGUHsQo7CxCWFUVDT.
 - Try the rebuilt edit screen (15 November) and say what to change. You chose
   mock-up C (picture first), the Bar slider, and the app's own menus; the
-  mock-ups are at https://claude.ai/artifact/UEbbvKGUHsQo7CxCWFUVDT. Still to
-  do, agreed: the same menus and bars on the Setup screen (it still has the
-  system's menus). The phone's Quality menu stays the iPhone's own picker
-  unless you say otherwise.
+  mock-ups are at https://claude.ai/artifact/UEbbvKGUHsQo7CxCWFUVDT. The Setup
+  screen has the same menus and bars. LFO shape and tempo sync are rows of
+  small pictures (you chose note values for sync). The phone's Quality menu
+  stays the iPhone's own picker unless you say otherwise.
 - Try the running order and say what is missing. Left out of this first
   version on purpose: several named shows (there is one running order),
   and steps timed against an audio track. (Since 14 November the phone's
@@ -309,13 +305,16 @@ Three static pages built by Vite, no framework.
 
 ### Rules that are easy to break
 
-- **No `<select>` and no third-party controls on the edit screen.** Sliders
+- **No `<select>`, no plain `<input type=range>` and no third-party controls
+  anywhere on `/control`.** (The phone page keeps its one system menu.) Sliders
   are `bar()` and menus are `menu()` from `src/control/controls.js` (Tweakpane
   was removed on 15 November). A `menu()` list is appended to `<body>` and
   must stop key events itself: the page's shortcuts (arrows step presets,
   Space freezes) listen on `window`. It follows its button on scroll instead
   of closing, because clicking a half-hidden button scrolls it into view
-  first. Setup still uses `<select>` until the second half of that job.
+  first. `choice()` is a row of picture buttons (LFO shape, tempo sync).
+  One trap: `.panel button.grow` is styled tall for big wrapped buttons, so a
+  `menu()` given `grow` needs the `.panel button.menu.grow` override.
 - **A step of the running order points at a preset by id, never by place.**
   Presets are still addressed by index everywhere else (`presetIndex`,
   `preset:3`), so anything that creates a preset must give it an id

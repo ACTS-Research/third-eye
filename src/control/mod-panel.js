@@ -21,6 +21,25 @@ const SHAPE_PICTURES = {
 };
 const SHAPE_ICONS = Object.entries(LFO_SHAPES).map(([label, value]) => ({ value, label, icon: SHAPE_PICTURES[value] ?? '' }));
 
+// Tempo sync as note values, drawn 24 by 24: a numbered bar for whole bars,
+// then the notes that last two beats, one, a half and a quarter (in 4/4).
+const BAR = (n) => `<path d="M4 4v16M20 4v16"/><text x="12" y="16" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">${n}</text>`;
+const HEAD = (filled) => `<ellipse cx="10" cy="17" rx="4" ry="2.8" transform="rotate(-20 10 17)"${filled ? ' fill="currentColor"' : ''}/>`;
+const SYNC_PICTURES = {
+  16: [BAR(4), '4 bars'],
+  8: [BAR(2), '2 bars'],
+  4: [BAR(1), '1 bar'],
+  2: [`${HEAD(false)}<path d="M13.8 16V4"/>`, '2 beats (a half note)'],
+  1: [`${HEAD(true)}<path d="M13.8 16V4"/>`, '1 beat (a quarter note)'],
+  0.5: [`${HEAD(true)}<path d="M13.8 16V4c3 1.5 4.5 4 3 7.5"/>`, 'Half a beat (an eighth note)'],
+  0.25: [`${HEAD(true)}<path d="M13.8 16V4c3 1.5 4.5 4 3 7.5M13.8 8.5c3 1.5 4.5 4 3 7.5"/>`, 'A quarter of a beat (a sixteenth note)'],
+};
+const SYNC_ICONS = Object.values(LFO_SYNC).map((value) =>
+  value > 0
+    ? { value, label: `One cycle every ${SYNC_PICTURES[value]?.[1] ?? `${value} beats`}`, icon: SYNC_PICTURES[value]?.[0] ?? '', box: '0 0 24 24' }
+    : { value, label: 'Free: not locked to the tempo; the rate below sets the speed', text: 'Free' },
+);
+
 // roots: { edit, setup } — mappings and LFOs belong to a preset (edit
 // screen); triggers and the full source list are global (setup screen).
 export function mountModPanel(roots, ui) {
@@ -28,8 +47,6 @@ export function mountModPanel(roots, ui) {
   // Sources seen at run time (MIDI controls) join the static catalog.
   const dynamic = new Set();
   ui.knownSources = () => [...SOURCES.map((s) => s.id), ...dynamic];
-
-  const sourceOptions = () => Object.fromEntries(ui.knownSources().map((id) => [sourceLabel(id), id]));
 
   function targetOptions() {
     const out = {};
@@ -215,22 +232,26 @@ export function mountModPanel(roots, ui) {
 
   function buildActions() {
     actionList.replaceChildren();
-    const sources = sourceOptions();
     for (const b of store.state.actions) {
       const update = (patch) => setActions(store.state.actions.map((x) => (x.id === b.id ? { ...x, ...patch } : x)));
-      const src = el('select', { onchange: () => update({ source: src.value }) }, Object.entries(sources).map(([label, id]) => el('option', { value: id, text: label })));
-      if (![...src.options].some((o) => o.value === b.source)) src.append(el('option', { value: b.source, text: sourceLabel(b.source) }));
-      src.value = b.source;
-      const act = el('select', { onchange: () => update({ action: act.value }) }, Object.entries(actionOptions()).map(([id, label]) => el('option', { value: id, text: label })));
-      if (![...act.options].some((o) => o.value === b.action)) act.append(el('option', { value: b.action, text: describeAction(b.action) }));
-      act.value = b.action;
+      const src = menu({ label: 'What fires it', options: () => sourceChoices(b), value: b.source, onChange: (v) => update({ source: v }) });
+      const act = menu({
+        label: 'What it does',
+        options: () => {
+          const list = Object.entries(actionOptions()).map(([value, label]) => ({ value, label }));
+          if (!list.some((o) => o.value === b.action)) list.push({ value: b.action, label: describeAction(b.action) });
+          return list;
+        },
+        value: b.action,
+        onChange: (v) => update({ action: v }),
+      });
       const hold = el('input', { type: 'checkbox', checked: b.hold, onchange: () => update({ hold: hold.checked }) });
       const holdLabel = el('label', { title: 'On only while the trigger is held' }, [hold, 'hold']);
       holdLabel.style.visibility = TOGGLE_ACTIONS[b.action] ? 'visible' : 'hidden';
       actionList.append(
         el('div', { class: 'binding' }, [
-          src,
-          act,
+          src.node,
+          act.node,
           holdLabel,
           el('button', { class: 'icon', text: '✕', title: 'Remove', onclick: () => setActions(store.state.actions.filter((x) => x.id !== b.id)) }),
         ]),
@@ -257,10 +278,11 @@ export function mountModPanel(roots, ui) {
           rate.node.classList.toggle('idle', sync > 0);
           rate.node.title = sync > 0 ? 'Locked to the tempo: the rate is not used' : '';
         };
-        const shape = choice({ label: `LFO ${i + 1} shape`, options: SHAPE_ICONS, value: lfo.shape, onChange: (v) => patch({ shape: v }) });
-        const sync = menu({
+        const shape = choice({ label: `LFO ${i + 1} shape`, cls: 'shape', options: SHAPE_ICONS, value: lfo.shape, onChange: (v) => patch({ shape: v }) });
+        const sync = choice({
           label: `LFO ${i + 1} tempo sync`,
-          options: Object.entries(LFO_SYNC).map(([label, value]) => ({ value, label })),
+          cls: 'sync',
+          options: SYNC_ICONS,
           value: lfo.sync ?? 0,
           onChange: (v) => {
             patch({ sync: v });

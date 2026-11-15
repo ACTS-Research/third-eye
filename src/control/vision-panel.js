@@ -2,6 +2,7 @@
 // as sources under Modulation, and segmentation feeds "Apply to" on effects.
 
 import { el } from '../shared/util.js';
+import { menu } from './controls.js';
 
 const FEATURES = [
   ['face', 'Face', 'Head pose and expressions'],
@@ -22,16 +23,22 @@ export function mountVisionPanel(root, ui) {
     buttons[key] = el('button', { title: help, onclick: () => store.merge('vision', { [key]: !store.state.vision[key] }) }, [label, badges[key]]);
     grid.append(buttons[key]);
   }
-  const delegate = el('select', {
-    title: 'Where inference runs',
-    onchange: () => store.merge('vision', { delegate: delegate.value }),
-  }, [el('option', { value: 'GPU', text: 'Run on GPU' }), el('option', { value: 'CPU', text: 'Run on CPU' })]);
+  const delegate = menu({
+    label: 'Where inference runs',
+    options: [
+      { value: 'GPU', label: 'Run on GPU' },
+      { value: 'CPU', label: 'Run on CPU' },
+    ],
+    value: store.state.vision.delegate,
+    onChange: (v) => store.merge('vision', { delegate: v }),
+  });
+  delegate.node.title = 'Where inference runs';
   const note = el('div', { class: 'dim small keep-3', id: 'vision-note' });
 
   const sync = () => {
     const v = store.state.vision;
     for (const [key] of FEATURES) buttons[key].classList.toggle('on', v[key]);
-    delegate.value = v.delegate;
+    delegate.set(v.delegate);
   };
   store.subscribe((op) => {
     if (op.op === 'replace' || (op.op === 'merge' && op.key === 'vision')) sync();
@@ -60,7 +67,7 @@ export function mountVisionPanel(root, ui) {
   });
 
   root.append(
-    el('div', { class: 'panel', id: 'vision-panel' }, [el('h2', { text: 'Vision (MediaPipe)' }), grid, el('div', { class: 'row' }, [delegate]), note]),
+    el('div', { class: 'panel', id: 'vision-panel' }, [el('h2', { text: 'Vision (MediaPipe)' }), grid, el('div', { class: 'row' }, [delegate.node]), note]),
   );
   sync();
 }
