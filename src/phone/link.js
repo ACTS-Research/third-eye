@@ -18,11 +18,14 @@ const RETRY_MS = 2500;
 const CONNECT_TIMEOUT_MS = 9000;
 const MAX_PENDING = 4;
 // The Mac answers a ping every second. This long without a word from it and
-// the link is dead, whatever the browser says about the connection.
-const SILENT_MS = 6000;
+// the link is dead, whatever the browser says about the connection. (Not
+// shorter: a Mac page that is very busy, compiling a long chain say, can be
+// silent for several seconds and still be there, and a needless redial
+// interrupts the picture.)
+const SILENT_MS = 10000;
 // A direct link cannot be rebuilt without a new handshake, so it is given
 // longer before the pairing server is tried instead.
-const DIRECT_SILENT_MS = 10000;
+const DIRECT_SILENT_MS = 15000;
 
 function pcState(connection) {
   return connection?.peerConnection?.connectionState ?? 'new';

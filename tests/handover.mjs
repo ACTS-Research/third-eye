@@ -4,7 +4,7 @@
 // against a local PeerServer, so the phone's reconnects are covered too.
 //   node tests/handover.mjs
 
-import { benignError, check, failureCount, launch, outputStats, startPeerServer, startSite, stopPeerServer, waitFor, watch } from './lib.mjs';
+import { benignError, check, failureCount, launch, outputStats, startPeerServer, startSite, stopPeerServer, waitFor, watch, addEffect } from './lib.mjs';
 
 const site = await startSite();
 const peerServer = await startPeerServer();
@@ -89,8 +89,7 @@ try {
       start();
     };
   });
-  await control.selectOption('#col-chain select', 'kaleido');
-  await control.click('text=Add effect');
+  await addEffect(control, 'kaleido');
   await control.evaluate(() => window.thirdEye.ui.setView('perform'));
   const chain = await control.evaluate(() => window.thirdEye.store.state.chain.map((c) => c.type).join());
   await control.keyboard.press('r');

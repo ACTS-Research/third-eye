@@ -1,13 +1,14 @@
-// Modulation: source meters, source -> parameter mappings, trigger -> action
-// bindings and the LFOs.
+// Modulation. On the edit screen's Modulation tab: one box for each mapping
+// (a source moving a slider) and the LFO settings. On the setup screen: the
+// triggers (source -> action) and a meter for every source.
 
-import { Pane } from 'tweakpane';
 import { ACTIONS, TOGGLE_ACTIONS, describeAction } from '../shared/actions.js';
 import { MACRO_COUNT } from '../shared/macros.js';
 import { EFFECT_BY_ID } from '../effects/index.js';
 import { LFO_SHAPES, LFO_SYNC, SOURCES, describeSource, sourceLabel } from '../shared/sources.js';
 import { INPUT_KINDS, makeActionBinding, makeMapping, sceneOf } from '../shared/state.js';
 import { el } from '../shared/util.js';
+import { bar, menu, toggle } from './controls.js';
 
 // roots: { edit, setup } — mappings and LFOs belong to a preset (edit
 // screen); triggers and the full source list are global (setup screen).
@@ -49,14 +50,17 @@ export function mountModPanel(roots, ui) {
     const i = store.state.chain.findIndex((it) => it.uid === m.fx);
     if (i < 0) return '?';
     const def = EFFECT_BY_ID[store.state.chain[i].type];
-    return `${i + 1} ${def.name} · ${m.key === 'mix' ? 'wet / dry' : m.key}`;
+    return `${i + 1} ${def.name} · ${m.key === 'mix' ? 'wet / dry' : def.params[m.key]?.label ?? m.key}`;
   }
 
   // ------------------------------------------------------------ mappings --
-  const mapHost = el('div', { class: 'tp-host' });
-  const mapNote = el('div', { class: 'dim small keep-2' });
-  let mapPane = null;
-  let openMapping = null;
+  // One box per mapping: one source moving one slider. A preset can have any
+  // number, and a slider can be moved by more than one source.
+  const mapList = el('div', { class: 'mod-list' });
+  const mapNote = el('div', { class: 'dim small keep-1' });
+  const moreOpen = new Set(); // mappings whose extra settings are showing
+  let boxes = new Map(); // mapping id -> { node, fill, bipolar, source, bars }
+  let highlight = null;
 
   function mutateScene(fn) {
     const scene = sceneOf(store.state);
@@ -64,61 +68,134 @@ export function mountModPanel(roots, ui) {
     store.setScene(scene);
   }
 
-  function addMapping(source, overrides) {
+  // The slider touched last, if it is still in the chain; else the first
+  // slider of the effect that is open; else of the first effect.
+  function defaultTarget() {
     const chain = store.state.chain;
-    if (!chain.length) {
+    if (!chain.length) return null;
+    const touched = ui.lastTouched && store.findEffect(ui.lastTouched.uid) ? ui.lastTouched : null;
+    if (touched) return { fx: touched.uid, key: touched.key };
+    return { fx: chain[0].uid, key: Object.keys(EFFECT_BY_ID[chain[0].type].params)[0] ?? 'mix' };
+  }
+
+  function addMapping(source, overrides, target = defaultTarget()) {
+    if (!target) {
       mapNote.textContent = 'Add an effect first.';
       return null;
     }
-    // Aim at the parameter touched last, else the first one in the chain.
-    const touched = ui.lastTouched && store.findEffect(ui.lastTouched.uid) ? ui.lastTouched : null;
-    const fx = touched?.uid ?? chain[0].uid;
-    const key = touched?.key ?? Object.keys(EFFECT_BY_ID[chain[0].type].params)[0];
-    const mapping = makeMapping(source ?? 'pad.x', fx, key, overrides);
-    openMapping = mapping.id;
+    const mapping = makeMapping(source ?? 'lfo.1', target.fx, target.key, overrides);
+    highlight = mapping.id;
     mutateScene((scene) => scene.mappings.push(mapping));
     return mapping;
   }
   ui.addMapping = addMapping;
+  // The Mod button on a slider: shows what moves it, adding a source first
+  // if nothing does.
+  ui.openMod = (fx, key) => {
+    const mine = store.state.mappings.find((m) => m.fx === fx && m.key === key);
+    ui.setEditTab('mods');
+    if (mine) {
+      highlight = mine.id;
+      buildMappings();
+    } else {
+      addMapping('lfo.1', undefined, { fx, key });
+    }
+    boxes.get(highlight)?.node.scrollIntoView({ block: 'nearest' });
+  };
+
+  // "Phone · Roll", but plain "LFO 1" where the name already says the group.
+  const sourceName = (id) => {
+    const s = describeSource(id);
+    return s.label.startsWith(s.group) ? s.label : `${s.group} · ${s.label}`;
+  };
+  const sourceChoices = (m) => {
+    const list = ui.knownSources().map((id) => {
+      const s = describeSource(id);
+      return { value: id, label: sourceName(id), item: s.label, group: s.group };
+    });
+    if (!list.some((o) => o.value === m.source)) list.push({ value: m.source, label: sourceName(m.source), item: describeSource(m.source).label, group: describeSource(m.source).group });
+    return list;
+  };
+  const targetChoices = () => Object.entries(targetOptions()).map(([label, value]) => ({ value, label }));
 
   function buildMappings() {
-    mapPane?.dispose();
-    mapPane = new Pane({ container: mapHost });
     const mappings = store.state.mappings;
-    mapNote.textContent = mappings.length ? '' : 'No mappings. Touch a parameter, then add one: it will target that parameter.';
-    const sources = sourceOptions();
-    const targets = targetOptions();
+    boxes = new Map();
+    mapList.replaceChildren();
+    mapNote.textContent = mappings.length ? '' : store.state.chain.length ? 'Nothing moves by itself in this preset.' : 'Add an effect first.';
     for (const m of mappings) {
-      const title = () => `${sourceLabel(m.source)}  →  ${targetLabel(m)}`;
-      const folder = mapPane.addFolder({ title: title(), expanded: m.id === openMapping });
-      const model = { source: m.source, target: `${m.fx}:${m.key}`, amount: m.amount, offset: m.offset, smooth: m.smooth, invert: m.invert, mode: m.mode, enabled: m.enabled };
-      if (!(m.source in SOURCES_INDEX) && !Object.values(sources).includes(m.source)) sources[sourceLabel(m.source)] = m.source;
       const patch = (p) => store.patchItem('mappings', m.id, p);
-      folder.addBinding(model, 'source', { options: sources }).on('change', (ev) => {
-        patch({ source: ev.value });
-        folder.title = title();
+      const live = () => store.state.mappings.find((x) => x.id === m.id) ?? m;
+      const s = describeSource(m.source);
+      const title = el('span', { class: 'mod-title', text: `${sourceName(m.source)} → ${targetLabel(m)}` });
+      const fill = el('i');
+      const on = toggle({ on: m.enabled, text: 'Off', onText: 'On', label: 'This modulation is on', onChange: (v) => patch({ enabled: v }) });
+      const source = menu({ label: 'Source', options: () => sourceChoices(live()), value: m.source, onChange: (v) => patch({ source: v }) });
+      const target = menu({
+        label: 'Slider',
+        options: targetChoices,
+        value: `${m.fx}:${m.key}`,
+        onChange: (v) => {
+          const [fx, key] = v.split(':');
+          patch({ fx, key });
+        },
       });
-      folder.addBinding(model, 'target', { options: targets }).on('change', (ev) => {
-        const [fx, key] = ev.value.split(':');
-        patch({ fx, key });
-        folder.title = title();
-      });
-      folder.addBinding(model, 'amount', { min: -1, max: 1, step: 0.01 }).on('change', (ev) => patch({ amount: ev.value }));
-      folder.addBinding(model, 'offset', { min: -1, max: 1, step: 0.01 }).on('change', (ev) => patch({ offset: ev.value }));
-      folder.addBinding(model, 'smooth', { label: 'smoothing s', min: 0, max: 2, step: 0.01 }).on('change', (ev) => patch({ smooth: ev.value }));
-      folder.addBinding(model, 'invert').on('change', (ev) => patch({ invert: ev.value }));
-      folder.addBinding(model, 'mode', { options: { 'Add to the dialled value': 'add', 'Replace the value': 'set' } }).on('change', (ev) => patch({ mode: ev.value }));
-      folder.addBinding(model, 'enabled').on('change', (ev) => patch({ enabled: ev.value }));
-      folder.addButton({ title: 'Remove mapping' }).on('click', () => mutateScene((scene) => {
-        scene.mappings = scene.mappings.filter((x) => x.id !== m.id);
-      }));
-      folder.on('fold', (ev) => {
-        if (ev.expanded) openMapping = m.id;
-        else if (openMapping === m.id) openMapping = null;
-      });
+      const amount = bar({ label: 'Amount', min: -1, max: 1, step: 0.01, value: m.amount, reset: 0.5, onInput: (v) => patch({ amount: v }) });
+      const smooth = bar({ label: 'Smoothing', min: 0, max: 2, step: 0.01, value: m.smooth, reset: 0.08, unit: ' s', onInput: (v) => patch({ smooth: v }) });
+      const offset = bar({ label: 'Offset', min: -1, max: 1, step: 0.01, value: m.offset, reset: 0, onInput: (v) => patch({ offset: v }) });
+      const invert = toggle({ on: m.invert, text: 'Off', onText: 'On', label: 'Invert', onChange: (v) => patch({ invert: v }) });
+      const mode = menu({ label: 'How it is applied', options: [{ value: 'add', label: 'Added to the dialled value' }, { value: 'set', label: 'Replaces the value' }], value: m.mode, onChange: (v) => patch({ mode: v }) });
+      const extra = el('div', { class: 'mod-grid', hidden: !moreOpen.has(m.id) }, [
+        el('span', { class: 'caps', text: 'Offset' }), offset.node,
+        el('span', { class: 'caps', text: 'Invert' }), invert.node,
+        el('span', { class: 'caps', text: 'Applied' }), mode.node,
+      ]);
+      const more = el('button', { class: 'mod-more', 'aria-expanded': String(moreOpen.has(m.id)), text: moreOpen.has(m.id) ? 'Less' : 'More', onclick: () => {
+        if (moreOpen.has(m.id)) moreOpen.delete(m.id);
+        else moreOpen.add(m.id);
+        extra.hidden = !moreOpen.has(m.id);
+        more.textContent = moreOpen.has(m.id) ? 'Less' : 'More';
+        more.setAttribute('aria-expanded', String(moreOpen.has(m.id)));
+      } });
+      const node = el('div', { class: `mod${m.id === highlight ? ' open' : ''}${m.enabled ? '' : ' off'}`, 'data-id': m.id }, [
+        el('div', { class: 'mod-head' }, [
+          title,
+          on.node,
+          el('button', { class: 'icon', text: '✕', title: 'Remove this modulation', 'aria-label': `Remove: ${sourceName(m.source)} → ${targetLabel(m)}`, onclick: () => mutateScene((scene) => {
+            scene.mappings = scene.mappings.filter((x) => x.id !== m.id);
+          }) }),
+        ]),
+        el('div', { class: `mod-meter${s.bipolar ? ' bipolar' : ''}`, title: 'What the source is doing now' }, [fill]),
+        el('div', { class: 'mod-route' }, [source.node, el('span', { 'aria-hidden': 'true', text: '→' }), target.node]),
+        el('div', { class: 'mod-grid' }, [
+          el('span', { class: 'caps', text: 'Amount' }), amount.node,
+          el('span', { class: 'caps', text: 'Smoothing' }), smooth.node,
+        ]),
+        extra,
+        more,
+      ]);
+      boxes.set(m.id, { node, fill, title, bars: { amount, smooth, offset } });
+      mapList.append(node);
     }
   }
   const SOURCES_INDEX = Object.fromEntries(SOURCES.map((s) => [s.id, true]));
+
+  // The little meter in each box shows its source moving.
+  function showBoxMeters(values) {
+    for (const [id, box] of boxes) {
+      const m = store.state.mappings.find((x) => x.id === id);
+      if (!m) continue;
+      const value = values[m.source] ?? 0;
+      if (describeSource(m.source).bipolar) {
+        const v = Math.max(-1, Math.min(1, value));
+        box.fill.style.left = `${v < 0 ? 50 + v * 50 : 50}%`;
+        box.fill.style.width = `${Math.abs(v) * 50}%`;
+      } else {
+        box.fill.style.left = '0';
+        box.fill.style.width = `${Math.max(0, Math.min(1, value)) * 100}%`;
+      }
+    }
+  }
 
   // ------------------------------------------------------------- actions --
   const actionList = el('div');
@@ -152,19 +229,25 @@ export function mountModPanel(roots, ui) {
   }
 
   // ---------------------------------------------------------------- LFOs --
-  const lfoHost = el('div', { class: 'tp-host' });
-  let lfoPane = null;
+  const lfoHost = el('div', { class: 'lfo-list' });
 
   function buildLfos() {
-    lfoPane?.dispose();
-    lfoPane = new Pane({ container: lfoHost });
-    store.state.lfos.forEach((lfo, i) => {
-      const model = { shape: lfo.shape, rate: lfo.rate, sync: lfo.sync ?? 0 };
-      const folder = lfoPane.addFolder({ title: `LFO ${i + 1}`, expanded: i === 0 });
-      folder.addBinding(model, 'shape', { options: LFO_SHAPES }).on('change', (ev) => store.patchItem('lfos', lfo.id, { shape: ev.value }));
-      folder.addBinding(model, 'sync', { label: 'tempo sync', options: LFO_SYNC }).on('change', (ev) => store.patchItem('lfos', lfo.id, { sync: ev.value }));
-      folder.addBinding(model, 'rate', { label: 'rate Hz', min: 0.01, max: 10, step: 0.01 }).on('change', (ev) => store.patchItem('lfos', lfo.id, { rate: ev.value }));
-    });
+    lfoHost.replaceChildren(
+      ...store.state.lfos.map((lfo, i) => {
+        const patch = (p) => store.patchItem('lfos', lfo.id, p);
+        const shape = menu({ label: `LFO ${i + 1} shape`, options: Object.entries(LFO_SHAPES).map(([label, value]) => ({ value, label })), value: lfo.shape, onChange: (v) => patch({ shape: v }) });
+        const sync = menu({ label: `LFO ${i + 1} tempo sync`, options: Object.entries(LFO_SYNC).map(([label, value]) => ({ value, label })), value: lfo.sync ?? 0, onChange: (v) => patch({ sync: v }) });
+        const rate = bar({ label: `LFO ${i + 1} rate in Hz`, min: 0.01, max: 10, step: 0.01, value: lfo.rate, reset: 1, unit: ' Hz', onInput: (v) => patch({ rate: v }) });
+        return el('div', { class: 'lfo' }, [
+          el('span', { class: 'lfo-name', text: `LFO ${i + 1}` }),
+          el('div', { class: 'mod-grid' }, [
+            el('span', { class: 'caps', text: 'shape' }), shape.node,
+            el('span', { class: 'caps', text: 'tempo sync' }), sync.node,
+            el('span', { class: 'caps', text: 'rate' }), rate.node,
+          ]),
+        ]);
+      }),
+    );
   }
 
   // -------------------------------------------------------------- meters --
@@ -211,31 +294,31 @@ export function mountModPanel(roots, ui) {
         meter.fill.style.width = `${Math.max(0, Math.min(1, value)) * 100}%`;
       }
     }
-    if (grew) {
-      buildMappings();
-      buildActions();
-    }
+    showBoxMeters(m.values);
+    // (The source lists are asked for afresh each time a menu opens.)
+    if (grew) buildActions();
   });
 
   // -------------------------------------------------------------- layout --
-  store.subscribe((op) => {
+  store.subscribe((op, state, remote) => {
     if (op.op === 'scene' || op.op === 'replace') {
       buildMappings();
       buildLfos();
     }
     if (op.op === 'replace' || (op.op === 'set' && op.key === 'actions')) buildActions();
-    if (op.op === 'item' && op.list === 'mappings' && op.patch && !('amount' in op.patch || 'offset' in op.patch || 'smooth' in op.patch)) {
-      // Rare remote edit of a mapping's routing: cheapest to rebuild.
-      if (store.lastRemote) buildMappings();
+    if (op.op === 'item' && op.list === 'mappings') {
+      // A bar being dragged here must not be rebuilt under the pointer.
+      const dragged = op.patch && Object.keys(op.patch).every((k) => k === 'amount' || k === 'offset' || k === 'smooth');
+      if (!dragged || remote) buildMappings();
     }
+    if (op.op === 'item' && op.list === 'lfos' && remote) buildLfos();
   });
 
   roots.edit.append(
-    el('div', { class: 'panel', id: 'mappings-panel' }, [
-      el('h2', { text: 'Modulation' }),
-      mapHost,
+    el('div', { id: 'mappings-panel' }, [
+      mapList,
       mapNote,
-      el('div', { class: 'row' }, [el('button', { class: 'primary', text: 'Add mapping', onclick: () => addMapping() })]),
+      el('button', { class: 'primary add-mod', text: '+ Add modulation', onclick: () => addMapping() }),
     ]),
     el('div', { class: 'panel', id: 'lfo-panel' }, [el('h2', { text: 'LFOs' }), lfoHost]),
   );

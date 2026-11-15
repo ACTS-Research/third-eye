@@ -204,12 +204,13 @@ main { flex: 1; min-height: 0; }
 .edit-head .num { font: 800 40px/0.9 var(--display); min-width: 28px; }
 .edit-head input[type='text'] { font: 700 26px/1 var(--display); letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 10px; width: min(360px, 100%); border-color: var(--ink); }
 .edit-head input[type='number'] { width: 76px; }
-.edit-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 400px; }
+.edit-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(400px, 34%); }
 .col { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 12px; }
 .edit-body .col + .col { border-left: 1px solid var(--line); }
-.edit-monitor { background: #000; aspect-ratio: 16 / 9; border: 1px solid var(--line); flex-shrink: 0; }
+/* As large as the column allows, but never so tall that the chain under it
+   is pushed off the screen. */
+.edit-monitor { background: #000; aspect-ratio: 16 / 9; width: min(100%, calc((100vh - 400px) * 16 / 9)); min-width: 280px; align-self: center; border: 1px solid var(--line); flex-shrink: 0; }
 .edit-monitor canvas { width: 100%; height: 100%; object-fit: contain; display: block; }
-.slot { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 6px; align-items: center; margin-bottom: 4px; }
 
 /* Setup --------------------------------------------------------------- */
 #view-setup { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr)); overflow-y: auto; align-content: start; }
@@ -244,42 +245,86 @@ details { margin-top: 8px; }
 details summary { cursor: pointer; }
 details .row:first-of-type { margin-top: 6px; }
 
-/* Effect cards */
-.fx { border: 1px solid var(--line); flex-shrink: 0; }
-.fx.bypassed { opacity: 0.5; }
-.fx-head { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-bottom: 1px solid var(--line); background: var(--wash); }
-.fx-head .num { font: 800 22px/1 var(--display); width: 18px; }
-.fx-head .name { font: 700 20px/1 var(--display); letter-spacing: 0.04em; text-transform: uppercase; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
-.fx-body.collapsed { display: none; }
+/* The app's own slider: a small rectangular fader on its side (controls.js). */
+input.bar { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 22px; margin: 0; padding: 0; border: 1px solid var(--ink); border-radius: 0; background-color: var(--bg); background-repeat: no-repeat; cursor: ew-resize; }
+input.bar::-webkit-slider-runnable-track { background: transparent; height: 100%; }
+input.bar::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 3px; height: 20px; background: var(--ink); border: 0; border-radius: 0; }
+input.bar::-moz-range-track { background: transparent; }
+input.bar::-moz-range-thumb { width: 3px; height: 20px; background: var(--ink); border: 0; border-radius: 0; }
+.bar-field { display: grid; grid-template-columns: minmax(64px, 180px) 62px; column-gap: 8px; align-items: center; justify-content: start; min-width: 0; }
+input.bar-value { width: 62px; border: 1px solid transparent; background: none; padding: 2px 4px; text-align: right; font: 700 18px/1 var(--display); letter-spacing: 0.02em; color: var(--ink); }
+input.bar-value:hover, input.bar-value:focus { border-color: var(--line); }
 
-/* Tweakpane, re-inked */
-.tp-host {
-  --tp-base-background-color: transparent;
-  --tp-base-shadow-color: transparent;
-  --tp-base-border-radius: 2px;
-  --tp-base-font-family: var(--mono);
-  --tp-blade-value-width: 190px;
-  --tp-button-background-color: var(--wash);
-  --tp-button-background-color-active: var(--line);
-  --tp-button-background-color-focus: var(--line);
-  --tp-button-background-color-hover: var(--line);
-  --tp-button-foreground-color: var(--ink);
-  --tp-container-background-color: var(--wash);
-  --tp-container-background-color-active: var(--line);
-  --tp-container-background-color-focus: var(--line);
-  --tp-container-background-color-hover: var(--line);
-  --tp-container-foreground-color: var(--ink);
-  --tp-groove-foreground-color: var(--line);
-  --tp-input-background-color: var(--wash);
-  --tp-input-background-color-active: var(--line);
-  --tp-input-background-color-focus: var(--line);
-  --tp-input-background-color-hover: var(--line);
-  --tp-input-foreground-color: var(--ink);
-  --tp-label-foreground-color: var(--soft);
-  --tp-monitor-background-color: var(--wash);
-  --tp-monitor-foreground-color: var(--soft);
-}
-.tp-host .tp-rotv { font-size: 12px; }
+/* The app's own menu: a button and a list the page draws (controls.js). */
+.menu { display: flex; align-items: center; justify-content: space-between; gap: 8px; max-width: 100%; text-align: left; text-transform: none; letter-spacing: 0; border-color: var(--ink); }
+.menu-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.menu-list { position: fixed; z-index: 60; overflow-y: auto; background: var(--bg); border: 1px solid var(--ink); }
+.menu-item { padding: 7px 12px 7px 8px; white-space: nowrap; cursor: pointer; outline: 0; }
+.menu-item::before { content: '✓'; display: inline-block; width: 1.5em; visibility: hidden; }
+.menu-item.on::before { visibility: visible; }
+.menu-item:hover, .menu-item:focus { background: var(--ink); color: var(--on-ink); }
+.menu-group { padding: 7px 10px 2px; color: var(--soft); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+.switch { padding: 4px 10px; min-width: 52px; }
+
+/* Edit screen: the picture and the chain at the left, three tabs at the right. */
+#col-chain { gap: 12px; }
+.chain-row { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; flex-shrink: 0; }
+.chain-end { display: flex; align-items: center; padding: 8px 10px; border: 1px dashed var(--line); color: var(--soft); }
+.chain-arrow { align-self: center; color: var(--soft); }
+.fx { display: flex; align-items: center; gap: 10px; padding: 8px 12px; text-align: left; border-color: var(--ink); cursor: pointer; }
+.fx .num { font: 800 28px/0.9 var(--display); }
+.fx-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fx .name { font: 700 18px/1.05 var(--display); letter-spacing: 0.04em; text-transform: uppercase; }
+.fx .meta { font-size: 11px; text-transform: none; letter-spacing: 0; }
+.fx.bypassed { opacity: 0.5; }
+.fx.drop-here { box-shadow: -5px 0 0 var(--ink); }
+.menu.add-effect { border-style: dashed; text-transform: uppercase; letter-spacing: 0.08em; }
+.preview-wrap { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); flex-shrink: 0; }
+.preview-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.fader-preview { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 10px; }
+.mini-fader { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; min-height: 124px; }
+.mini-fader .box { position: relative; width: 100%; height: 72px; border: 1px solid var(--ink); }
+.mini-fader.unused .box { border-style: dashed; border-color: var(--line); }
+.mini-fader .box i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--ink); }
+.mini-fader b { font: 700 16px/1 var(--display); }
+.mini-fader span { font: 700 11px/1.1 var(--display); letter-spacing: 0.03em; text-transform: uppercase; text-align: center; overflow-wrap: anywhere; }
+
+/* (Modulation has the longest name and a count after it.) */
+.tabs { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1.35fr); gap: 6px; flex-shrink: 0; }
+.tabs button { padding: 8px 4px; letter-spacing: 0.04em; }
+.tab-pane { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+.fx-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.fx-head .num { font: 800 34px/0.9 var(--display); }
+.fx-head .name { font: 800 24px/1 var(--display); letter-spacing: 0.04em; text-transform: uppercase; flex: 1; min-width: 0; }
+.param { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto auto; column-gap: 8px; align-items: center; min-height: 32px; }
+.param label { text-transform: none; letter-spacing: 0; overflow: hidden; text-overflow: ellipsis; }
+.param .menu, .param .switch { justify-self: start; }
+.pin-toggle, .mod-toggle { padding: 4px 6px; font-size: 10px; letter-spacing: 0.06em; overflow: hidden; text-overflow: ellipsis; }
+.pin-toggle { width: 60px; }
+.mod-toggle { width: 78px; }
+
+.pin-list { display: flex; flex-direction: column; gap: 6px; }
+.pin { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto auto auto; column-gap: 6px; align-items: center; padding: 6px 8px; border: 1px solid var(--line); }
+.pin .num { font: 800 24px/1 var(--display); }
+.pin-name { border: 0; padding: 0; background: none; text-align: left; text-transform: none; letter-spacing: 0; white-space: normal; }
+
+#mappings-panel, .mod-list { display: flex; flex-direction: column; gap: 8px; }
+.mod { display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid var(--line); }
+.mod.open { border-color: var(--ink); }
+.mod.off > :not(.mod-head) { opacity: 0.45; }
+.mod-head { display: flex; align-items: flex-start; gap: 8px; }
+.mod-title { flex: 1; min-width: 0; font: 700 16px/1.15 var(--display); letter-spacing: 0.04em; text-transform: uppercase; overflow-wrap: anywhere; }
+.mod-meter { position: relative; height: 6px; border: 1px solid var(--line); overflow: hidden; }
+.mod-meter i { position: absolute; top: 0; bottom: 0; background: var(--ink); }
+.mod-meter.bipolar::after { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--line); }
+.mod-route { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.3fr); column-gap: 8px; align-items: center; }
+.mod-grid { display: grid; grid-template-columns: 84px minmax(0, 1fr); column-gap: 8px; row-gap: 6px; align-items: center; }
+.mod-grid .menu, .mod-grid .switch { justify-self: start; }
+.mod-more { align-self: flex-start; padding: 3px 10px; font-size: 10px; }
+.add-mod { padding: 9px 12px; }
+.lfo-list { display: flex; flex-direction: column; gap: 12px; }
+.lfo { display: flex; flex-direction: column; gap: 6px; }
+.lfo-name { font: 700 16px/1 var(--display); letter-spacing: 0.04em; }
 
 /* MIDI map mode: every mappable control shows itself. */
 body.midi-map [data-midi] { outline: 2px dashed var(--ink); outline-offset: 2px; cursor: crosshair; }

@@ -1,11 +1,15 @@
-// The edit screen for one preset: its name, fade-in time, effects chain,
-// pinned faders and modulation. Changes are saved into the preset as you make
-// them; Revert goes back to how it was when the screen was opened.
+// The edit screen for one preset. At the left the picture, with the chain as
+// a row of buttons under it and the faders as the perform screen will show
+// them; at the right three tabs: the open effect's parameters (chain.js),
+// the chosen faders (here) and modulation (mod-panel.js). Changes are saved
+// into the preset as you make them; Revert goes back to how it was when the
+// screen was opened.
 
-import { MACRO_COUNT } from '../shared/macros.js';
+import { MACRO_COUNT, macroUnit, resolveMacros } from '../shared/macros.js';
 import { MAX_FADE } from '../shared/presets.js';
 import { sceneOf } from '../shared/state.js';
 import { debounce, el } from '../shared/util.js';
+import { digitsFor } from './controls.js';
 import { attachPreview } from './preview.js';
 
 export function mountEdit(root, ui) {
@@ -63,48 +67,119 @@ export function mountEdit(root, ui) {
     presetActions,
   ]);
 
-  const chainCol = el('div', { class: 'col', id: 'col-chain' });
+  // Left: the picture, the chain as a row under it, and the faders as the
+  // perform screen will show them. Right: three tabs.
+  const pictureCol = el('div', { class: 'col', id: 'col-chain' });
   const sideCol = el('div', { class: 'col', id: 'col-edit-side' });
   const canvas = el('canvas', { class: 'readback', width: 480, height: 270 });
   attachPreview(ui, canvas);
   ui.monitors.edit = el('div', { class: 'edit-monitor' }, [canvas]);
-  sideCol.append(ui.monitors.edit);
+  const chainRow = el('nav', { class: 'chain-row', 'aria-label': 'Effects chain' });
+
+  // ------------------------------------------- faders, as on perform ---
+  const previewSlots = el('div', { class: 'fader-preview' });
+  const previewNote = el('span', { class: 'dim small' });
+  function buildPreview() {
+    const macros = resolveMacros(store.state);
+    previewSlots.replaceChildren(
+      ...macros.map((m) => {
+        if (!m) return el('div', { class: 'mini-fader unused' }, [el('div', { class: 'box' })]);
+        const unit = Math.min(1, Math.max(0, macroUnit(m, m.value)));
+        return el('div', { class: `mini-fader${m.auto ? ' auto' : ''}`, title: `${m.effectIndex + 1} ${m.effect} · ${m.label}` }, [
+          el('div', { class: 'box' }, [el('i', { style: `height:${unit * 100}%` })]),
+          el('b', { text: Number(m.value).toFixed(digitsFor(m.step)) }),
+          el('span', { text: m.label }),
+        ]);
+      }),
+    );
+    const chosen = pins().length;
+    previewNote.textContent = chosen ? `${chosen} of ${MACRO_COUNT} chosen` : store.state.chain.length ? 'None chosen: the first sliders of each effect' : '';
+  }
+  pictureCol.append(
+    ui.monitors.edit,
+    chainRow,
+    el('div', { class: 'preview-wrap' }, [el('div', { class: 'preview-head' }, [el('span', { class: 'caps', text: 'As on the perform screen' }), previewNote]), previewSlots]),
+  );
 
   // ------------------------------------------------------ pinned faders ---
-  const slots = el('div');
-  const slotNote = el('div', { class: 'dim small keep-3' });
-
-  function setSlot(i, value) {
+  // Kept in the scene as up to eight slots. Here they are a plain ordered
+  // list: pressing Fader on a slider adds it to the end.
+  const pins = () => (store.state.macros ?? []).filter(Boolean);
+  function setPins(list) {
     const scene = sceneOf(store.state);
-    const macros = Array.from({ length: MACRO_COUNT }, (_, k) => scene.macros[k] ?? null);
-    if (value) {
-      const [fx, key] = value.split(':');
-      macros[i] = { fx, key };
-    } else {
-      macros[i] = null;
-    }
-    scene.macros = macros;
+    scene.macros = Array.from({ length: MACRO_COUNT }, (_, k) => list[k] ?? null);
     store.setScene(scene);
   }
+  ui.pinIndex = (fx, key) => pins().findIndex((s) => s.fx === fx && s.key === key);
+  ui.togglePin = (fx, key) => {
+    const list = pins();
+    const at = list.findIndex((s) => s.fx === fx && s.key === key);
+    if (at >= 0) list.splice(at, 1);
+    else if (list.length < MACRO_COUNT) list.push({ fx, key });
+    else return false;
+    setPins(list);
+    return true;
+  };
 
-  function buildSlots() {
-    slots.replaceChildren();
-    const targets = ui.targetOptions?.() ?? {};
-    const pinned = store.state.macros ?? [];
-    for (let i = 0; i < MACRO_COUNT; i++) {
-      const select = el('select', { 'aria-label': `Fader ${i + 1}`, onchange: () => setSlot(i, select.value) }, [
-        el('option', { value: '', text: '—' }),
-        ...Object.entries(targets).map(([label, value]) => el('option', { value, text: label })),
-      ]);
-      select.value = pinned[i] ? `${pinned[i].fx}:${pinned[i].key}` : '';
-      slots.append(el('div', { class: 'slot' }, [el('span', { text: String(i + 1) }), select]));
-    }
-    slotNote.textContent = pinned.some(Boolean)
-      ? 'These parameters appear as the faders on the perform screen, in this order.'
-      : 'Nothing pinned: the perform screen shows the first parameters of the chain. Choose any here to take over.';
+  const pinList = el('div', { class: 'pin-list' });
+  const pinNote = el('div', { class: 'dim small' });
+  function buildPins() {
+    const list = pins();
+    const labels = Object.fromEntries(Object.entries(ui.targetOptions?.() ?? {}).map(([label, value]) => [value, label]));
+    const move = (i, j) => {
+      if (j < 0 || j >= list.length) return;
+      [list[i], list[j]] = [list[j], list[i]];
+      setPins(list);
+    };
+    pinList.replaceChildren(
+      ...list.map((slot, i) => {
+        const name = labels[`${slot.fx}:${slot.key}`] ?? 'an effect that is no longer in the chain';
+        return el('div', { class: 'pin' }, [
+          el('span', { class: 'num', text: String(i + 1) }),
+          el('button', { class: 'pin-name', text: name, title: 'Show this slider', onclick: () => ui.showParam?.(slot.fx, slot.key) }),
+          el('button', { class: 'icon', text: '↑', 'aria-label': `Move fader ${i + 1} up`, disabled: i === 0, onclick: () => move(i, i - 1) }),
+          el('button', { class: 'icon', text: '↓', 'aria-label': `Move fader ${i + 1} down`, disabled: i === list.length - 1, onclick: () => move(i, i + 1) }),
+          el('button', { class: 'icon', text: '✕', 'aria-label': `Take fader ${i + 1} off the perform screen`, onclick: () => setPins(list.filter((_, k) => k !== i)) }),
+        ]);
+      }),
+    );
+    pinNote.textContent = list.length
+      ? 'The faders on the perform screen, in this order.'
+      : 'Nothing chosen: the perform screen shows the first sliders of each effect. Press Fader on a slider to choose your own.';
   }
 
-  sideCol.append(el('div', { class: 'panel', id: 'faders-panel' }, [el('h2', { text: 'Perform faders' }), slots, slotNote]));
+  // ---------------------------------------------------------------- tabs ---
+  const panes = {
+    params: el('div', { class: 'tab-pane', id: 'tab-params' }),
+    faders: el('div', { class: 'tab-pane', id: 'faders-panel' }, [pinList, pinNote]),
+    mods: el('div', { class: 'tab-pane', id: 'tab-mods' }),
+  };
+  const tabButtons = {};
+  const tabBar = el('div', { class: 'tabs', role: 'group', 'aria-label': 'What to edit' });
+  for (const [id, text] of [['params', 'Parameters'], ['faders', 'Faders'], ['mods', 'Modulation']]) {
+    tabButtons[id] = el('button', { 'data-tab': id, text, onclick: () => ui.setEditTab(id) });
+    tabBar.append(tabButtons[id]);
+  }
+  ui.editTab = 'params';
+  ui.setEditTab = (id) => {
+    ui.editTab = panes[id] ? id : 'params';
+    for (const [key, pane] of Object.entries(panes)) {
+      pane.hidden = key !== ui.editTab;
+      tabButtons[key].setAttribute('aria-pressed', String(key === ui.editTab));
+    }
+  };
+  function labelTabs() {
+    tabButtons.faders.textContent = `Faders · ${pins().length}`;
+    tabButtons.mods.textContent = `Modulation · ${store.state.mappings.length}`;
+  }
+  sideCol.append(tabBar, panes.params, panes.faders, panes.mods);
+  ui.setEditTab('params');
+
+  function buildSlots() {
+    buildPins();
+    buildPreview();
+    labelTabs();
+  }
 
   // --------------------------------------------------------------- sync ---
   function sync() {
@@ -133,6 +208,8 @@ export function mountEdit(root, ui) {
 
   store.subscribe((op) => {
     if (op.op === 'scene' || op.op === 'replace') buildSlots();
+    else if (op.op === 'param' || (op.op === 'item' && op.list === 'chain')) buildPreview();
+    else if (op.op === 'item' && op.list === 'mappings') labelTabs();
     const edit = op.op === 'param' || op.op === 'item' || (op.op === 'scene' && !Number.isInteger(op.presetIndex));
     if (edit && ui.view === 'edit' && presets.list[presets.current]) {
       saved.textContent = 'Saving…';
@@ -149,8 +226,8 @@ export function mountEdit(root, ui) {
     buildSlots();
   });
 
-  root.append(head, el('div', { class: 'edit-body' }, [chainCol, sideCol]));
-  ui.editCols = { chain: chainCol, side: sideCol };
+  root.append(head, el('div', { class: 'edit-body' }, [pictureCol, sideCol]));
+  ui.editCols = { chain: chainRow, params: panes.params, mods: panes.mods };
   ui.refreshSlots = buildSlots;
   sync();
 }

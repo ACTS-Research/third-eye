@@ -7,7 +7,7 @@ live on GitHub Pages from `main`: the output window is optional (`/control`
 runs the whole instrument by itself); the phone can be paired with no
 internet, by QR code both ways ("Pair without internet"); the phone's live
 screen was rebuilt around a large horizontal preview; and there is a running
-order (steps that point at presets, on the preset strip). All eighteen test
+order (steps that point at presets, on the preset strip). All nineteen test
 suites pass in headless Chromium. The phone screen's last rework, the Freeze
 fix and the running order have not been tried on the real iPhone yet.
 
@@ -19,11 +19,12 @@ preset strip and check the phone's six buttons show them.
 
 **Decisions only you can make.**
 
-- Pick a direction for the edit screen. Three mock-ups (A rows, B inspector,
-  C picture first) are at https://claude.ai/artifact/UEbbvKGUHsQo7CxCWFUVDT.
-  All three put a Fader button and a Mod button on every slider, in place of
-  the eight fader menus and the "touch a parameter, then add a mapping" rule.
-  Nothing in the app has changed yet.
+- Try the rebuilt edit screen (15 November) and say what to change. You chose
+  mock-up C (picture first), the Bar slider, and the app's own menus; the
+  mock-ups are at https://claude.ai/artifact/UEbbvKGUHsQo7CxCWFUVDT. Still to
+  do, agreed: the same menus and bars on the Setup screen (it still has the
+  system's menus). The phone's Quality menu stays the iPhone's own picker
+  unless you say otherwise.
 - Try the running order and say what is missing. Left out of this first
   version on purpose: several named shows (there is one running order),
   and steps timed against an audio track. (Since 14 November the phone's
@@ -192,7 +193,8 @@ right way up. What stands now:
 - **The phone does not trust the browser about a dead link** (added 14
   November after the owner kept having to close the page and scan again;
   which failure they hit is not known). `HostLink.tick` counts silence: the
-  Mac answers a ping a second, and six seconds with nothing heard drops the
+  Mac answers a ping a second, and ten seconds with nothing heard (six at first; raised on 15 November after
+  a busy Mac page was seen to trip it in a test) drops the
   link and starts signaling over too. Two data connections in a row that
   never open also restart signaling. Time the page spent asleep is not
   counted (`awake`, and the gap check at the top of `tick`). A direct link is
@@ -292,17 +294,24 @@ Three static pages built by Vite, no framework.
 | Path | What lives there |
 | --- | --- |
 | `src/engine/` | Everything live: the WebGL2 pipeline (`pipeline.js`), inputs, the host side of the phone link (`remote.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop. It runs in `/output` while an output window is open, otherwise in `/control` |
-| `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js` (+ `strip.js`, the strip of presets and the running order), `edit.js` (+ `chain.js`, `mod-panel.js`), and the Setup panels. `host.js` decides which window hosts the engine and owns the monitor canvas. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts |
+| `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js` (+ `strip.js`, the strip of presets and the running order), `edit.js` (+ `chain.js` the chain row and Parameters tab, `mod-panel.js` the Modulation tab, `controls.js` the app's own bar slider, menu and switch), and the Setup panels. `host.js` decides which window hosts the engine and owns the monitor canvas. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts |
 | `src/phone/` | The iPhone page: `main.js`, `link.js` (reconnect watchdog, direct links), `sensors.js` (motion, the XY pad, triggers, presets), `camera-controls.js`, `orient.js` (page angle, the Rotate turn), `widgets.js` (the fader) |
 | `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js` (presets, each with a permanent id, and the running order: `loadOrder`, `orderView`, `applyStep`, `stepShow`), `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `direct.js` (pairing with no server), `qr.js`, `sources.js`, `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; the engine forwards them to the phone) |
 | `src/effects/` | One file per effect; `index.js` is the registry, `common.glsl.js` the shared GLSL |
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon, option D2 from the sheet at https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo) |
 | `design/` | `third-eye-icons.html`: the icon options shown to the owner (a page for a browser, not part of the site) |
-| `tests/` | Eighteen headless suites and `lib.mjs` |
+| `tests/` | Nineteen headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 
+- **No `<select>` and no third-party controls on the edit screen.** Sliders
+  are `bar()` and menus are `menu()` from `src/control/controls.js` (Tweakpane
+  was removed on 15 November). A `menu()` list is appended to `<body>` and
+  must stop key events itself: the page's shortcuts (arrows step presets,
+  Space freezes) listen on `window`. It follows its button on scroll instead
+  of closing, because clicking a half-hidden button scrolls it into view
+  first. Setup still uses `<select>` until the second half of that job.
 - **A step of the running order points at a preset by id, never by place.**
   Presets are still addressed by index everywhere else (`presetIndex`,
   `preset:3`), so anything that creates a preset must give it an id

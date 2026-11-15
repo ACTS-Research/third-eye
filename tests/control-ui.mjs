@@ -3,7 +3,7 @@
 // pop-out output window.
 //   node tests/control-ui.mjs
 
-import { benignError, check, failureCount, launch, sleep, startSite, waitFor, watch } from './lib.mjs';
+import { benignError, check, failureCount, launch, sleep, startSite, waitFor, watch, clickBar, paramBar } from './lib.mjs';
 
 const site = await startSite();
 const browser = await launch();
@@ -55,7 +55,7 @@ try {
     for (let i = 0; i < d.length; i += 4) if (d[i] < 128) dark++;
     return dark > 1000;
   })));
-  check('it says what is wrong and what to try', (await control.locator('#pairing-pop').textContent()).includes('Personal Hotspot'));
+  check('it says what is wrong and what to try', await settle(async () => (await control.locator('#pairing-pop').textContent()).includes('Personal Hotspot'), 'advice', 6000), await control.locator('#pop-state, #pairing-pop').first().textContent());
   if (process.env.SHOTS) await control.screenshot({ path: `${process.env.SHOTS}/pairing-pop.png` });
   await control.keyboard.press('Escape');
   check('Esc closes it', await control.locator('#pairing-pop').isHidden());
@@ -130,9 +130,7 @@ try {
   }, 'stored'));
 
   // Change a parameter: it must be saved into the preset without asking.
-  const slider = control.locator('.fx').first().locator('.tp-sldv_t').nth(1); // zoom
-  const box = await slider.boundingBox();
-  await control.mouse.click(box.x + box.width * 0.9, box.y + box.height / 2);
+  await clickBar(control, paramBar('zoom'), 0.9);
   check('edits on this screen save into the preset', await settle(async () => (await stored())[1].scene.chain[0].params.zoom > 1.15, 'autosaved'), `zoom ${(await stored())[1].scene.chain[0].params.zoom}`);
   await control.click('text=Revert');
   check('Revert restores the preset as it was when opened', await settle(async () => {
@@ -183,9 +181,20 @@ try {
   check('double-click resets a fader to the default', await settle(() => state(() => window.thirdEye.store.state.chain[0].params.zoom === 1.03), 'reset'));
 
   await view('edit');
-  await control.selectOption('#faders-panel select >> nth=0', { label: '2 RGB Offset · amount' });
-  await control.selectOption('#faders-panel select >> nth=1', { label: '1 Video Feedback · wet / dry' });
-  check('pinned faders are saved with the preset', await settle(async () => (await stored())[1].scene.macros?.length === 2, 'macros stored'));
+  // Fader on a slider puts it on the perform screen, in the order pressed.
+  await control.locator('.chain-row .fx').nth(1).click();
+  await control.locator('#tab-params .param[data-key="amount"] .pin-toggle').click();
+  await control.locator('.chain-row .fx').nth(0).click();
+  await control.locator('#tab-params .param[data-key="mix"] .pin-toggle').click();
+  check('pinned faders are saved with the preset', await settle(async () => (await stored())[1].scene.macros?.filter(Boolean).length === 2, 'macros stored'));
+  check('the slider\'s button says which fader it is', (await control.locator('#tab-params .param[data-key="mix"] .pin-toggle').textContent()) === 'Fader 2' && (await control.locator('.tabs button[data-tab=faders]').textContent()) === 'Faders · 2');
+  check('the preview under the picture shows them as the perform screen will', (await control.locator('.fader-preview .mini-fader:not(.unused) span').allTextContents()).join(',') === 'amount,wet / dry');
+  await control.locator('.tabs button[data-tab=faders]').click();
+  check('the Faders tab lists them, with what each is', (await control.locator('#faders-panel .pin-name').allTextContents()).join(' | ') === '2 RGB Offset · amount | 1 Video Feedback · wet / dry', (await control.locator('#faders-panel .pin-name').allTextContents()).join(' | '));
+  await control.locator('#faders-panel .pin').nth(1).locator('button[aria-label="Move fader 2 up"]').click();
+  await control.locator('#faders-panel .pin').nth(0).locator('button[aria-label="Move fader 1 down"]').click();
+  check('and reorders them', (await control.locator('#faders-panel .pin-name').allTextContents()).join(' | ') === '2 RGB Offset · amount | 1 Video Feedback · wet / dry');
+  await control.locator('.tabs button[data-tab=params]').click();
   await view('perform');
   check('the perform screen shows only the pinned faders', (await control.locator('.fader .name').allTextContents()).join(',') === 'amount,wet / dry', (await control.locator('.fader .name').allTextContents()).join(','));
 

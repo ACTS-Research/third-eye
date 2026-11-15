@@ -101,7 +101,7 @@ npm run preview
 | Screen | For |
 | --- | --- |
 | **Perform** | The show: panic buttons, input select, the monitor, eight faders for the live preset, and the strip of presets and the running order |
-| **Edit** | One preset: its name, fade-in time, effects chain, pinned faders and modulation |
+| **Edit** | One preset. At the left the picture, with the effects chain as a row of buttons under it and the faders as the perform screen will show them. At the right three tabs: **Parameters** (the open effect's controls), **Faders** and **Modulation** |
 | **Setup** | Everything done once beforehand: output window, inputs, pairing, MIDI, audio, vision, triggers, preset files |
 
 1. On the Mac open `/control` in Chrome. That is enough to play: the picture
@@ -206,7 +206,7 @@ to use the whole sensor.
 | Camera (top right) | Opens the settings panel: Quality (360p / 720p / 1080p at 30 or 60 fps, default 720p · 60), Camera on / off, **Preview: camera / Mac output**, any exposure and focus controls the camera reports (an iPhone in Safari reports none, and the panel says so), and **Scan the Mac's code** |
 | Preview: Mac output | The preview shows the Mac's finished picture instead of the camera: effects, Freeze and Blackout as the audience sees them. The Mac sends it back small (480 pixels wide, 15 pictures a second, at most 500 kbit/s) on the video call the phone already has, and only while a phone asks for it. It runs a moment behind the camera, because the picture has been to the Mac and back. It needs the camera on, and is not available on a phone paired without internet; the preview then shows the camera and the panel says why. The setting is remembered |
 | **Reconnect** | Appears in the top line whenever the link is down. It redials. It reads **Scan code** instead when the phone was paired by code, or when no Mac is found under the phone's room code (the code may have changed): it then reads a code on the Mac's screen through the camera, without leaving the page. Either code works: the ordinary pairing code (click **Phone** in the Mac's top bar) or the one from Pair without internet. While it is reading, the instruction lies along the foot of the preview and the status line stays readable; it stops by itself if the link comes back |
-| By itself | The phone redials whenever the link drops, and also when the Mac has said nothing for six seconds, whatever the browser reports about the connection. After a Mac reload it is back in a few seconds with no tap |
+| By itself | The phone redials whenever the link drops, and also when the Mac has said nothing for ten seconds, whatever the browser reports about the connection. After a Mac reload it is back in a few seconds with no tap |
 
 A message (a camera that refused a setting, a screen that will not stay awake)
 lies over the top line for a few seconds and goes; it never takes room from
@@ -411,6 +411,15 @@ to fold its card.
 **Apply to** (on every effect) limits it to the person or to the background.
 That needs **Segmentation** switched on under Setup → Vision.
 
+**Editing the chain.** Under the picture on the Edit screen the chain reads
+left to right: the input, each effect, then **+ Add effect**. Click an effect
+to open its controls on the **Parameters** tab; drag its button to move it
+(or use ← → beside its name), and **Bypass** or **✕** there to skip or remove
+it. Each slider is a bar: click or drag to set it, type an exact number in
+the box beside it, double-click to return to the default. The two buttons on
+a slider's row are **Fader**, which puts it on the perform screen, and
+**Mod**, which has something move it by itself (both below).
+
 The picture is rendered at the output window's pixel size and follows resizes
 and display scaling. **Setup → Output → Full res / 75% / 50%** lowers the internal
 resolution if the GPU is struggling.
@@ -432,11 +441,18 @@ resolution if the GPU is struggling.
 **Setup → Sources** shows them all moving live; the perform screen shows the
 ones the live preset uses.
 
-**Mappings.** On the Edit screen, under **Modulation**, **Add mapping** connects a source to a
-parameter. Touch a parameter slider first and the new mapping targets it.
-Each mapping has an amount (-1..1 of the parameter's range), offset,
-smoothing time, invert, and a mode: *add to the dialled value* or *replace
-the value* (the source sweeps the whole range). Wet / dry can be a target too.
+**Modulation.** Press **Mod** on a slider and a source starts moving it; the
+**Modulation** tab opens on the new box. Each box is one source moving one
+slider (`Phone · Roll → 1 Video Feedback · rotate`), with a thin meter
+showing the source live. **Source** and **Slider** are menus, so a box can be
+re-aimed; **Amount** (-1..1 of the slider's range) and **Smoothing** are
+always there, and **More** opens **Offset**, **Invert** and how it is
+applied: *added to the dialled value* or *replaces the value* (the source
+sweeps the whole range). The switch turns one off without removing it; ✕
+removes it. A preset can have any number, and one slider can be moved by
+more than one source. **+ Add modulation** on the tab aims at the slider
+touched last. Wet / dry can be moved too. The four **LFOs** (shape, tempo
+sync, rate) are at the foot of the tab.
 
 **Triggers.** Any source rising through its halfway point can fire an action:
 blackout, freeze, bypass, next / previous preset, next input, glitch burst.
@@ -502,7 +518,9 @@ By default they are picked automatically: the eight places are shared out
 between the effects in the chain (two effects get four each, three get three
 each), and each effect gives its first sliders, in the order they appear on
 the Edit screen; menus and switches are skipped. On the Edit screen,
-**Perform faders** pins the ones you want instead, in order. Under the faders,
+**Fader** on a slider's row chooses it instead; the **Faders** tab lists the
+chosen ones in order, with ↑ ↓ to rearrange and ✕ to take one off, and the
+row of small faders under the picture shows the result. Under the faders,
 each modulation source the preset uses has a meter, with what it is moving
 written under it (`→ 1 Video Feedback · rotate`). Dragging a fader changes
 the parameter for now without altering the saved preset; double-click resets
@@ -792,6 +810,7 @@ npm test
 | `tests/running-order.mjs` | The running order: building it with +, Next and Prev, the same preset twice, going off the list and returning, notes and fades, dragging and removing steps, deleting a preset that steps use, the phone's six buttons following it, the export file, stepping with `/control` closed and with no output window |
 | `tests/reconnect.mjs` | Getting the phone back without closing its page: a Mac that stops answering, a Mac reload, scanning that stops when the link returns, the ordinary pairing code read inside the page, a changed room code, Reconnect by hand |
 | `tests/output-preview.mjs` | The phone's preview showing the Mac's finished picture: the setting, the picture following Blackout, Rotate not applied twice, the camera taking over while a code is read, a Mac reload, switching back; torch and white-balance lock dimmed on a camera without them |
+| `tests/edit-screen.mjs` | The edit screen's own controls: the bar slider (click, typed value, double-click reset), the app's menus by mouse and keyboard without the page's shortcuts firing, a menu whose button scrolls into view, the chain row (add, drag, remove, bypass), modulation boxes and their extra settings, LFOs, autosave, a narrow window |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |

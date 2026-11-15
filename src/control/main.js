@@ -128,8 +128,8 @@ mountIoPanel(setupB, ui);
 mountVisionPanel(setupB, ui);
 
 mountEdit(views.edit, ui);
-mountChain(ui.editCols.chain, ui);
-mountModPanel({ edit: ui.editCols.side, setup: setupC }, ui);
+mountModPanel({ edit: ui.editCols.mods, setup: setupC }, ui);
+mountChain(ui.editCols, ui);
 mountLibraryPanel(setupC, ui);
 mountRecordPanel(setupC, ui);
 mountShortcuts(setupC, ui);

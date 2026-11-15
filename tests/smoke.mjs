@@ -3,7 +3,7 @@
 // both directions, and back to /control alone.
 //   npm run test:smoke
 
-import { check, failureCount, launch, outputStats, sleep, startSite, waitFor, watch } from './lib.mjs';
+import { check, failureCount, launch, outputStats, sleep, startSite, waitFor, watch, addEffect, clickBar, paramBar } from './lib.mjs';
 
 const site = await startSite();
 const browser = await launch();
@@ -66,22 +66,22 @@ try {
 
   console.log('control -> output');
   await control.evaluate(() => window.thirdEye.ui.setView('edit'));
-  await control.selectOption('#col-chain select', 'kaleido');
-  await control.click('text=Add effect');
+  await addEffect(control, 'kaleido');
   await waitFor(() => output.evaluate(() => window.thirdEye.store.state.chain.length === 3), { label: 'effect added on output' });
   check('added effect reaches output', true);
   check('effect instance created', await output.evaluate(() => window.thirdEye.engine.pipeline.cur.instances.size === 3));
 
-  // Drag a Tweakpane slider and confirm the value arrives.
+  check('the effect just added is the one open', (await control.locator('#tab-params .fx-head .name').textContent()) === 'Kaleidoscope' || (await control.locator('.chain-row .fx[aria-pressed=true]').getAttribute('data-type')) === 'kaleido');
+  // Move a slider of the first effect and confirm the value arrives.
   const before = await output.evaluate(() => window.thirdEye.store.state.chain[0].params.zoom);
-  const slider = control.locator('.fx').first().locator('.tp-sldv_t').nth(1);
-  const box = await slider.boundingBox();
-  await control.mouse.click(box.x + box.width * 0.9, box.y + box.height / 2);
+  await control.locator('.chain-row .fx').nth(0).click();
+  await clickBar(control, paramBar('zoom'), 0.9);
   await sleep(200);
   const after = await output.evaluate(() => window.thirdEye.store.state.chain[0].params.zoom);
   check('slider drag reaches output', after !== before && after > 1.15, `zoom ${before} -> ${after}`);
 
-  await control.locator('.fx').nth(2).locator('button[title="Move earlier"]').click();
+  await control.locator('.chain-row .fx').nth(2).click();
+  await control.locator('#tab-params .fx-head button[title="Move earlier"]').click();
   await sleep(200);
   check('reorder reaches output', await output.evaluate(() => window.thirdEye.store.state.chain[1].type === 'kaleido'));
   check('feedback buffers kept across reorder', await output.evaluate(() => {
@@ -90,7 +90,8 @@ try {
     return !!pipeline.cur.instances.get(uid)?.own;
   }));
 
-  await control.locator('.fx').nth(1).locator('text=Bypass').click();
+  await control.locator('.chain-row .fx').nth(1).click();
+  await control.locator('#tab-params .fx-head >> text=Bypass').click();
   await sleep(150);
   check('bypass reaches output', await output.evaluate(() => window.thirdEye.store.state.chain[1].bypass === true));
 

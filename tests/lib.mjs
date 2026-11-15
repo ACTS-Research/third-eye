@@ -198,3 +198,26 @@ export const phoneCode = (phone) => phone.evaluate(() => document.getElementById
 export const showToMac = (control, picture) => control.evaluate((p) => window.__show(p), picture);
 
 export const benignError = (e) => /peerjs|WebSocket|ERR_CONNECTION_REFUSED|Lost connection|server-error|socket/i.test(e);
+
+// ---- the edit screen's own controls (src/control/controls.js) ----
+
+// Adds an effect through the "+ Add effect" menu under the picture.
+export const addEffect = (page, type) => page.evaluate((t) => {
+  document.getElementById('add-effect').click();
+  document.querySelector(`.menu-list .menu-item[data-value="${t}"]`).click();
+}, type);
+
+// Clicks a bar slider at a fraction of its width (0 = left end, 1 = right).
+export async function clickBar(page, selector, at = 0.5) {
+  const box = await page.locator(selector).boundingBox();
+  await page.mouse.click(box.x + box.width * at, box.y + box.height / 2);
+}
+
+// Chooses a value from one of the app's menus: `button` opens it.
+export async function pickMenu(page, button, value) {
+  await page.locator(button).dispatchEvent('click');
+  await page.locator(`.menu-list .menu-item[data-value="${value}"]`).dispatchEvent('click');
+}
+
+// A slider of the effect that is open on the Parameters tab.
+export const paramBar = (key) => `#tab-params .param[data-key="${key}"] input.bar`;

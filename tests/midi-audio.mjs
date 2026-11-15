@@ -2,7 +2,7 @@
 // Chromium's fake microphone (a beep roughly once a second).
 //   node tests/midi-audio.mjs
 
-import { benignError, check, failureCount, launch, startSite, waitFor, watch } from './lib.mjs';
+import { benignError, check, failureCount, launch, startSite, waitFor, watch, clickBar, paramBar } from './lib.mjs';
 
 const site = await startSite();
 const browser = await launch();
@@ -89,9 +89,7 @@ try {
   check('map mode outlines the controls', await control.evaluate(() => document.body.classList.contains('midi-map')) && (await control.locator('#map-hint').isVisible()));
 
   // An effect parameter: touching its slider arms it.
-  const slider = control.locator('.fx').first().locator('.tp-sldv_t').nth(2); // feedback rotate
-  const box = await slider.boundingBox();
-  await control.mouse.click(box.x + box.width * 0.5, box.y + box.height / 2);
+  await clickBar(control, paramBar('rotate'), 0.5); // feedback rotate
   check('touching a parameter arms it by name', (await hint()).includes('rotate'), await hint());
   await armed();
   await midi([0xb0, 21, 127]);

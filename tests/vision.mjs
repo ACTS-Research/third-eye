@@ -142,56 +142,49 @@ try {
     check('face sources get meters on control', await s.settle(() => s.control.evaluate(() => !!document.querySelector('.meter[title="face.smile"]')), 'meters', 5000));
 
     // Invert colours on: nothing / everything / person only / background only.
-    let before = null;
-    const setTarget = async (target, bypass = false) => {
-      await s.control.evaluate(({ target, bypass }) => {
-        const { store } = window.thirdEye;
-        if (!store.state.chain.length) {
-          document.querySelector('#col-chain select').value = 'levels';
-          [...document.querySelectorAll('#col-chain button')].find((b) => b.textContent === 'Add effect').click();
-          store.setParam(store.state.chain[0].uid, 'invert', 1);
-        }
-        store.patchItem('chain', store.state.chain[0].uid, { target, bypass });
-      }, { target, bypass });
-      // The change reaches the output when it reaches it: on a slow machine
-      // that can be well over a second. Wait until the picture is no longer
-      // the one before the change, then let it settle.
+    const setTarget = (target, bypass = false) => s.control.evaluate(({ target, bypass }) => {
+      const { store } = window.thirdEye;
+      if (!store.state.chain.length) {
+        document.getElementById('add-effect').click();
+        document.querySelector('.menu-list .menu-item[data-value="levels"]').click();
+        store.setParam(store.state.chain[0].uid, 'invert', 1);
+      }
+      store.patchItem('chain', store.state.chain[0].uid, { target, bypass });
+    }, { target, bypass });
+    // Reads the picture until it is as `good` says, or half a minute is up.
+    // A mask counts as fresh for 1.5 s. On a real Mac a new one arrives many
+    // times a second; here a pass takes a second or more on the CPU, frames
+    // are drawn a few times a second, and a picture read between masks has
+    // none (the effect then covers everything). So: read until a picture
+    // drawn with a mask comes by. Without masking at all, none ever does.
+    const picture = async (good) => {
       const start = Date.now();
-      await sleep(600);
-      while (before && Date.now() - start < 10000 && changedFraction(before, await pixels(s.output)) < 0.05) await sleep(300);
-      await sleep(600);
-      // A mask counts as fresh for 1.5 s. On a real Mac a new one arrives
-      // many times a second; here a pass takes about a second on the CPU and
-      // sometimes longer, and a picture read in such a gap has no mask (the
-      // effect then covers everything). Read one drawn with a mask.
-      return s.output.evaluate(async () => {
-        const { gl, pipeline, vision } = window.thirdEye.engine;
-        const until = performance.now() + 30000;
-        // A mask that has just arrived, then two frames drawn with it.
-        while (performance.now() - vision.maskAt > 400 && performance.now() < until) await new Promise((r) => setTimeout(r, 20));
-        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-        const { w, h } = pipeline.preview;
-        const px = new Uint8Array(w * h * 4);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, pipeline.preview.fbo);
-        gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        return Array.from(px);
-      });
+      let px = await pixels(s.output);
+      while (!good(px) && Date.now() - start < 30000) {
+        await sleep(250);
+        px = await pixels(s.output);
+      }
+      return px;
     };
-    const setTargetAfter = async (previous, target, bypass) => {
-      before = previous;
-      return setTarget(target, bypass);
-    };
-    const clean = await setTargetAfter(null, 'all', true);
-    const all = await setTargetAfter(clean, 'all');
-    const person = await setTargetAfter(all, 'person');
-    const background = await setTargetAfter(person, 'background');
+    await setTarget('all', true);
+    await sleep(1500);
+    const clean = await pixels(s.output);
+    await setTarget('all');
+    const all = await picture((px) => changedFraction(clean, px) > 0.9);
+    const whole = changedFraction(clean, all);
+    await setTarget('person');
+    const person = await picture((px) => {
+      const f = changedFraction(clean, px);
+      return f > 0.08 && f < whole - 0.08;
+    });
+    await setTarget('background');
+    const background = await picture((px) => Math.abs(changedFraction(clean, person) + changedFraction(clean, px) - whole) < 0.12 && changedFraction(person, px) > 0.3);
     const fAll = changedFraction(clean, all);
     const fPerson = changedFraction(clean, person);
     const fBackground = changedFraction(clean, background);
     check('"person only" changes just part of the picture', fPerson > 0.08 && fPerson < fAll - 0.08, `changed: everything ${(fAll * 100).toFixed(0)}%, person ${(fPerson * 100).toFixed(0)}%, background ${(fBackground * 100).toFixed(0)}%`);
     check('person and background masks are complementary', Math.abs(fPerson + fBackground - fAll) < 0.12 && changedFraction(person, background) > 0.3);
-    check('effect card offers "apply to"', (await s.control.locator('.fx').first().textContent()).includes('apply to'));
+    check('effect card offers "apply to"', (await s.control.locator('#tab-params').textContent()).includes('apply to'));
     if (process.env.SHOTS) {
       await setTarget('person');
       await s.output.screenshot({ path: `${process.env.SHOTS}/mask-person.png` });

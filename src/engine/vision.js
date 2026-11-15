@@ -5,7 +5,13 @@
 const FRAME_WIDTH = 480; // inference input; models resize further themselves
 const MIN_INTERVAL_MS = 33; // at most ~30 inference passes per second
 const BUSY_TIMEOUT_MS = 6000;
+// A mask is good for this long, or for three passes at the pace this machine
+// manages if that is longer (never more than MASK_STALE_MS). A fast machine
+// delivers one many times a second; a slow one, deciding on its processor,
+// can take over a second a pass, and a fixed limit close to that would have
+// the mask (and anything applied to "person only") flicker in and out.
 const MASK_FRESH_MS = 1500;
+const MASK_STALE_MS = 8000;
 export const VISION_FEATURES = ['face', 'hands', 'gesture', 'pose', 'segment'];
 const SOURCE_PREFIX = { face: 'face.', hands: 'hand.', gesture: 'gesture.', pose: 'pose.', segment: 'seg.' };
 
@@ -90,6 +96,10 @@ export class Vision {
     if (msg.t !== 'result') return;
     this.busy = false;
     this.ms = this.ms ? this.ms * 0.8 + msg.ms * 0.2 : msg.ms;
+    // How far apart results arrive, end to end.
+    const at = performance.now();
+    if (this.resultAt && at - this.resultAt < MASK_STALE_MS) this.gapMs = this.gapMs ? this.gapMs * 0.7 + (at - this.resultAt) * 0.3 : at - this.resultAt;
+    this.resultAt = at;
     this.passes++;
     this.error = msg.error;
     for (const id in msg.values) this.mod.set(id, msg.values[id]);
@@ -146,7 +156,11 @@ export class Vision {
       gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
       this.maskAt = now;
     }
-    return this.segmenting && now - this.maskAt < MASK_FRESH_MS ? this.tex : null;
+    return this.maskFresh(now) ? this.tex : null;
+  }
+
+  maskFresh(now) {
+    return this.segmenting && now - this.maskAt < Math.min(MASK_STALE_MS, Math.max(MASK_FRESH_MS, 3 * (this.gapMs ?? 0)));
   }
 
   takeRate(dt) {
@@ -161,7 +175,7 @@ export class Vision {
       ms: this.ms,
       hz: this.hz,
       error: this.error,
-      mask: this.segmenting && performance.now() - this.maskAt < MASK_FRESH_MS,
+      mask: this.maskFresh(performance.now()),
     };
   }
 }

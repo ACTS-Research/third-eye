@@ -2,7 +2,7 @@
 // matrix, trigger actions, presets and crossfade.
 //   node tests/modulation.mjs
 
-import { benignError, check, failureCount, launch, openSession, outputStats, sleep, startPeerServer, startSite, stopPeerServer, waitFor } from './lib.mjs';
+import { benignError, check, failureCount, launch, openSession, outputStats, sleep, startPeerServer, startSite, stopPeerServer, waitFor, clickBar, paramBar } from './lib.mjs';
 
 const site = await startSite();
 const peerServer = await startPeerServer();
@@ -22,11 +22,10 @@ try {
   // Each effect alone must change the picture compared with a clean chain.
   const setChain = (types) => control.evaluate(async (list) => {
     const { store } = window.thirdEye;
-    const picker = document.querySelector('#col-chain select');
     store.setScene({ chain: [], mappings: [], lfos: store.state.lfos });
     for (const type of list) {
-      picker.value = type;
-      [...document.querySelectorAll('#col-chain button')].find((b) => b.textContent === 'Add effect').click();
+      document.getElementById('add-effect').click();
+      document.querySelector(`.menu-list .menu-item[data-value="${type}"]`).click();
     }
   }, types);
   await control.keyboard.press(' '); // freeze the pattern so only the effect differs
@@ -47,10 +46,14 @@ try {
   check('chain editor shows 12 cards', (await control.locator('.fx').count()) === 12);
 
   console.log('sensor channel');
-  const channel = await phone.evaluate(() => {
+  const readChannel = () => phone.evaluate(() => {
     const ch = window.thirdEyePhone.link.sensorChannel;
-    return { ordered: ch.ordered, maxRetransmits: ch.maxRetransmits, negotiated: ch.negotiated, state: ch.readyState };
+    return ch ? { ordered: ch.ordered, maxRetransmits: ch.maxRetransmits, negotiated: ch.negotiated, state: ch.readyState } : { state: 'none' };
   });
+  // (Twelve effects have just been compiled with software graphics, which
+  // can hold the Mac's page up for seconds: the phone may be redialling.)
+  await waitFor(async () => (await readChannel()).state === 'open', { label: 'sensor channel open', timeout: 20000 }).catch(() => {});
+  const channel = await readChannel();
   check('sensor channel is unordered with no retransmits', channel.ordered === false && channel.maxRetransmits === 0 && channel.state === 'open', JSON.stringify(channel));
   const hz = await waitFor(() => control.evaluate(() => window.thirdEye.ui.status?.sensors?.hz > 20 && window.thirdEye.ui.status.sensors.hz), { label: 'sensor rate' });
   check('sensor packets arrive', true, `${hz.toFixed(0)} Hz in this sandbox (target 60)`);
@@ -103,15 +106,32 @@ try {
 
   console.log('mappings');
   await setChain(['feedback']);
-  // Touch a parameter, then add a mapping: it should target that parameter.
+  // Mod on a slider adds a source for that slider and shows it.
   await control.evaluate(() => window.thirdEye.ui.setView('edit'));
-  const slider = control.locator('.fx').first().locator('.tp-sldv_t').nth(1);
-  const box = await slider.boundingBox();
-  await control.mouse.click(box.x + box.width * 0.5, box.y + box.height / 2);
-  await control.click('text=Add mapping');
+  await control.locator('#tab-params .param[data-key="zoom"] .mod-toggle').click();
   await sleep(200);
   let mapping = await state(() => window.thirdEye.store.state.mappings[0]);
-  check('"Add mapping" targets the last touched parameter', mapping?.key === 'zoom' && mapping.source === 'pad.x', JSON.stringify(mapping));
+  check('Mod on a slider adds a source for that slider', mapping?.key === 'zoom' && mapping.source === 'lfo.1' && (await control.locator('#tab-mods').isVisible()), JSON.stringify(mapping));
+  check('its box says what moves what', (await control.locator('.mod .mod-title').first().textContent()) === 'LFO 1 → 1 Video Feedback · zoom', await control.locator('.mod .mod-title').first().textContent());
+  // The source is chosen from the app's own menu, grouped as the sources are.
+  await control.locator('.mod .mod-route .menu').first().click();
+  check('the source menu is the app\'s own list, not the system\'s', (await control.locator('.menu-list .menu-group').first().textContent()) === 'Phone' && (await control.locator('.menu-list .menu-item.on').textContent()) === 'LFO 1' && (await control.locator('#tab-mods select').count()) === 0);
+  await control.locator('.menu-list .menu-item[data-value="pad.x"]').click();
+  await sleep(200);
+  mapping = await state(() => window.thirdEye.store.state.mappings[0]);
+  check('choosing from it changes the source', mapping.source === 'pad.x' && (await control.locator('.mod .mod-title').first().textContent()).startsWith('Touch · Pad X →'), JSON.stringify(mapping));
+  await control.locator('.tabs button[data-tab=params]').click();
+  check('the slider\'s Mod button now names the source', (await control.locator('#tab-params .param[data-key="zoom"] .mod-toggle').textContent()) === '~ Pad X');
+  // Add modulation on the tab itself aims at the slider touched last.
+  await clickBar(control, paramBar('rotate'), 0.5);
+  await control.locator('.tabs button[data-tab=mods]').click();
+  await control.locator('.add-mod').click();
+  await sleep(200);
+  check('"Add modulation" aims at the slider touched last', await state(() => window.thirdEye.store.state.mappings.length === 2 && window.thirdEye.store.state.mappings[1].key === 'rotate'));
+  await control.locator('.mod').nth(1).locator('button[title="Remove this modulation"]').click();
+  await sleep(200);
+  check('× removes that one only', await state(() => window.thirdEye.store.state.mappings.length === 1 && window.thirdEye.store.state.mappings[0].key === 'zoom'));
+  await control.evaluate(() => window.thirdEye.store.setParam(window.thirdEye.store.state.chain[0].uid, 'rotate', 0.012));
   await control.evaluate((id) => window.thirdEye.store.patchItem('mappings', id, { mode: 'set', amount: 1, smooth: 0 }), mapping.id);
   const resolved = () => state(() => {
     const { pipeline } = window.thirdEye.engine;
