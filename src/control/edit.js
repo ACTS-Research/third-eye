@@ -1,7 +1,7 @@
 // The edit screen for one preset. At the left the picture, with the chain as
 // a row of buttons under it and the faders as the perform screen will show
-// them; at the right three tabs: the open effect's parameters (chain.js),
-// the chosen faders (here) and modulation (mod-panel.js). Changes are saved
+// them; at the right four tabs: the open effect's parameters (chain.js),
+// the chosen faders (here), modulation and the LFOs (mod-panel.js). Changes are saved
 // into the preset as you make them; Revert goes back to how it was when the
 // screen was opened.
 
@@ -153,10 +153,11 @@ export function mountEdit(root, ui) {
     params: el('div', { class: 'tab-pane', id: 'tab-params' }),
     faders: el('div', { class: 'tab-pane', id: 'faders-panel' }, [pinList, pinNote]),
     mods: el('div', { class: 'tab-pane', id: 'tab-mods' }),
+    lfos: el('div', { class: 'tab-pane', id: 'lfo-panel' }),
   };
   const tabButtons = {};
   const tabBar = el('div', { class: 'tabs', role: 'group', 'aria-label': 'What to edit' });
-  for (const [id, text] of [['params', 'Parameters'], ['faders', 'Faders'], ['mods', 'Modulation']]) {
+  for (const [id, text] of [['params', 'Parameters'], ['faders', 'Faders'], ['mods', 'Modulation'], ['lfos', 'LFOs']]) {
     tabButtons[id] = el('button', { 'data-tab': id, text, onclick: () => ui.setEditTab(id) });
     tabBar.append(tabButtons[id]);
   }
@@ -172,7 +173,7 @@ export function mountEdit(root, ui) {
     tabButtons.faders.textContent = `Faders · ${pins().length}`;
     tabButtons.mods.textContent = `Modulation · ${store.state.mappings.length}`;
   }
-  sideCol.append(tabBar, panes.params, panes.faders, panes.mods);
+  sideCol.append(tabBar, panes.params, panes.faders, panes.mods, panes.lfos);
   ui.setEditTab('params');
 
   function buildSlots() {
@@ -227,7 +228,7 @@ export function mountEdit(root, ui) {
   });
 
   root.append(head, el('div', { class: 'edit-body' }, [pictureCol, sideCol]));
-  ui.editCols = { chain: chainRow, params: panes.params, mods: panes.mods };
+  ui.editCols = { chain: chainRow, params: panes.params, mods: panes.mods, lfos: panes.lfos };
   ui.refreshSlots = buildSlots;
   sync();
 }

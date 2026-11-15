@@ -101,7 +101,7 @@ npm run preview
 | Screen | For |
 | --- | --- |
 | **Perform** | The show: panic buttons, input select, the monitor, eight faders for the live preset, and the strip of presets and the running order |
-| **Edit** | One preset. At the left the picture, with the effects chain as a row of buttons under it and the faders as the perform screen will show them. At the right three tabs: **Parameters** (the open effect's controls), **Faders** and **Modulation** |
+| **Edit** | One preset. At the left the picture, with the effects chain as a row of buttons under it and the faders as the perform screen will show them. At the right four tabs: **Parameters** (the open effect's controls), **Faders**, **Modulation** and **LFOs** |
 | **Setup** | Everything done once beforehand: output window, inputs, pairing, MIDI, audio, vision, triggers, preset files |
 
 1. On the Mac open `/control` in Chrome. That is enough to play: the picture
@@ -451,8 +451,12 @@ applied: *added to the dialled value* or *replaces the value* (the source
 sweeps the whole range). The switch turns one off without removing it; ✕
 removes it. A preset can have any number, and one slider can be moved by
 more than one source. **+ Add modulation** on the tab aims at the slider
-touched last. Wet / dry can be moved too. The four **LFOs** (shape, tempo
-sync, rate) are at the foot of the tab.
+touched last. Wet / dry can be moved too.
+
+**LFOs.** The fourth tab holds the four LFOs. Each has a meter showing what
+it is doing, its **shape** as a row of small pictures (sine, triangle, ramp
+up, square, random steps, drift), **tempo sync**, and **rate**. The rate
+only counts while the LFO runs free; locked to the tempo it is dimmed.
 
 **Triggers.** Any source rising through its halfway point can fire an action:
 blackout, freeze, bypass, next / previous preset, next input, glitch burst.

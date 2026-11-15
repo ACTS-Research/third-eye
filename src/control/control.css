@@ -289,9 +289,10 @@ input.bar-value:hover, input.bar-value:focus { border-color: var(--line); }
 .mini-fader b { font: 700 16px/1 var(--display); }
 .mini-fader span { font: 700 11px/1.1 var(--display); letter-spacing: 0.03em; text-transform: uppercase; text-align: center; overflow-wrap: anywhere; }
 
-/* (Modulation has the longest name and a count after it.) */
-.tabs { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1.35fr); gap: 6px; flex-shrink: 0; }
-.tabs button { padding: 8px 4px; letter-spacing: 0.04em; }
+/* Four tabs in a narrow column: small type, and room in proportion to the
+   names (Modulation is the longest and has a count after it). */
+.tabs { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.45fr) minmax(0, 0.7fr); gap: 6px; flex-shrink: 0; }
+.tabs button { padding: 8px 2px; font-size: 11px; letter-spacing: 0; }
 .tab-pane { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
 .fx-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
 .fx-head .num { font: 800 34px/0.9 var(--display); }
@@ -322,9 +323,17 @@ input.bar-value:hover, input.bar-value:focus { border-color: var(--line); }
 .mod-grid .menu, .mod-grid .switch { justify-self: start; }
 .mod-more { align-self: flex-start; padding: 3px 10px; font-size: 10px; }
 .add-mod { padding: 9px 12px; }
-.lfo-list { display: flex; flex-direction: column; gap: 12px; }
-.lfo { display: flex; flex-direction: column; gap: 6px; }
+.lfo-list { display: flex; flex-direction: column; gap: 8px; }
+.lfo { display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid var(--line); }
+.lfo-head { display: grid; grid-template-columns: 84px minmax(0, 1fr); column-gap: 8px; align-items: center; }
 .lfo-name { font: 700 16px/1 var(--display); letter-spacing: 0.04em; }
+.bar-field.idle { opacity: 0.35; }
+/* A few choices as small pictures (controls.js, choice()). */
+/* All in one row: they narrow together rather than wrap. */
+.choice { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 44px); gap: 4px; min-width: 0; }
+.choice button { display: grid; place-items: center; height: 28px; padding: 0 3px; min-width: 0; }
+.choice button svg { width: 100%; max-width: 32px; height: 16px; display: block; }
+.choice button[aria-checked='true'] { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
 
 /* MIDI map mode: every mappable control shows itself. */
 body.midi-map [data-midi] { outline: 2px dashed var(--ink); outline-offset: 2px; cursor: crosshair; }

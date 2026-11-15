@@ -251,3 +251,35 @@ export function toggle({ on = false, text = '', onText = text, label = '', onCha
     },
   };
 }
+
+// A few choices side by side, each a small picture: one is always chosen.
+// options: [{ value, label, icon }] where `icon` is the inside of an <svg>
+// drawn 32 by 16 (the label is what a screen reader and the tooltip say).
+// Returns { node, set(value) }.
+export function choice({ options, value, onChange, label = '' }) {
+  let current = value;
+  const node = el('div', { class: 'choice', role: 'radiogroup', 'aria-label': label || null });
+  const buttons = options.map((o) => {
+    const b = el('button', { type: 'button', role: 'radio', title: o.label, 'aria-label': o.label, 'data-value': String(o.value) });
+    b.innerHTML = `<svg viewBox="0 0 32 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">${o.icon}</svg>`;
+    b.addEventListener('click', () => {
+      if (o.value === current) return;
+      current = o.value;
+      show();
+      onChange?.(current);
+    });
+    node.append(b);
+    return [o.value, b];
+  });
+  function show() {
+    for (const [v, b] of buttons) b.setAttribute('aria-checked', String(v === current));
+  }
+  show();
+  return {
+    node,
+    set(v) {
+      current = v;
+      show();
+    },
+  };
+}

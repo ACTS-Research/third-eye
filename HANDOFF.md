@@ -19,6 +19,10 @@ preset strip and check the phone's six buttons show them.
 
 **Decisions only you can make.**
 
+- Choose how an LFO's tempo sync is set. It is a menu for now; three
+  alternatives (a strip of lengths, note values, a switch with halve and
+  double) are on the "LFO tempo sync" board at
+  https://claude.ai/artifact/UEbbvKGUHsQo7CxCWFUVDT.
 - Try the rebuilt edit screen (15 November) and say what to change. You chose
   mock-up C (picture first), the Bar slider, and the app's own menus; the
   mock-ups are at https://claude.ai/artifact/UEbbvKGUHsQo7CxCWFUVDT. Still to

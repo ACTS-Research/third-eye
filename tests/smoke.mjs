@@ -119,28 +119,51 @@ try {
 
   console.log('video file input');
   // Record a short clip in the page, then load it through the file picker.
+  // Its frames are pushed by hand (a canvas stream left to itself gets a
+  // frame only when the page presents one, which a headless page that is
+  // not in front may not do for seconds), and the clip is played back once
+  // here before it is used: a recording with no frames in it is a file no
+  // player can open.
   const clip = await control.evaluate(async () => {
     const canvas = document.createElement('canvas');
     canvas.width = 320;
     canvas.height = 240;
     const ctx = canvas.getContext('2d');
-    let n = 0;
-    const timer = setInterval(() => {
-      ctx.fillStyle = `hsl(${(n += 20) % 360} 90% 50%)`;
-      ctx.fillRect(0, 0, 320, 240);
-    }, 40);
-    const recorder = new MediaRecorder(canvas.captureStream(25), { mimeType: 'video/webm' });
-    const chunks = [];
-    recorder.ondataavailable = (e) => chunks.push(e.data);
-    const done = new Promise((r) => (recorder.onstop = r));
-    recorder.start();
-    await new Promise((r) => setTimeout(r, 1500));
-    recorder.stop();
-    await done;
-    clearInterval(timer);
-    const bytes = new Uint8Array(await new Blob(chunks).arrayBuffer());
-    return Array.from(bytes);
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const stream = canvas.captureStream(0);
+      const track = stream.getVideoTracks()[0];
+      let n = 0;
+      const draw = () => {
+        ctx.fillStyle = `hsl(${(n += 20) % 360} 90% 50%)`;
+        ctx.fillRect(0, 0, 320, 240);
+        track.requestFrame?.();
+      };
+      draw();
+      const timer = setInterval(draw, 40);
+      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      const chunks = [];
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      const done = new Promise((r) => (recorder.onstop = r));
+      recorder.start();
+      await new Promise((r) => setTimeout(r, 1500 + attempt * 1000));
+      recorder.stop();
+      await done;
+      clearInterval(timer);
+      track.stop();
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const playable = await new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.muted = true;
+        video.onloadeddata = () => resolve(video.videoWidth === 320);
+        video.onerror = () => resolve(false);
+        setTimeout(() => resolve(false), 4000);
+        video.src = URL.createObjectURL(blob);
+      });
+      if (playable) return Array.from(new Uint8Array(await blob.arrayBuffer()));
+    }
+    return [];
   });
+  check('a test clip could be recorded', clip.length > 0, `${clip.length} bytes`);
   // With no file loaded, input button 4 on the perform screen asks for one.
   // (A file picker only opens for a real click, and a real click needs the
   // page in front.)

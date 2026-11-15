@@ -103,14 +103,24 @@ try {
   check('the Slider menu re-aims it', await settle(async () => (await mapping()).key === 'amount' && (await control.locator('.mod').first().locator('.mod-title').textContent()).endsWith('2 RGB Offset · amount'), 're-aimed'), JSON.stringify(await mapping()));
 
   console.log('LFOs');
-  await control.locator('#lfo-panel h2').click();
-  check('the LFO settings are at the foot of the tab', await control.locator('#lfo-panel .lfo').first().isVisible() && (await control.locator('#lfo-panel .lfo').count()) === 4);
-  await control.locator('#lfo-panel .lfo').first().locator('.menu').first().click();
-  await control.locator('.menu-list .menu-item[data-value="square"]').click();
-  check('shape is chosen from a menu, though its button had to scroll into view first', await settle(() => state(() => window.thirdEye.store.state.lfos[0].shape === 'square'), 'shape'));
-  await control.locator('#lfo-panel .lfo').first().locator('.bar-value').fill('2.5');
+  await control.locator('.tabs button[data-tab=lfos]').click();
+  check('the LFOs have a tab of their own, the fourth', (await control.locator('.tabs button').allTextContents()).join('|') === 'Parameters|Faders · 0|Modulation · 3|LFOs' && (await control.locator('#lfo-panel .lfo').count()) === 4 && (await control.locator('#lfo-panel .lfo').first().isVisible()));
+  const lfo = control.locator('#lfo-panel .lfo').first();
+  check('shape is a row of six small pictures, the current one marked', (await lfo.locator('.choice button').count()) === 6 && (await lfo.locator('.choice button svg path').count()) === 6 && (await lfo.locator('.choice button[aria-checked=true]').getAttribute('title')) === 'Sine');
+  await lfo.locator('.choice button[data-value="square"]').click();
+  check('a click on a picture chooses that shape', await settle(() => state(() => window.thirdEye.store.state.lfos[0].shape === 'square'), 'shape') && (await lfo.locator('.choice button[aria-checked=true]').getAttribute('title')) === 'Square');
+  await lfo.locator('.bar-value').fill('2.5');
   await control.keyboard.press('Enter');
   check('rate is a bar with a number', await settle(() => state(() => window.thirdEye.store.state.lfos[0].rate === 2.5), 'rate'));
+  // A menu whose button is off the screen: clicking it scrolls it into view
+  // first, and the list must survive that.
+  await control.setViewportSize({ width: 1440, height: 420 });
+  await control.locator('#lfo-panel .lfo').nth(3).locator('.menu').click();
+  await control.locator('.menu-list .menu-item', { hasText: '1 bar' }).click();
+  check('tempo sync is chosen from a menu, though its button had to scroll into view first', await settle(() => state(() => window.thirdEye.store.state.lfos[3].sync === 4), 'sync'));
+  check('a synced LFO\'s rate is dimmed: it is not used', await control.locator('#lfo-panel .lfo').nth(3).locator('.bar-field').evaluate((n) => n.classList.contains('idle')) && !(await lfo.locator('.bar-field').evaluate((n) => n.classList.contains('idle'))));
+  await control.setViewportSize({ width: 1440, height: 900 });
+  check('each LFO has a meter that moves', await settle(() => lfo.locator('.mod-meter i').evaluate((i) => parseFloat(i.style.width) > 0), 'lfo meter'));
 
   console.log('it is saved');
   check('all of it went into the preset', await settle(() => state(() => {

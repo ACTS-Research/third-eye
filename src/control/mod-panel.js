@@ -1,5 +1,5 @@
 // Modulation. On the edit screen's Modulation tab: one box for each mapping
-// (a source moving a slider) and the LFO settings. On the setup screen: the
+// (a source moving a slider); on its LFOs tab, the four LFOs. On the setup screen: the
 // triggers (source -> action) and a meter for every source.
 
 import { ACTIONS, TOGGLE_ACTIONS, describeAction } from '../shared/actions.js';
@@ -8,7 +8,18 @@ import { EFFECT_BY_ID } from '../effects/index.js';
 import { LFO_SHAPES, LFO_SYNC, SOURCES, describeSource, sourceLabel } from '../shared/sources.js';
 import { INPUT_KINDS, makeActionBinding, makeMapping, sceneOf } from '../shared/state.js';
 import { el } from '../shared/util.js';
-import { bar, menu, toggle } from './controls.js';
+import { bar, choice, menu, toggle } from './controls.js';
+
+// One cycle of each LFO shape, drawn 32 by 16.
+const SHAPE_PICTURES = {
+  sine: '<path d="M1 8C5 -3 11 -3 16 8S27 19 31 8"/>',
+  triangle: '<path d="M1 8L8.5 2L23.5 14L31 8"/>',
+  saw: '<path d="M1 14L15 2V14L29 2V14"/>',
+  square: '<path d="M1 13V3H11V13H21V3H31"/>',
+  random: '<path d="M1 9H6V4H11V12H16V6H21V13H26V3H31"/>',
+  drift: '<path d="M1 10C5 3 8 14 12 9S18 2 21 7S27 14 31 5"/>',
+};
+const SHAPE_ICONS = Object.entries(LFO_SHAPES).map(([label, value]) => ({ value, label, icon: SHAPE_PICTURES[value] ?? '' }));
 
 // roots: { edit, setup } — mappings and LFOs belong to a preset (edit
 // screen); triggers and the full source list are global (setup screen).
@@ -229,17 +240,36 @@ export function mountModPanel(roots, ui) {
   }
 
   // ---------------------------------------------------------------- LFOs --
+  // Their own tab: for each LFO a live meter, its shape as a row of small
+  // pictures, tempo sync, and the rate (which only counts when it runs free).
   const lfoHost = el('div', { class: 'lfo-list' });
+  let lfoMeters = [];
 
   function buildLfos() {
+    lfoMeters = [];
     lfoHost.replaceChildren(
       ...store.state.lfos.map((lfo, i) => {
         const patch = (p) => store.patchItem('lfos', lfo.id, p);
-        const shape = menu({ label: `LFO ${i + 1} shape`, options: Object.entries(LFO_SHAPES).map(([label, value]) => ({ value, label })), value: lfo.shape, onChange: (v) => patch({ shape: v }) });
-        const sync = menu({ label: `LFO ${i + 1} tempo sync`, options: Object.entries(LFO_SYNC).map(([label, value]) => ({ value, label })), value: lfo.sync ?? 0, onChange: (v) => patch({ sync: v }) });
+        const fill = el('i');
+        lfoMeters.push({ id: `lfo.${i + 1}`, fill });
         const rate = bar({ label: `LFO ${i + 1} rate in Hz`, min: 0.01, max: 10, step: 0.01, value: lfo.rate, reset: 1, unit: ' Hz', onInput: (v) => patch({ rate: v }) });
+        const free = (sync) => {
+          rate.node.classList.toggle('idle', sync > 0);
+          rate.node.title = sync > 0 ? 'Locked to the tempo: the rate is not used' : '';
+        };
+        const shape = choice({ label: `LFO ${i + 1} shape`, options: SHAPE_ICONS, value: lfo.shape, onChange: (v) => patch({ shape: v }) });
+        const sync = menu({
+          label: `LFO ${i + 1} tempo sync`,
+          options: Object.entries(LFO_SYNC).map(([label, value]) => ({ value, label })),
+          value: lfo.sync ?? 0,
+          onChange: (v) => {
+            patch({ sync: v });
+            free(v);
+          },
+        });
+        free(lfo.sync ?? 0);
         return el('div', { class: 'lfo' }, [
-          el('span', { class: 'lfo-name', text: `LFO ${i + 1}` }),
+          el('div', { class: 'lfo-head' }, [el('span', { class: 'lfo-name', text: `LFO ${i + 1}` }), el('div', { class: 'mod-meter bipolar', title: 'What it is doing now' }, [fill])]),
           el('div', { class: 'mod-grid' }, [
             el('span', { class: 'caps', text: 'shape' }), shape.node,
             el('span', { class: 'caps', text: 'tempo sync' }), sync.node,
@@ -295,6 +325,11 @@ export function mountModPanel(roots, ui) {
       }
     }
     showBoxMeters(m.values);
+    for (const meter of lfoMeters) {
+      const v = Math.max(-1, Math.min(1, m.values[meter.id] ?? 0));
+      meter.fill.style.left = `${v < 0 ? 50 + v * 50 : 50}%`;
+      meter.fill.style.width = `${Math.abs(v) * 50}%`;
+    }
     // (The source lists are asked for afresh each time a menu opens.)
     if (grew) buildActions();
   });
@@ -320,8 +355,8 @@ export function mountModPanel(roots, ui) {
       mapNote,
       el('button', { class: 'primary add-mod', text: '+ Add modulation', onclick: () => addMapping() }),
     ]),
-    el('div', { class: 'panel', id: 'lfo-panel' }, [el('h2', { text: 'LFOs' }), lfoHost]),
   );
+  roots.lfos.append(lfoHost);
   roots.setup.append(
     el('div', { class: 'panel', id: 'actions-panel' }, [
       el('h2', { text: 'Triggers and MIDI controls' }),

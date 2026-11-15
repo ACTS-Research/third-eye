@@ -128,7 +128,7 @@ mountIoPanel(setupB, ui);
 mountVisionPanel(setupB, ui);
 
 mountEdit(views.edit, ui);
-mountModPanel({ edit: ui.editCols.mods, setup: setupC }, ui);
+mountModPanel({ edit: ui.editCols.mods, lfos: ui.editCols.lfos, setup: setupC }, ui);
 mountChain(ui.editCols, ui);
 mountLibraryPanel(setupC, ui);
 mountRecordPanel(setupC, ui);
@@ -247,7 +247,7 @@ document.addEventListener('click', (e) => {
 
 // Click a panel title to fold it; the choice is remembered.
 const FOLD_KEY = 'thirdeye.folded';
-const folded = new Set(readJSON(FOLD_KEY, ['lfo-panel', 'shortcuts', 'sources-panel']));
+const folded = new Set(readJSON(FOLD_KEY, ['shortcuts', 'sources-panel']));
 for (const id of folded) document.getElementById(id)?.classList.add('collapsed');
 document.addEventListener('click', (e) => {
   const title = e.target.closest?.('.panel > h2');
