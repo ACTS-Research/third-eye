@@ -19,6 +19,11 @@ preset strip and check the phone's six buttons show them.
 
 **Decisions only you can make.**
 
+- Pick a direction for the edit screen. Three mock-ups (A rows, B inspector,
+  C picture first) are at https://claude.ai/artifact/UEbbvKGUHsQo7CxCWFUVDT.
+  All three put a Fader button and a Mod button on every slider, in place of
+  the eight fader menus and the "touch a parameter, then add a mapping" rule.
+  Nothing in the app has changed yet.
 - Try the running order and say what is missing. Left out of this first
   version on purpose: several named shows (there is one running order),
   and steps timed against an audio track. (Since 14 November the phone's
