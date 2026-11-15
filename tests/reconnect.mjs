@@ -22,6 +22,10 @@ try {
   const macPhone = () => control.evaluate(() => window.thirdEye.ui.status?.phone);
   await waitFor(async () => (await macPhone())?.signal === 'open', { label: 'registered', timeout: 20000 });
   const room = await control.locator('#room-code').textContent();
+  // The pairing pop-over, opened to pair a phone.
+  await control.locator('#phone-pill').click();
+  const popOpen = () => control.locator('#pairing-pop').isVisible();
+  check('the pairing pop-over is open, waiting for a phone', await popOpen());
   const phone = await context.newPage();
   watch(phone, 'phone', errors);
   await phone.setViewportSize({ width: 844, height: 390 });
@@ -33,6 +37,11 @@ try {
   // Holds the Mac's ordinary pairing code up to the phone's camera.
   const showPairingCode = async () => phone.evaluate((p) => window.__show(p), await control.evaluate(() => document.getElementById('qr').toDataURL()));
   check('paired the ordinary way', await live(30000), await stateText());
+  check('once the phone has paired the pop-over closes by itself', await settle(async () => !(await popOpen()), 'pop closed', 12000));
+  await control.locator('#phone-pill').dispatchEvent('click');
+  await new Promise((r) => setTimeout(r, 3500));
+  check('opened again with the phone already paired, it stays', await popOpen());
+  await control.locator('#phone-pill').dispatchEvent('click');
 
   console.log('a Mac that stops answering');
   await phone.evaluate(() => {

@@ -173,7 +173,9 @@ other shows a small copy of it.
    `Phone: streaming`.
 
 If it does not get that far, click the phone status in the top bar of
-`/control`. The pop-over shows the QR code and room code again, and lists the
+`/control`. (Opened to pair a phone, the pop-over closes by itself a moment
+after the phone has paired; opened with a phone already paired, it stays.)
+The pop-over shows the QR code and room code again, and lists the
 connection as five steps (picture running, pairing server reached, phone
 found, video link, picture arriving) with the one it is stuck at marked. It also has
 **Restart output** and **New room code**.
@@ -496,8 +498,13 @@ any other, and the beat pulse works as a trigger. The tempo is global, not
 per preset.
 
 **Faders.** The perform screen shows up to eight faders for the live preset.
-By default they are the first parameters of its chain; on the Edit screen,
-**Perform faders** pins the ones you want, in order. Dragging a fader changes
+By default they are picked automatically: the eight places are shared out
+between the effects in the chain (two effects get four each, three get three
+each), and each effect gives its first sliders, in the order they appear on
+the Edit screen; menus and switches are skipped. On the Edit screen,
+**Perform faders** pins the ones you want instead, in order. Under the faders,
+each modulation source the preset uses has a meter, with what it is moving
+written under it (`→ 1 Video Feedback · rotate`). Dragging a fader changes
 the parameter for now without altering the saved preset; double-click resets
 it. When modulation moves a fader's parameter, a hatched band runs from the
 fader's setting to where the parameter is right now: stripes above the fill

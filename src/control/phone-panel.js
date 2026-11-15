@@ -42,11 +42,20 @@ export function mountPhonePanel(root, ui) {
   ]);
   document.body.append(pop);
   let anchor = null;
+  // Opened to pair a phone (none was paired at the time): once one pairs
+  // the pop-over has done its job and closes by itself. Opened with a phone
+  // already paired, to look at the connection, it stays.
+  let forPairing = false;
+  let closeTimer = 0;
   const hidePop = () => {
     pop.hidden = true;
+    forPairing = false;
+    clearTimeout(closeTimer);
+    closeTimer = 0;
   };
   ui.togglePairing = (from) => {
     if (!pop.hidden && anchor === from) return hidePop();
+    forPairing = ui.status?.phone.phone !== 'connected';
     anchor = from;
     const r = from.getBoundingClientRect();
     pop.style.top = `${r.bottom + 10}px`;
@@ -140,6 +149,12 @@ export function mountPhonePanel(root, ui) {
 
     const paired = p?.phone === 'connected';
     const video = paired && p.media === 'connected';
+    // Long enough to read "Phone paired and streaming."
+    if (forPairing && !pop.hidden && paired && !closeTimer) closeTimer = setTimeout(hidePop, video || p.info?.controllerOnly ? 1500 : 4000);
+    if (!paired && closeTimer) {
+      clearTimeout(closeTimer);
+      closeTimer = 0;
+    }
     const steps = [
       [`Picture running${p ? (status.host?.role === 'output' ? ': in the output window' : ': on this page') : ''}`, !!p, 'Starting. If this stays, reload this page.'],
       [p?.direct && paired ? 'Paired without the pairing server' : 'Mac reached the pairing server', p?.signal === 'open' || paired, p?.signal === 'error' ? 'Room code taken elsewhere.' : 'No answer yet. The network may block it: use Pair without internet.'],

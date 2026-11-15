@@ -147,6 +147,10 @@ try {
   await control.locator('.tile .load').nth(0).click();
   await settle(() => state(() => window.thirdEye.store.state.presetIndex === 0 && !window.thirdEye.engine.pipeline.fade), 'on preset 1', 6000);
   await control.locator('.tile .load').nth(1).click();
+  check('each modulation meter says what it is moving', await settle(async () => {
+    const to = await control.locator('.mini .meter[title="phone.roll"] .to').textContent().catch(() => '');
+    return /^→ 1 .+ · rotate/i.test(to);
+  }, 'meter targets'), await control.locator('.mini').textContent());
   const fadeMs = await waitFor(() => state(() => window.thirdEye.engine.pipeline.fade?.duration), { label: 'fade started' }).catch(() => null);
   check('a preset crossfades in over its own fade time', fadeMs === 600, `${fadeMs} ms`);
   await settle(() => state(() => !window.thirdEye.engine.pipeline.fade), 'fade done');

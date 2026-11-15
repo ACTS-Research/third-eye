@@ -2,6 +2,7 @@
 // current preset, and the strip of presets and the running order (strip.js).
 // Everything here is MIDI-mappable.
 
+import { EFFECT_BY_ID } from '../effects/index.js';
 import { runAction } from '../shared/actions.js';
 import { macroUnit, macroValue, resolveMacros } from '../shared/macros.js';
 import { describeSource } from '../shared/sources.js';
@@ -161,11 +162,28 @@ export function mountPerform(root, ui) {
   function buildMini() {
     mini.replaceChildren();
     miniBars = new Map();
-    const used = [...new Set(store.state.mappings.filter((m) => m.enabled).map((m) => m.source))].slice(0, 6);
+    const live = store.state.mappings.filter((m) => m.enabled);
+    const used = [...new Set(live.map((m) => m.source))].slice(0, 6);
+    // What a mapping drives, as "2 Trails · persistence".
+    const target = (m) => {
+      const i = store.state.chain.findIndex((it) => it.uid === m.fx);
+      if (i < 0) return '';
+      const def = EFFECT_BY_ID[store.state.chain[i].type];
+      return `${i + 1} ${def.name} · ${m.key === 'mix' ? 'wet / dry' : def.params[m.key]?.label ?? m.key}`;
+    };
     for (const id of used) {
       const s = describeSource(id);
       const fill = el('i');
-      mini.append(el('div', { class: 'meter', title: id }, [el('span', { text: s.label.startsWith(s.group) ? s.label : `${s.group} ${s.label}` }), el('div', { class: `bar${s.bipolar ? ' bipolar' : ''}` }, [fill])]));
+      // Under each source, everything it is moving in this preset.
+      const targets = live.filter((m) => m.source === id).map(target).filter(Boolean);
+      const to = targets.length ? `→ ${targets.join(', ')}` : '→ an effect that is no longer in the chain';
+      mini.append(
+        el('div', { class: 'meter', title: id }, [
+          el('span', { text: s.label.startsWith(s.group) ? s.label : `${s.group} ${s.label}` }),
+          el('div', { class: `bar${s.bipolar ? ' bipolar' : ''}` }, [fill]),
+          el('div', { class: 'to', text: to, title: to }),
+        ]),
+      );
       miniBars.set(id, { fill, bipolar: s.bipolar });
     }
     if (!used.length) mini.append(el('div', { class: 'dim small', text: 'No modulation in this preset.' }));

@@ -188,7 +188,9 @@ main { flex: 1; min-height: 0; }
 /* Meters -------------------------------------------------------------- */
 .meters { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; }
 .meter { display: grid; grid-template-columns: minmax(0, 1fr) 76px; align-items: center; gap: 8px; font-size: 11px; }
-.mini .meter { grid-template-columns: minmax(0, 1fr) 84px; }
+.mini .meter { grid-template-columns: minmax(0, 1fr) 84px; row-gap: 1px; }
+/* What the source is moving, on a line of its own under it. */
+.mini .meter .to { grid-column: 1 / -1; color: var(--soft); font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .meter span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.04em; }
 .meter .bar { position: relative; height: 8px; border: 1px solid var(--line); overflow: hidden; }
 .meter .bar i { position: absolute; top: 0; bottom: 0; background: var(--ink); }
