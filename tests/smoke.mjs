@@ -170,10 +170,10 @@ try {
   await control.evaluate(() => window.thirdEye.ui.setView('perform'));
   await control.bringToFront();
   const chooseFile = async () => {
-    await control.locator('#input-a').click();
-    await control.locator('.menu-list .menu-item[data-value="file"]').click();
+    await control.locator('#input-a').hover();
+    await control.locator('#inview-a .inview-icon[data-kind="file"]').click();
   };
-  const lineA = () => control.locator('#input-a .menu-text').textContent();
+  const lineA = () => control.locator('#input-a').getAttribute('data-caption');
   const [chooser] = await Promise.all([control.waitForEvent('filechooser'), chooseFile()]);
   check('choosing Video file for input A opens the file picker when no file is loaded', !!chooser && (await control.evaluate(() => window.thirdEye.store.state.input.kind)) === 'file');
   check('the line under the small view offers to choose a file', await waitFor(async () => (await lineA()) === 'A · Video file · choose…', { label: 'choose line', timeout: 8000 }).then(() => true, () => false), await lineA());

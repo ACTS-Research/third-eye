@@ -438,19 +438,47 @@ export class Pipeline {
 
     if (ctx.wantThumbs && !this.thumbs.busy) {
       this.thumbs.target.clear();
-      const copy = this.copyProgram.use();
-      if (this.inputs.kind === 'pattern' || this.inputs.hasFrame) {
-        gl.viewport(0, 0, THUMB_W, THUMB_H);
-        copy.tex('uTex', 0, this.src.tex);
-        drawFullscreen(gl);
-      }
-      if (ctx.texB) {
-        gl.viewport(THUMB_W, 0, THUMB_W, THUMB_H);
-        copy.tex('uTex', 0, ctx.texB);
-        drawFullscreen(gl);
-      }
+      this.drawThumb(ctx, 0, ctx.peek?.a || this.inputs.kind);
+      this.drawThumb(ctx, THUMB_W, ctx.peek?.b || this.inputs.b.kind);
       this.thumbs.start();
     }
+  }
+
+  // One half of the strip of small views: the source `kind` as input A or B
+  // is showing it, or, for a source neither is showing (the perform
+  // screen's rollover), looked at through the spare slot. Left black when
+  // that source has no picture.
+  drawThumb(ctx, x, kind) {
+    const gl = this.gl;
+    const { inputs } = this;
+    if (!kind) return;
+    gl.viewport(x, 0, THUMB_W, THUMB_H);
+    let tex = null;
+    if (kind === inputs.kind) tex = inputs.kind === 'pattern' || inputs.hasFrame ? this.src.tex : null;
+    else if (kind === inputs.b.kind) tex = ctx.texB;
+    else if (kind === 'pattern') {
+      this.patternProgram.use().f('uTime', ctx.time).v2('uResolution', this.width, this.height);
+      drawFullscreen(gl);
+      return;
+    } else {
+      const peek = inputs.peek;
+      if (peek.kind !== kind) {
+        peek.setKind(kind);
+        peek.hasFrame = false;
+      }
+      peek.turn = inputs.turn;
+      // Whatever frame the feed has now: the "new frame" flag is not this
+      // slot's to wait for.
+      peek.force = true;
+      if (!peek.feed?.ready || !peek.update()) return;
+      const [sx, sy] = this.fitScale(ctx.input.fit, peek);
+      this.sourceProgram.use().tex('uTex', 0, peek.tex).v2('uFit', sx, sy).f('uMirror', ctx.input.mirror ? 1 : 0).f('uTurn', peek.quarter);
+      drawFullscreen(gl);
+      return;
+    }
+    if (!tex) return;
+    this.copyProgram.use().tex('uTex', 0, tex);
+    drawFullscreen(gl);
   }
 
   // Non-blocking readback of the preview started in render(). Returns

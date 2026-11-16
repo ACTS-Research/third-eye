@@ -118,9 +118,7 @@ document.addEventListener('scroll', (e) => {
 // Returns { node, set(value), get value }.
 // An option may carry `item` (its text in the list, when that differs from
 // the button's) and `midi` (an action, so MIDI map mode can pick it).
-// `down` keeps the list under the button even when it has to scroll there,
-// unless there is next to no room; `listCls` styles the list.
-export function menu({ options, value, onChange, onOpen, label = '', id, text = '', action = false, cls = '', down = false, listCls = '' }) {
+export function menu({ options, value, onChange, onOpen, label = '', id, text = '', action = false, cls = '' }) {
   const caption = el('span', { class: 'menu-text' });
   const button = el('button', { type: 'button', class: `menu${cls ? ` ${cls}` : ''}`, 'aria-haspopup': 'listbox', 'aria-expanded': 'false', 'aria-label': label || null }, [caption, el('span', { class: 'menu-mark', 'aria-hidden': 'true', text: action ? '' : '▾' })]);
   if (id) button.id = id;
@@ -155,7 +153,7 @@ export function menu({ options, value, onChange, onOpen, label = '', id, text = 
   function open() {
     closeOpenMenu();
     const items = all();
-    list = el('div', { class: `menu-list${listCls ? ` ${listCls}` : ''}`, role: 'listbox', 'aria-label': label || null });
+    list = el('div', { class: 'menu-list', role: 'listbox', 'aria-label': label || null });
     let group = '';
     for (const o of items) {
       if (o.group && o.group !== group) {
@@ -179,7 +177,7 @@ export function menu({ options, value, onChange, onOpen, label = '', id, text = 
       const above = r.top - 8;
       list.style.maxHeight = '';
       const wanted = Math.min(list.scrollHeight + 2, 360);
-      const up = below < Math.min(wanted, down ? 90 : 160) && above > below;
+      const up = below < Math.min(wanted, 160) && above > below;
       list.style.maxHeight = `${Math.max(80, Math.min(wanted, up ? above : below))}px`;
       list.style.minWidth = `${r.width}px`;
       list.style.left = `${clamp(r.left, 8, Math.max(8, window.innerWidth - list.offsetWidth - 8))}px`;

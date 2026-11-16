@@ -7,7 +7,7 @@ import { EFFECTS, EFFECT_BY_ID } from '../effects/index.js';
 import { describeSource } from '../shared/sources.js';
 import { INPUT_LABELS, makeEffect, sceneOf } from '../shared/state.js';
 import { el } from '../shared/util.js';
-import { bar, menu, toggle } from './controls.js';
+import { bar, choice, menu, toggle } from './controls.js';
 
 const TARGETS = [
   { value: 'all', label: 'Everything' },
@@ -200,7 +200,22 @@ export function mountChain(roots, ui) {
     pane.append(slider('mix', def.mixLabel ?? 'wet / dry', { min: 0, max: 1, step: 0.01, default: 1 }, item.mix, (v) => store.patchItem('chain', item.uid, { mix: v })));
     for (const [key, spec] of Object.entries(def.params)) {
       const label = spec.label ?? key;
-      if (spec.options) {
+      if (spec.grid) {
+        // Every choice in view, one click each (the Mix B modes).
+        const grid = choice({
+          cls: 'mode-grid',
+          label,
+          options: Object.entries(spec.options).map(([text, value]) => ({ value, label: text, text })),
+          value: item.params[key],
+          onChange: (v) => {
+            touched(key, label);
+            store.setParam(item.uid, key, v);
+          },
+        });
+        grid.node.id = `p-${item.uid}-${key}`;
+        controls.set(key, grid);
+        pane.append(rowFor(key, label, grid.node));
+      } else if (spec.options) {
         const choice = menu({
           id: `p-${item.uid}-${key}`,
           label,

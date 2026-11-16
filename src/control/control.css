@@ -130,20 +130,45 @@ main { flex: 1; min-height: 0; }
 /* The picture, and under it the inputs and the mix. */
 .center { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
 .center .monitor { flex: 1; }
-.mixrow { display: grid; grid-template-columns: 230px minmax(0, 1fr) 230px; gap: 8px; align-items: start; padding: 8px; border-top: 1px solid var(--line); flex-shrink: 0; }
-.inview { display: flex; flex-direction: column; min-width: 0; }
-.inview-pic { width: 100%; height: 54px; object-fit: cover; display: block; background: #000; border: 1px solid var(--ink); border-bottom: 0; cursor: pointer; }
+/* One row, 54 px: view A, the bar, view B, the mode. What pops up from it
+   opens upward, over the picture. */
+.mixrow { position: relative; z-index: 5; display: grid; grid-template-columns: 96px minmax(0, 1fr) 96px 112px; gap: 8px; height: 54px; padding: 8px; border-top: 1px solid var(--line); flex-shrink: 0; box-sizing: content-box; }
+.inview { position: relative; min-width: 0; }
+.inview-view { position: relative; display: block; width: 100%; height: 100%; padding: 0; border: 1px solid var(--ink); background: #000; overflow: hidden; }
+.inview-pic { width: 100%; height: 100%; object-fit: contain; display: block; }
+.inview-tag { position: absolute; top: 0; left: 0; padding: 0 4px; background: var(--bg); font-weight: 700; line-height: 1.4; }
+.inview.b .inview-tag { left: auto; right: 0; }
+.inview-note { position: absolute; left: 2px; right: 2px; bottom: 2px; text-align: center; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inview-note:empty { display: none; }
+.inview.off .inview-pic, .inview.peek .inview-pic { opacity: 0.9; }
 .inview.off .inview-pic { opacity: 0.35; }
-/* Which input, and what it is doing. One line, always the same height. */
-.inview-menu { width: 100%; padding: 4px 6px; }
-.inview-menu.warn { border-style: dashed; }
-.inview-menu.bad { background: var(--ink); color: var(--on-ink); font-weight: 700; animation: blink 0.8s steps(2) infinite; }
-.mixbar { position: relative; height: 54px; border: 1px solid var(--ink); cursor: ew-resize; touch-action: none; overflow: hidden; }
+.inview.blank .inview-pic { visibility: hidden; }
+.inview.peek .inview-view, .inview-view.warn { border-style: dashed; }
+.inview-view.bad { animation: blink 0.8s steps(2) infinite; }
+/* The four sources, out over the end of the bar while the pointer or the
+   keyboard is on the view or on them. The padding bridges the gap. */
+.inview-icons { display: none; position: absolute; top: 0; left: 100%; padding-left: 8px; z-index: 2; grid-template-columns: 27px 27px; grid-auto-rows: 27px; }
+.inview.b .inview-icons { left: auto; right: 100%; padding-left: 0; padding-right: 8px; }
+.inview:hover .inview-icons, .inview:focus-within .inview-icons, .inview.open .inview-icons, body.midi-map .inview-icons { display: grid; }
+.inview-icon { position: relative; display: grid; place-items: center; padding: 0; background: var(--bg); border: 1px solid var(--line); }
+.inview-icon svg { width: 16px; height: 16px; display: block; }
+.inview-icon:hover, .inview-icon:focus-visible { border-color: var(--ink); border-style: dashed; }
+.inview-icon[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); border-style: solid; color: var(--on-ink); }
+.strip-tip { position: absolute; bottom: calc(100% + 4px); left: 8px; z-index: 4; max-width: calc(100% - 16px); padding: 3px 8px; background: var(--ink); color: var(--on-ink); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+.strip-tip.right { left: auto; right: 8px; }
+.mixbar { position: relative; border: 1px solid var(--ink); cursor: ew-resize; touch-action: none; overflow: hidden; }
 .mixbar .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ink); }
-.mixbar-text { position: absolute; right: 8px; top: 0; bottom: 0; display: flex; align-items: center; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; pointer-events: none; mix-blend-mode: difference; }
-.mixbar.none { border-color: var(--line); cursor: default; }
+.mixbar-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; pointer-events: none; mix-blend-mode: difference; }
+.mixbar.none { border-color: var(--line); }
 .mixbar.none .mixbar-text { color: var(--soft); mix-blend-mode: normal; }
 .mixbar:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.mixmode { display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 0 8px; border-color: var(--ink); min-width: 0; }
+.mixmode-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mixmode[aria-expanded='true'] { background: var(--ink); color: var(--on-ink); }
+.mixmode:disabled { border-color: var(--line); color: var(--soft); cursor: default; }
+.mixmode-grid { position: absolute; bottom: calc(100% + 4px); right: 8px; z-index: 3; width: 270px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 6px; background: var(--bg); border: 1px solid var(--ink); }
+.mixmode-grid button { position: relative; padding: 5px 0; font-size: 11px; text-transform: none; letter-spacing: 0; white-space: nowrap; }
+.mixmode-grid button[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--on-ink); font-weight: 700; }
 
 .monitor { position: relative; background: #000; min-height: 0; min-width: 0; display: grid; place-items: center; overflow: hidden; }
 .monitor canvas { width: 100%; height: 100%; object-fit: contain; display: block; }
@@ -273,7 +298,6 @@ input.bar-value:hover, input.bar-value:focus { border-color: var(--line); }
 .menu-item::before { content: '✓'; display: inline-block; width: 1.5em; visibility: hidden; }
 .menu-item.on::before { visibility: visible; }
 .menu-item:hover, .menu-item:focus { background: var(--ink); color: var(--on-ink); }
-.menu-list.compact .menu-item { padding-top: 4px; padding-bottom: 4px; }
 .menu-group { padding: 7px 10px 2px; color: var(--soft); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
 .switch { padding: 4px 10px; min-width: 52px; }
 
@@ -346,6 +370,8 @@ input.bar-value:hover, input.bar-value:focus { border-color: var(--line); }
 .choice button svg { width: 100%; max-width: 32px; height: 16px; display: block; }
 .choice button[aria-checked='true'] { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
 /* Tempo sync: the word Free, then seven note values. */
+.choice.mode-grid { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 300px; }
+.choice.mode-grid button { font-size: 11px; text-transform: none; letter-spacing: 0; white-space: nowrap; }
 .choice.sync { grid-auto-flow: row; grid-template-columns: minmax(0, 1.5fr) repeat(7, minmax(0, 1fr)); max-width: 330px; }
 .choice.sync button { height: 30px; font-size: 10px; letter-spacing: 0.02em; }
 .choice.sync button svg { max-width: 22px; height: 22px; }
@@ -368,7 +394,6 @@ body.midi-map [data-midi][data-midi-label]::after {
   .panic, .side { border: 0; border-bottom: 1px solid var(--line); }
   .monitor { aspect-ratio: 16 / 9; }
   .center .monitor { flex: none; }
-  .mixrow { grid-template-columns: 120px minmax(0, 1fr) 120px; }
   .edit-body { grid-template-columns: 1fr; }
   .col { overflow: visible; }
 }

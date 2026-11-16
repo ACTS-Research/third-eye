@@ -11,9 +11,18 @@
 ,
     "InputsMenu.dc.html": { "x": 1740, "y": 1140, "w": 920, "h": 600, "title": "C1 · The small views choose the inputs (a list opens)" },
     "InputsRow.dc.html": { "x": 2740, "y": 1140, "w": 920, "h": 600, "title": "C2 · The small views with their four buttons underneath" }
+,
+    "StripGrid.dc.html": { "x": 0, "y": 2280, "w": 1000, "h": 400, "title": "S1 · Four icons in a square beside each view" },
+    "StripSlim.dc.html": { "x": 1080, "y": 2280, "w": 1000, "h": 400, "title": "S2 · Slimmest: the icons in a line" },
+    "StripHover.dc.html": { "x": 2160, "y": 2280, "w": 1000, "h": 400, "title": "S3 · Icons appear only when the pointer is on a view" },
+    "Modes.dc.html": { "x": 3240, "y": 2280, "w": 760, "h": 400, "title": "Mix B modes: the menu today, and a grid of buttons" }
+,
+    "StripModes.dc.html": { "x": 0, "y": 3180, "w": 1000, "h": 900, "title": "S3 with the mode button outside the views: right of B, or left of A" }
   },
-  "order": ["Main.dc.html", "Crossfader.dc.html", "Both.dc.html", "InputsMenu.dc.html", "InputsRow.dc.html"],
+  "order": ["Main.dc.html", "Crossfader.dc.html", "Both.dc.html", "InputsMenu.dc.html", "InputsRow.dc.html", "StripGrid.dc.html", "StripSlim.dc.html", "StripHover.dc.html", "Modes.dc.html", "StripModes.dc.html"],
   "notes": {
+    "heading4": { "x": 0, "y": 2880, "text": "Third round: modes on the main screen", "kind": "title1", "maxW": 1000 },
+    "heading3": { "x": 0, "y": 1980, "text": "The strip under the picture, second round", "kind": "title1", "maxW": 4000 },
     "heading2": { "x": 1740, "y": 840, "text": "C: where the inputs go", "kind": "title1", "maxW": 1920 },
     "heading": { "x": 0, "y": -300, "text": "Input B and mixing: three directions", "kind": "title1", "maxW": 3760 }
   },

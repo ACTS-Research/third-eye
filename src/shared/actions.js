@@ -2,7 +2,14 @@
 // whichever window initiated them and reach the other one through the store.
 
 import { applyPreset, applyStep, stepShow } from './presets.js';
+import { EFFECT_BY_ID } from '../effects/index.js';
 import { INPUT_KINDS, INPUT_LABELS } from './state.js';
+
+// The modes of the Mix B effect, as [name, value] pairs in their order.
+export const MIX_MODES = Object.entries(EFFECT_BY_ID.mixb.params.mode.options);
+// The Mix B effect the perform screen's bar and mode buttons work on: the
+// first in the chain that is not bypassed, else the first.
+export const mixItem = (state) => state.chain.find((it) => it.type === 'mixb' && !it.bypass) ?? state.chain.find((it) => it.type === 'mixb') ?? null;
 
 export const ACTIONS = {
   blackout: 'Blackout',
@@ -30,6 +37,7 @@ export function describeAction(action) {
   if (kind === 'step') return `Step ${Number(arg) + 1}`;
   if (kind === 'input') return `Input: ${INPUT_LABELS[arg] ?? arg}`;
   if (kind === 'inputB') return arg === 'off' ? 'Input B off' : `Input B: ${INPUT_LABELS[arg] ?? arg}`;
+  if (kind === 'mixMode') return `Mix mode: ${MIX_MODES.find(([, v]) => v === Number(arg))?.[0] ?? arg}`;
   if (kind === 'macro') return `Fader ${Number(arg) + 1}`;
   if (kind === 'param') return 'Parameter';
   return action;
@@ -62,6 +70,11 @@ export function runAction(store, name, arg) {
       else if (arg !== kind) store.merge('input', { kindB: arg });
       // B was off: A keeps its source, there is nothing to trade.
       else if (kindB) store.merge('input', { kind: kindB, kindB: arg });
+      break;
+    }
+    case 'mixMode': {
+      const item = mixItem(store.state);
+      if (item && MIX_MODES.some(([, v]) => v === Number(arg))) store.setParam(item.uid, 'mode', Number(arg));
       break;
     }
     case 'inputNext': {

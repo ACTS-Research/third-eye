@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mix B modes, menu or grid</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button{font:inherit;cursor:pointer}
+.cap{text-transform:uppercase;letter-spacing:0.08em}
+.b{background:none;color:#ff6b5e;border:1px solid #5b2622;padding:8px 0;text-align:center}
+.b.on{background:#ff6b5e;color:#140302;border-color:#ff6b5e;font-weight:700}
+.opt{padding:5px 10px;white-space:nowrap}
+.opt.on{background:#ff6b5e;color:#140302;font-weight:700}
+</style>
+</helmet>
+<div style="width: 760px; height: 400px; box-sizing: border-box; padding: 20px; display: flex; gap: 24px; background: #060303; color: #ff6b5e; font: 500 12px/1.4 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+
+  <section style="width: 250px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px">
+    <div class="cap" style="color: #ffb3ab">Today: a menu</div>
+    <div style="display: flex; gap: 10px; align-items: center">
+      <span class="cap" style="width: 50px">Mode</span>
+      <button aria-haspopup="listbox" aria-expanded="true" style="flex-grow: 1; display: flex; justify-content: space-between; background: none; color: #ff6b5e; border: 1px solid #ff6b5e; padding: 6px 8px; text-align: left"><span>Screen</span><span aria-hidden="true">▾</span></button>
+    </div>
+    <div style="margin-left: 60px; border: 1px solid #ff6b5e; display: flex; flex-direction: column">
+      <div class="opt">Fade</div>
+      <div class="opt">Add</div>
+      <div class="opt on">Screen</div>
+      <div class="opt">Multiply</div>
+      <div class="opt">Difference</div>
+      <div class="opt">Bright key</div>
+      <div class="opt">Colour key</div>
+      <div class="opt">Wipe</div>
+      <div class="opt">B pushes A</div>
+    </div>
+    <div style="color: #ffb3ab; margin-top: auto">One line tall when shut. Two clicks to change, and you only see the other modes after opening it.</div>
+  </section>
+
+  <section style="flex-grow: 1; display: flex; flex-direction: column; gap: 10px">
+    <div class="cap" style="color: #ffb3ab">A grid of buttons</div>
+    <div class="cap">Mode</div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+      <button class="b">Fade</button>
+      <button class="b">Add</button>
+      <button class="b on" aria-pressed="true">Screen</button>
+      <button class="b">Multiply</button>
+      <button class="b">Difference</button>
+      <button class="b">Bright key</button>
+      <button class="b">Colour key</button>
+      <button class="b">Wipe</button>
+      <button class="b">B pushes A</button>
+    </div>
+    <div style="color: #ffb3ab; margin-top: auto">All nine in view, the one in use lit, one click to change, so you can audition modes quickly while watching the picture. It takes three rows of the Mix B panel. Each button could also be MIDI-mapped, which the menu's choices cannot.</div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":760,"height":400}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

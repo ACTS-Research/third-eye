@@ -74,6 +74,9 @@ export class Engine {
     this.lastStatusAt = performance.now();
     this.lastPreviewAt = 0;
     this.lastThumbsAt = 0;
+    // Sources the perform screen is pointing at: shown in the small views
+    // without being chosen. { a: kind | '', b: kind | '' }
+    this.peek = { a: '', b: '' };
     this.worstFrameMs = 0;
     this.lastFrameAt = 0;
 
@@ -164,6 +167,11 @@ export class Engine {
     bus.on('control-alive', (_m, local) => {
       this.controlSeenAt = performance.now();
       if (!local) this.remoteControlSeenAt = this.controlSeenAt;
+    });
+    bus.on('peek', (m) => {
+      this.peek = { a: m.a || '', b: m.b || '' };
+      // Show it at once, not at the next turn of the small views.
+      this.lastThumbsAt = 0;
     });
     bus.on('midi', (m) => {
       if (m.cmd === 'learn' && this.running) this.midi.learning = !!m.on;
@@ -493,6 +501,7 @@ export class Engine {
       if (wantPreview) this.lastPreviewAt = now;
       // The small views go to whichever control page is looking, this one
       // included.
+      if (!watched) this.peek = { a: '', b: '' };
       const wantThumbs = watched && now - this.lastThumbsAt >= THUMBS_INTERVAL_MS;
       if (wantThumbs) this.lastThumbsAt = now;
       try {
@@ -518,6 +527,7 @@ export class Engine {
           canvasHeight: this.canvas.height,
           wantPreview,
           wantThumbs,
+          peek: this.peek,
         });
       } catch (err) {
         // Never let one bad frame stop the show.
@@ -611,6 +621,8 @@ export class Engine {
       input: { ...this.inputStatus(now), fps: this.inputFps },
       // Input B, or null while it is off.
       inputB: this.inputs.b.kind ? this.inputStatus(now, this.inputs.b) : null,
+      // Which sources have a picture to show right now.
+      sources: { pattern: true, phone: this.inputs.feeds.phone.ready, camera: this.inputs.feeds.camera.ready, file: this.inputs.feeds.file.ready },
     };
   }
 }

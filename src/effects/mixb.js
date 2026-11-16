@@ -8,6 +8,8 @@ export default {
   uses: { inputB: true },
   params: {
     mode: {
+      // Shown as a grid of buttons, not a menu.
+      grid: true,
       options: { Fade: 0, Add: 1, Screen: 2, Multiply: 3, Difference: 4, 'Bright key': 5, 'Colour key': 6, Wipe: 7, 'B pushes A': 8 },
       default: 0,
     },

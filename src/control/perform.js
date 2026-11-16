@@ -4,12 +4,11 @@
 
 import { EFFECT_BY_ID } from '../effects/index.js';
 import { THUMB_H, THUMB_W } from '../engine/pipeline.js';
-import { runAction } from '../shared/actions.js';
+import { MIX_MODES, mixItem, runAction } from '../shared/actions.js';
 import { macroUnit, macroValue, resolveMacros } from '../shared/macros.js';
 import { describeSource } from '../shared/sources.js';
-import { INPUT_KINDS, INPUT_LABELS } from '../shared/state.js';
+import { INPUT_KINDS, INPUT_LABELS, makeEffect, sceneOf } from '../shared/state.js';
 import { el } from '../shared/util.js';
-import { menu } from './controls.js';
 import { attachPreview } from './preview.js';
 import { mountStrip } from './strip.js';
 
@@ -71,60 +70,112 @@ export function mountPerform(root, ui) {
   }
 
   // ------------------------------------------------- inputs and the mix ---
-  // Under the picture: a small live view of input A and one of input B, each
-  // over the list that chooses its source, and between them the bar that
-  // mixes B in. The bar belongs to the preset's Mix B effect (its mix); a
-  // preset without one shows A alone, and the bar keeps its place, dimmed.
+  // Under the picture: a small live view of input A, the bar that mixes B
+  // in, a small live view of input B, and the mode of the mix. Pointing at a
+  // view slides its four source icons out over the end of the bar; pointing
+  // at an icon shows that source in the view without choosing it. The bar
+  // and the mode belong to the preset's Mix B effect; in a preset without
+  // one the first drag of the bar adds it. Everything that pops up from
+  // this strip opens upward (the owner's choice: over the picture, for that
+  // moment only).
+  const ICONS = {
+    phone: '<rect x="5" y="2" width="6" height="12" rx="1.5"/>',
+    camera: '<rect x="2" y="5" width="9" height="7"/><path d="M11 8l3-2v5l-3-2z"/>',
+    pattern: '<rect x="2" y="3" width="12" height="10"/><path d="M6 3v10M10 3v10"/>',
+    file: '<rect x="2" y="3" width="12" height="10"/><path d="M7 6l3 2-3 2z"/>',
+  };
+  const kindOf = (slot) => (slot === 'a' ? store.state.input.kind : store.state.input.kindB);
   const stateOf = (slot) => {
-    const kind = slot === 'a' ? store.state.input.kind : store.state.input.kindB;
+    const kind = kindOf(slot);
     const seen = slot === 'a' ? ui.status?.input : ui.status?.inputB;
     return seen?.kind === kind ? seen.state : '';
   };
-  const needsFile = (slot) => (slot === 'a' ? store.state.input.kind : store.state.input.kindB) === 'file' && stateOf(slot) === 'no-signal';
-  function caption(slot, kind) {
+  const needsFile = (slot) => kindOf(slot) === 'file' && stateOf(slot) === 'no-signal';
+  function caption(slot) {
     const name = slot.toUpperCase();
+    const kind = kindOf(slot);
     if (!kind) return `${name} · off`;
     const state = stateOf(slot);
     return `${name} · ${INPUT_LABELS[kind]} · ${needsFile(slot) ? 'choose…' : INPUT_STATE_TEXT[state] ?? (state || '—')}`;
   }
+  // Why a source that is not showing has no picture to preview.
+  const NOT_READY = { phone: 'not paired, or its camera is off', camera: 'starts when chosen', file: 'no file loaded' };
+
+  const tip = el('div', { class: 'strip-tip', role: 'status', hidden: true });
+  // `say` is a function so the words follow what happens while the pointer
+  // rests there (a camera starting, a phone pairing).
+  let tipSay = null;
+  function showTip(say, slot) {
+    tipSay = say || null;
+    if (slot) tip.classList.toggle('right', slot === 'b');
+    refreshTip();
+  }
+  function refreshTip() {
+    const text = tipSay?.() ?? '';
+    tip.textContent = text;
+    tip.hidden = !text;
+  }
+  const peeking = { a: '', b: '' };
+  function peek(slot, kind) {
+    if (peeking[slot] === kind) return;
+    peeking[slot] = kind;
+    bus.send('peek', { ...peeking });
+    syncInputs();
+  }
 
   function inputView(slot) {
     const isA = slot === 'a';
-    const view = el('canvas', { class: 'inview-pic', width: THUMB_W, height: THUMB_H, 'aria-hidden': 'true' });
-    const pick = menu({
-      id: `input-${slot}`,
-      cls: 'inview-menu',
-      // Downward, over the preset strip: never over the picture.
-      down: true,
-      listCls: 'compact',
-      label: `Input ${slot.toUpperCase()}`,
-      value: isA ? store.state.input.kind : store.state.input.kindB,
-      options: () => {
-        const { kind, kindB } = store.state.input;
-        const mine = isA ? kind : kindB;
-        const other = isA ? kindB : kind;
-        const list = INPUT_KINDS.map((k, i) => {
-          let note = '';
-          if (k === other) note = isA || mine ? ` · trades places with ${isA ? 'B' : 'A'}` : ' · in use by A';
-          return { value: k, label: caption(slot, k), item: `${i + 1} ${INPUT_LABELS[k]}${note}`, midi: `${isA ? 'input' : 'inputB'}:${k}` };
-        });
-        if (!isA) list.push({ value: '', label: caption('b', ''), item: 'B off', midi: 'inputB:off' });
-        list.push({ value: '$setup', label: '', item: 'Input settings…' });
-        return list;
-      },
-      onOpen: () => ui.midiMap?.refresh(),
-      onChange: (v) => {
-        if (v === '$setup') ui.goToPanel('input-panel');
-        else {
-          runAction(store, isA ? 'input' : 'inputB', v || 'off');
-          // Nothing to play yet: ask for the file here and now.
-          if (v === 'file' && (!ui.hasVideoFile?.() || needsFile(slot))) ui.pickVideoFile?.();
-        }
-        syncInputs();
-      },
+    const other = isA ? 'b' : 'a';
+    const pic = el('canvas', { class: 'inview-pic', width: THUMB_W, height: THUMB_H, 'aria-hidden': 'true' });
+    const tag = el('span', { class: 'inview-tag' });
+    const note = el('span', { class: 'inview-note' });
+    const view = el('button', { class: 'inview-view', id: `input-${slot}`, 'aria-haspopup': 'true', 'aria-expanded': 'false' }, [pic, tag, note]);
+    const buttons = {};
+    const icons = el('div', { class: 'inview-icons', role: 'group', 'aria-label': `Source for input ${slot.toUpperCase()}` });
+    // What clicking an icon would do, said before it is done.
+    const describe = (kind, i) => {
+      const mine = kindOf(slot);
+      const ready = ui.status?.sources?.[kind];
+      const head = `${i + 1} · ${INPUT_LABELS[kind]}`;
+      if (kind === mine) return isA ? `${head} · A is showing this` : `${head} · B is showing this. Click to turn B off`;
+      if (kind === kindOf(other)) return !isA && !mine ? `${head} · in use by A` : `${head} · click to trade places with ${other.toUpperCase()}`;
+      return `${head} · ${ready ? 'ready' : NOT_READY[kind]}. Click to make it ${slot.toUpperCase()}`;
+    };
+    INPUT_KINDS.forEach((kind, i) => {
+      const button = el('button', { class: 'inview-icon', 'data-kind': kind, 'data-midi': `${isA ? 'input' : 'inputB'}:${kind}`, 'aria-label': `Input ${slot.toUpperCase()}: ${INPUT_LABELS[kind]}` });
+      button.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4">${ICONS[kind]}</svg>`;
+      const enter = () => {
+        showTip(() => describe(kind, i), slot);
+        peek(slot, kind === kindOf(slot) ? '' : kind);
+      };
+      const leave = () => {
+        showTip(null);
+        peek(slot, '');
+      };
+      button.addEventListener('pointerenter', enter);
+      button.addEventListener('focus', enter);
+      button.addEventListener('pointerleave', leave);
+      button.addEventListener('blur', leave);
+      button.addEventListener('click', () => {
+        const mine = kindOf(slot);
+        if (!isA && kind === mine) runAction(store, 'inputB', 'off');
+        else runAction(store, isA ? 'input' : 'inputB', kind);
+        // Nothing to play yet: ask for the file here and now.
+        if (kind === 'file' && kindOf(slot) === 'file' && (!ui.hasVideoFile?.() || needsFile(slot))) ui.pickVideoFile?.();
+        peek(slot, '');
+        showTip(() => describe(kind, i), slot);
+      });
+      buttons[kind] = button;
+      icons.append(button);
     });
-    view.addEventListener('click', () => pick.node.click());
-    return { view, pick, node: el('div', { class: 'inview', id: `inview-${slot}` }, [view, pick.node]) };
+    const node = el('div', { class: `inview ${slot}`, id: `inview-${slot}` }, isA ? [view, icons] : [icons, view]);
+    // The icons are out while the pointer or the keyboard is on the view or
+    // on them, and a click on the view holds them out (for a touch screen).
+    view.addEventListener('click', () => node.classList.toggle('open'));
+    view.addEventListener('pointerenter', () => showTip(() => caption(slot), slot));
+    view.addEventListener('pointerleave', () => showTip(null));
+    node.addEventListener('pointerleave', () => node.classList.remove('open'));
+    return { node, view, pic, tag, note, buttons };
   }
   const viewA = inputView('a');
   const viewB = inputView('b');
@@ -137,26 +188,34 @@ export function mountPerform(root, ui) {
     // GL rows arrive bottom-up. A is the left half of the strip, B the right.
     const stride = width * 4;
     for (let y = 0; y < height; y++) thumbs.data.set(pixels.subarray((height - 1 - y) * stride, (height - y) * stride), y * stride);
-    viewA.view.getContext('2d').putImageData(thumbs, 0, 0, 0, 0, THUMB_W, THUMB_H);
-    viewB.view.getContext('2d').putImageData(thumbs, -THUMB_W, 0, THUMB_W, 0, THUMB_W, THUMB_H);
+    viewA.pic.getContext('2d').putImageData(thumbs, 0, 0, 0, 0, THUMB_W, THUMB_H);
+    viewB.pic.getContext('2d').putImageData(thumbs, -THUMB_W, 0, THUMB_W, 0, THUMB_W, THUMB_H);
   });
 
-  const mixItem = () => store.state.chain.find((it) => it.type === 'mixb' && !it.bypass) ?? store.state.chain.find((it) => it.type === 'mixb') ?? null;
+  // ---- the bar
   const mixFill = el('div', { class: 'fill' });
   const mixText = el('span', { class: 'mixbar-text' });
   const mixBar = el('div', { class: 'mixbar', id: 'mixbar', role: 'slider', tabindex: '0', 'aria-label': 'Mix of input B', 'aria-valuemin': '0', 'aria-valuemax': '1' }, [mixFill, mixText]);
   const setMix = (value) => {
-    const item = mixItem();
-    if (!item) return;
-    ui.lastTouched = { uid: item.uid, key: 'mix' };
-    store.patchItem('chain', item.uid, { mix: Math.round(Math.min(1, Math.max(0, value)) * 100) / 100 });
+    const mix = Math.round(Math.min(1, Math.max(0, value)) * 100) / 100;
+    const item = mixItem(store.state);
+    if (item) {
+      ui.lastTouched = { uid: item.uid, key: 'mix' };
+      store.patchItem('chain', item.uid, { mix });
+      return;
+    }
+    // No Mix B in this preset: the bar adds one, a plain fade in front of
+    // every other effect, so the chain treats the mixed picture.
+    const scene = sceneOf(store.state);
+    scene.chain.unshift(makeEffect('mixb', { mix }));
+    store.setScene(scene);
   };
   const dragMix = (e) => {
     const r = mixBar.getBoundingClientRect();
     setMix((e.clientX - r.left) / r.width);
   };
   mixBar.addEventListener('pointerdown', (e) => {
-    if (!mixItem()) return;
+    if (document.body.classList.contains('midi-map')) return;
     mixBar.setPointerCapture(e.pointerId);
     dragMix(e);
     e.preventDefault();
@@ -167,37 +226,74 @@ export function mountPerform(root, ui) {
   // The arrows step presets everywhere else on the page: here they move the bar.
   mixBar.addEventListener('keydown', (e) => {
     const step = { ArrowLeft: -0.05, ArrowDown: -0.05, ArrowRight: 0.05, ArrowUp: 0.05 }[e.key];
-    const item = mixItem();
-    if (!step || !item) return;
+    if (!step) return;
     e.preventDefault();
     e.stopPropagation();
-    setMix(item.mix + step);
+    setMix((mixItem(store.state)?.mix ?? 0) + step);
   });
-  const mixRow = el('div', { class: 'mixrow', 'aria-label': 'Inputs and mix' }, [viewA.node, mixBar, viewB.node]);
+
+  // ---- the mode
+  const modeText = el('span', { class: 'mixmode-text' });
+  const modeButton = el('button', { class: 'mixmode', id: 'mix-mode', 'aria-haspopup': 'true', 'aria-expanded': 'false' }, [modeText, el('span', { 'aria-hidden': 'true', text: '▴' })]);
+  const modeButtons = MIX_MODES.map(([name, value]) => {
+    const b = el('button', { text: name, 'data-value': String(value), 'data-midi': `mixMode:${value}`, onclick: () => runAction(store, 'mixMode', value) });
+    return [value, b];
+  });
+  const modeGrid = el('div', { class: 'mixmode-grid', id: 'mix-modes', role: 'group', 'aria-label': 'Mode of the mix', hidden: true }, modeButtons.map(([, b]) => b));
+  const openModes = (on) => {
+    modeGrid.hidden = !on;
+    modeButton.setAttribute('aria-expanded', String(on));
+    if (on) ui.midiMap?.refresh();
+  };
+  modeButton.addEventListener('click', () => openModes(modeGrid.hidden));
+  // It stays open while modes are tried; a click anywhere else, or Esc,
+  // closes it.
+  document.addEventListener('pointerdown', (e) => {
+    if (!modeGrid.hidden && !modeGrid.contains(e.target) && !modeButton.contains(e.target)) openModes(false);
+  });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modeGrid.hidden) openModes(false);
+  });
+
+  const mixRow = el('div', { class: 'mixrow', 'aria-label': 'Inputs and mix' }, [viewA.node, mixBar, viewB.node, modeButton, modeGrid, tip]);
   const center = el('div', { class: 'center' }, [monitor, mixRow]);
 
   function syncMix() {
-    const item = mixItem();
+    const item = mixItem(store.state);
     const { kindB } = store.state.input;
     mixBar.classList.toggle('none', !item);
-    mixBar.setAttribute('aria-disabled', String(!item));
     mixFill.style.width = `${item ? item.mix * 100 : 0}%`;
     mixBar.setAttribute('aria-valuenow', String(item ? item.mix : 0));
-    const mode = item ? Object.entries(EFFECT_BY_ID.mixb.params.mode.options).find(([, v]) => v === item.params.mode)?.[0] ?? '' : '';
-    mixText.textContent = !item ? 'No Mix B in this preset: A alone' : item.bypass ? `${mode} · bypassed` : !kindB ? `${mode} · B is off` : mode;
-    mixBar.title = item ? 'Drag to mix input B in. The mode and the rest are under Edit, in Mix B.' : 'Add the Mix B effect to this preset (Edit) to mix input B in.';
+    mixText.textContent = !item ? 'Drag to mix B in' : item.bypass ? 'Mix B is bypassed' : !kindB ? 'B is off' : '';
+    mixBar.title = item ? 'Drag to mix input B in.' : 'Drag to mix input B in. This adds the Mix B effect to the preset.';
+    const mode = item ? MIX_MODES.find(([, v]) => v === item.params.mode)?.[0] ?? '' : '';
+    modeText.textContent = mode || 'Mode';
+    modeButton.disabled = !item;
+    modeButton.title = item ? 'How B is mixed in' : 'Drag the bar first: there is no Mix B in this preset yet.';
+    if (!item) openModes(false);
+    for (const [value, b] of modeButtons) b.setAttribute('aria-pressed', String(!!item && item.params.mode === value));
   }
 
   function syncInputs() {
-    const { kind, kindB } = store.state.input;
-    viewA.pick.set(kind);
-    viewB.pick.set(kindB);
     for (const [slot, v] of [['a', viewA], ['b', viewB]]) {
+      const kind = kindOf(slot);
       const state = stateOf(slot);
-      v.pick.node.classList.toggle('warn', !!state && state !== 'live' && state !== 'stalled');
-      v.pick.node.classList.toggle('bad', state === 'stalled');
+      const looking = peeking[slot];
+      v.view.dataset.caption = caption(slot);
+      v.view.setAttribute('aria-label', `Input ${caption(slot)}. Its sources are beside it.`);
+      v.view.classList.toggle('warn', !!state && state !== 'live' && state !== 'stalled');
+      v.view.classList.toggle('bad', state === 'stalled');
+      v.node.classList.toggle('off', !kind && !looking);
+      v.node.classList.toggle('peek', !!looking);
+      // A source with nothing to show: its name alone, not the last picture.
+      v.node.classList.toggle('blank', !!looking && !ui.status?.sources?.[looking]);
+      v.tag.textContent = looking ? `${slot.toUpperCase()}?` : slot.toUpperCase();
+      // Words where there is no picture: B off, or a source that cannot be
+      // previewed yet.
+      v.note.textContent = looking ? (ui.status?.sources?.[looking] ? '' : INPUT_LABELS[looking]) : !kind ? 'off' : needsFile(slot) ? 'choose…' : '';
+      for (const k of INPUT_KINDS) v.buttons[k].setAttribute('aria-pressed', String(k === kind));
     }
-    viewB.node.classList.toggle('off', !kindB);
+    refreshTip();
     syncMix();
   }
 

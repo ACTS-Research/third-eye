@@ -124,14 +124,17 @@ progress stops.
 The two readouts at the top left are also buttons, each with its own job:
 the output readout opens the output window, and the phone readout shows the
 QR code and the connection steps. Under the picture on the perform screen
-are a small live view of input A, the mix bar, and a small live view of
-input B (see [Inputs](#inputs)). The line under each view says which source
-it is and what it is doing (`A · iPhone · live`, `B · off`); click it, or
-the view, for the list that chooses the source. **Input settings…** at the
-foot of the list goes to **Setup → Input**. Choosing **Video file** with no
-file loaded (the line then reads `A · Video file · choose…`) opens the file
-picker straight away (the same picker as **Setup → Input → Load video
-file…**).
+is one slim strip: a small live view of input A, the mix bar, a small live
+view of input B, and the mode of the mix (see [Inputs](#inputs)). Point at a
+view and a line above the strip says which source it is and what it is doing
+(`A · iPhone · live`, `B · off`), and its four source icons slide out beside
+it: iPhone, local camera, test pattern, video file. Point at an icon to see
+that source in the small view without choosing it (a source that is not
+running shows its name instead); click to choose it. B's lit icon turns B
+off. Choosing **Video file** with no file loaded opens the file picker
+straight away (the same picker as **Setup → Input → Load video file…**).
+Everything that pops up from the strip opens upward, over the picture, for
+that moment only; none of it is ever on the output or in a recording.
 
 The coloured dot at the top right opens the interface palettes (red, amber,
 bone, lime, ice, magenta). All are a single ink on black so the laptop does
@@ -376,8 +379,9 @@ They work in both `/control` and `/output` (not while typing in a text field).
 There are four sources and two inputs. **Input A** is what the effects
 chain starts from, and what face, hand and person tracking watch. **Input
 B** is a second picture that the **Mix B** effect mixes in; it is off until
-you choose a source for it. Both are chosen from the small views under the
-picture on the perform screen (or `1`–`4` for A, `Shift` + `1`–`4` for B)
+you choose a source for it. Both are chosen from the icons beside the small
+views under the picture on the perform screen (or `1`–`4` for A, `Shift` +
+`1`–`4` for B)
 and configured under **Setup → Input**. They can be switched live; while a
 newly chosen source has no frame yet, the previous picture stays up.
 
@@ -385,14 +389,19 @@ A and B never show the same source: ask one for the source the other has
 and they trade places. So one iPhone, and the one video file, can feed A or
 B, not both.
 
-**Mixing.** Add **Mix B** to a preset's chain (Edit → + Add effect). Its
-**mix** is how much of B comes in, and it is the bar between the two small
-views on the perform screen: drag it, pin it as a fader, map it to MIDI, or
-have tilt, an LFO or the audio level move it like any other slider. Effects
+**Mixing.** The bar between the two small views mixes B in, in any preset.
+It belongs to an effect in the chain, **Mix B**: if the preset has none, the
+first drag of the bar adds one, a plain fade in front of every other effect
+(to keep it in the preset, open Edit, or save a new preset). Its **mix** is
+how much of B comes in: drag the bar, pin it as a fader, map it to MIDI, or
+have tilt, an LFO or the audio level move it like any other slider. The
+button at the right of the strip names the **mode** and opens all nine as a
+grid; the grid stays open while you try them, and closes on a click
+elsewhere or `Esc`. The same grid is in Mix B's panel under Edit. Effects
 before Mix B in the chain treat A alone; effects after it treat the mixed
-picture. **Apply to** limits the mix to the person or to the background. A
-preset with no Mix B shows A alone, and the bar is dimmed. With B off, Mix B
-passes A through.
+picture, so drag Mix B along the chain under Edit to choose. **Apply to**
+limits the mix to the person or to the background. With B off, Mix B passes
+A through.
 
 | Mode | What it does |
 | --- | --- |
@@ -575,8 +584,8 @@ move with it when the output window opens or closes.
 **MIDI.** Click **MIDI map** at the top right (or press `M`). Every control
 that can be mapped is outlined:
 
-- the panic buttons, the choices in the two input lists (open a list, then
-  click a choice), previous / next preset
+- the panic buttons, the source icons of inputs A and B and the nine mix
+  modes (all shown while map mode is on, or open), previous / next preset
 - every preset tile (a pad per preset; the pad stays with the slot) and every
   step of the running order (a pad per step number)
 - the eight perform faders (the knob moves the parameter itself, so the
@@ -855,7 +864,7 @@ npm test
 | `tests/reconnect.mjs` | Getting the phone back without closing its page: a Mac that stops answering, a Mac reload, scanning that stops when the link returns, the ordinary pairing code read inside the page, a changed room code, Reconnect by hand |
 | `tests/output-preview.mjs` | The phone's preview showing the Mac's finished picture: the setting, the picture following Blackout, Rotate not applied twice, the camera taking over while a code is read, a Mac reload, switching back; torch and white-balance lock dimmed on a camera without them |
 | `tests/edit-screen.mjs` | The edit screen's own controls: the bar slider (click, typed value, double-click reset), the app's menus by mouse and keyboard without the page's shortcuts firing, a menu whose button scrolls into view, the chain row (add, drag, remove, bypass), modulation boxes and their extra settings, LFOs, autosave, a narrow window |
-| `tests/mix.mjs` | Input B and Mix B: choosing B from its small view (the list opening downward), A and B trading places, the nine modes, the bar under the picture, B off passing A through, the small live views, the iPhone as B, B carrying on when the picture moves to `/control` |
+| `tests/mix.mjs` | Input B and Mix B: the strip under the picture (uncropped small views, source icons that slide out, looking at a source without choosing it, tooltips and the mode grid opening upward), the bar adding Mix B on its first drag, the nine modes on both screens, A and B trading places, B off passing A through, the iPhone as B, B carrying on when the picture moves to `/control` |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Strip S3 with the mode button outside</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button{font:inherit;cursor:pointer}
+.cap{text-transform:uppercase;letter-spacing:0.08em}
+.ic{width:26px;height:26px;padding:0;display:grid;place-items:center;background:#060303;color:#ff6b5e;border:1px solid #5b2622}
+.ic.on{background:#ff6b5e;color:#140302;border-color:#ff6b5e}
+.ic.hover{border-color:#ff6b5e;border-style:dashed}
+.ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.4}
+.m{background:#060303;color:#ff6b5e;border:1px solid #5b2622;padding:8px 0;text-align:center}
+.m.on{background:#ff6b5e;color:#140302;border-color:#ff6b5e;font-weight:700}
+.mode{width:118px;flex-shrink:0;display:flex;justify-content:space-between;align-items:center;background:none;color:#ff6b5e;border:1px solid #ff6b5e;padding:0 8px;text-transform:uppercase;letter-spacing:0.08em}
+.mode.open{background:#ff6b5e;color:#140302;font-weight:700}
+.view{width:96px;flex-shrink:0;border:1px solid #ff6b5e;box-sizing:border-box;position:relative;padding:0}
+.tag{position:absolute;top:0;background:#060303;color:#ff6b5e;padding:0 4px;font-weight:700}
+.picA{background:repeating-linear-gradient(115deg,#ff9a3c 0 8px,#c2185b 8px 16px,#2a0a3a 16px 24px)}
+.picB{background:radial-gradient(circle at 60% 45%,#e8fbff 0 12%,#2ad4ff 12% 24%,#0b3a8a 24% 40%,#02101f 40%)}
+.picC{background:linear-gradient(90deg,#3a3 0 33%,#dd3 33% 66%,#36c 66%)}
+.tile{flex:1;height:70px;border:1px solid #5b2622;padding:6px;box-sizing:border-box;font:800 26px/1 'Big Shoulders Display',sans-serif;color:#8a3a34}
+.row{display:flex;gap:8px;align-items:stretch;height:54px;position:relative}
+.bar{flex-grow:1;border:1px solid #ff6b5e;position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;width:60%;background:#ff6b5e}
+.grid{position:absolute;top:54px;width:330px;box-sizing:border-box;padding:8px;background:#060303;border:1px solid #ff6b5e;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+</style>
+</helmet>
+<div style="width: 1000px; height: 900px; box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 8px; background: #060303; color: #ff6b5e; font: 500 12px/1.4 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+
+  <div style="font: 800 24px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.04em">R · MODE BUTTON RIGHT OF B</div>
+  <div class="cap" style="color: #ffb3ab">At rest</div>
+  <div class="row">
+    <button class="view picA" aria-label="Input A: iPhone, live"><span class="tag" style="left: 0">A</span></button>
+    <div class="bar"><i></i></div>
+    <button class="view picB" aria-label="Input B: video file, live"><span class="tag" style="right: 0">B</span></button>
+    <button class="mode" aria-haspopup="true" aria-expanded="false"><span>Screen</span><span aria-hidden="true">▾</span></button>
+  </div>
+
+  <div class="cap" style="color: #ffb3ab; margin-top: 8px">Pointer on B's view, then on its camera icon</div>
+  <div class="row">
+    <button class="view picA" aria-label="Input A: iPhone, live"><span class="tag" style="left: 0">A</span></button>
+    <div class="bar"><i></i></div>
+    <div class="view picC" style="border-style: dashed"><span class="tag" style="right: 0">B?</span></div>
+    <button class="mode" aria-haspopup="true" aria-expanded="false"><span>Screen</span><span aria-hidden="true">▾</span></button>
+    <div style="position: absolute; right: 230px; top: 0; bottom: 0; display: grid; grid-template-columns: 27px 27px; background: #060303; border: 1px solid #ff6b5e">
+      <button class="ic" aria-label="B: iPhone"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5" y="2" width="6" height="12" rx="1.5"></rect></svg></button>
+      <button class="ic hover" aria-label="B: Mac camera"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="5" width="9" height="7"></rect><path d="M11 8l3-2v5l-3-2z"></path></svg></button>
+      <button class="ic" aria-label="B: Test pattern"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="10"></rect><path d="M6 3v10M10 3v10"></path></svg></button>
+      <button class="ic on" aria-pressed="true" aria-label="B: Video file"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="10"></rect><path d="M7 6l3 2-3 2z"></path></svg></button>
+    </div>
+    <div style="position: absolute; right: 186px; top: 60px; background: #ff6b5e; color: #140302; padding: 4px 8px; font-weight: 700; white-space: nowrap">2 · Mac camera · ready. Click to make it B</div>
+  </div>
+
+  <div class="cap" style="color: #ffb3ab; margin-top: 30px">Mode button clicked</div>
+  <div style="position: relative; height: 150px">
+    <div class="row">
+      <button class="view picA" aria-label="Input A: iPhone, live"><span class="tag" style="left: 0">A</span></button>
+      <div class="bar"><i></i></div>
+      <button class="view picB" aria-label="Input B: video file, live"><span class="tag" style="right: 0">B</span></button>
+      <button class="mode open" aria-haspopup="true" aria-expanded="true"><span>Screen</span><span aria-hidden="true">▴</span></button>
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 22px"><div class="tile">1</div><div class="tile">2</div><div class="tile">3</div><div class="tile">4</div><div class="tile">5</div><div class="tile">6</div></div>
+    <div class="grid" style="right: 0">
+      <button class="m">Fade</button><button class="m">Add</button><button class="m on" aria-pressed="true">Screen</button>
+      <button class="m">Multiply</button><button class="m">Difference</button><button class="m">Bright key</button>
+      <button class="m">Colour key</button><button class="m">Wipe</button><button class="m">B pushes A</button>
+    </div>
+  </div>
+  <div style="color: #ffb3ab">The bar runs straight from A to B, as on a mixer. B's icons slide out over the end of the bar and never touch the mode button. The grid drops from the right-hand corner, beside the faders column.</div>
+
+  <div style="font: 800 24px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.04em; margin-top: 26px">L · MODE BUTTON LEFT OF A</div>
+  <div class="cap" style="color: #ffb3ab">At rest</div>
+  <div class="row">
+    <button class="mode" aria-haspopup="true" aria-expanded="false"><span>Screen</span><span aria-hidden="true">▾</span></button>
+    <button class="view picA" aria-label="Input A: iPhone, live"><span class="tag" style="left: 0">A</span></button>
+    <div class="bar"><i></i></div>
+    <button class="view picB" aria-label="Input B: video file, live"><span class="tag" style="right: 0">B</span></button>
+  </div>
+
+  <div class="cap" style="color: #ffb3ab; margin-top: 8px">Mode button clicked</div>
+  <div style="position: relative; height: 150px">
+    <div class="row">
+      <button class="mode open" aria-haspopup="true" aria-expanded="true"><span>Screen</span><span aria-hidden="true">▴</span></button>
+      <button class="view picA" aria-label="Input A: iPhone, live"><span class="tag" style="left: 0">A</span></button>
+      <div class="bar"><i></i></div>
+      <button class="view picB" aria-label="Input B: video file, live"><span class="tag" style="right: 0">B</span></button>
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 22px"><div class="tile">1</div><div class="tile">2</div><div class="tile">3</div><div class="tile">4</div><div class="tile">5</div><div class="tile">6</div></div>
+    <div class="grid" style="left: 0">
+      <button class="m">Fade</button><button class="m">Add</button><button class="m on" aria-pressed="true">Screen</button>
+      <button class="m">Multiply</button><button class="m">Difference</button><button class="m">Bright key</button>
+      <button class="m">Colour key</button><button class="m">Wipe</button><button class="m">B pushes A</button>
+    </div>
+  </div>
+  <div style="color: #ffb3ab">The same, mirrored: the mode sits beside the panic buttons, and its grid covers the first preset tiles (1 to 3) while it is open.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1000,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

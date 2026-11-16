@@ -8,18 +8,19 @@ and two small live views under the picture on the perform screen. It has
 only been run in headless Chromium. Most of what was built after 13 November
 is in the same position.
 
-**Next step.** On the real Mac, with every page reloaded: choose the Mac
-camera for B under the picture (or Shift + 2), add Mix B to a preset under
-Edit, and drag the bar. Then go down "Built since 13 November, not yet tried
+**Next step.** On the real Mac, with every page reloaded: point at B's
+small view under the picture, click the camera icon (or press Shift + 2),
+and drag the bar. Then go down "Built since 13 November, not yet tried
 on real hardware" below.
 
 **Decisions only you can make.**
 
-- Say whether the Mix B modes should be a grid of buttons, as in the mock-up.
-  They are a menu for now, like every other effect's choices.
-- Say when to start the second iPhone as input B (stage 2), and whether
-  "an image as a control signal" comes before or after it. You have said
-  both phones should control, and yes to the control signal.
+- Try the new strip under the picture on the real Mac and say what still
+  needs changing (it is its second version).
+- Say whether a Mix B added by dragging the bar should be saved into the
+  preset by itself. For now it lasts until the preset is loaded again.
+- Next to build, as you asked: the second iPhone as input B. After it,
+  "an image as a control signal".
 - Picture controls on the Mac (brightness, contrast, saturation and so on):
   say whether they belong to each preset (the Contrast / Brightness effect
   already does that) or should be one fixed set that holds across presets.
@@ -39,8 +40,9 @@ output is fine as it is (normal pairing only; no work for a phone paired
 without internet). Running order: on hold, including named running orders.
 Name stays Third Eye Cam; 1280×720 stays. No server of your own: you got
 pairing working without it (route not said). Old presets can be abandoned.
-Mixing: option C (an effect, with its bar under the picture) and C1 (the
-small views choose the inputs, their lists opening downward).
+Mixing: option C (an effect, with its bar under the picture). The strip:
+S3 (source icons on rollover), the mode button right of B, the bar always
+working, modes as a grid on both screens, pop-ups opening upward.
 
 **Built since 13 November, not yet tried on real hardware.**
 
@@ -74,7 +76,7 @@ temporary local branch: switch to `main` (`git checkout -B main
 origin/main`) before committing, and push `main` only.
 
 **Mock-ups.** Input B and mixing: https://claude.ai/artifact/4yrzjrjTVfZ4qgMexUNNn3
-(C and C1 were built). Running order: https://claude.ai/artifact/SiD1F7P89JLwXeC31BKhz4
+(C, then strip S3 with layout R, were built). Running order: https://claude.ai/artifact/SiD1F7P89JLwXeC31BKhz4
 (A, the strip, was built). Edit screen, slider styles and tempo sync:
 https://claude.ai/artifact/UEbbvKGUHsQo7CxCWFUVDT (C, the Bar, and Notes were
 built). Icons: https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo. All private
@@ -529,18 +531,35 @@ image as a control signal" are not started; see the end of this section.
   has no picture, so A passes through. Its mix is the effect's own wet / dry
   (`mixLabel` renames the slider), which is why pinning, mapping, presets
   and Apply to all work with no new code.
-- **The row under the picture** (`perform.js`, "inputs and the mix"): the
-  bar moves the `mix` of the preset's first Mix B that is not bypassed. The
-  small views are one 192×54 strip (A left, B right) the engine reads back
-  about five times a second and sends as `thumbs` on the bus, so they work
-  in both hosting modes. `Readback` in `pipeline.js` is the shared
-  non-blocking readback (the monitor image uses it too).
-- **The input lists open downward** (`menu({ down: true })`), over the
-  preset strip, never over the picture: the owner asked for that. Their
-  choices carry `data-midi`, so MIDI map mode picks them from the open list.
-- **Not done:** the Mix B modes as a grid of buttons (the mock-up drew one;
-  they are a menu); a hatched "moved by modulation" band on the bar; a
-  second video file.
+- **The strip under the picture** (`perform.js`, "inputs and the mix"; the
+  second version, after the owner found the first too tall, cropped and
+  unable to fade in a preset without Mix B). One 54 px row: view A, the bar,
+  view B, the mode button. Mock-up S3 with the mode button right of B
+  (`design/mix/StripModes.dc.html`, layout R).
+  - The bar moves the `mix` of `mixItem(state)` (`actions.js`): the first
+    Mix B that is not bypassed. With none, the first drag adds one at the
+    start of the chain (`setScene`). That is not saved into the preset: only
+    the edit screen autosaves.
+  - Source icons slide out beside a view on hover, focus, or a click on the
+    view; `body.midi-map` shows them all. They carry `data-midi`.
+  - Pointing at an icon sends `peek` on the bus; the engine then draws that
+    source into the view's half of the strip (`Pipeline.drawThumb`, through
+    the spare `inputs.peek` slot when neither A nor B has it). It never
+    opens a device: `status.sources` says which sources have a picture, and
+    the view shows the name of one that has not.
+  - The small views are one 192×54 strip (A left, B right) the engine reads
+    back about five times a second and sends as `thumbs`, so they work in
+    both hosting modes. `Readback` in `pipeline.js` is the shared
+    non-blocking readback (the monitor image uses it too).
+  - **Everything that pops up from the strip opens upward**, over the
+    picture: the owner's choice (16 November), and the one allowed exception
+    to "nothing covers the monitor". The mode grid stays open until a click
+    elsewhere or Esc.
+- **Modes are a grid** on both screens: `grid: true` on the parameter makes
+  `chain.js` use `choice()`; the perform grid runs the `mixMode:N` action,
+  which is MIDI-mappable.
+- **Not done:** a hatched "moved by modulation" band on the bar; a second
+  video file; saving a Mix B added from the perform screen into the preset.
 
 Still to come, as advised:
 

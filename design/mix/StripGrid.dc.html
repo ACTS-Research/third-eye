@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Strip S1, icons in a square</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button{font:inherit;cursor:pointer}
+.cap{text-transform:uppercase;letter-spacing:0.08em}
+.ic{width:26px;height:26px;padding:0;display:grid;place-items:center;background:none;color:#ff6b5e;border:1px solid #5b2622}
+.ic.on{background:#ff6b5e;color:#140302;border-color:#ff6b5e}
+.ic.hover{border-color:#ff6b5e;border-style:dashed}
+.ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.4}
+.picA{background:repeating-linear-gradient(115deg,#ff9a3c 0 8px,#c2185b 8px 16px,#2a0a3a 16px 24px)}
+.picB{background:radial-gradient(circle at 60% 45%,#e8fbff 0 12%,#2ad4ff 12% 24%,#0b3a8a 24% 40%,#02101f 40%)}
+.picC{background:linear-gradient(90deg,#3a3 0 33%,#dd3 33% 66%,#36c 66%)}
+</style>
+</helmet>
+<div style="width: 1000px; height: 400px; box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 10px; background: #060303; color: #ff6b5e; font: 500 12px/1.4 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+
+  <div class="cap" style="color: #ffb3ab">At rest · 54 px tall (today: 96)</div>
+  <div style="display: flex; gap: 8px; align-items: stretch; height: 54px">
+    <div class="picA" style="width: 96px; flex-shrink: 0; border: 1px solid #ff6b5e; box-sizing: border-box; position: relative"><b style="position: absolute; left: 0; top: 0; background: #060303; padding: 0 4px">A</b></div>
+    <div style="display: grid; grid-template-columns: 26px 26px; gap: 2px; flex-shrink: 0">
+      <button class="ic on" aria-pressed="true" aria-label="A: iPhone"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5" y="2" width="6" height="12" rx="1.5"></rect></svg></button>
+      <button class="ic" aria-label="A: Mac camera"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="5" width="9" height="7"></rect><path d="M11 8l3-2v5l-3-2z"></path></svg></button>
+      <button class="ic" aria-label="A: Test pattern"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="10"></rect><path d="M6 3v10M10 3v10"></path></svg></button>
+      <button class="ic" aria-label="A: Video file"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="10"></rect><path d="M7 6l3 2-3 2z"></path></svg></button>
+    </div>
+    <div style="flex-grow: 1; border: 1px solid #ff6b5e; position: relative">
+      <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 60%; background: #ff6b5e"></div>
+      <div class="cap" style="position: absolute; right: 8px; top: 18px">Screen</div>
+    </div>
+    <div style="display: grid; grid-template-columns: 26px 26px; gap: 2px; flex-shrink: 0">
+      <button class="ic" aria-label="B: iPhone"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5" y="2" width="6" height="12" rx="1.5"></rect></svg></button>
+      <button class="ic" aria-label="B: Mac camera"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="5" width="9" height="7"></rect><path d="M11 8l3-2v5l-3-2z"></path></svg></button>
+      <button class="ic" aria-label="B: Test pattern"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="10"></rect><path d="M6 3v10M10 3v10"></path></svg></button>
+      <button class="ic on" aria-pressed="true" aria-label="B: Video file"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="10"></rect><path d="M7 6l3 2-3 2z"></path></svg></button>
+    </div>
+    <div class="picB" style="width: 96px; flex-shrink: 0; border: 1px solid #ff6b5e; box-sizing: border-box; position: relative"><b style="position: absolute; right: 0; top: 0; background: #060303; padding: 0 4px">B</b></div>
+  </div>
+
+  <div class="cap" style="color: #ffb3ab; margin-top: 14px">Pointer on B's camera icon</div>
+  <div style="display: flex; gap: 8px; align-items: stretch; height: 54px; position: relative">
+    <div class="picA" style="width: 96px; flex-shrink: 0; border: 1px solid #ff6b5e; box-sizing: border-box; position: relative"><b style="position: absolute; left: 0; top: 0; background: #060303; padding: 0 4px">A</b></div>
+    <div style="display: grid; grid-template-columns: 26px 26px; gap: 2px; flex-shrink: 0">
+      <button class="ic on" aria-pressed="true" aria-label="A: iPhone"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5" y="2" width="6" height="12" rx="1.5"></rect></svg></button>
+      <button class="ic" aria-label="A: Mac camera"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="5" width="9" height="7"></rect><path d="M11 8l3-2v5l-3-2z"></path></svg></button>
+      <button class="ic" aria-label="A: Test pattern"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="10"></rect><path d="M6 3v10M10 3v10"></path></svg></button>
+      <button class="ic" aria-label="A: Video file"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="10"></rect><path d="M7 6l3 2-3 2z"></path></svg></button>
+    </div>
+    <div style="flex-grow: 1; border: 1px solid #ff6b5e; position: relative">
+      <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 60%; background: #ff6b5e"></div>
+      <div class="cap" style="position: absolute; right: 8px; top: 18px">Screen</div>
+    </div>
+    <div style="display: grid; grid-template-columns: 26px 26px; gap: 2px; flex-shrink: 0">
+      <button class="ic" aria-label="B: iPhone"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5" y="2" width="6" height="12" rx="1.5"></rect></svg></button>
+      <button class="ic hover" aria-label="B: Mac camera"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="5" width="9" height="7"></rect><path d="M11 8l3-2v5l-3-2z"></path></svg></button>
+      <button class="ic" aria-label="B: Test pattern"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="10"></rect><path d="M6 3v10M10 3v10"></path></svg></button>
+      <button class="ic on" aria-pressed="true" aria-label="B: Video file"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="10"></rect><path d="M7 6l3 2-3 2z"></path></svg></button>
+    </div>
+    <div class="picC" style="width: 96px; flex-shrink: 0; border: 1px dashed #ff6b5e; box-sizing: border-box; position: relative"><b style="position: absolute; right: 0; top: 0; background: #060303; padding: 0 4px">B?</b></div>
+    <div style="position: absolute; right: 60px; top: 60px; background: #ff6b5e; color: #140302; padding: 4px 8px; font-weight: 700; white-space: nowrap">2 · Mac camera · ready. Click to make it B</div>
+  </div>
+
+  <div style="color: #ffb3ab; margin-top: auto">The small views are the whole picture, uncropped (96 × 54). Four icons in a square sit between each view and the bar: iPhone, Mac camera, test pattern, video file. The lit one is in use. Point at another and the small view shows that source, with a tooltip naming it and its state; the big picture does not change until you click. Click B's lit icon to turn B off.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1000,"height":400}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

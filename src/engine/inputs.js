@@ -159,11 +159,15 @@ export class InputManager extends Slot {
   constructor() {
     super({ phone: new VideoFeed(), camera: new VideoFeed(), file: new VideoFeed() }, 'pattern');
     this.b = new Slot(this.feeds, '');
+    // A third picture, for the perform screen's rollover: a source neither A
+    // nor B is showing, looked at without being chosen.
+    this.peek = new Slot(this.feeds, '');
   }
 
   initGL(gl) {
     super.initGL(gl);
     this.b.initGL(gl);
+    this.peek.initGL(gl);
   }
 
   // Both at once, so that when A and B change places neither is for a

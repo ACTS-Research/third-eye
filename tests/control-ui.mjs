@@ -60,10 +60,9 @@ try {
   await control.keyboard.press('Escape');
   check('Esc closes it', await control.locator('#pairing-pop').isHidden());
   check('the top bar has two readouts: the output and the phone', (await control.locator('#pills .pill').count()) === 2 && (await control.locator('#pills .pill').nth(1).getAttribute('id')) === 'phone-pill');
-  check('what the input is doing is under its small view', await settle(async () => (await control.locator('#input-a .menu-text').textContent()) === 'A · Test pattern · live', 'input line'), await control.locator('#input-a .menu-text').textContent());
-  await control.locator('#input-a').click();
-  await control.locator('.menu-list .menu-item[data-value="$setup"]').click();
-  check('Input settings in its list goes to the Input panel, and says so', (await control.evaluate(() => window.thirdEye.ui.view)) === 'setup' && (await control.locator('#input-panel').evaluate((n) => n.classList.contains('flash'))) && (await control.locator('#pairing-pop').isHidden()));
+  await control.locator('#input-a').hover();
+  check('what the input is doing is said over its small view', await settle(async () => (await control.locator('.strip-tip').textContent()) === 'A · Test pattern · live', 'input line'), await control.locator('.strip-tip').textContent());
+  await control.mouse.move(5, 5);
   await control.evaluate(() => window.thirdEye.ui.setView('perform'));
 
   console.log('palettes');
