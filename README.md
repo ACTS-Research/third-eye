@@ -128,10 +128,10 @@ is one slim strip: a small live view of input A, the mix bar, a small live
 view of input B, and the mode of the mix (see [Inputs](#inputs)). Point at a
 view and a line above the strip says which source it is and what it is doing
 (`A · iPhone · live`, `B · off`), and its four source icons slide out beside
-it: iPhone, local camera, test pattern, video file. Point at an icon to see
+it: iPhone, iPhone B, local camera, test pattern, video file (and, for B,
+Off). Point at an icon to see
 that source in the small view without choosing it (a source that is not
-running shows its name instead); click to choose it. B's lit icon turns B
-off. Choosing **Video file** with no file loaded opens the file picker
+running shows its name instead); click to choose it. Choosing **Video file** with no file loaded opens the file picker
 straight away (the same picker as **Setup → Input → Load video file…**).
 Everything that pops up from the strip opens upward, over the picture, for
 that moment only; none of it is ever on the output or in a recording.
@@ -184,6 +184,24 @@ The pop-over shows the QR code and room code again, and lists the
 connection as five steps (picture running, pairing server reached, phone
 found, video link, picture arriving) with the one it is stuck at marked. It also has
 **Restart output** and **New room code**.
+
+**A second iPhone.** The pop-over has a tab for each phone. Open the
+**iPhone B** tab and scan its code with the second phone (or type its room
+code, the first phone's with a B after it: `PSAQ2-B`). Opening that tab is
+what switches the second phone on; **Stop using iPhone B** in it switches it
+off again, and a show with one phone never registers the second code. Each
+phone has its own connection, so one dropping or reconnecting does not
+disturb the other, and the top bar gains a `Phone B` readout. The second
+phone's picture is the source **iPhone B** (key `2`): choose it for input A
+or B like any other, so the two phones can be mixed with **Mix B**. Its
+screen is the same as the first phone's, marked `PHONE B`; its preset
+buttons and its four triggers do what the first phone's do, and its tilt,
+motion and touch pad are modulation sources of their own (**Phone B**,
+**Touch B**), listed once it has paired. Pair without internet is not yet
+available for the second phone. Two 720p · 60 streams need about 10 Mbit/s
+between the phones and the Mac; on the first iPhone's Personal Hotspot the
+second phone's video goes through the first phone's radio, so try 720p · 30
+on it there.
 
 The picture the Mac shows is always horizontal, and so is the preview on the
 phone. The page lays itself out for how the phone is held:
@@ -363,10 +381,11 @@ They work in both `/control` and `/output` (not while typing in a text field).
 | `]` or `→` | Next step of the running order, with crossfade; next preset when there is no running order |
 | `[` or `←` | Previous step, or previous preset |
 | `1` | Input: iPhone |
-| `2` | Input: local camera |
-| `3` | Input: test pattern |
-| `4` | Input: video file |
-| `Shift` + `1`–`4` | The same four sources, for input B |
+| `2` | Input: iPhone B (the second iPhone) |
+| `3` | Input: local camera |
+| `4` | Input: test pattern |
+| `5` | Input: video file |
+| `Shift` + `1`–`5` | The same five sources, for input B |
 | `R` | Record the output on / off |
 | `T` | Tap tempo |
 | `I` | Cycle to the next input |
@@ -376,12 +395,12 @@ They work in both `/control` and `/output` (not while typing in a text field).
 
 ## Inputs
 
-There are four sources and two inputs. **Input A** is what the effects
+There are five sources and two inputs. **Input A** is what the effects
 chain starts from, and what face, hand and person tracking watch. **Input
 B** is a second picture that the **Mix B** effect mixes in; it is off until
 you choose a source for it. Both are chosen from the icons beside the small
-views under the picture on the perform screen (or `1`–`4` for A, `Shift` +
-`1`–`4` for B)
+views under the picture on the perform screen (or `1`–`5` for A, `Shift` +
+`1`–`5` for B)
 and configured under **Setup → Input**. They can be switched live; while a
 newly chosen source has no frame yet, the previous picture stays up.
 
@@ -415,6 +434,8 @@ A through.
 The sources:
 
 - **iPhone** — the WebRTC stream. Primary input.
+- **iPhone B** — a second iPhone, paired from its own tab (see
+  [Pairing the phone](#pairing-the-phone)).
 
 - **Local camera** — any camera Chrome can see. Click **Find cameras** once
   to grant permission and list them. An iPhone used through Continuity Camera
@@ -471,6 +492,7 @@ resolution if the GPU is struggling.
 | Group | Sources |
 | --- | --- |
 | Phone | roll, pitch, yaw, tilt left/right, tilt forward/back, spin rate ×3, motion, shake |
+| Phone B, Touch B | the same, and pad X, pad Y, pad touched, from the second iPhone (its triggers are the same four triggers) |
 | Touch | pad X, pad Y, pad touched, triggers 1–4 |
 | LFO | four oscillators: sine, triangle, ramp, square, random steps, drift; free-running or locked to the tempo |
 | Tempo | beat pulse, beat ramp, bar ramp |
@@ -865,6 +887,7 @@ npm test
 | `tests/output-preview.mjs` | The phone's preview showing the Mac's finished picture: the setting, the picture following Blackout, Rotate not applied twice, the camera taking over while a code is read, a Mac reload, switching back; torch and white-balance lock dimmed on a camera without them |
 | `tests/edit-screen.mjs` | The edit screen's own controls: the bar slider (click, typed value, double-click reset), the app's menus by mouse and keyboard without the page's shortcuts firing, a menu whose button scrolls into view, the chain row (add, drag, remove, bypass), modulation boxes and their extra settings, LFOs, autosave, a narrow window |
 | `tests/mix.mjs` | Input B and Mix B: the strip under the picture (uncropped small views, source icons that slide out, looking at a source without choosing it, tooltips and the mode grid opening upward), the bar adding Mix B on its first drag, the nine modes on both screens, A and B trading places, B off passing A through, the iPhone as B, B carrying on when the picture moves to `/control` |
+| `tests/two-phones.mjs` | A second iPhone: its tab and room code, pairing beside the first without disturbing it, the Phone B readout, iPhone B as input A or B with both live, its sensors as their own sources, its triggers and preset buttons, both phones following the picture to `/control`, one dropping alone, Stop using iPhone B |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |
@@ -892,6 +915,10 @@ else. Check these the first time you use them:
   as A or B beside the Mac's camera, and whether the Mac holds 60 fps with
   two live videos. The tests mix the test pattern, Chromium's stand-in
   camera and a stand-in phone.
+- **A second iPhone** (16 November): two real iPhones streaming at once, the
+  frame rate and the Wi-Fi with both, the second phone on the first one's
+  hotspot, and Safari on the second phone reconnecting. The tests pair two
+  stand-in phones.
 - **A closed network made by the Mac** with Internet Sharing and no internet
   behind it. The steps are from how macOS is known to behave; they have not
   been tried on your Mac.

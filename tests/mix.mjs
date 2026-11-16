@@ -50,7 +50,7 @@ try {
   const stripTop = async () => (await control.locator('.mixrow').boundingBox()).y;
 
   console.log('before anything is mixed');
-  await control.keyboard.press('3');
+  await control.keyboard.press('4');
   check('input B starts off', (await input()).kindB === '' && (await line('b')) === 'B · off');
   check('the strip is one slim row under the picture', (await control.locator('.panic .inputs').count()) === 0 && (await control.locator('.mixrow').boundingBox()).height <= 72, `${(await control.locator('.mixrow').boundingBox()).height} px`);
   check('the bar invites a drag and the mode waits for it', (await control.locator('#mixbar').textContent()) === 'Drag to mix B in' && (await control.locator('#mix-mode').isDisabled()));
@@ -61,7 +61,7 @@ try {
   console.log('choosing B');
   check('the source icons are away until the pointer is on a view', await icon('b', 'camera').isHidden());
   await control.locator('#input-b').hover();
-  check('pointing at the view brings its four icons out', (await icon('b', 'camera').isVisible()) && (await control.locator('#inview-b .inview-icon').count()) === 4);
+  check('pointing at the view brings its icons out: five sources and Off for B, five for A', (await icon('b', 'camera').isVisible()) && (await control.locator('#inview-b .inview-icon').count()) === 6 && (await control.locator('#inview-a .inview-icon').count()) === 5);
   check('the view says what it is showing, above the strip', (await tipText()) === 'B · off' && (await control.locator('.strip-tip').boundingBox()).y + (await control.locator('.strip-tip').boundingBox()).height <= (await stripTop()) + 1);
   await icon('b', 'pattern').hover();
   check("the source A is using says so", (await tipText()).includes('in use by A'), await tipText());
@@ -78,9 +78,9 @@ try {
   check('with no Mix B in the preset the picture is still A alone', !green(await picture()), (await picture()).map((v) => v.toFixed(0)).join(','));
 
   console.log('looking without choosing');
-  await icon('b', 'camera').click();
+  await icon('b', 'off').click();
   await settle(async () => (await input()).kindB === '' && (await lit(control, 'b')) < 0.02, 'B off again');
-  check("clicking B's lit icon turns B off", (await input()).kindB === '');
+  check("B's Off button turns B off, and lights", (await input()).kindB === '' && (await icon('b', 'off').getAttribute('aria-pressed')) === 'true' && (await icon('b', 'off').getAttribute('data-midi')) === 'inputB:off');
   await control.mouse.move(5, 5);
   await control.locator('#input-b').hover();
   await icon('b', 'camera').hover();
@@ -145,18 +145,18 @@ try {
   await setMode(0);
 
   console.log('B off, and trading places');
-  await choose('b', 'camera');
+  await choose('b', 'off');
   check('with B off the effect passes A through', await settle(async () => (await input()).kindB === '' && !green(await picture()), 'A alone'), (await picture()).map((v) => v.toFixed(0)).join(','));
   check('and the bar says B is off', (await control.locator('#mixbar').textContent()) === 'B is off');
-  await control.keyboard.press('Shift+Digit2');
-  check('Shift + 2 makes the Mac camera B again', (await input()).kindB === 'camera' && (await settle(async () => green(await picture()), 'green again')));
-  await control.keyboard.press('2');
+  await control.keyboard.press('Shift+Digit3');
+  check('Shift + 3 makes the Mac camera B again', (await input()).kindB === 'camera' && (await settle(async () => green(await picture()), 'green again')));
+  await control.keyboard.press('3');
   check("asking A for B's source makes them trade places", (await input()).kind === 'camera' && (await input()).kindB === 'pattern');
   await choose('b', 'camera');
   check('and so does asking B for the source A has', (await input()).kind === 'pattern' && (await input()).kindB === 'camera');
   await control.keyboard.press('Shift+Digit1');
   check('the iPhone can be B', (await input()).kindB === 'phone' && (await settle(async () => (await status()).inputB?.kind === 'phone' && (await status()).inputB.state === 'live', 'phone as B', 20000)), JSON.stringify((await status()).inputB));
-  await control.keyboard.press('Shift+Digit2');
+  await control.keyboard.press('Shift+Digit3');
 
   console.log('the picture moves to /control');
   await output.close();

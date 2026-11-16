@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pairing P1, a tab for each phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button{font:inherit;cursor:pointer}
+.cap{text-transform:uppercase;letter-spacing:0.08em}
+.b{background:none;color:#ff6b5e;border:1px solid #5b2622;padding:7px 12px;text-transform:uppercase;letter-spacing:0.08em}
+.b.on{background:#ff6b5e;color:#140302;border-color:#ff6b5e;font-weight:700}
+.qr{width:170px;height:170px;flex-shrink:0;background-color:#fff;background-image:repeating-linear-gradient(0deg,#000 0 6px,transparent 6px 14px),repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 12px);background-size:100% 100%;border:10px solid #fff;box-sizing:border-box}
+</style>
+</helmet>
+<div style="width: 620px; height: 620px; box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 12px; background: #060303; color: #ff6b5e; font: 500 12px/1.4 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+
+  <div style="border: 1px solid #ff6b5e; padding: 14px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+      <button class="b">iPhone · paired</button>
+      <button class="b on" aria-pressed="true">iPhone B · not paired</button>
+    </div>
+    <div style="display: flex; gap: 14px">
+      <div class="qr" role="img" aria-label="QR code for iPhone B"></div>
+      <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+        <div class="cap" style="color: #ffb3ab">Room code · iPhone B</div>
+        <div style="font: 800 44px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.12em">PSAQ2-B</div>
+        <div>Ready. Scan this code with the second iPhone.</div>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 4px 8px">
+      <b>OK</b><span>Picture running: on this page</span>
+      <b>OK</b><span>Mac reached the pairing server</span>
+      <b style="background: #ff6b5e; color: #140302; padding: 0 4px">HERE</b><span>Phone B found the Mac. Scan the code and tap START on the second phone.</span>
+      <span>··</span><span>Video link</span>
+      <span>··</span><span>Picture arriving</span>
+    </div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap">
+      <button class="b">Pair without internet</button>
+      <button class="b">New room code</button>
+      <button class="b">Close</button>
+    </div>
+  </div>
+
+  <div style="color: #ffb3ab">The pop-over you have now, with two tabs across its top. Each tab is one phone: its own code, its own five steps, its own Pair without internet. The tab says whether that phone is paired, so one glance shows both. Nothing else in the pop-over changes.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":620,"height":620}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

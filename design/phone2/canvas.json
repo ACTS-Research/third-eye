@@ -1,0 +1,18 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-16T19:30:00Z" },
+  "title": "Third Eye Cam: Second iPhone",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 620, "h": 620, "title": "P1 · One pop-over, a tab for each phone" },
+    "Side.dc.html": { "x": 700, "y": 0, "w": 940, "h": 620, "title": "P2 · Both codes side by side" },
+    "OneCode.dc.html": { "x": 1720, "y": 0, "w": 940, "h": 620, "title": "P3 · One code; each phone says which it is" },
+    "Strip.dc.html": { "x": 0, "y": 960, "w": 1000, "h": 420, "title": "The top bar and the strip with five sources" }
+  },
+  "order": ["Main.dc.html", "Side.dc.html", "OneCode.dc.html", "Strip.dc.html"],
+  "notes": {
+    "heading": { "x": 0, "y": -300, "text": "Pairing a second iPhone: three ways", "kind": "title1", "maxW": 2660 }
+  },
+  "designSystems": []
+}

@@ -94,13 +94,19 @@ class Slot {
     this.width = 0;
     this.height = 0;
     this.hasFrame = false;
-    // Quarter turns (anticlockwise) applied to the phone's frames, asked for
-    // with the phone's Rotate button. The engine sets it.
-    this.turn = 0;
+    // Quarter turns (anticlockwise) applied to each phone's frames, asked
+    // for with that phone's Rotate button. The engine sets them; every slot
+    // of a manager shares the one object.
+    this.turns = { phone: 0, phone2: 0 };
   }
 
   get quarter() {
-    return this.kind === 'phone' ? this.turn : 0;
+    return this.turns[this.kind] ?? 0;
+  }
+
+  // The first phone's turn, as it was before there were two.
+  get turn() {
+    return this.turns.phone;
   }
 
   // The picture's size as shown, after any turn.
@@ -157,11 +163,13 @@ class Slot {
 // "new frame" flag is taken by whichever slot uploads it.
 export class InputManager extends Slot {
   constructor() {
-    super({ phone: new VideoFeed(), camera: new VideoFeed(), file: new VideoFeed() }, 'pattern');
+    super({ phone: new VideoFeed(), phone2: new VideoFeed(), camera: new VideoFeed(), file: new VideoFeed() }, 'pattern');
     this.b = new Slot(this.feeds, '');
+    this.b.turns = this.turns;
     // A third picture, for the perform screen's rollover: a source neither A
     // nor B is showing, looked at without being chosen.
     this.peek = new Slot(this.feeds, '');
+    this.peek.turns = this.turns;
   }
 
   initGL(gl) {

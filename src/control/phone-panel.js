@@ -1,6 +1,6 @@
 // Pairing: room code, QR code for the phone, and the signaling server setting.
 
-import { normalizeRoom, phoneUrl, randomRoom } from '../shared/net.js';
+import { normalizeRoom, phoneUrl, randomRoom, roomB } from '../shared/net.js';
 import { currentDim, currentPalette } from '../shared/palette.js';
 import { drawQr } from '../shared/qr.js';
 import { CODECS } from '../shared/sdp.js';
@@ -24,10 +24,28 @@ export function mountPhonePanel(root, ui) {
   // The connection as five steps, so a failure names the step it is at.
   const popSteps = el('ol', { class: 'steps' });
   const popLink = el('div', { class: 'small dim', style: 'word-break:break-all' });
+  // A tab for each phone: the pop-over shows one phone's code and steps at a
+  // time, so the wrong phone can never be pointed at a code. Opening the
+  // second tab is what switches the second phone on (net.second).
+  let which = 'a';
+  const tabs = {
+    a: el('button', { id: 'pair-tab-a', role: 'tab', onclick: () => showPhone('a') }),
+    b: el('button', { id: 'pair-tab-b', role: 'tab', onclick: () => showPhone('b') }),
+  };
+  const popCodeLabel = el('div', { class: 'caps dim', text: 'Room code' });
+  const stopB = el('button', { id: 'pair-stop-b', text: 'Stop using iPhone B', title: 'Lets go of its room code. A paired second phone is dropped.', onclick: () => { store.merge('net', { second: false }); showPhone('a'); } });
+  const pairOffline = el('button', { class: 'pair-offline', text: 'Pair without internet', title: PAIR_TIP, onclick: () => { hidePop(); ui.pairOffline?.(); } });
+  function showPhone(next) {
+    which = next;
+    if (which === 'b' && !store.state.net.second) store.merge('net', { second: true });
+    sync();
+    render(ui.status);
+  }
   const pop = el('div', { id: 'pairing-pop', hidden: true, role: 'dialog', 'aria-label': 'Pair the phone' }, [
+    el('div', { class: 'pair-tabs', role: 'tablist' }, [tabs.a, tabs.b]),
     popQr,
     el('div', { class: 'grow' }, [
-      el('div', { class: 'caps dim', text: 'Room code' }),
+      popCodeLabel,
       popCode,
       popState,
       popSteps,
@@ -35,7 +53,8 @@ export function mountPhonePanel(root, ui) {
       el('div', { class: 'row wrap', style: 'margin-top:8px' }, [
         el('button', { text: 'Restart output', title: 'Close every output window in this browser and open a new one', onclick: () => ui.restartOutput?.() }),
         el('button', { text: 'New room code', title: 'The phone must scan again', onclick: () => store.merge('net', { room: randomRoom() }) }),
-        el('button', { class: 'pair-offline', text: 'Pair without internet', title: PAIR_TIP, onclick: () => { hidePop(); ui.pairOffline?.(); } }),
+        pairOffline,
+        stopB,
         el('button', { text: 'Pairing settings', onclick: () => { hidePop(); ui.setView('setup'); } }),
         el('button', { text: 'Close', onclick: () => hidePop() }),
       ]),
@@ -54,9 +73,13 @@ export function mountPhonePanel(root, ui) {
     clearTimeout(closeTimer);
     closeTimer = 0;
   };
-  ui.togglePairing = (from) => {
+  // `phone` ('a' or 'b') opens it at that phone's tab.
+  ui.togglePairing = (from, phone = 'a') => {
     if (!pop.hidden && anchor === from) return hidePop();
-    forPairing = ui.status?.phone.phone !== 'connected';
+    which = phone;
+    sync();
+    render(ui.status);
+    forPairing = (which === 'b' ? ui.status?.phoneB : ui.status?.phone)?.phone !== 'connected';
     anchor = from;
     const r = from.getBoundingClientRect();
     pop.style.top = `${r.bottom + 10}px`;
@@ -64,7 +87,7 @@ export function mountPhonePanel(root, ui) {
     pop.hidden = false;
   };
   document.addEventListener('pointerdown', (e) => {
-    if (!pop.hidden && !pop.contains(e.target) && !e.target.closest?.('#phone-pill')) hidePop();
+    if (!pop.hidden && !pop.contains(e.target) && !e.target.closest?.('#phone-pill, #phone-b-pill')) hidePop();
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') hidePop();
@@ -99,6 +122,13 @@ export function mountPhonePanel(root, ui) {
   });
 
   let currentUrl = '';
+  let popUrl = '';
+  // The second phone's pairing link, for the tests.
+  ui.phoneLinkB = () => {
+    const u = new URL(currentUrl);
+    u.searchParams.set('room', roomB(store.state.net.room));
+    return u.href;
+  };
   // The pairing link as shown in the QR codes (room, palette, dimmer).
   ui.phoneLink = () => currentUrl;
 
@@ -114,10 +144,22 @@ export function mountPhonePanel(root, ui) {
     currentUrl = url;
     qr.width = 320;
     drawQr(qr, url);
+    // The pop-over shows the phone its tab is on. The second phone's link is
+    // the same link under its own room.
+    const second = which === 'b';
+    const rb = roomB(net.room);
+    const popLink_ = new URL(url);
+    if (second) popLink_.searchParams.set('room', rb);
+    popUrl = popLink_.href;
     popQr.width = 320;
-    drawQr(popQr, url);
-    popCode.textContent = net.room;
-    popLink.textContent = url;
+    drawQr(popQr, popUrl);
+    popCode.textContent = second ? `${rb.slice(0, -1)}-B` : net.room;
+    popCodeLabel.textContent = second ? 'Room code · iPhone B' : 'Room code';
+    popLink.textContent = popUrl;
+    for (const [key, tab] of Object.entries(tabs)) tab.setAttribute('aria-selected', String(key === which));
+    stopB.hidden = !second;
+    // (Pairing the second phone without internet is not built yet.)
+    pairOffline.hidden = second;
     code.textContent = net.room;
     link.textContent = url;
     link.href = url;
@@ -138,17 +180,29 @@ export function mountPhonePanel(root, ui) {
 
   ui.onPalette?.(sync);
 
-  ui.onStatus((status) => {
-    const p = status?.phone;
-    let text;
-    if (!p) text = ui.host?.stalled ? 'The output window is not drawing. Bring it back into view.' : 'Starting…';
-    else if (p.signal === 'error') text = p.error;
-    else if (p.phone === 'connected') text = p.media === 'connected' ? 'Phone paired and streaming.' : 'Phone paired.';
-    else if (p.signal === 'open') text = 'Ready. Scan the code with the iPhone camera.';
-    else if (p.signal === 'disconnected') text = `Cannot reach the pairing server${p.error ? ` (${p.error})` : ''}; retrying. Public and guest Wi-Fi often block it: try the iPhone's Personal Hotspot, or Pair without internet. A phone that is already paired keeps working.`;
-    else text = 'Connecting to the pairing server…';
-    state.textContent = text;
-    popState.textContent = text;
+  // What one phone's link is doing, in a sentence.
+  const say = (status, p, second) => {
+    const name = second ? 'second iPhone' : 'iPhone';
+    if (!status) return ui.host?.stalled ? 'The output window is not drawing. Bring it back into view.' : 'Starting…';
+    if (!p) return 'Starting…';
+    if (p.signal === 'error') return p.error;
+    if (p.phone === 'connected') return p.media === 'connected' ? 'Phone paired and streaming.' : 'Phone paired.';
+    if (p.signal === 'open') return `Ready. Scan the code with the ${name}'s camera.`;
+    if (p.signal === 'disconnected') return `Cannot reach the pairing server${p.error ? ` (${p.error})` : ''}; retrying. Public and guest Wi-Fi often block it: try the iPhone's Personal Hotspot, or Pair without internet. A phone that is already paired keeps working.`;
+    return 'Connecting to the pairing server…';
+  };
+  const tabText = (name, p) => `${name} · ${p?.phone === 'connected' ? 'paired' : 'not paired'}`;
+
+  function render(status) {
+    // The Setup panel is about the first phone; the pop-over about the
+    // phone its tab is on.
+    state.textContent = say(status, status?.phone, false);
+    const second = which === 'b';
+    const p = second ? status?.phoneB : status?.phone;
+    const kind = second ? 'phone2' : 'phone';
+    popState.textContent = say(status, p, second);
+    tabs.a.textContent = tabText('iPhone', status?.phone);
+    tabs.b.textContent = store.state.net.second ? tabText('iPhone B', status?.phoneB) : 'iPhone B · add a second phone';
 
     const paired = p?.phone === 'connected';
     const video = paired && p.media === 'connected';
@@ -158,12 +212,14 @@ export function mountPhonePanel(root, ui) {
       clearTimeout(closeTimer);
       closeTimer = 0;
     }
+    // Either input may be showing this phone.
+    const shown = [status?.input, status?.inputB].find((i) => i?.kind === kind);
     const steps = [
-      [`Picture running${p ? (status.host?.role === 'output' ? ': in the output window' : ': on this page') : ''}`, !!p, 'Starting. If this stays, reload this page.'],
+      [`Picture running${status ? (status.host?.role === 'output' ? ': in the output window' : ': on this page') : ''}`, !!status, 'Starting. If this stays, reload this page.'],
       [p?.direct && paired ? 'Paired without the pairing server' : 'Mac reached the pairing server', p?.signal === 'open' || paired, p?.signal === 'error' ? 'Room code taken elsewhere.' : 'No answer yet. The network may block it: use Pair without internet.'],
-      ['Phone found the Mac', paired, 'Scan the code and tap START on the phone. If the phone says "Mac not found", the code is wrong or stale.'],
+      ['Phone found the Mac', paired, `Scan the code and tap START on the ${second ? 'second ' : ''}phone. If the phone says "Mac not found", the code is wrong or stale.`],
       [`Video link${video && p.route ? `: ${p.route}` : ''}`, video, p?.info?.controllerOnly ? 'The phone\'s camera is off (controller only).' : 'Phone and Mac cannot reach each other directly on this network.'],
-      ['Picture arriving', video && status.input.kind === 'phone' && status.input.state === 'live', status?.input.kind === 'phone' ? 'Connected, but no frames yet.' : 'Select the iPhone input (key 1).'],
+      ['Picture arriving', video && shown?.state === 'live', shown ? 'Connected, but no frames yet.' : `Select the ${second ? 'iPhone B input (key 2, or Shift + 2 for input B)' : 'iPhone input (key 1)'}.`],
     ];
     popSteps.replaceChildren();
     let failed = false;
@@ -172,7 +228,8 @@ export function mountPhonePanel(root, ui) {
       popSteps.append(el('li', { class: state }, [el('b', { text: ok ? 'OK' : failed ? '··' : 'HERE' }), el('span', { text: !ok && !failed ? `${label}. ${help}` : label })]));
       if (!ok) failed = true;
     }
-  });
+  }
+  ui.onStatus(render);
 
   root.append(
     el('div', { class: 'panel', id: 'phone-panel' }, [

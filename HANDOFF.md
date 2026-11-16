@@ -2,16 +2,17 @@
 
 ## 2026-11-16 (fourth session)
 
-**Where things stand.** Input B and the Mix B effect are built and live from
-`main`: a second input, mixed in by an effect in the chain, with a mix bar
-and two small live views under the picture on the perform screen. It has
-only been run in headless Chromium. Most of what was built after 13 November
-is in the same position.
+**Where things stand.** Three things were built this session and are live
+from `main`: input B with the Mix B effect, the strip under the picture
+(second version), and a second iPhone pairing under its own room code. All
+of it has only been run in headless Chromium, as has most of what was built
+after 13 November.
 
-**Next step.** On the real Mac, with every page reloaded: point at B's
-small view under the picture, click the camera icon (or press Shift + 2),
-and drag the bar. Then go down "Built since 13 November, not yet tried
-on real hardware" below.
+**Next step.** Build the second half of the second iPhone: Pair without
+internet for it, and carrying it over a direct link when the picture moves
+between windows (see "A second iPhone" below). Before that, if you can, try
+the first half on two real iPhones: phone pill → the iPhone B tab → scan
+with the second phone → press 2.
 
 **Decisions only you can make.**
 
@@ -19,8 +20,7 @@ on real hardware" below.
   needs changing (it is its second version).
 - Say whether a Mix B added by dragging the bar should be saved into the
   preset by itself. For now it lasts until the preset is loaded again.
-- Next to build, as you asked: the second iPhone as input B. After it,
-  "an image as a control signal".
+- After the second iPhone is finished: "an image as a control signal".
 - Picture controls on the Mac (brightness, contrast, saturation and so on):
   say whether they belong to each preset (the Contrast / Brightness effect
   already does that) or should be one fixed set that holds across presets.
@@ -58,7 +58,8 @@ working, modes as a grid on both screens, pop-ups opening upward.
   pictures, note-value tempo sync, and dragging effects to reorder.
 - Mac, Setup: the app's own menus and bars.
 - Mac, input B and Mix B (16 November): all of it. Two real pictures mixed,
-  the iPhone as A or B, 60 fps with two live videos, the small views.
+  the iPhone as A or B, 60 fps with two live videos, the strip's rollover.
+- A second iPhone (16 November): all of it, on two real phones.
 
 **When you are next in the studio.** Open the output window before the
 show, then: measure real latency fullscreen on the projector at 720p · 60 (so
@@ -340,8 +341,8 @@ Three static pages built by Vite, no framework.
 | `src/effects/` | One file per effect; `index.js` is the registry, `common.glsl.js` the shared GLSL |
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon, option D2 from the sheet at https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo) |
-| `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `running-order/`, `edit-screen/`, `mix/`. `design/README.md` says which option of each was built |
-| `tests/` | Twenty headless suites and `lib.mjs` |
+| `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `running-order/`, `edit-screen/`, `mix/`, `phone2/`. `design/README.md` says which option of each was built |
+| `tests/` | Twenty-one headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 
@@ -471,6 +472,11 @@ Three static pages built by Vite, no framework.
 - One `control-ui` check ("it says what is wrong and what to try") is
   timing-dependent and occasionally fails; it passes on a rerun. So does
   "the output flashes black and white during the test" in `record-latency`.
+- `offline-pair`'s "the link is lost: the Mac says so" failed in two of three
+  full runs on 16 November and passed four times out of four run alone. It
+  waits twenty seconds for the Mac to notice a phone page that was closed
+  on a direct link, which depends on how fast Chromium gives the link up.
+  Not traced further.
 - In the sandbox a busy output can go quiet for two seconds, and `/control`
   then shows "not drawing" for a moment. Not seen to matter; on a real Mac
   it should only appear for a window that is really hidden.
@@ -561,16 +567,43 @@ image as a control signal" are not started; see the end of this section.
 - **Not done:** a hatched "moved by modulation" band on the bar; a second
   video file; saving a Mix B added from the perform screen into the preset.
 
-Still to come, as advised:
+### A second iPhone (first half built 2026-11-16)
 
-- **A second iPhone as input B.** Today a second phone that pairs takes over
-  from the first (`acceptCall` / `acceptData` in `remote.js` replace the
-  link). `PhoneLink` would hold two links; first to pair is A, the next B;
-  both ways of pairing; both phones carried when the engine moves between
-  windows; phone B's sensors as their own modulation sources (the owner
-  wants both phones to control). Touches engine, remote, host and link. Two
-  720p60 streams are about 10 Mbit/s; on the iPhone hotspot phone B's video
-  goes through phone A's radio.
+Mock-ups: https://claude.ai/artifact/Ee4tdXfFVVeuFct1gv7JH9 (P1, a tab for
+each phone, was built; iPhone B is key 2). Sources in `design/phone2/`.
+
+- **The second phone is another room.** It pairs under `roomB(room)`
+  (`net.js`): the room code with a B after it, shown as `PSAQ2-B`. To the
+  phone it is simply a room, so its page, its reconnecting and its typed
+  code needed no changes. The only thing it is told is `second: true` in
+  the `config` message, to label itself PHONE B.
+- **Two `PhoneLink`s in the engine** (`link`, `linkB`, both in `links`),
+  each with its own feed (`feeds.phone`, `feeds.phone2`) and its own
+  `PhoneSensors` (`sensors`, `sensorsB` with tag `B`: sources `phoneB.*`,
+  `padB.*`, lazy so they are listed once the phone reports). Neither link
+  knows of the other. `linkB` is only open while `net.second` is on
+  (`Engine.refreshLinks`); opening the iPhone B tab turns it on, Stop using
+  iPhone B turns it off.
+- **Triggers are shared**: `PhoneSensors` no longer writes `trig.N`; the
+  engine ORs the two phones' `shown` each frame. Presets, labels, look and
+  config go to both (`sendPhones`). The Mac-output preview runs while
+  either phone asks (`link.wantsPreview`).
+- **`phone2` is a fifth source**, second in `INPUT_KINDS`, so the keys moved:
+  1 iPhone, 2 iPhone B, 3 camera, 4 pattern, 5 file. Each phone's Rotate
+  turns its own frames (`inputs.turns`). Vision, the latency estimate and
+  uPhone still follow input A and the first phone.
+- **When the picture moves between windows** both links shut down and open
+  again in the other window; each phone finds the Mac again by itself
+  through the pairing server.
+- **Not built (the second half):** Pair without internet for the second
+  phone (`pair-offer` / `pair-answer` / `intro` on the bus, `keepSpare` in
+  `host.js` and `offline-pair.js` all speak of one phone: give them a
+  `phone` field and use `linkB`); alerts for the second phone going silent
+  or into the background (only its readout says so); the Setup → Phone
+  panel, which shows the first phone only.
+
+Still to come:
+
 - **An image as a control signal** (the owner said yes): B's brightness or
   motion, whole or by region, as modulation sources.
 

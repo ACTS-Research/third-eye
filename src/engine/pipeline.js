@@ -466,7 +466,6 @@ export class Pipeline {
         peek.setKind(kind);
         peek.hasFrame = false;
       }
-      peek.turn = inputs.turn;
       // Whatever frame the feed has now: the "new frame" flag is not this
       // slot's to wait for.
       peek.force = true;

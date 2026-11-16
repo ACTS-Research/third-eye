@@ -18,7 +18,7 @@ try {
   console.log('effects');
   const effects = await output.evaluate(() => [...window.thirdEye.engine.pipeline.programs.keys()]);
   check('all 13 effects compiled', effects.length === 13, effects.join(', '));
-  await control.keyboard.press('3'); // test pattern
+  await control.keyboard.press('4'); // test pattern
   // Each effect alone must change the picture compared with a clean chain.
   const setChain = (types) => control.evaluate(async (list) => {
     const { store } = window.thirdEye;

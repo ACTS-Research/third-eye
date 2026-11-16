@@ -235,7 +235,7 @@ try {
   console.log('local camera');
   await control.evaluate(() => window.thirdEye.ui.setView('setup'));
   await control.click('text=Find cameras');
-  await control.keyboard.press('2');
+  await control.keyboard.press('3');
   s = await waitStatus(control, (st) => st.input.kind === 'camera' && st.input.state === 'live', 'local camera live');
   check('local camera feeds the pipeline', true, `${s.camera.label} ${s.input.width}x${s.input.height}`);
   await control.locator('#camera-menu').dispatchEvent('click');

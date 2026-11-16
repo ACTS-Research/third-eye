@@ -8,8 +8,9 @@ import { CODECS, DEFAULT_CODEC } from './sdp.js';
 import { LFO_COUNT, LFO_SHAPES, LFO_SYNC } from './sources.js';
 import { clamp, uid } from './util.js';
 
-export const INPUT_KINDS = ['phone', 'camera', 'pattern', 'file'];
-export const INPUT_LABELS = { phone: 'iPhone', camera: 'Local camera', pattern: 'Test pattern', file: 'Video file' };
+// (phone2 is the second iPhone, which pairs under its own room code.)
+export const INPUT_KINDS = ['phone', 'phone2', 'camera', 'pattern', 'file'];
+export const INPUT_LABELS = { phone: 'iPhone', phone2: 'iPhone B', camera: 'Local camera', pattern: 'Test pattern', file: 'Video file' };
 export const FX_TARGETS = ['all', 'person', 'background'];
 
 export function makeEffect(type, overrides = {}) {
@@ -84,7 +85,9 @@ export function defaultState() {
     // kindB is the second input, mixed in by the Mix B effect ('' = off). It
     // is never the same source as kind.
     input: { kind: 'pattern', kindB: '', cameraId: '', fit: 'cover', mirror: false },
-    net: { room: randomRoom(), signal: '', codec: DEFAULT_CODEC },
+    // second: a second iPhone may pair (under roomB(room)). Off until the
+    // operator asks for it, so a one-phone show registers one code only.
+    net: { room: randomRoom(), signal: '', codec: DEFAULT_CODEC, second: false },
     tempo: { bpm: 120 },
     midi: { enabled: false },
     audio: { enabled: false, deviceId: '', gain: 1, sensitivity: 1.6 },

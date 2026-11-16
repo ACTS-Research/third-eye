@@ -327,7 +327,10 @@ export class HostLink {
     this.heardAt = performance.now();
     this.silent = false;
     if (msg.t === 'pong') this.rttMs = performance.now() - msg.ts;
-    else if (msg.t === 'config') this.setCodec(msg.codec);
+    else if (msg.t === 'config') {
+      this.setCodec(msg.codec);
+      this.onMessage?.(msg);
+    }
     else if (msg.t === 'host') this.onHostSession(msg.session);
     else if (msg.t === 'intro') this.introduce(msg, (reply) => this.send(reply));
     else this.onMessage?.(msg);

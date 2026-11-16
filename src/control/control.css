@@ -58,7 +58,7 @@ kbd { font: inherit; opacity: 0.8; }
 #pills { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
 .pill { white-space: nowrap; font-variant-numeric: tabular-nums; padding: 2px 0; }
 .pill[role='button'] { cursor: pointer; }
-#pairing-pop { position: fixed; z-index: 20; width: min(540px, calc(100vw - 16px)); display: flex; gap: 14px; align-items: flex-start; padding: 14px; background: var(--bg); border: 2px solid var(--ink); }
+#pairing-pop { position: fixed; z-index: 20; width: min(540px, calc(100vw - 16px)); display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; padding: 14px; background: var(--bg); border: 2px solid var(--ink); }
 /* Pair without internet: a dialog over the page. The code is drawn large
    and always black on white; the camera view is mirrored, like a mirror. */
 #offline-pair { position: fixed; z-index: 30; inset: 60px 0 auto 0; margin: 0 auto; width: min(920px, calc(100vw - 24px)); max-height: calc(100vh - 80px); overflow: auto; padding: 16px; background: var(--bg); border: 2px solid var(--ink); display: flex; flex-direction: column; gap: 12px; }
@@ -72,6 +72,10 @@ kbd { font: inherit; opacity: 0.8; }
 #offline-state { font-weight: 700; }
 .tip { border-bottom: 1px dashed var(--ink); cursor: help; color: var(--ink); }
 @media (max-width: 700px) { .offline-steps { grid-template-columns: 1fr; } }
+.pair-tabs { flex: 0 0 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.pair-tabs button { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pair-tabs button[aria-selected='true'] { background: var(--ink); border-color: var(--ink); color: var(--on-ink); font-weight: 700; }
+#pairing-pop > .grow { flex: 1 1 0; min-width: 0; }
 #pairing-pop canvas { width: 180px; height: 180px; image-rendering: pixelated; flex-shrink: 0; }
 .steps { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 11px; }
 .steps li { display: grid; grid-template-columns: 40px 1fr; gap: 6px; }
@@ -147,7 +151,7 @@ main { flex: 1; min-height: 0; }
 .inview-view.bad { animation: blink 0.8s steps(2) infinite; }
 /* The four sources, out over the end of the bar while the pointer or the
    keyboard is on the view or on them. The padding bridges the gap. */
-.inview-icons { display: none; position: absolute; top: 0; left: 100%; padding-left: 8px; z-index: 2; grid-template-columns: 27px 27px; grid-auto-rows: 27px; }
+.inview-icons { display: none; position: absolute; top: 0; left: 100%; padding-left: 8px; z-index: 2; grid-template-columns: 27px 27px 27px; grid-auto-rows: 27px; }
 .inview.b .inview-icons { left: auto; right: 100%; padding-left: 0; padding-right: 8px; }
 .inview:hover .inview-icons, .inview:focus-within .inview-icons, .inview.open .inview-icons, body.midi-map .inview-icons { display: grid; }
 .inview-icon { position: relative; display: grid; place-items: center; padding: 0; background: var(--bg); border: 1px solid var(--line); }

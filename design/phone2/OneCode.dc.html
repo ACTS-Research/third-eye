@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pairing P3, one code</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button{font:inherit;cursor:pointer}
+.cap{text-transform:uppercase;letter-spacing:0.08em}
+.b{background:none;color:#ff6b5e;border:1px solid #5b2622;padding:7px 12px;text-transform:uppercase;letter-spacing:0.08em}
+.qr{width:150px;height:150px;flex-shrink:0;background-color:#fff;background-image:repeating-linear-gradient(0deg,#000 0 6px,transparent 6px 14px),repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 12px);border:10px solid #fff;box-sizing:border-box}
+</style>
+</helmet>
+<div style="width: 940px; height: 620px; box-sizing: border-box; padding: 20px; display: flex; gap: 24px; background: #060303; color: #ff6b5e; font: 500 12px/1.4 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+
+  <section style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+    <div class="cap" style="color: #ffb3ab">On the Mac</div>
+    <div style="border: 1px solid #ff6b5e; padding: 14px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; gap: 12px">
+        <div class="qr" role="img" aria-label="QR code for pairing"></div>
+        <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+          <div class="cap" style="color: #ffb3ab">Room code</div>
+          <div style="font: 800 40px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.12em">PSAQ2</div>
+          <div>One code for both phones.</div>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 6px 8px; align-items: center">
+        <b class="cap">iPhone</b><span style="background: #ff6b5e; color: #140302; font-weight: 700; padding: 2px 6px; justify-self: start">PAIRED · LIVE</span>
+        <b class="cap">iPhone B</b><span style="border: 1px dashed #ff6b5e; padding: 2px 6px; justify-self: start">NOT PAIRED</span>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <button class="b">Show the steps</button>
+        <button class="b">Pair without internet</button>
+        <button class="b">Close</button>
+      </div>
+    </div>
+    <div style="color: #ffb3ab">The Mac's pop-over stays almost as it is: one code, and a line for each phone. The choice moves to the phone.</div>
+  </section>
+
+  <section style="width: 330px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px">
+    <div class="cap" style="color: #ffb3ab">On each phone, before START</div>
+    <div style="border: 1px solid #5b2622; padding: 18px 16px; display: flex; flex-direction: column; gap: 14px; flex-grow: 1">
+      <div style="font: 800 30px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.1em">THIRD EYE CAM</div>
+      <div>Room PSAQ2</div>
+      <div class="cap">Which phone is this?</div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+        <button style="min-height: 64px; background: none; color: #8a3a34; border: 1px solid #5b2622" disabled="disabled"><b style="font: 800 22px/1 'Big Shoulders Display', sans-serif; display: block">IPHONE</b>in use</button>
+        <button aria-pressed="true" style="min-height: 64px; background: #ff6b5e; color: #140302; border: 1px solid #ff6b5e; font-weight: 700"><b style="font: 800 22px/1 'Big Shoulders Display', sans-serif; display: block">IPHONE B</b>free</button>
+      </div>
+      <button style="min-height: 72px; margin-top: auto; background: #ff6b5e; color: #140302; border: 0; font: 800 34px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.1em">START</button>
+    </div>
+    <div style="color: #ffb3ab">Each phone asks the Mac which places are free and offers them. It remembers its answer for next time.</div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":940,"height":620}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

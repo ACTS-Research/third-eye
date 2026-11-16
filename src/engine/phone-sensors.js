@@ -13,8 +13,15 @@ function wrapPi(a) {
 }
 
 export class PhoneSensors {
-  constructor(mod) {
+  // `tag` is '' for the first phone and 'B' for the second, whose sources
+  // are phoneB.* and padB.*. Triggers are not written to the modulation
+  // table here: both phones' buttons do the same things, so the engine
+  // combines `shown` from the two (see Engine.frame).
+  constructor(mod, tag = '') {
     this.mod = mod;
+    this.tag = tag;
+    this.phone = `phone${tag}`;
+    this.pad = `pad${tag}`;
     this.channel = null;
     this.lastSeq = -1;
     this.lastPacketAt = 0;
@@ -88,25 +95,25 @@ export class PhoneSensors {
         this.target[1] = pitch;
         this.target[2] = yaw;
       }
-      mod.set('phone.roll', roll / Math.PI);
-      mod.set('phone.pitch', pitch / (Math.PI / 2));
-      mod.set('phone.yaw', yaw / Math.PI);
-      mod.set('phone.tiltX', clamp(-ux, -1, 1));
-      mod.set('phone.tiltY', clamp(uy, -1, 1));
+      mod.set(`${this.phone}.roll`, roll / Math.PI);
+      mod.set(`${this.phone}.pitch`, pitch / (Math.PI / 2));
+      mod.set(`${this.phone}.yaw`, yaw / Math.PI);
+      mod.set(`${this.phone}.tiltX`, clamp(-ux, -1, 1));
+      mod.set(`${this.phone}.tiltY`, clamp(uy, -1, 1));
     }
 
     if (this.hasMotion) {
-      mod.set('phone.spinX', clamp(f[P.ROT_BETA] / 360, -1, 1));
-      mod.set('phone.spinY', clamp(f[P.ROT_GAMMA] / 360, -1, 1));
-      mod.set('phone.spinZ', clamp(f[P.ROT_ALPHA] / 360, -1, 1));
+      mod.set(`${this.phone}.spinX`, clamp(f[P.ROT_BETA] / 360, -1, 1));
+      mod.set(`${this.phone}.spinY`, clamp(f[P.ROT_GAMMA] / 360, -1, 1));
+      mod.set(`${this.phone}.spinZ`, clamp(f[P.ROT_ALPHA] / 360, -1, 1));
       const a = Math.hypot(f[P.ACC_X], f[P.ACC_Y], f[P.ACC_Z]);
       this.motion += (clamp(a / 12, 0, 1) - this.motion) * 0.25;
       if (a > SHAKE_THRESHOLD) this.shake = 1;
     }
 
-    mod.set('pad.x', clamp(f[P.PAD_X], 0, 1));
-    mod.set('pad.y', clamp(f[P.PAD_Y], 0, 1));
-    mod.set('pad.touch', f[P.PAD_DOWN] > 0.5 ? 1 : 0);
+    mod.set(`${this.pad}.x`, clamp(f[P.PAD_X], 0, 1));
+    mod.set(`${this.pad}.y`, clamp(f[P.PAD_Y], 0, 1));
+    mod.set(`${this.pad}.touch`, f[P.PAD_DOWN] > 0.5 ? 1 : 0);
 
     // Triggers: the mask says what is held now; the counters say how many
     // presses there have been, including taps that started and ended between
@@ -139,14 +146,16 @@ export class PhoneSensors {
         if (on) this.queued[i]--;
       }
       this.shown[i] = on;
-      mod.set(`trig.${i + 1}`, on ? 1 : 0);
     }
-    if (!alive) mod.set('pad.touch', 0);
-
     this.shake *= Math.exp(-dt / SHAKE_DECAY_S);
     if (!alive) this.motion *= Math.exp(-dt / 0.3);
-    mod.set('phone.shake', this.shake);
-    mod.set('phone.motion', this.motion);
+    // The second phone's sources are listed once it has reported: until
+    // then nothing is written for it.
+    if (!this.tag || this.lastPacketAt) {
+      if (!alive) mod.set(`${this.pad}.touch`, 0);
+      mod.set(`${this.phone}.shake`, this.shake);
+      mod.set(`${this.phone}.motion`, this.motion);
+    }
 
     // Light smoothing for the angles shaders read directly.
     const k = 1 - Math.exp(-dt / 0.05);

@@ -59,7 +59,7 @@ try {
   if (process.env.SHOTS) await control.screenshot({ path: `${process.env.SHOTS}/pairing-pop.png` });
   await control.keyboard.press('Escape');
   check('Esc closes it', await control.locator('#pairing-pop').isHidden());
-  check('the top bar has two readouts: the output and the phone', (await control.locator('#pills .pill').count()) === 2 && (await control.locator('#pills .pill').nth(1).getAttribute('id')) === 'phone-pill');
+  check('the top bar has two readouts: the output and the phone', (await control.locator('#pills .pill:not([hidden])').count()) === 2 && (await control.locator('#pills .pill').nth(1).getAttribute('id')) === 'phone-pill');
   await control.locator('#input-a').hover();
   check('what the input is doing is said over its small view', await settle(async () => (await control.locator('.strip-tip').textContent()) === 'A · Test pattern · live', 'input line'), await control.locator('.strip-tip').textContent());
   await control.mouse.move(5, 5);

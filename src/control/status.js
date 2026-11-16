@@ -27,7 +27,11 @@ export function mountStatus(root, ui) {
     return pill;
   };
   const phonePill = button('phone-pill', 'Show the QR code and connection details', (pill) => ui.togglePairing?.(pill));
-  pills.append(outPill, phonePill);
+  // The second iPhone's readout: there only while a second phone is wanted
+  // (net.second), so a one-phone show's bar is as it always was.
+  const phoneBPill = button('phone-b-pill', 'Show the second iPhone\'s QR code and connection details', (pill) => ui.togglePairing?.(pill, 'b'));
+  phoneBPill.hidden = true;
+  pills.append(outPill, phonePill, phoneBPill);
 
   const rows = {};
   const list = el('dl', { class: 'stats' });
@@ -121,6 +125,7 @@ export function mountStatus(root, ui) {
       else setPill(outPill, '', h?.state === 'remote' ? 'Output …' : 'Starting…');
       outPill.title = '';
       setPill(phonePill, '', 'Phone —');
+      phoneBPill.hidden = true;
       for (const key of Object.keys(rows)) if (key !== 'offline') rows[key].textContent = '—';
       for (const key of ['input', 'gl', 'phone', 'build', 'room']) ui.setAlert(key, null);
       return;
@@ -155,25 +160,32 @@ export function mountStatus(root, ui) {
 
     const p = status.phone;
     const info = p.info;
-    let phoneText = 'not paired';
-    let phoneLevel = 'warn';
-    if (p.phone === 'connected') {
-      phoneLevel = 'good';
-      phoneText = info?.controllerOnly ? 'controller only' : p.media === 'connected' ? 'streaming' : 'paired, no video yet';
-      if (info?.hidden) {
-        phoneLevel = 'bad';
-        phoneText = 'PAGE IN BACKGROUND';
+    // One phone's link in two or three words, and how worrying that is.
+    const describePhone = (link) => {
+      let text = 'not paired';
+      let level = 'warn';
+      if (link.phone === 'connected') {
+        level = 'good';
+        text = link.info?.controllerOnly ? 'controller only' : link.media === 'connected' ? 'streaming' : 'paired, no video yet';
+        if (link.info?.hidden) {
+          level = 'bad';
+          text = 'PAGE IN BACKGROUND';
+        }
+      } else if (link.phone === 'silent') {
+        level = 'bad';
+        text = 'not responding';
+      } else if (link.signal === 'error') {
+        level = 'bad';
+        text = 'room code in use elsewhere';
+      } else if (link.signal !== 'open') {
+        level = link.signal === 'connecting' ? 'warn' : 'bad';
+        text = link.signal === 'connecting' ? 'connecting…' : 'pairing server unreachable';
       }
-    } else if (p.phone === 'silent') {
-      phoneLevel = 'bad';
-      phoneText = 'not responding';
-    } else if (p.signal === 'error') {
-      phoneLevel = 'bad';
-      phoneText = 'room code in use elsewhere';
-    } else if (p.signal !== 'open') {
-      phoneLevel = p.signal === 'connecting' ? 'warn' : 'bad';
-      phoneText = p.signal === 'connecting' ? 'connecting…' : 'pairing server unreachable';
-    }
+      return [text, level];
+    };
+    const [phoneText, phoneLevel] = describePhone(p);
+    phoneBPill.hidden = !status.phoneB;
+    if (status.phoneB) setPill(phoneBPill, describePhone(status.phoneB)[1], `Phone B: ${describePhone(status.phoneB)[0]}`);
     setPill(phonePill, phoneLevel, `Phone: ${phoneText}`);
     rows.phone.textContent = phoneText;
     rows.link.textContent = p.media === 'connected' ? [p.route, p.rttMs !== undefined ? `${p.rttMs.toFixed(0)} ms rtt` : ''].filter(Boolean).join(' · ') : '—';

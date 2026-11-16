@@ -74,7 +74,7 @@ try {
   await pickMenu(control, '#rec-format', 'webm');
 
   console.log('latency measurement');
-  await control.keyboard.press('3');
+  await control.keyboard.press('4');
   await control.click('#latency-test');
   check('refuses to measure on the test pattern', await settle(async () => (await control.locator('#latency-note').textContent()).includes('Select the phone or a camera'), 'refused'));
   await control.keyboard.press('1');

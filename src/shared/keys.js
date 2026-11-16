@@ -27,7 +27,7 @@ export function installKeys(store, extra = {}) {
   window.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
     if (isTypingTarget(e.target)) return;
-    // Shift + 1 to 4 choose input B. (Read from the key's place on the
+    // Shift + 1 to 5 choose input B. (Read from the key's place on the
     // keyboard: with Shift held, e.key is a punctuation mark.)
     const digit = e.shiftKey ? /^Digit([1-9])$/.exec(e.code) : null;
     if (digit && INPUT_KINDS[digit[1] - 1]) {

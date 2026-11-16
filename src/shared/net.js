@@ -16,6 +16,12 @@ export function normalizeRoom(value) {
   return String(value ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
 }
 
+// The room a second iPhone pairs under: the room code with a B after it.
+// To the phone it is simply another room, so its page needs to know nothing.
+export function roomB(room) {
+  return `${normalizeRoom(room).slice(0, 7)}B`;
+}
+
 export function hostPeerId(room) {
   return `third-eye-cam-${normalizeRoom(room).toLowerCase()}-host`;
 }

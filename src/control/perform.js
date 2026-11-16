@@ -80,6 +80,9 @@ export function mountPerform(root, ui) {
   // moment only).
   const ICONS = {
     phone: '<rect x="5" y="2" width="6" height="12" rx="1.5"/>',
+    // A phone with a B beside it.
+    phone2: '<rect x="2.5" y="2" width="6" height="12" rx="1.5"/><path d="M11 5v6M11 5h1.6a1.4 1.4 0 010 3H11M11 8h1.9a1.5 1.5 0 010 3H11"/>',
+    off: '<circle cx="8" cy="8" r="5"/><path d="M4.5 11.5l7-7"/>',
     camera: '<rect x="2" y="5" width="9" height="7"/><path d="M11 8l3-2v5l-3-2z"/>',
     pattern: '<rect x="2" y="3" width="12" height="10"/><path d="M6 3v10M10 3v10"/>',
     file: '<rect x="2" y="3" width="12" height="10"/><path d="M7 6l3 2-3 2z"/>',
@@ -99,7 +102,7 @@ export function mountPerform(root, ui) {
     return `${name} · ${INPUT_LABELS[kind]} · ${needsFile(slot) ? 'choose…' : INPUT_STATE_TEXT[state] ?? (state || '—')}`;
   }
   // Why a source that is not showing has no picture to preview.
-  const NOT_READY = { phone: 'not paired, or its camera is off', camera: 'starts when chosen', file: 'no file loaded' };
+  const NOT_READY = { phone: 'not paired, or its camera is off', phone2: 'not paired, or its camera is off', camera: 'starts when chosen', file: 'no file loaded' };
 
   const tip = el('div', { class: 'strip-tip', role: 'status', hidden: true });
   // `say` is a function so the words follow what happens while the pointer
@@ -137,7 +140,7 @@ export function mountPerform(root, ui) {
       const mine = kindOf(slot);
       const ready = ui.status?.sources?.[kind];
       const head = `${i + 1} · ${INPUT_LABELS[kind]}`;
-      if (kind === mine) return isA ? `${head} · A is showing this` : `${head} · B is showing this. Click to turn B off`;
+      if (kind === mine) return `${head} · ${slot.toUpperCase()} is showing this`;
       if (kind === kindOf(other)) return !isA && !mine ? `${head} · in use by A` : `${head} · click to trade places with ${other.toUpperCase()}`;
       return `${head} · ${ready ? 'ready' : NOT_READY[kind]}. Click to make it ${slot.toUpperCase()}`;
     };
@@ -158,8 +161,7 @@ export function mountPerform(root, ui) {
       button.addEventListener('blur', leave);
       button.addEventListener('click', () => {
         const mine = kindOf(slot);
-        if (!isA && kind === mine) runAction(store, 'inputB', 'off');
-        else runAction(store, isA ? 'input' : 'inputB', kind);
+        runAction(store, isA ? 'input' : 'inputB', kind);
         // Nothing to play yet: ask for the file here and now.
         if (kind === 'file' && kindOf(slot) === 'file' && (!ui.hasVideoFile?.() || needsFile(slot))) ui.pickVideoFile?.();
         peek(slot, '');
@@ -168,6 +170,19 @@ export function mountPerform(root, ui) {
       buttons[kind] = button;
       icons.append(button);
     });
+    // B's sixth place turns B off.
+    if (!isA) {
+      const off = el('button', { class: 'inview-icon', 'data-kind': 'off', 'data-midi': 'inputB:off', 'aria-label': 'Input B off' });
+      off.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4">${ICONS.off}</svg>`;
+      const say = () => showTip(() => (kindOf('b') ? 'Off · click to turn B off' : 'Off · B is off'), slot);
+      off.addEventListener('pointerenter', say);
+      off.addEventListener('focus', say);
+      off.addEventListener('pointerleave', () => showTip(null));
+      off.addEventListener('blur', () => showTip(null));
+      off.addEventListener('click', () => runAction(store, 'inputB', 'off'));
+      buttons.off = off;
+      icons.append(off);
+    }
     const node = el('div', { class: `inview ${slot}`, id: `inview-${slot}` }, isA ? [view, icons] : [icons, view]);
     // The icons are out while the pointer or the keyboard is on the view or
     // on them, and a click on the view holds them out (for a touch screen).
@@ -292,6 +307,7 @@ export function mountPerform(root, ui) {
       // previewed yet.
       v.note.textContent = looking ? (ui.status?.sources?.[looking] ? '' : INPUT_LABELS[looking]) : !kind ? 'off' : needsFile(slot) ? 'choose…' : '';
       for (const k of INPUT_KINDS) v.buttons[k].setAttribute('aria-pressed', String(k === kind));
+      v.buttons.off?.setAttribute('aria-pressed', String(!kind));
     }
     refreshTip();
     syncMix();

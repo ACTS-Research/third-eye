@@ -11,7 +11,7 @@ import { MidiInput } from './midi.js';
 import { TOGGLE_ACTIONS, describeAction } from '../shared/actions.js';
 import { ORDER_KEY, PRESETS_KEY, applyPreset, applyStep, loadPresets, orderView } from '../shared/presets.js';
 import { macroUnit, resolveMacros } from '../shared/macros.js';
-import { randomRoom } from '../shared/net.js';
+import { randomRoom, roomB } from '../shared/net.js';
 import { TRIGGER_COUNT } from '../shared/protocol.js';
 import { InputManager } from './inputs.js';
 import { LatencyProbe } from './latency-probe.js';
@@ -54,6 +54,8 @@ export class Engine {
     this.glitchStart = -1e9;
     this.mod = new Modulation(store);
     this.sensors = new PhoneSensors(this.mod);
+    // The second iPhone's motion and touch pad: sources of their own.
+    this.sensorsB = new PhoneSensors(this.mod, 'B');
     this.resolve = this.mod.resolve;
     this.midi = new MidiInput(this.mod, (source) => this.bus.send('midi-learned', { source }));
     this.audio = new AudioInput(this.mod);
@@ -83,18 +85,34 @@ export class Engine {
     this.initGL();
 
     this.camera = new LocalCamera(this.inputs.feeds.camera);
-    // The link opens in start(): until then the room code is not taken.
-    this.link = new PhoneLink(this.inputs.feeds.phone, () => this.store.state.net, (msg) => this.onPhoneMessage(msg));
-    this.link.onData = (conn) => this.sensors.attach(conn);
-    this.link.onOpenData = () => {
-      // A phone on the new room code clears the "scan again" notice.
-      this.link.notice = '';
-      // Which run of which engine this is. When the picture moves between
-      // /control and the output window the phone sees a new one, and calls
-      // again at once instead of waiting to notice its old call went dead.
-      this.link.send({ t: 'host', session: this.session });
-      this.greetPhone();
+    // The links open in start(): until then no room code is taken. Each
+    // phone has a link of its own, under its own room code (the second
+    // phone's is roomB), so neither knows of the other and one dropping or
+    // reconnecting never disturbs the other. The second is only opened while
+    // net.second is on.
+    const wire = (link, sensors) => {
+      link.onData = (conn) => sensors.attach(conn);
+      link.onOpenData = () => {
+        // A phone on the new room code clears the "scan again" notice.
+        link.notice = '';
+        // Which run of which engine this is. When the picture moves between
+        // /control and the output window the phone sees a new one, and calls
+        // again at once instead of waiting to notice its old call went dead.
+        link.send({ t: 'host', session: this.session });
+        this.greetPhone(link);
+      };
+      link.getCodec = () => this.store.state.net.codec;
+      link.getReturnStream = () => this.returnFeed.stream;
+      link.onRoomTaken = () => {
+        const old = this.store.state.net.room;
+        this.link.notice = `Room code ${old} was in use somewhere else, so a new one was made. Scan the QR code again.`;
+        this.store.merge('net', { room: randomRoom() });
+      };
+      return link;
     };
+    this.link = wire(new PhoneLink(this.inputs.feeds.phone, () => this.store.state.net, (msg) => this.onPhoneMessage(msg, this.link)), this.sensors);
+    this.linkB = wire(new PhoneLink(this.inputs.feeds.phone2, () => ({ ...this.store.state.net, room: roomB(this.store.state.net.room) }), (msg) => this.onPhoneMessage(msg, this.linkB)), this.sensorsB);
+    this.links = [this.link, this.linkB];
     // Palette and dimmer are set on /control and kept in this browser's
     // storage; a change there fires here, and the phone follows. (No storage
     // event reaches the window that made the change: when /control hosts the
@@ -104,15 +122,8 @@ export class Engine {
       // Presets edited in /control (another window): the phone's row follows.
       else if (e.key === PRESETS_KEY || e.key === ORDER_KEY) this.sendPresets();
     });
-    this.link.getCodec = () => this.store.state.net.codec;
     // The finished picture, small, for a phone that asks to see it.
     this.returnFeed = new ReturnFeed(canvas);
-    this.link.getReturnStream = () => this.returnFeed.stream;
-    this.link.onRoomTaken = () => {
-      const old = this.store.state.net.room;
-      this.link.notice = `Room code ${old} was in use somewhere else, so a new one was made. Scan the QR code again.`;
-      this.store.merge('net', { room: randomRoom() });
-    };
     this.latency = null;
     setInterval(() => {
       if (this.running) this.housekeeping();
@@ -272,7 +283,7 @@ export class Engine {
     this.setInputs();
     this.mod.dirty = true;
     this.applySize();
-    this.link.refresh();
+    this.refreshLinks();
     this.housekeeping();
   }
 
@@ -297,8 +308,8 @@ export class Engine {
           this.setInputs();
           this.housekeeping();
         } else if (op.key === 'net') {
-          this.link.refresh();
-          if ('codec' in op.patch) this.link.send({ t: 'config', codec: state.net.codec });
+          this.refreshLinks();
+          if ('codec' in op.patch) this.sendPhones({ t: 'config', codec: state.net.codec });
         } else if (op.key === 'midi' || op.key === 'audio' || op.key === 'vision') {
           this.housekeeping();
         } else if (op.key === 'order') {
@@ -317,7 +328,8 @@ export class Engine {
   housekeeping() {
     // No phone, nobody to draw the return picture for; a phone that comes
     // back asks again.
-    if (!this.link.conn?.open) this.returnFeed.on = false;
+    for (const link of this.links) if (!link.conn?.open) link.wantsPreview = false;
+    this.returnFeed.on = this.links.some((link) => link.wantsPreview);
     const input = this.store.state.input;
     // Once opened the camera stays warm so switching back to it is instant.
     if (input.kind === 'camera' || input.kindB === 'camera' || this.camera.stream) this.camera.ensure(input.cameraId);
@@ -333,17 +345,35 @@ export class Engine {
   // Everything a phone needs to draw its screen. Sent when its link opens,
   // and again whenever the phone asks (`hello`), so a phone that missed the
   // first lot is never left with blank buttons.
-  greetPhone() {
+  greetPhone(link = null) {
     this.sendTriggerLabels();
     this.sendPresets();
-    this.link.send({ t: 'config', codec: this.store.state.net.codec });
+    // (`second` lets the second phone's page say that it is phone B.)
+    for (const l of link ? [link] : this.links) l.send({ t: 'config', codec: this.store.state.net.codec, second: l === this.linkB });
     this.sendLook();
   }
 
-  onPhoneMessage(msg) {
-    if (msg?.t === 'hello') return this.greetPhone();
-    // The phone's preview shows the Mac's output, or stopped showing it.
-    if (msg?.t === 'preview') this.returnFeed.on = !!msg.on;
+  // To every paired phone. (A link with no phone on it sends nothing.)
+  sendPhones(msg) {
+    for (const link of this.links) link.send(msg);
+  }
+
+  // Follows the room code and pairing server, and opens or closes the
+  // second phone's link as net.second says.
+  refreshLinks() {
+    this.link.refresh();
+    if (!this.store.state.net.second) this.linkB.shutdown();
+    else if (this.linkB.stopped) this.linkB.resume();
+    else this.linkB.refresh();
+  }
+
+  onPhoneMessage(msg, link = this.link) {
+    if (msg?.t === 'hello') return this.greetPhone(link);
+    // A phone's preview shows the Mac's output, or stopped showing it.
+    if (msg?.t === 'preview') {
+      link.wantsPreview = !!msg.on;
+      this.returnFeed.on = this.links.some((l) => l.wantsPreview);
+    }
     if (msg?.t === 'intro-answer') this.bus.send('intro-answer', { to: msg.to, token: msg.token });
     // One of the six buttons on the phone: a step of the running order when
     // that is what the phone was showing, a preset otherwise. (If the two
@@ -372,19 +402,19 @@ export class Engine {
       const start = steps.length > PHONE_BANK ? Math.max(0, cue - 1) : 0;
       this.bankStart = start;
       const at = (i) => (i >= start && i < start + PHONE_BANK ? i - start : -1);
-      this.link.send({ t: 'presets', order: true, start, names: steps.slice(start, start + PHONE_BANK).map((s) => s.name), current: at(live), next: at(next) });
+      this.sendPhones({ t: 'presets', order: true, start, names: steps.slice(start, start + PHONE_BANK).map((s) => s.name), current: at(live), next: at(next) });
     } else {
       this.bankStart = 0;
-      this.link.send({ t: 'presets', order: false, start: 0, names: presets.map((p) => p.name), current: this.store.state.presetIndex, next: -1 });
+      this.sendPhones({ t: 'presets', order: false, start: 0, names: presets.map((p) => p.name), current: this.store.state.presetIndex, next: -1 });
     }
   }
 
   // The phone's Rotate button turns the picture a quarter turn at a time.
   updateTurn() {
-    const want = this.sensors.turn;
-    if (want === this.inputs.turn) return;
-    this.inputs.turn = want;
-    this.inputs.b.turn = want;
+    const { turns } = this.inputs;
+    if (turns.phone === this.sensors.turn && turns.phone2 === this.sensorsB.turn) return;
+    turns.phone = this.sensors.turn;
+    turns.phone2 = this.sensorsB.turn;
     this.pipeline.srcDirty = true;
     this.pipeline.srcBDirty = true;
   }
@@ -425,12 +455,12 @@ export class Engine {
       actions.push(bound?.action ?? '');
       on.push(!!globals[TOGGLE_ACTIONS[bound?.action]]);
     }
-    this.link.send({ t: 'labels', triggers: labels, actions, on });
+    this.sendPhones({ t: 'labels', triggers: labels, actions, on });
   }
 
   // The phone wears the palette and dimmer of the control page.
   sendLook() {
-    this.link.send({ t: 'look', ...readLook() });
+    this.sendPhones({ t: 'look', ...readLook() });
   }
 
   start() {
@@ -442,6 +472,7 @@ export class Engine {
     this.prevFrameAt = undefined;
     this.renderFrames = 0;
     this.link.resume();
+    if (this.store.state.net.second) this.linkB.resume();
     if (!this.lost) this.resync();
     const tick = (now) => {
       this.raf = requestAnimationFrame(tick);
@@ -456,7 +487,7 @@ export class Engine {
     if (!this.running) return;
     this.running = false;
     cancelAnimationFrame(this.raf);
-    this.link.shutdown();
+    for (const link of this.links) link.shutdown();
     this.recorder.stop();
     this.probe.cancel();
     this.midi.disable();
@@ -464,6 +495,7 @@ export class Engine {
     this.vision.configure({});
     this.camera.stop();
     this.inputs.feeds.phone.clear();
+    this.inputs.feeds.phone2.clear();
   }
 
   frame(now) {
@@ -473,6 +505,9 @@ export class Engine {
     const dt = Math.min(0.1, (now - (this.prevFrameAt ?? now)) / 1000);
     this.prevFrameAt = now;
     this.sensors.frame(dt, now);
+    this.sensorsB.frame(dt, now);
+    // Either phone's four buttons are the four triggers.
+    for (let i = 0; i < TRIGGER_COUNT; i++) this.mod.set(`trig.${i + 1}`, this.sensors.shown[i] || this.sensorsB.shown[i] ? 1 : 0);
     this.audio.frame(dt, now, this.store.state.audio);
     this.mod.frame(dt, this.tempo.frame(now));
     const watched = now - this.controlSeenAt < CONTROL_TIMEOUT_MS;
@@ -482,6 +517,7 @@ export class Engine {
     }
 
     this.inputs.feeds.phone.gated = this.link.hold;
+    this.inputs.feeds.phone2.gated = this.linkB.hold;
     if (!this.lost) this.updateTurn(now);
     this.vision.frame(now, this.inputs.feed?.video ?? null, this.inputs.quarter);
     if (!this.lost) {
@@ -541,6 +577,11 @@ export class Engine {
     if (now - this.lastStatusAt >= STATUS_INTERVAL_MS) this.sendStatus(now);
   }
 
+  // The link a source's picture comes over, if it is one of the phones.
+  linkFor(kind) {
+    return kind === 'phone' ? this.link : kind === 'phone2' ? this.linkB : null;
+  }
+
   // What input A is doing, or with `inputs` given, input B.
   inputStatus(now, inputs = this.inputs) {
     const feed = inputs.feed;
@@ -548,7 +589,7 @@ export class Engine {
     let state = 'no-signal';
     if (feed.gated && inputs.hasFrame) state = 'paused';
     else if (feed.lastFrameAt && now - feed.lastFrameAt < STALL_MS) state = 'live';
-    else if (inputs.kind === 'phone' && this.link.phoneInfo?.controllerOnly && this.link.conn?.open) state = 'paused';
+    else if (this.linkFor(inputs.kind)?.phoneInfo?.controllerOnly && this.linkFor(inputs.kind).conn?.open) state = 'paused';
     else if (inputs.hasFrame && feed.lastFrameAt) state = 'stalled';
     const turned = inputs.quarter % 2 === 1;
     return { kind: inputs.kind, state, width: turned ? feed.video.videoHeight : feed.video.videoWidth, height: turned ? feed.video.videoWidth : feed.video.videoHeight };
@@ -568,6 +609,7 @@ export class Engine {
     }
     this.lastStatusAt = now;
     this.sensors.takeRate(dt);
+    this.sensorsB.takeRate(dt);
     this.vision.takeRate(dt);
     this.updateLatency();
     this.bus.send('status', { status: this.collectStatus(now) });
@@ -592,7 +634,7 @@ export class Engine {
     let ms = delay.ms + frameMs;
     if (!delay.fromCapture) {
       const cameraFrameMs = 1000 / Math.max(this.inputFps, 15);
-      ms += 45 + cameraFrameMs + (this.link.stats.rttMs ?? 0) / 2;
+      ms += 45 + cameraFrameMs + (this.linkFor(this.inputs.kind)?.stats.rttMs ?? 0) / 2;
     }
     const prev = this.latency?.ms;
     this.latency = { ms: prev ? prev * 0.6 + ms * 0.4 : ms, measured: delay.fromCapture };
@@ -605,6 +647,9 @@ export class Engine {
       latency: this.latency,
       phone: this.link.status(now),
       sensors: this.sensors.status(now),
+      // The second iPhone, or null while it is not wanted (net.second).
+      phoneB: this.store.state.net.second ? this.linkB.status(now) : null,
+      sensorsB: this.sensorsB.status(now),
       midi: this.midi.status(),
       audio: this.audio.status(),
       vision: this.vision.status(),
@@ -622,7 +667,7 @@ export class Engine {
       // Input B, or null while it is off.
       inputB: this.inputs.b.kind ? this.inputStatus(now, this.inputs.b) : null,
       // Which sources have a picture to show right now.
-      sources: { pattern: true, phone: this.inputs.feeds.phone.ready, camera: this.inputs.feeds.camera.ready, file: this.inputs.feeds.file.ready },
+      sources: { pattern: true, phone: this.inputs.feeds.phone.ready, phone2: this.inputs.feeds.phone2.ready, camera: this.inputs.feeds.camera.ready, file: this.inputs.feeds.file.ready },
     };
   }
 }

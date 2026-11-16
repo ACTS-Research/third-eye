@@ -120,6 +120,8 @@ async function start() {
     directFirst: !!offer,
     onMessage: (msg) => {
       if (msg.t === 'presets') greeted = true;
+      // The Mac says when this is the second iPhone, and the bar shows it.
+      if (msg.t === 'config') $('room-label').textContent = msg.second ? `PHONE B · ${app.room}` : app.room;
       if (msg.t === 'labels') sensors.setTriggerLabels(msg.triggers ?? [], msg.actions ?? [], msg.on ?? []);
       else if (msg.t === 'presets') sensors.setPresets(msg.names ?? [], msg.current, msg.next ?? -1, !!msg.order, msg.start ?? 0);
       else if (msg.t === 'look') {

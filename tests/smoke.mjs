@@ -187,11 +187,11 @@ try {
   check('local video file plays through the pipeline', !!fileLive, fileLive ? `${fileLive.input.width}x${fileLive.input.height}` : 'not live');
   check('file name shown on control', (await control.locator('#input-panel').textContent()).includes('clip.webm'));
   check('with a file playing the line says so', await waitFor(async () => (await lineA()) === 'A · Video file · live', { label: 'file line', timeout: 8000 }).then(() => true, () => false), await lineA());
-  await control.keyboard.press('3');
+  await control.keyboard.press('4');
   const reopened = await Promise.race([control.waitForEvent('filechooser').then(() => true), chooseFile().then(() => new Promise((r) => setTimeout(() => r(false), 800)))]);
   check('with a file loaded, choosing it just switches to it', !reopened && (await control.evaluate(() => window.thirdEye.store.state.input.kind)) === 'file');
   await output.bringToFront();
-  await control.keyboard.press('3');
+  await control.keyboard.press('4');
 
   console.log('resilience');
   await output.setViewportSize({ width: 960, height: 540 });

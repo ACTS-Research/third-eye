@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pairing P2, both codes side by side</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button{font:inherit;cursor:pointer}
+.cap{text-transform:uppercase;letter-spacing:0.08em}
+.b{background:none;color:#ff6b5e;border:1px solid #5b2622;padding:7px 12px;text-transform:uppercase;letter-spacing:0.08em}
+.qr{width:150px;height:150px;flex-shrink:0;background-color:#fff;background-image:repeating-linear-gradient(0deg,#000 0 6px,transparent 6px 14px),repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 12px);border:10px solid #fff;box-sizing:border-box}
+.qr.b2{background-image:repeating-linear-gradient(0deg,#000 0 4px,transparent 4px 11px),repeating-linear-gradient(90deg,#000 0 7px,transparent 7px 13px)}
+</style>
+</helmet>
+<div style="width: 940px; height: 620px; box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 12px; background: #060303; color: #ff6b5e; font: 500 12px/1.4 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+
+  <div style="border: 1px solid #ff6b5e; padding: 14px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px">
+
+      <section style="display: flex; flex-direction: column; gap: 8px">
+        <div style="font: 800 26px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.06em">IPHONE</div>
+        <div style="display: flex; gap: 12px">
+          <div class="qr" role="img" aria-label="QR code for the iPhone" style="opacity: 0.35"></div>
+          <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+            <div class="cap" style="color: #ffb3ab">Room code</div>
+            <div style="font: 800 34px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.12em">PSAQ2</div>
+            <div style="background: #ff6b5e; color: #140302; font-weight: 700; padding: 2px 6px; align-self: flex-start">PAIRED · LIVE</div>
+            <div>720p · 60 fps · H.264</div>
+          </div>
+        </div>
+        <button class="b" style="align-self: flex-start">Show the steps</button>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 8px">
+        <div style="font: 800 26px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.06em">IPHONE B</div>
+        <div style="display: flex; gap: 12px">
+          <div class="qr b2" role="img" aria-label="QR code for iPhone B"></div>
+          <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+            <div class="cap" style="color: #ffb3ab">Room code</div>
+            <div style="font: 800 34px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.12em">PSAQ2-B</div>
+            <div style="border: 1px dashed #ff6b5e; padding: 2px 6px; align-self: flex-start">NOT PAIRED</div>
+            <div>Scan with the second iPhone and tap START.</div>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 3px 8px">
+          <b>OK</b><span>Mac reached the pairing server</span>
+          <b style="background: #ff6b5e; color: #140302; padding: 0 4px">HERE</b><span>Phone B found the Mac</span>
+          <span>··</span><span>Video link</span>
+          <span>··</span><span>Picture arriving</span>
+        </div>
+      </section>
+    </div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap">
+      <button class="b">Pair without internet</button>
+      <button class="b">New room code</button>
+      <button class="b">Close</button>
+    </div>
+  </div>
+
+  <div style="color: #ffb3ab">Both phones in one wider pop-over, each with its own code and state. A paired phone's code is dimmed and its steps fold away, so the one that still needs pairing stands out. Nothing to click to see the other phone; but two codes on screen at once means a phone could be pointed at the wrong one.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":940,"height":620}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
