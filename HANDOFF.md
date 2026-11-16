@@ -24,8 +24,6 @@ with the second phone → press 2.
 - Picture controls on the Mac (brightness, contrast, saturation and so on):
   say whether they belong to each preset (the Contrast / Brightness effect
   already does that) or should be one fixed set that holds across presets.
-- Board cover: send a screenshot of the real app to make the current one, or
-  say to use the session capture.
 - Recording: MP4 is now the default, but your Mac remembers WebM from
   before. Choose MP4 once in Setup → Recordings.
 - Say whether the phone's Quality menu should be restyled. It is the
