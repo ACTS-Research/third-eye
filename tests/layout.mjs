@@ -21,7 +21,7 @@ const snapshot = (page) => page.evaluate(() => {
   });
   pick('nav', document.querySelectorAll('#views button, #rec, #midi-map-toggle, #palette'));
   pick('view', document.querySelectorAll('.view:not([hidden])'));
-  pick('big', document.querySelectorAll('.big, .tap, .inputs'));
+  pick('big', document.querySelectorAll('.big, .tap, .mixrow, .inview, .mixbar'));
   pick('monitor', document.querySelectorAll('.monitor, .edit-monitor'));
   pick('faders', document.querySelectorAll('.faders, .fader'));
   pick('strip', document.querySelectorAll('.strip, .tile'));

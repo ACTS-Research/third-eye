@@ -3,7 +3,7 @@
 // both directions, and back to /control alone.
 //   npm run test:smoke
 
-import { check, failureCount, launch, outputStats, sleep, startSite, waitFor, watch, addEffect, clickBar, paramBar } from './lib.mjs';
+import { check, failureCount, launch, outputStats, sleep, startSite, waitFor, watch, addEffect, clickBar, paramBar, pickMenu } from './lib.mjs';
 
 const site = await startSite();
 const browser = await launch();
@@ -169,11 +169,16 @@ try {
   // page in front.)
   await control.evaluate(() => window.thirdEye.ui.setView('perform'));
   await control.bringToFront();
-  const [chooser] = await Promise.all([control.waitForEvent('filechooser'), control.locator('.inputs button').nth(3).click()]);
-  check('input button 4 opens the file picker when no file is loaded', !!chooser && (await control.evaluate(() => window.thirdEye.store.state.input.kind)) === 'file');
-  check('the line under the buttons offers to choose a file', await waitFor(async () => (await control.locator('#input-line').textContent()) === 'Video file · choose…', { label: 'choose line', timeout: 8000 }).then(() => true, () => false), await control.locator('#input-line').textContent());
-  const [chooser2] = await Promise.all([control.waitForEvent('filechooser'), control.locator('#input-line').click()]);
-  check('a click on that line opens the picker too, without leaving the perform screen', !!chooser2 && (await control.evaluate(() => window.thirdEye.ui.view)) === 'perform');
+  const chooseFile = async () => {
+    await control.locator('#input-a').click();
+    await control.locator('.menu-list .menu-item[data-value="file"]').click();
+  };
+  const lineA = () => control.locator('#input-a .menu-text').textContent();
+  const [chooser] = await Promise.all([control.waitForEvent('filechooser'), chooseFile()]);
+  check('choosing Video file for input A opens the file picker when no file is loaded', !!chooser && (await control.evaluate(() => window.thirdEye.store.state.input.kind)) === 'file');
+  check('the line under the small view offers to choose a file', await waitFor(async () => (await lineA()) === 'A · Video file · choose…', { label: 'choose line', timeout: 8000 }).then(() => true, () => false), await lineA());
+  const [chooser2] = await Promise.all([control.waitForEvent('filechooser'), chooseFile()]);
+  check('choosing it again opens the picker again, without leaving the perform screen', !!chooser2 && (await control.evaluate(() => window.thirdEye.ui.view)) === 'perform');
   await chooser2.setFiles({ name: 'clip.webm', mimeType: 'video/webm', buffer: Buffer.from(clip) });
   const fileLive = await waitFor(() => control.evaluate(() => {
     const st = window.thirdEye.ui.status;
@@ -181,10 +186,10 @@ try {
   }), { label: 'video file live', timeout: 8000 }).catch(() => null);
   check('local video file plays through the pipeline', !!fileLive, fileLive ? `${fileLive.input.width}x${fileLive.input.height}` : 'not live');
   check('file name shown on control', (await control.locator('#input-panel').textContent()).includes('clip.webm'));
-  check('with a file playing the line says so', await waitFor(async () => (await control.locator('#input-line').textContent()) === 'Video file · live', { label: 'file line', timeout: 8000 }).then(() => true, () => false), await control.locator('#input-line').textContent());
+  check('with a file playing the line says so', await waitFor(async () => (await lineA()) === 'A · Video file · live', { label: 'file line', timeout: 8000 }).then(() => true, () => false), await lineA());
   await control.keyboard.press('3');
-  const reopened = await Promise.race([control.waitForEvent('filechooser').then(() => true), control.locator('.inputs button').nth(3).click().then(() => new Promise((r) => setTimeout(() => r(false), 800)))]);
-  check('with a file loaded, button 4 just switches to it', !reopened && (await control.evaluate(() => window.thirdEye.store.state.input.kind)) === 'file');
+  const reopened = await Promise.race([control.waitForEvent('filechooser').then(() => true), chooseFile().then(() => new Promise((r) => setTimeout(() => r(false), 800)))]);
+  check('with a file loaded, choosing it just switches to it', !reopened && (await control.evaluate(() => window.thirdEye.store.state.input.kind)) === 'file');
   await output.bringToFront();
   await control.keyboard.press('3');
 

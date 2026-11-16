@@ -1,0 +1,21 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-16T15:40:00Z" },
+  "title": "Third Eye Cam: Input B and Mix",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1200, "h": 720, "title": "A · Mix is an effect in the chain" },
+    "Crossfader.dc.html": { "x": 1280, "y": 0, "w": 1200, "h": 720, "title": "B · A crossfader that is always there" },
+    "Both.dc.html": { "x": 2560, "y": 0, "w": 1200, "h": 720, "title": "C · An effect in the chain, with its crossfader under the picture" }
+,
+    "InputsMenu.dc.html": { "x": 1740, "y": 1140, "w": 920, "h": 600, "title": "C1 · The small views choose the inputs (a list opens)" },
+    "InputsRow.dc.html": { "x": 2740, "y": 1140, "w": 920, "h": 600, "title": "C2 · The small views with their four buttons underneath" }
+  },
+  "order": ["Main.dc.html", "Crossfader.dc.html", "Both.dc.html", "InputsMenu.dc.html", "InputsRow.dc.html"],
+  "notes": {
+    "heading2": { "x": 1740, "y": 840, "text": "C: where the inputs go", "kind": "title1", "maxW": 1920 },
+    "heading": { "x": 0, "y": -300, "text": "Input B and mixing: three directions", "kind": "title1", "maxW": 3760 }
+  },
+  "designSystems": []
+}

@@ -3,15 +3,17 @@
 // Everything here is MIDI-mappable.
 
 import { EFFECT_BY_ID } from '../effects/index.js';
+import { THUMB_H, THUMB_W } from '../engine/pipeline.js';
 import { runAction } from '../shared/actions.js';
 import { macroUnit, macroValue, resolveMacros } from '../shared/macros.js';
 import { describeSource } from '../shared/sources.js';
 import { INPUT_KINDS, INPUT_LABELS } from '../shared/state.js';
 import { el } from '../shared/util.js';
+import { menu } from './controls.js';
 import { attachPreview } from './preview.js';
 import { mountStrip } from './strip.js';
 
-// What an input is doing, short enough for the line under the input buttons.
+// What an input is doing, short enough for the line under its small view.
 const INPUT_STATE_TEXT = { live: 'live', stalled: 'stalled', 'no-signal': 'no signal', paused: 'camera off' };
 
 function format(value, step) {
@@ -29,28 +31,6 @@ export function mountPerform(root, ui) {
   const freeze = big('', 'freeze', 'Space', 'Freeze');
   const bypass = big('', 'bypassAll', 'X', 'Bypass');
   const glitch = big('', 'glitch', 'G', 'Glitch');
-  const inputButtons = {};
-  const inputs = el('div', { class: 'inputs' });
-  INPUT_KINDS.forEach((kind, i) => {
-    inputButtons[kind] = el('button', {
-      text: String(i + 1),
-      title: INPUT_LABELS[kind],
-      'aria-label': `Input ${i + 1}, ${INPUT_LABELS[kind]}`,
-      'data-midi': `input:${kind}`,
-      onclick: () => {
-        runAction(store, 'input', kind);
-        // Nothing to play yet: ask for the file here and now.
-        if (kind === 'file' && !ui.hasVideoFile?.()) ui.pickVideoFile?.();
-      },
-    });
-    inputs.append(inputButtons[kind]);
-  });
-  // Which input is selected and what it is doing, in few enough words to
-  // stay on one line. A click goes to its settings.
-  // (When the input is a video file and there is none, the click chooses one.)
-  let needsFile = false;
-  const inputName = el('button', { class: 'input-line', id: 'input-line', onclick: () => (needsFile ? ui.pickVideoFile?.() : ui.goToPanel('input-panel')) });
-
   // Tap tempo: the button blinks on the beat; the field takes a typed BPM.
   const bpm = el('input', {
     type: 'number',
@@ -68,7 +48,7 @@ export function mountPerform(root, ui) {
   const tempo = el('div', { class: 'tempo' }, [tap, bpm, el('label', { for: 'bpm', text: 'BPM' })]);
   bus.on('sources', (m) => tap.classList.toggle('beat', (m.values['tempo.beat'] ?? 0) > 0.4));
 
-  const panic = el('aside', { class: 'panic', 'aria-label': 'Panic controls and inputs' }, [blackout, freeze, bypass, glitch, tempo, inputs, inputName]);
+  const panic = el('aside', { class: 'panic', 'aria-label': 'Panic controls' }, [blackout, freeze, bypass, glitch, tempo]);
 
   // ----------------------------------------------------------- monitor ---
   // With an output window open this canvas shows the small picture it sends
@@ -88,6 +68,137 @@ export function mountPerform(root, ui) {
     note.hidden = !off;
     noteTitle.textContent = off ? 'Monitor is off' : '';
     noteText.textContent = off ? 'The output is running. Turn the monitor back on under Setup → Output.' : '';
+  }
+
+  // ------------------------------------------------- inputs and the mix ---
+  // Under the picture: a small live view of input A and one of input B, each
+  // over the list that chooses its source, and between them the bar that
+  // mixes B in. The bar belongs to the preset's Mix B effect (its mix); a
+  // preset without one shows A alone, and the bar keeps its place, dimmed.
+  const stateOf = (slot) => {
+    const kind = slot === 'a' ? store.state.input.kind : store.state.input.kindB;
+    const seen = slot === 'a' ? ui.status?.input : ui.status?.inputB;
+    return seen?.kind === kind ? seen.state : '';
+  };
+  const needsFile = (slot) => (slot === 'a' ? store.state.input.kind : store.state.input.kindB) === 'file' && stateOf(slot) === 'no-signal';
+  function caption(slot, kind) {
+    const name = slot.toUpperCase();
+    if (!kind) return `${name} · off`;
+    const state = stateOf(slot);
+    return `${name} · ${INPUT_LABELS[kind]} · ${needsFile(slot) ? 'choose…' : INPUT_STATE_TEXT[state] ?? (state || '—')}`;
+  }
+
+  function inputView(slot) {
+    const isA = slot === 'a';
+    const view = el('canvas', { class: 'inview-pic', width: THUMB_W, height: THUMB_H, 'aria-hidden': 'true' });
+    const pick = menu({
+      id: `input-${slot}`,
+      cls: 'inview-menu',
+      // Downward, over the preset strip: never over the picture.
+      down: true,
+      listCls: 'compact',
+      label: `Input ${slot.toUpperCase()}`,
+      value: isA ? store.state.input.kind : store.state.input.kindB,
+      options: () => {
+        const { kind, kindB } = store.state.input;
+        const mine = isA ? kind : kindB;
+        const other = isA ? kindB : kind;
+        const list = INPUT_KINDS.map((k, i) => {
+          let note = '';
+          if (k === other) note = isA || mine ? ` · trades places with ${isA ? 'B' : 'A'}` : ' · in use by A';
+          return { value: k, label: caption(slot, k), item: `${i + 1} ${INPUT_LABELS[k]}${note}`, midi: `${isA ? 'input' : 'inputB'}:${k}` };
+        });
+        if (!isA) list.push({ value: '', label: caption('b', ''), item: 'B off', midi: 'inputB:off' });
+        list.push({ value: '$setup', label: '', item: 'Input settings…' });
+        return list;
+      },
+      onOpen: () => ui.midiMap?.refresh(),
+      onChange: (v) => {
+        if (v === '$setup') ui.goToPanel('input-panel');
+        else {
+          runAction(store, isA ? 'input' : 'inputB', v || 'off');
+          // Nothing to play yet: ask for the file here and now.
+          if (v === 'file' && (!ui.hasVideoFile?.() || needsFile(slot))) ui.pickVideoFile?.();
+        }
+        syncInputs();
+      },
+    });
+    view.addEventListener('click', () => pick.node.click());
+    return { view, pick, node: el('div', { class: 'inview', id: `inview-${slot}` }, [view, pick.node]) };
+  }
+  const viewA = inputView('a');
+  const viewB = inputView('b');
+
+  let thumbs = null;
+  bus.on('thumbs', (m) => {
+    if (mixRow.offsetParent === null) return;
+    const { width, height, pixels } = m;
+    if (!thumbs || thumbs.width !== width || thumbs.height !== height) thumbs = new ImageData(width, height);
+    // GL rows arrive bottom-up. A is the left half of the strip, B the right.
+    const stride = width * 4;
+    for (let y = 0; y < height; y++) thumbs.data.set(pixels.subarray((height - 1 - y) * stride, (height - y) * stride), y * stride);
+    viewA.view.getContext('2d').putImageData(thumbs, 0, 0, 0, 0, THUMB_W, THUMB_H);
+    viewB.view.getContext('2d').putImageData(thumbs, -THUMB_W, 0, THUMB_W, 0, THUMB_W, THUMB_H);
+  });
+
+  const mixItem = () => store.state.chain.find((it) => it.type === 'mixb' && !it.bypass) ?? store.state.chain.find((it) => it.type === 'mixb') ?? null;
+  const mixFill = el('div', { class: 'fill' });
+  const mixText = el('span', { class: 'mixbar-text' });
+  const mixBar = el('div', { class: 'mixbar', id: 'mixbar', role: 'slider', tabindex: '0', 'aria-label': 'Mix of input B', 'aria-valuemin': '0', 'aria-valuemax': '1' }, [mixFill, mixText]);
+  const setMix = (value) => {
+    const item = mixItem();
+    if (!item) return;
+    ui.lastTouched = { uid: item.uid, key: 'mix' };
+    store.patchItem('chain', item.uid, { mix: Math.round(Math.min(1, Math.max(0, value)) * 100) / 100 });
+  };
+  const dragMix = (e) => {
+    const r = mixBar.getBoundingClientRect();
+    setMix((e.clientX - r.left) / r.width);
+  };
+  mixBar.addEventListener('pointerdown', (e) => {
+    if (!mixItem()) return;
+    mixBar.setPointerCapture(e.pointerId);
+    dragMix(e);
+    e.preventDefault();
+  });
+  mixBar.addEventListener('pointermove', (e) => {
+    if (mixBar.hasPointerCapture(e.pointerId)) dragMix(e);
+  });
+  // The arrows step presets everywhere else on the page: here they move the bar.
+  mixBar.addEventListener('keydown', (e) => {
+    const step = { ArrowLeft: -0.05, ArrowDown: -0.05, ArrowRight: 0.05, ArrowUp: 0.05 }[e.key];
+    const item = mixItem();
+    if (!step || !item) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setMix(item.mix + step);
+  });
+  const mixRow = el('div', { class: 'mixrow', 'aria-label': 'Inputs and mix' }, [viewA.node, mixBar, viewB.node]);
+  const center = el('div', { class: 'center' }, [monitor, mixRow]);
+
+  function syncMix() {
+    const item = mixItem();
+    const { kindB } = store.state.input;
+    mixBar.classList.toggle('none', !item);
+    mixBar.setAttribute('aria-disabled', String(!item));
+    mixFill.style.width = `${item ? item.mix * 100 : 0}%`;
+    mixBar.setAttribute('aria-valuenow', String(item ? item.mix : 0));
+    const mode = item ? Object.entries(EFFECT_BY_ID.mixb.params.mode.options).find(([, v]) => v === item.params.mode)?.[0] ?? '' : '';
+    mixText.textContent = !item ? 'No Mix B in this preset: A alone' : item.bypass ? `${mode} · bypassed` : !kindB ? `${mode} · B is off` : mode;
+    mixBar.title = item ? 'Drag to mix input B in. The mode and the rest are under Edit, in Mix B.' : 'Add the Mix B effect to this preset (Edit) to mix input B in.';
+  }
+
+  function syncInputs() {
+    const { kind, kindB } = store.state.input;
+    viewA.pick.set(kind);
+    viewB.pick.set(kindB);
+    for (const [slot, v] of [['a', viewA], ['b', viewB]]) {
+      const state = stateOf(slot);
+      v.pick.node.classList.toggle('warn', !!state && state !== 'live' && state !== 'stalled');
+      v.pick.node.classList.toggle('bad', state === 'stalled');
+    }
+    viewB.node.classList.toggle('off', !kindB);
+    syncMix();
   }
 
   // ------------------------------------------------------------ faders ---
@@ -169,7 +280,7 @@ export function mountPerform(root, ui) {
       const i = store.state.chain.findIndex((it) => it.uid === m.fx);
       if (i < 0) return '';
       const def = EFFECT_BY_ID[store.state.chain[i].type];
-      return `${i + 1} ${def.name} · ${m.key === 'mix' ? 'wet / dry' : def.params[m.key]?.label ?? m.key}`;
+      return `${i + 1} ${def.name} · ${m.key === 'mix' ? def.mixLabel ?? 'wet / dry' : def.params[m.key]?.label ?? m.key}`;
     };
     for (const id of used) {
       const s = describeSource(id);
@@ -228,26 +339,12 @@ export function mountPerform(root, ui) {
   });
 
   // --------------------------------------------------------------- sync ---
-  function syncInput() {
-    const kind = store.state.input.kind;
-    // The engine reports on the input it is showing; for a moment after a
-    // switch that is still the old one.
-    const seen = ui.status?.input;
-    const state = seen?.kind === kind ? seen.state : '';
-    needsFile = kind === 'file' && state === 'no-signal';
-    inputName.textContent = needsFile ? `${INPUT_LABELS[kind]} · choose…` : `${INPUT_LABELS[kind]} · ${INPUT_STATE_TEXT[state] ?? (state || '—')}`;
-    inputName.title = needsFile ? 'No video file is loaded. Click to choose one.' : 'Choose and set up the input (Setup → Input)';
-    inputName.classList.toggle('warn', !!state && state !== 'live' && state !== 'stalled');
-    inputName.classList.toggle('bad', state === 'stalled');
-  }
-
   function syncState() {
-    const { globals, input } = store.state;
+    const { globals } = store.state;
     blackout.classList.toggle('on', globals.blackout);
     freeze.classList.toggle('on', globals.freeze);
     bypass.classList.toggle('on', globals.bypassAll);
-    for (const kind of INPUT_KINDS) inputButtons[kind].setAttribute('aria-pressed', String(input.kind === kind));
-    syncInput();
+    syncInputs();
     if (document.activeElement !== bpm) bpm.value = String(store.state.tempo.bpm);
     syncMonitor();
   }
@@ -256,8 +353,10 @@ export function mountPerform(root, ui) {
     if (op.op === 'scene' || op.op === 'replace') {
       buildFaders();
       buildMini();
+      syncMix();
     } else if (op.op === 'param' || (op.op === 'item' && op.list === 'chain')) {
       syncFaders();
+      syncMix();
     } else if (op.op === 'item' && op.list === 'mappings') {
       buildMini();
     }
@@ -269,10 +368,10 @@ export function mountPerform(root, ui) {
     setTimeout(() => glitch.classList.remove('on'), 300);
   });
   ui.onStatus(syncMonitor);
-  ui.onStatus(syncInput);
+  ui.onStatus(syncInputs);
   ui.onHost(syncMonitor);
 
-  root.append(panic, monitor, side, strip);
+  root.append(panic, center, side, strip);
   buildFaders();
   buildMini();
   buildTiles();

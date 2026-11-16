@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Inputs chosen from the small views</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button{font:inherit;cursor:pointer}
+.cap{text-transform:uppercase;letter-spacing:0.08em}
+.opt{display:flex;justify-content:space-between;gap:12px;width:100%;box-sizing:border-box;background:none;color:#ff6b5e;border:0;padding:8px 10px;text-align:left;white-space:nowrap}
+.opt.on{background:#ff6b5e;color:#140302;font-weight:700}
+</style>
+</helmet>
+<div style="width: 920px; height: 600px; box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 12px; background: #060303; color: #ff6b5e; font: 500 12px/1.4 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+  <div class="cap" style="color: #ffb3ab">Perform screen · under the picture</div>
+
+  <div style="position: relative; height: 300px; flex-shrink: 0; background: repeating-linear-gradient(115deg, #ff9a3c 0 40px, #c2185b 40px 80px, #2a0a3a 80px 120px); overflow: hidden">
+    <div style="position: absolute; inset: 0; mix-blend-mode: screen; opacity: 0.6; background: radial-gradient(circle at 60% 45%, #e8fbff 0 12%, #2ad4ff 12% 24%, #0b3a8a 24% 40%, #02101f 40%)"></div>
+  </div>
+
+  <div style="display: flex; gap: 10px; align-items: flex-start; position: relative">
+    <button aria-label="Input A: iPhone, live. Choose another" style="width: 170px; flex-shrink: 0; padding: 0; background: none; color: #ff6b5e; border: 1px solid #ff6b5e; display: flex; flex-direction: column; text-align: left">
+      <div style="height: 62px; background: repeating-linear-gradient(115deg, #ff9a3c 0 8px, #c2185b 8px 16px, #2a0a3a 16px 24px)"></div>
+      <div style="padding: 6px 8px; border-top: 1px solid #ff6b5e"><b>A</b> · iPhone · live ▾</div>
+    </button>
+
+    <div style="flex-grow: 1; height: 62px; border: 1px solid #ff6b5e; position: relative">
+      <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 60%; background: repeating-linear-gradient(135deg, #5b2622 0 4px, #060303 4px 8px)"></div>
+      <div style="position: absolute; left: 60%; top: -4px; bottom: -4px; width: 10px; margin-left: -5px; background: #ff6b5e"></div>
+      <div class="cap" style="position: absolute; right: 8px; top: 22px">Screen</div>
+    </div>
+
+    <button aria-label="Input B: video file, live. Choose another" aria-expanded="true" style="width: 170px; flex-shrink: 0; padding: 0; background: none; color: #140302; border: 1px solid #ff6b5e; display: flex; flex-direction: column; text-align: left">
+      <div style="height: 62px; background: radial-gradient(circle at 60% 45%, #e8fbff 0 12%, #2ad4ff 12% 24%, #0b3a8a 24% 40%, #02101f 40%)"></div>
+      <div style="padding: 6px 8px; background: #ff6b5e; font-weight: 700"><b>B</b> · Video file · live ▴</div>
+    </button>
+
+    <div style="position: absolute; right: 0; bottom: 100%; margin-bottom: 6px; width: 230px; background: #060303; border: 1px solid #ff6b5e; display: flex; flex-direction: column">
+      <button class="opt"><span>1 iPhone</span><span>in use by A</span></button>
+      <button class="opt"><span>2 Mac camera</span><span>ready</span></button>
+      <button class="opt"><span>3 Test pattern</span><span>ready</span></button>
+      <button class="opt on" aria-pressed="true"><span>4 Video file</span><span>live</span></button>
+      <button class="opt" style="border-top: 1px solid #5b2622"><span>B off</span><span></span></button>
+    </div>
+  </div>
+
+  <div style="color: #ffb3ab">Each small view shows what that input sees and names it. Click one and its list opens upward, over the picture's lower edge, and closes when you choose. The four input buttons leave the lower left. Keys 1 to 4 and MIDI still switch A in one press; Shift + 1 to 4 switch B. With no Mix B in the preset, A's view stays, and the bar and B are dimmed.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":920,"height":600}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

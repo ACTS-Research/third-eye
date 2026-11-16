@@ -100,7 +100,7 @@ npm run preview
 
 | Screen | For |
 | --- | --- |
-| **Perform** | The show: panic buttons, input select, the monitor, eight faders for the live preset, and the strip of presets and the running order |
+| **Perform** | The show: panic buttons, the monitor, the inputs and the mix bar under it, eight faders for the live preset, and the strip of presets and the running order |
 | **Edit** | One preset. At the left the picture, with the effects chain as a row of buttons under it and the faders as the perform screen will show them. At the right four tabs: **Parameters** (the open effect's controls), **Faders**, **Modulation** and **LFOs** |
 | **Setup** | Everything done once beforehand: output window, inputs, pairing, MIDI, audio, vision, triggers, preset files |
 
@@ -123,12 +123,14 @@ progress stops.
 
 The two readouts at the top left are also buttons, each with its own job:
 the output readout opens the output window, and the phone readout shows the
-QR code and the connection steps. Which input is selected, and what it is
-doing (`iPhone · live`, `Video file · no signal`), is on the perform screen
-under the four input buttons; a click on that line goes to **Setup → Input**.
-With the video file input selected and no file loaded, the line reads
-`Video file · choose…` and a click on it, or on input button **4**, opens the
-file picker straight away (the same picker as **Setup → Input → Load video
+QR code and the connection steps. Under the picture on the perform screen
+are a small live view of input A, the mix bar, and a small live view of
+input B (see [Inputs](#inputs)). The line under each view says which source
+it is and what it is doing (`A · iPhone · live`, `B · off`); click it, or
+the view, for the list that chooses the source. **Input settings…** at the
+foot of the list goes to **Setup → Input**. Choosing **Video file** with no
+file loaded (the line then reads `A · Video file · choose…`) opens the file
+picker straight away (the same picker as **Setup → Input → Load video
 file…**).
 
 The coloured dot at the top right opens the interface palettes (red, amber,
@@ -361,6 +363,7 @@ They work in both `/control` and `/output` (not while typing in a text field).
 | `2` | Input: local camera |
 | `3` | Input: test pattern |
 | `4` | Input: video file |
+| `Shift` + `1`–`4` | The same four sources, for input B |
 | `R` | Record the output on / off |
 | `T` | Tap tempo |
 | `I` | Cycle to the next input |
@@ -370,12 +373,39 @@ They work in both `/control` and `/output` (not while typing in a text field).
 
 ## Inputs
 
-All four feed the same pipeline and can be switched live. While a newly
-selected input has no frame yet, the previous picture stays up.
+There are four sources and two inputs. **Input A** is what the effects
+chain starts from, and what face, hand and person tracking watch. **Input
+B** is a second picture that the **Mix B** effect mixes in; it is off until
+you choose a source for it. Both are chosen from the small views under the
+picture on the perform screen (or `1`–`4` for A, `Shift` + `1`–`4` for B)
+and configured under **Setup → Input**. They can be switched live; while a
+newly chosen source has no frame yet, the previous picture stays up.
+
+A and B never show the same source: ask one for the source the other has
+and they trade places. So one iPhone, and the one video file, can feed A or
+B, not both.
+
+**Mixing.** Add **Mix B** to a preset's chain (Edit → + Add effect). Its
+**mix** is how much of B comes in, and it is the bar between the two small
+views on the perform screen: drag it, pin it as a fader, map it to MIDI, or
+have tilt, an LFO or the audio level move it like any other slider. Effects
+before Mix B in the chain treat A alone; effects after it treat the mixed
+picture. **Apply to** limits the mix to the person or to the background. A
+preset with no Mix B shows A alone, and the bar is dimmed. With B off, Mix B
+passes A through.
+
+| Mode | What it does |
+| --- | --- |
+| Fade | A plain crossfade from A to B |
+| Add, Screen, Multiply, Difference | The two pictures combined, as in a video mixer or a paint program |
+| Bright key | B shows where B is brighter than **level**; **softness** blurs the edge |
+| Colour key | B shows except where it is the **key colour** (0.33 is green); **level** is how far from that colour still counts |
+| Wipe | An edge across the picture at **level**, turned by **angle**: B on one side, A on the other |
+| B pushes A | B is not seen: its brightness pushes A's pixels along **angle**, as far as **level** |
+
+The sources:
 
 - **iPhone** — the WebRTC stream. Primary input.
-Inputs are selected with the `1`–`4` buttons on the perform screen and
-configured under **Setup → Input**.
 
 - **Local camera** — any camera Chrome can see. Click **Find cameras** once
   to grant permission and list them. An iPhone used through Continuity Camera
@@ -407,6 +437,7 @@ to fold its card.
 | False Colour / Thermal | Five palettes, banding, cycling |
 | Hue Shift | Shift, cycle, saturation |
 | Contrast / Brightness | Plus saturation, gamma, invert |
+| Mix B | Mixes input B in: nine modes (see [Inputs](#inputs)) |
 
 **Apply to** (on every effect) limits it to the person or to the background.
 That needs **Segmentation** switched on under Setup → Vision.
@@ -544,7 +575,8 @@ move with it when the output window opens or closes.
 **MIDI.** Click **MIDI map** at the top right (or press `M`). Every control
 that can be mapped is outlined:
 
-- the panic buttons, the four input buttons, previous / next preset
+- the panic buttons, the choices in the two input lists (open a list, then
+  click a choice), previous / next preset
 - every preset tile (a pad per preset; the pad stays with the slot) and every
   step of the running order (a pad per step number)
 - the eight perform faders (the knob moves the parameter itself, so the
@@ -656,6 +688,9 @@ modulated.
   (see `feedback.js`, `trails.js`).
 - `uses: { history: { frames, maxWidth } }` gives a ring buffer of past input
   frames as `uHistory` (see `delay.js`).
+- `uses: { inputB: true }` gives input B as `uTexB`, fitted like A; the
+  effect is skipped while B is off (see `mixb.js`). `mixLabel` renames the
+  effect's wet / dry slider.
 
 A shader that fails to compile is reported in the console of the window
 drawing the picture and that effect is skipped; the rest of the chain keeps
@@ -820,6 +855,7 @@ npm test
 | `tests/reconnect.mjs` | Getting the phone back without closing its page: a Mac that stops answering, a Mac reload, scanning that stops when the link returns, the ordinary pairing code read inside the page, a changed room code, Reconnect by hand |
 | `tests/output-preview.mjs` | The phone's preview showing the Mac's finished picture: the setting, the picture following Blackout, Rotate not applied twice, the camera taking over while a code is read, a Mac reload, switching back; torch and white-balance lock dimmed on a camera without them |
 | `tests/edit-screen.mjs` | The edit screen's own controls: the bar slider (click, typed value, double-click reset), the app's menus by mouse and keyboard without the page's shortcuts firing, a menu whose button scrolls into view, the chain row (add, drag, remove, bypass), modulation boxes and their extra settings, LFOs, autosave, a narrow window |
+| `tests/mix.mjs` | Input B and Mix B: choosing B from its small view (the list opening downward), A and B trading places, the nine modes, the bar under the picture, B off passing A through, the small live views, the iPhone as B, B carrying on when the picture moves to `/control` |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |
@@ -843,6 +879,10 @@ the Mac on 15 November, before its LFOs tab was added.
 **Only in headless Chromium**, with a fake camera and microphone: everything
 else. Check these the first time you use them:
 
+- **Input B and Mix B** (16 November): two real pictures mixed, the iPhone
+  as A or B beside the Mac's camera, and whether the Mac holds 60 fps with
+  two live videos. The tests mix the test pattern, Chromium's stand-in
+  camera and a stand-in phone.
 - **A closed network made by the Mac** with Internet Sharing and no internet
   behind it. The steps are from how macOS is known to behave; they have not
   been tried on your Mac.

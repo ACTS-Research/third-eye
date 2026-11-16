@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mix A, an effect in the chain</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button{font:inherit;cursor:pointer}
+.b{background:none;color:#ff6b5e;border:1px solid #5b2622;padding:9px 0;text-align:center}
+.b.on{background:#ff6b5e;color:#140302;border-color:#ff6b5e;font-weight:700}
+.cap{text-transform:uppercase;letter-spacing:0.08em}
+.bar{height:22px;border:1px solid #ff6b5e;background:#060303;position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:#ff6b5e}
+</style>
+</helmet>
+<div style="width: 1200px; height: 720px; box-sizing: border-box; display: flex; background: #060303; color: #ff6b5e; font: 500 12px/1.4 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+
+  <section style="width: 760px; box-sizing: border-box; padding: 20px; border-right: 1px solid #5b2622; display: flex; flex-direction: column; gap: 14px">
+    <div class="cap" style="color: #ffb3ab">Perform screen</div>
+    <div style="display: flex; gap: 20px; flex-grow: 1">
+
+      <aside style="width: 210px; display: flex; flex-direction: column; gap: 8px; justify-content: flex-end">
+        <div class="cap">Input A</div>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+          <button class="b on" aria-pressed="true" aria-label="Input A 1, iPhone">1</button>
+          <button class="b" aria-label="Input A 2, Mac camera">2</button>
+          <button class="b" aria-label="Input A 3, test pattern">3</button>
+          <button class="b" aria-label="Input A 4, video file">4</button>
+        </div>
+        <div>iPhone · live</div>
+        <div class="cap" style="margin-top: 10px">Input B</div>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+          <button class="b" aria-label="Input B 1, iPhone">1</button>
+          <button class="b" aria-label="Input B 2, Mac camera">2</button>
+          <button class="b" aria-label="Input B 3, test pattern">3</button>
+          <button class="b on" aria-pressed="true" aria-label="Input B 4, video file">4</button>
+        </div>
+        <div>Video file · live</div>
+        <div style="color: #ffb3ab; margin-top: 6px">Press B's lit button again to turn B off.</div>
+      </aside>
+
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 12px">
+        <div style="position: relative; height: 281px; background: repeating-linear-gradient(115deg, #ff9a3c 0 40px, #c2185b 40px 80px, #2a0a3a 80px 120px); overflow: hidden">
+          <div style="position: absolute; inset: 0; mix-blend-mode: screen; opacity: 0.75; background: radial-gradient(circle at 60% 45%, #e8fbff 0 12%, #2ad4ff 12% 24%, #0b3a8a 24% 40%, #02101f 40%)"></div>
+        </div>
+        <div style="color: #ffb3ab">The picture: A and B mixed by the Mix effect, then the rest of the chain.</div>
+        <div style="display: flex; gap: 16px; align-items: flex-end; margin-top: auto">
+          <div style="display: flex; flex-direction: column; gap: 6px; align-items: center; width: 70px">
+            <div style="width: 70px; height: 150px; border: 1px solid #ff6b5e; position: relative"><div style="position: absolute; left: 0; right: 0; bottom: 0; height: 75%; background: #ff6b5e"></div></div>
+            <div style="font: 800 26px/1 'Big Shoulders Display', sans-serif">0.75</div>
+            <div class="cap" style="font: 700 14px/1 'Big Shoulders Display', sans-serif">Mix</div>
+          </div>
+          <div style="flex-grow: 1; color: #ffb3ab">You mix with an ordinary fader in the Faders column, or map it to tilt, an LFO, audio or a MIDI knob like any other setting.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="flex-grow: 1; box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+    <div class="cap" style="color: #ffb3ab">Edit screen · the chain</div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+      <button class="b">1 Feedback</button>
+      <button class="b on" aria-pressed="true">2 Mix B</button>
+      <button class="b">3 Hue</button>
+    </div>
+    <div style="font: 800 30px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.04em">MIX B</div>
+    <div class="cap">Mode</div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+      <button class="b">Fade</button>
+      <button class="b">Add</button>
+      <button class="b on" aria-pressed="true">Screen</button>
+      <button class="b">Multiply</button>
+      <button class="b">Difference</button>
+      <button class="b">Bright key</button>
+      <button class="b">Colour key</button>
+      <button class="b">Wipe</button>
+      <button class="b">B pushes A</button>
+    </div>
+    <div style="display: grid; grid-template-columns: 90px minmax(0, 1fr) 44px; gap: 10px 10px; align-items: center">
+      <span class="cap">Mix</span><div class="bar"><i style="width: 75%"></i></div><span>0.75</span>
+      <span class="cap">Level</span><div class="bar"><i style="width: 40%"></i></div><span>0.40</span>
+      <span class="cap">Softness</span><div class="bar"><i style="width: 20%"></i></div><span>0.20</span>
+    </div>
+    <div class="cap">Applies to</div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+      <button class="b on" aria-pressed="true">All</button>
+      <button class="b">Person</button>
+      <button class="b">Background</button>
+    </div>
+    <div style="color: #ffb3ab; margin-top: auto">Saved with each preset. Drag Mix B along the chain: effects before it treat A alone, effects after it treat the mixed picture. A preset with no Mix B shows A only.</div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1200,"height":720}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

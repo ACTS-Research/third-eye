@@ -52,7 +52,7 @@ export function mountModPanel(roots, ui) {
     const out = {};
     store.state.chain.forEach((item, i) => {
       const def = EFFECT_BY_ID[item.type];
-      out[`${i + 1} ${def.name} · wet / dry`] = `${item.uid}:mix`;
+      out[`${i + 1} ${def.name} · ${def.mixLabel ?? 'wet / dry'}`] = `${item.uid}:mix`;
       for (const key of Object.keys(def.params)) out[`${i + 1} ${def.name} · ${def.params[key].label ?? key}`] = `${item.uid}:${key}`;
     });
     return out;
@@ -78,7 +78,7 @@ export function mountModPanel(roots, ui) {
     const i = store.state.chain.findIndex((it) => it.uid === m.fx);
     if (i < 0) return '?';
     const def = EFFECT_BY_ID[store.state.chain[i].type];
-    return `${i + 1} ${def.name} · ${m.key === 'mix' ? 'wet / dry' : def.params[m.key]?.label ?? m.key}`;
+    return `${i + 1} ${def.name} · ${m.key === 'mix' ? def.mixLabel ?? 'wet / dry' : def.params[m.key]?.label ?? m.key}`;
   }
 
   // ------------------------------------------------------------ mappings --

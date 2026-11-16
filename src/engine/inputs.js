@@ -83,10 +83,12 @@ export class VideoFeed {
   }
 }
 
-export class InputManager {
-  constructor() {
-    this.feeds = { phone: new VideoFeed(), camera: new VideoFeed(), file: new VideoFeed() };
-    this.kind = 'pattern';
+// One picture taken from the feeds: its own texture, uploaded only when the
+// feed it is showing has a new frame.
+class Slot {
+  constructor(feeds, kind) {
+    this.feeds = feeds;
+    this.kind = kind;
     this.force = false;
     this.tex = null;
     this.width = 0;
@@ -146,5 +148,28 @@ export class InputManager {
     feed.fresh = false;
     this.force = false;
     return true;
+  }
+}
+
+// Input A is the manager itself (what the chain starts from, and what vision
+// watches); `b` is the second input, mixed in by the Mix B effect, with
+// kind '' while it is off. The two never show the same feed: a feed's
+// "new frame" flag is taken by whichever slot uploads it.
+export class InputManager extends Slot {
+  constructor() {
+    super({ phone: new VideoFeed(), camera: new VideoFeed(), file: new VideoFeed() }, 'pattern');
+    this.b = new Slot(this.feeds, '');
+  }
+
+  initGL(gl) {
+    super.initGL(gl);
+    this.b.initGL(gl);
+  }
+
+  // Both at once, so that when A and B change places neither is for a
+  // moment showing the other's feed.
+  setKinds(kind, kindB) {
+    this.setKind(kind);
+    this.b.setKind(kindB === kind ? '' : kindB || '');
   }
 }

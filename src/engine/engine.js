@@ -34,6 +34,8 @@ const STALL_MS = 1000;
 const PREVIEW_INTERVAL_MS = 100;
 const STATUS_INTERVAL_MS = 500;
 const SOURCES_INTERVAL_MS = 66;
+// The small views of inputs A and B on the perform screen.
+const THUMBS_INTERVAL_MS = 200;
 const CONTROL_TIMEOUT_MS = 3000;
 
 export class Engine {
@@ -71,6 +73,7 @@ export class Engine {
     this.lastInputFrames = 0;
     this.lastStatusAt = performance.now();
     this.lastPreviewAt = 0;
+    this.lastThumbsAt = 0;
     this.worstFrameMs = 0;
     this.lastFrameAt = 0;
 
@@ -217,9 +220,19 @@ export class Engine {
     this.inputs.initGL(gl);
     this.vision.initGL(gl);
     this.pipeline = new Pipeline(gl, this.inputs);
-    this.inputs.setKind(this.store.state.input.kind);
+    this.setInputs();
     this.applySize();
     this.pipeline.setChain(this.store.state.chain, 0, performance.now());
+  }
+
+  // Which sources inputs A and B show, from the store.
+  setInputs() {
+    const { kind, kindB } = this.store.state.input;
+    this.inputs.setKinds(kind, kindB);
+    if (this.pipeline) {
+      this.pipeline.srcDirty = true;
+      this.pipeline.srcBDirty = true;
+    }
   }
 
   applySize() {
@@ -248,8 +261,7 @@ export class Engine {
     this.sendTriggerLabels();
     this.sendPresets();
     this.pipeline.setChain(state.chain, 0, performance.now());
-    this.inputs.setKind(state.input.kind);
-    this.pipeline.srcDirty = true;
+    this.setInputs();
     this.mod.dirty = true;
     this.applySize();
     this.link.refresh();
@@ -274,8 +286,7 @@ export class Engine {
         break;
       case 'merge':
         if (op.key === 'input') {
-          this.inputs.setKind(state.input.kind);
-          this.pipeline.srcDirty = true;
+          this.setInputs();
           this.housekeeping();
         } else if (op.key === 'net') {
           this.link.refresh();
@@ -301,7 +312,7 @@ export class Engine {
     if (!this.link.conn?.open) this.returnFeed.on = false;
     const input = this.store.state.input;
     // Once opened the camera stays warm so switching back to it is instant.
-    if (input.kind === 'camera' || this.camera.stream) this.camera.ensure(input.cameraId);
+    if (input.kind === 'camera' || input.kindB === 'camera' || this.camera.stream) this.camera.ensure(input.cameraId);
 
     const { midi, audio } = this.store.state;
     if (midi.enabled) this.midi.enable();
@@ -365,7 +376,9 @@ export class Engine {
     const want = this.sensors.turn;
     if (want === this.inputs.turn) return;
     this.inputs.turn = want;
+    this.inputs.b.turn = want;
     this.pipeline.srcDirty = true;
+    this.pipeline.srcBDirty = true;
   }
 
   // Asks whichever window has the phone on a direct link to introduce this
@@ -478,10 +491,16 @@ export class Engine {
       const remoteWatched = now - this.remoteControlSeenAt < CONTROL_TIMEOUT_MS;
       const wantPreview = remoteWatched && g.preview && now - this.lastPreviewAt >= PREVIEW_INTERVAL_MS;
       if (wantPreview) this.lastPreviewAt = now;
+      // The small views go to whichever control page is looking, this one
+      // included.
+      const wantThumbs = watched && now - this.lastThumbsAt >= THUMBS_INTERVAL_MS;
+      if (wantThumbs) this.lastThumbsAt = now;
       try {
         // Collect the previous preview before a new one can be started.
         const preview = this.pipeline.pollPreview();
         if (preview) this.bus.send('preview', preview);
+        const thumbs = this.pipeline.pollThumbs();
+        if (thumbs) this.bus.send('thumbs', thumbs);
         this.pipeline.render({
           now,
           time: (now - this.t0) / 1000,
@@ -498,6 +517,7 @@ export class Engine {
           canvasWidth: this.canvas.width,
           canvasHeight: this.canvas.height,
           wantPreview,
+          wantThumbs,
         });
       } catch (err) {
         // Never let one bad frame stop the show.
@@ -511,8 +531,8 @@ export class Engine {
     if (now - this.lastStatusAt >= STATUS_INTERVAL_MS) this.sendStatus(now);
   }
 
-  inputStatus(now) {
-    const { inputs } = this;
+  // What input A is doing, or with `inputs` given, input B.
+  inputStatus(now, inputs = this.inputs) {
     const feed = inputs.feed;
     if (inputs.kind === 'pattern') return { kind: 'pattern', state: 'live', width: this.canvas.width, height: this.canvas.height };
     let state = 'no-signal';
@@ -589,6 +609,8 @@ export class Engine {
       contextLost: this.lost,
       fullscreen: !!document.fullscreenElement,
       input: { ...this.inputStatus(now), fps: this.inputFps },
+      // Input B, or null while it is off.
+      inputB: this.inputs.b.kind ? this.inputStatus(now, this.inputs.b) : null,
     };
   }
 }

@@ -81,7 +81,9 @@ export function defaultScene() {
 export function defaultState() {
   return {
     v: 1,
-    input: { kind: 'pattern', cameraId: '', fit: 'cover', mirror: false },
+    // kindB is the second input, mixed in by the Mix B effect ('' = off). It
+    // is never the same source as kind.
+    input: { kind: 'pattern', kindB: '', cameraId: '', fit: 'cover', mirror: false },
     net: { room: randomRoom(), signal: '', codec: DEFAULT_CODEC },
     tempo: { bpm: 120 },
     midi: { enabled: false },
@@ -214,6 +216,7 @@ export function sanitizeState(raw) {
   };
   if (!Number.isInteger(state.order.cue) || state.order.cue < -1) state.order.cue = -1;
   if (!INPUT_KINDS.includes(state.input.kind)) state.input.kind = 'pattern';
+  if (!INPUT_KINDS.includes(state.input.kindB) || state.input.kindB === state.input.kind) state.input.kindB = '';
   if (!CODECS[state.net.codec]) state.net.codec = DEFAULT_CODEC;
   state.tempo.bpm = clamp(Number(state.tempo.bpm) || 120, 30, 300);
   state.net.room = normalizeRoom(state.net.room);

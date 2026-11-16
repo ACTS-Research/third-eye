@@ -29,6 +29,7 @@ export function describeAction(action) {
   if (kind === 'preset') return `Preset ${Number(arg) + 1}`;
   if (kind === 'step') return `Step ${Number(arg) + 1}`;
   if (kind === 'input') return `Input: ${INPUT_LABELS[arg] ?? arg}`;
+  if (kind === 'inputB') return arg === 'off' ? 'Input B off' : `Input B: ${INPUT_LABELS[arg] ?? arg}`;
   if (kind === 'macro') return `Fader ${Number(arg) + 1}`;
   if (kind === 'param') return 'Parameter';
   return action;
@@ -47,12 +48,27 @@ export function runAction(store, name, arg) {
     case 'bypassAll':
       store.merge('globals', { bypassAll: !g.bypassAll });
       break;
-    case 'input':
-      if (INPUT_KINDS.includes(arg)) store.merge('input', { kind: arg });
+    // A and B never show the same source: asking one for the other's makes
+    // them change places.
+    case 'input': {
+      const { kind, kindB } = store.state.input;
+      if (INPUT_KINDS.includes(arg)) store.merge('input', arg === kindB ? { kind: arg, kindB: kind } : { kind: arg });
       break;
+    }
+    case 'inputB': {
+      const { kind, kindB } = store.state.input;
+      if (arg === 'off') store.merge('input', { kindB: '' });
+      else if (!INPUT_KINDS.includes(arg)) break;
+      else if (arg !== kind) store.merge('input', { kindB: arg });
+      // B was off: A keeps its source, there is nothing to trade.
+      else if (kindB) store.merge('input', { kind: kindB, kindB: arg });
+      break;
+    }
     case 'inputNext': {
-      const i = INPUT_KINDS.indexOf(store.state.input.kind);
-      store.merge('input', { kind: INPUT_KINDS[(i + 1) % INPUT_KINDS.length] });
+      const { kind, kindB } = store.state.input;
+      const i = INPUT_KINDS.indexOf(kind);
+      const next = INPUT_KINDS[(i + 1) % INPUT_KINDS.length];
+      store.merge('input', next === kindB ? { kind: next, kindB: kind } : { kind: next });
       break;
     }
     case 'glitch':

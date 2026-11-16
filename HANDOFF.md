@@ -1,22 +1,25 @@
 # Handoff
 
-## 2026-11-16 (end of the third session, 13 to 16 November)
+## 2026-11-16 (fourth session)
 
-**Where things stand.** Everything asked for in this session is built and
-live on GitHub Pages from `main`; the last push was the Setup screen's menus
-and LFO tempo sync as note values. Most of what was built after 13 November
-(running order, the phone's Mac-output preview, the rebuilt edit screen and
-Setup) has only been run in headless Chromium, not on the real iPhone and
-Mac.
+**Where things stand.** Input B and the Mix B effect are built and live from
+`main`: a second input, mixed in by an effect in the chain, with a mix bar
+and two small live views under the picture on the perform screen. It has
+only been run in headless Chromium. Most of what was built after 13 November
+is in the same position.
 
-**Next step.** On the real Mac and iPhone, with every page reloaded, go down
-"Built since 13 November, not yet tried on real hardware" below, starting
-with Freeze from the phone (tap twice: it should freeze, light up, release).
+**Next step.** On the real Mac, with every page reloaded: choose the Mac
+camera for B under the picture (or Shift + 2), add Mix B to a preset under
+Edit, and drag the bar. Then go down "Built since 13 November, not yet tried
+on real hardware" below.
 
 **Decisions only you can make.**
 
-- Blending inputs: pick a direction from the advice given on 16 November
-  (summarised under "Blending inputs" below). Nothing is built yet.
+- Say whether the Mix B modes should be a grid of buttons, as in the mock-up.
+  They are a menu for now, like every other effect's choices.
+- Say when to start the second iPhone as input B (stage 2), and whether
+  "an image as a control signal" comes before or after it. You have said
+  both phones should control, and yes to the control signal.
 - Picture controls on the Mac (brightness, contrast, saturation and so on):
   say whether they belong to each preset (the Contrast / Brightness effect
   already does that) or should be one fixed set that holds across presets.
@@ -36,6 +39,8 @@ output is fine as it is (normal pairing only; no work for a phone paired
 without internet). Running order: on hold, including named running orders.
 Name stays Third Eye Cam; 1280×720 stays. No server of your own: you got
 pairing working without it (route not said). Old presets can be abandoned.
+Mixing: option C (an effect, with its bar under the picture) and C1 (the
+small views choose the inputs, their lists opening downward).
 
 **Built since 13 November, not yet tried on real hardware.**
 
@@ -50,6 +55,8 @@ pairing working without it (route not said). Old presets can be abandoned.
   tabs); everything on it since then is unseen, namely the LFOs tab, shape
   pictures, note-value tempo sync, and dragging effects to reorder.
 - Mac, Setup: the app's own menus and bars.
+- Mac, input B and Mix B (16 November): all of it. Two real pictures mixed,
+  the iPhone as A or B, 60 fps with two live videos, the small views.
 
 **When you are next in the studio.** Open the output window before the
 show, then: measure real latency fullscreen on the projector at 720p · 60 (so
@@ -62,9 +69,12 @@ internet) and pairing by code on it.
 
 **Branch.** Work is on `main`, the default branch and the one that deploys.
 Nothing is waiting to be merged; everything is pushed. `main` is the only
-branch on GitHub (checked 16 November).
+branch on GitHub (checked 16 November). A cloud session starts on a
+temporary local branch: switch to `main` (`git checkout -B main
+origin/main`) before committing, and push `main` only.
 
-**Mock-ups.** Running order: https://claude.ai/artifact/SiD1F7P89JLwXeC31BKhz4
+**Mock-ups.** Input B and mixing: https://claude.ai/artifact/4yrzjrjTVfZ4qgMexUNNn3
+(C and C1 were built). Running order: https://claude.ai/artifact/SiD1F7P89JLwXeC31BKhz4
 (A, the strip, was built). Edit screen, slider styles and tempo sync:
 https://claude.ai/artifact/UEbbvKGUHsQo7CxCWFUVDT (C, the Bar, and Notes were
 built). Icons: https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo. All private
@@ -328,8 +338,8 @@ Three static pages built by Vite, no framework.
 | `src/effects/` | One file per effect; `index.js` is the registry, `common.glsl.js` the shared GLSL |
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon, option D2 from the sheet at https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo) |
-| `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `running-order/`, `edit-screen/`. `design/README.md` says which option of each was built |
-| `tests/` | Nineteen headless suites and `lib.mjs` |
+| `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `running-order/`, `edit-screen/`, `mix/`. `design/README.md` says which option of each was built |
+| `tests/` | Twenty headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 
@@ -499,31 +509,51 @@ on the Mac side; a larger XY pad in place of the phone's six buttons (the
 owner chose to leave the pad on the preview); tempo from the audio beat; a
 native wrapper for a true Syphon output; a MIDI mapping for the dimmer.
 
-### Blending inputs (advice given 16 November, nothing built)
+### Input B and Mix B (built 2026-11-16)
 
-Today one input shows at a time; a second phone that pairs takes over from
-the first (`acceptCall` / `acceptData` in `remote.js` replace the link). The
-only blending is preset crossfades and the effects that mix the picture with
-its own past (Feedback, Trails, Delay).
+Stage 1 of the advice on blending inputs. Stage 2 (a second iPhone) and "an
+image as a control signal" are not started; see the end of this section.
 
-Advised, in two stages:
+- **Two slots, one set of feeds.** `InputManager` (`src/engine/inputs.js`) is
+  input A itself and has `b`, a second `Slot` with its own texture. State:
+  `input.kind` and `input.kindB` (`''` = off). The two are never the same
+  source, because a feed's "new frame" flag is taken by whichever slot
+  uploads it: the `input` and `inputB` actions make A and B trade places
+  instead (`src/shared/actions.js`). Change inputs through those actions,
+  never with `store.merge('input', { kind })`.
+- **B is drawn only while it is on** (`Pipeline.updateSource(…, true)` into
+  `srcB`), fitted and mirrored like A. Vision, the latency estimate and the
+  top-bar readouts still watch A only.
+- **Mix B is an ordinary effect** (`src/effects/mixb.js`) with
+  `uses: { inputB: true }`: it gets `uTexB`, and the runner skips it while B
+  has no picture, so A passes through. Its mix is the effect's own wet / dry
+  (`mixLabel` renames the slider), which is why pinning, mapping, presets
+  and Apply to all work with no new code.
+- **The row under the picture** (`perform.js`, "inputs and the mix"): the
+  bar moves the `mix` of the preset's first Mix B that is not bypassed. The
+  small views are one 192×54 strip (A left, B right) the engine reads back
+  about five times a second and sends as `thumbs` on the bus, so they work
+  in both hosting modes. `Readback` in `pipeline.js` is the shared
+  non-blocking readback (the monitor image uses it too).
+- **The input lists open downward** (`menu({ down: true })`), over the
+  preset strip, never over the picture: the owner asked for that. Their
+  choices carry `data-midi`, so MIDI map mode picks them from the open list.
+- **Not done:** the Mix B modes as a grid of buttons (the mock-up drew one;
+  they are a menu); a hatched "moved by modulation" band on the bar; a
+  second video file.
 
-1. **Input B and a Mix effect.** A second input slot fed by any local source
-   (Mac camera, file, pattern) beside the phone, uploaded to a second
-   texture. Mixing is an effect in the chain, so it is saved in presets,
-   every parameter can be mapped, it can sit anywhere in the chain, and the
-   effect's Person / Background target works with it unchanged. Modes:
-   crossfade, add, screen, multiply, difference, luma key, colour key, wipe,
-   B displaces A. Does not touch the phone link.
-2. **A second iPhone as input B.** `PhoneLink` holds two links instead of
-   one; first to pair is A, the next B; both ways of pairing; both phones
-   carried when the engine moves between windows; phone B's sensors as their
-   own modulation sources. Touches engine, remote, host and link. Two
-   720p60 streams are about 10 Mbit/s; on the iPhone hotspot phone B's video
-   goes through phone A's radio.
+Still to come, as advised:
 
-Also raised: B's brightness or motion as modulation sources (an image as a
-control signal).
+- **A second iPhone as input B.** Today a second phone that pairs takes over
+  from the first (`acceptCall` / `acceptData` in `remote.js` replace the
+  link). `PhoneLink` would hold two links; first to pair is A, the next B;
+  both ways of pairing; both phones carried when the engine moves between
+  windows; phone B's sensors as their own modulation sources (the owner
+  wants both phones to control). Touches engine, remote, host and link. Two
+  720p60 streams are about 10 Mbit/s; on the iPhone hotspot phone B's video
+  goes through phone A's radio.
+- **An image as a control signal** (the owner said yes): B's brightness or
+  motion, whole or by region, as modulation sources.
 
 ### Prompt to start a new session
 

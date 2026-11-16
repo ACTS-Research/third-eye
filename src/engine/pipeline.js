@@ -13,6 +13,61 @@ import { COPY_FRAG, FINAL_FRAG, PATTERN_FRAG, SOURCE_FRAG } from './shaders.js';
 const PREVIEW_W = 480;
 const PREVIEW_H = 270;
 const MASK_MODES = { all: 0, person: 1, background: 2 };
+// The small views of inputs A and B on the perform screen: one strip, A in
+// its left half and B in its right, read back like the monitor image.
+export const THUMB_W = 96;
+export const THUMB_H = 54;
+
+// A picture read back from the GPU without waiting for it: start() after
+// drawing into the target, poll() on a later frame.
+class Readback {
+  constructor(gl, w, h) {
+    this.gl = gl;
+    this.w = w;
+    this.h = h;
+    this.target = new Target(gl, w, h);
+    this.pbo = gl.createBuffer();
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.pbo);
+    gl.bufferData(gl.PIXEL_PACK_BUFFER, w * h * 4, gl.STREAM_READ);
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+    this.sync = null;
+  }
+
+  // (The tests read the picture straight from here.)
+  get fbo() {
+    return this.target.fbo;
+  }
+
+  get busy() {
+    return !!this.sync;
+  }
+
+  // Reads the bound target (this one) into the buffer.
+  start() {
+    const gl = this.gl;
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.pbo);
+    gl.readPixels(0, 0, this.w, this.h, gl.RGBA, gl.UNSIGNED_BYTE, 0);
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+    this.sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+    gl.flush();
+  }
+
+  // { width, height, pixels } once the GPU has finished, otherwise null.
+  poll() {
+    const gl = this.gl;
+    if (!this.sync) return null;
+    const status = gl.clientWaitSync(this.sync, 0, 0);
+    if (status === gl.TIMEOUT_EXPIRED) return null;
+    gl.deleteSync(this.sync);
+    this.sync = null;
+    if (status === gl.WAIT_FAILED) return null;
+    const pixels = new Uint8Array(this.w * this.h * 4);
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.pbo);
+    gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, pixels);
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+    return { width: this.w, height: this.h, pixels };
+  }
+}
 
 function effectSource(def) {
   const uniforms = Object.keys(def.params)
@@ -115,6 +170,7 @@ class EffectInstance {
     }
     dst.bind();
     p.tex('uTex', 0, inTex);
+    if (this.def.uses?.inputB) p.tex('uTexB', 4, ctx.texB);
     p.tex('uMask', 3, ctx.maskTex);
     p.i('uMaskMode', MASK_MODES[item.target] ?? 0);
     p.v4('uMaskFit', ctx.maskFit[0], ctx.maskFit[1], ctx.maskFit[2], ctx.maskFit[3]);
@@ -185,6 +241,8 @@ class Runner {
       if (!inst) continue;
       if (resolve) resolve(item, inst);
       if (item.bypass || inst.values.mix <= 0) continue;
+      // An effect that mixes input B in passes A through while B is off.
+      if (inst.def.uses?.inputB && !ctx.texB) continue;
       const scratch = tex === this.a.tex ? this.b : this.a;
       tex = inst.render(ctx, tex, scratch, item);
     }
@@ -219,7 +277,11 @@ export class Pipeline {
 
     this.src = new Target(gl, this.width, this.height);
     this.srcDirty = true;
+    // Input B, fitted like A. Only drawn while B is on.
+    this.srcB = new Target(gl, this.width, this.height);
+    this.srcBDirty = true;
     this.patternTime = 0;
+    this.thumbs = new Readback(gl, THUMB_W * 2, THUMB_H);
 
     // 1x1 white stand-in until a segmentation mask exists.
     this.noMask = createTexture(gl, 1, 1);
@@ -229,12 +291,7 @@ export class Pipeline {
     this.prev = null;
     this.fade = null;
 
-    this.preview = new Target(gl, PREVIEW_W, PREVIEW_H);
-    this.pbo = gl.createBuffer();
-    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.pbo);
-    gl.bufferData(gl.PIXEL_PACK_BUFFER, PREVIEW_W * PREVIEW_H * 4, gl.STREAM_READ);
-    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
-    this.previewSync = null;
+    this.preview = new Readback(gl, PREVIEW_W, PREVIEW_H);
 
     // Compile every effect up front so adding one mid-show never hitches.
     for (const def of Object.values(EFFECT_BY_ID)) {
@@ -277,6 +334,8 @@ export class Pipeline {
     this.height = h;
     this.src.resize(w, h);
     this.srcDirty = true;
+    this.srcB.resize(w, h);
+    this.srcBDirty = true;
     this.cur.resize(w, h);
     this.prev?.resize(w, h);
   }
@@ -294,8 +353,8 @@ export class Pipeline {
     }
   }
 
-  fitScale(fit) {
-    const [iw, ih] = this.inputs.size();
+  fitScale(fit, slot = this.inputs) {
+    const [iw, ih] = slot.size();
     if (!iw || !ih) return [1, 1];
     const r = this.width / this.height / (iw / ih);
     if (fit === 'stretch') return [1, 1];
@@ -303,25 +362,34 @@ export class Pipeline {
     return [Math.min(1, r), Math.min(1, 1 / r)];
   }
 
-  updateSource(ctx, input, frozen) {
+  // Draws one input (A, or B with `second`) into its working buffer.
+  updateSource(ctx, input, frozen, second = false) {
     const gl = this.gl;
-    const inputs = this.inputs;
-    if (inputs.kind === 'pattern') {
+    const slot = second ? this.inputs.b : this.inputs;
+    const target = second ? this.srcB : this.src;
+    const dirtyKey = second ? 'srcBDirty' : 'srcDirty';
+    if (slot.kind === 'pattern') {
       if (!frozen) this.patternTime = ctx.time;
-      if (frozen && !this.srcDirty) return;
-      this.src.bind();
+      if (frozen && !this[dirtyKey]) return;
+      target.bind();
       this.patternProgram.use().f('uTime', this.patternTime).v2('uResolution', this.width, this.height);
       drawFullscreen(gl);
-      this.srcDirty = false;
+      this[dirtyKey] = false;
       return;
     }
-    const uploaded = frozen ? false : inputs.update();
-    if (!(uploaded || this.srcDirty) || !inputs.hasFrame) return;
-    const [sx, sy] = this.fitScale(input.fit);
-    this.src.bind();
-    this.sourceProgram.use().tex('uTex', 0, inputs.tex).v2('uFit', sx, sy).f('uMirror', input.mirror ? 1 : 0).f('uTurn', inputs.quarter);
+    const uploaded = frozen ? false : slot.update();
+    if (!(uploaded || this[dirtyKey]) || !slot.hasFrame) return;
+    const [sx, sy] = this.fitScale(input.fit, slot);
+    target.bind();
+    this.sourceProgram.use().tex('uTex', 0, slot.tex).v2('uFit', sx, sy).f('uMirror', input.mirror ? 1 : 0).f('uTurn', slot.quarter);
     drawFullscreen(gl);
-    this.srcDirty = false;
+    this[dirtyKey] = false;
+  }
+
+  // Whether input B has a picture to mix in.
+  hasB() {
+    const b = this.inputs.b;
+    return b.kind === 'pattern' || (!!b.kind && b.hasFrame);
   }
 
   // ctx: { time, now, phone, maskTex, maskFit, glitch, master, bypassAll,
@@ -331,6 +399,8 @@ export class Pipeline {
     ctx.maskTex = ctx.maskTex ?? this.noMask;
 
     this.updateSource(ctx, ctx.input, ctx.frozen);
+    if (this.inputs.b.kind) this.updateSource(ctx, ctx.input, ctx.frozen, true);
+    ctx.texB = this.hasB() ? this.srcB.tex : null;
 
     let fadeT = 1;
     if (this.fade) {
@@ -360,31 +430,37 @@ export class Pipeline {
     gl.viewport(0, 0, ctx.canvasWidth, ctx.canvasHeight);
     drawFullscreen(gl);
 
-    if (ctx.wantPreview && !this.previewSync) {
-      this.preview.bind();
+    if (ctx.wantPreview && !this.preview.busy) {
+      this.preview.target.bind();
       drawFullscreen(gl);
-      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.pbo);
-      gl.readPixels(0, 0, PREVIEW_W, PREVIEW_H, gl.RGBA, gl.UNSIGNED_BYTE, 0);
-      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
-      this.previewSync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
-      gl.flush();
+      this.preview.start();
+    }
+
+    if (ctx.wantThumbs && !this.thumbs.busy) {
+      this.thumbs.target.clear();
+      const copy = this.copyProgram.use();
+      if (this.inputs.kind === 'pattern' || this.inputs.hasFrame) {
+        gl.viewport(0, 0, THUMB_W, THUMB_H);
+        copy.tex('uTex', 0, this.src.tex);
+        drawFullscreen(gl);
+      }
+      if (ctx.texB) {
+        gl.viewport(THUMB_W, 0, THUMB_W, THUMB_H);
+        copy.tex('uTex', 0, ctx.texB);
+        drawFullscreen(gl);
+      }
+      this.thumbs.start();
     }
   }
 
   // Non-blocking readback of the preview started in render(). Returns
   // { width, height, pixels } once the GPU has finished, otherwise null.
   pollPreview() {
-    const gl = this.gl;
-    if (!this.previewSync) return null;
-    const status = gl.clientWaitSync(this.previewSync, 0, 0);
-    if (status === gl.TIMEOUT_EXPIRED) return null;
-    gl.deleteSync(this.previewSync);
-    this.previewSync = null;
-    if (status === gl.WAIT_FAILED) return null;
-    const pixels = new Uint8Array(PREVIEW_W * PREVIEW_H * 4);
-    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.pbo);
-    gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, pixels);
-    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
-    return { width: PREVIEW_W, height: PREVIEW_H, pixels };
+    return this.preview.poll();
+  }
+
+  // The same for the strip of small input views.
+  pollThumbs() {
+    return this.thumbs.poll();
   }
 }

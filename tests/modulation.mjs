@@ -17,7 +17,7 @@ try {
 
   console.log('effects');
   const effects = await output.evaluate(() => [...window.thirdEye.engine.pipeline.programs.keys()]);
-  check('all 12 effects compiled', effects.length === 12, effects.join(', '));
+  check('all 13 effects compiled', effects.length === 13, effects.join(', '));
   await control.keyboard.press('3'); // test pattern
   // Each effect alone must change the picture compared with a clean chain.
   const setChain = (types) => control.evaluate(async (list) => {
@@ -42,8 +42,8 @@ try {
   await control.keyboard.press(' ');
   await setChain(effects);
   await sleep(600);
-  check('all 12 chained render without error', (await outputStats(output)).mean >= 0 && !(await state(() => window.thirdEye.engine.renderErrorLogged)));
-  check('chain editor shows 12 cards', (await control.locator('.fx').count()) === 12);
+  check('all 13 chained render without error', (await outputStats(output)).mean >= 0 && !(await state(() => window.thirdEye.engine.renderErrorLogged)));
+  check('chain editor shows 13 cards', (await control.locator('.fx').count()) === 13);
 
   console.log('sensor channel');
   const readChannel = () => phone.evaluate(() => {

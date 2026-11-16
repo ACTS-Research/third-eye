@@ -8,6 +8,7 @@ of the site; nothing here is deployed or tested.
 | `third-eye-icons.html` | The icon options, three rounds. Open it in a browser. D2 was chosen | https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo |
 | `running-order/` | Three directions for the running order (`Main` A strip, `Stack` B, `Show` C) and the phone board. A was built | https://claude.ai/artifact/SiD1F7P89JLwXeC31BKhz4 |
 | `edit-screen/` | Three directions for the edit screen (`Main` A rows, `Inspector` B, `Picture` C), four slider styles (`Sliders`) and three ways to set LFO tempo sync (`Sync`). C, the Bar and Notes were built | https://claude.ai/artifact/UEbbvKGUHsQo7CxCWFUVDT |
+| `mix/` | Input B and mixing: three directions (`Main` A an effect, `Crossfader` B, `Both` C) and two places for the inputs (`InputsMenu` C1, `InputsRow` C2). C with C1 was built, the lists opening downward | https://claude.ai/artifact/4yrzjrjTVfZ4qgMexUNNn3 |
 
 The `.dc.html` files are artboards for a claude.ai design canvas, with
 `canvas.json` saying where each sits. They do not render by themselves in a

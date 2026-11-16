@@ -18,7 +18,7 @@ function describe(state, slot, auto) {
   return {
     fx: item.uid,
     key: slot.key,
-    label: isMix ? 'wet / dry' : spec.label ?? slot.key,
+    label: isMix ? def.mixLabel ?? 'wet / dry' : spec.label ?? slot.key,
     effect: def.name,
     effectIndex: index,
     min,

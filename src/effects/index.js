@@ -9,13 +9,14 @@ import feedback from './feedback.js';
 import hue from './hue.js';
 import kaleido from './kaleido.js';
 import levels from './levels.js';
+import mixb from './mixb.js';
 import orient from './orient.js';
 import posterize from './posterize.js';
 import rgbshift from './rgbshift.js';
 import thermal from './thermal.js';
 import trails from './trails.js';
 
-export const EFFECTS = [feedback, trails, delay, kaleido, orient, displace, rgbshift, edges, posterize, thermal, hue, levels];
+export const EFFECTS = [feedback, trails, delay, kaleido, orient, displace, rgbshift, edges, posterize, thermal, hue, levels, mixb];
 
 export const EFFECT_BY_ID = Object.fromEntries(EFFECTS.map((e) => [e.id, e]));
 

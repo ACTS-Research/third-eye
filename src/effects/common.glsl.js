@@ -3,6 +3,8 @@
 //
 // Built-in uniforms available to an effect:
 //   uTex          sampler2D       the image coming into this effect
+//   uTexB         sampler2D       input B, fitted like A             (uses.inputB;
+//                                 the effect is skipped while B is off)
 //   uPrev         sampler2D       this effect's own previous output  (uses.prev)
 //   uHistory      sampler2DArray  ring buffer of past input frames   (uses.history)
 //   uHistoryHead  float           layer index of the newest frame
@@ -23,6 +25,7 @@ in vec2 vUv;
 out vec4 outColor;
 
 uniform sampler2D uTex;
+uniform sampler2D uTexB;
 uniform sampler2D uPrev;
 uniform sampler2DArray uHistory;
 uniform float uHistoryHead;

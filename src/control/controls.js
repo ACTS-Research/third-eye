@@ -116,7 +116,11 @@ document.addEventListener('scroll', (e) => {
 // each time the list opens). With `action: true` the button keeps its own
 // text and each choice just calls onChange (an "Add…" menu).
 // Returns { node, set(value), get value }.
-export function menu({ options, value, onChange, label = '', id, text = '', action = false, cls = '' }) {
+// An option may carry `item` (its text in the list, when that differs from
+// the button's) and `midi` (an action, so MIDI map mode can pick it).
+// `down` keeps the list under the button even when it has to scroll there,
+// unless there is next to no room; `listCls` styles the list.
+export function menu({ options, value, onChange, onOpen, label = '', id, text = '', action = false, cls = '', down = false, listCls = '' }) {
   const caption = el('span', { class: 'menu-text' });
   const button = el('button', { type: 'button', class: `menu${cls ? ` ${cls}` : ''}`, 'aria-haspopup': 'listbox', 'aria-expanded': 'false', 'aria-label': label || null }, [caption, el('span', { class: 'menu-mark', 'aria-hidden': 'true', text: action ? '' : '▾' })]);
   if (id) button.id = id;
@@ -151,7 +155,7 @@ export function menu({ options, value, onChange, label = '', id, text = '', acti
   function open() {
     closeOpenMenu();
     const items = all();
-    list = el('div', { class: 'menu-list', role: 'listbox', 'aria-label': label || null });
+    list = el('div', { class: `menu-list${listCls ? ` ${listCls}` : ''}`, role: 'listbox', 'aria-label': label || null });
     let group = '';
     for (const o of items) {
       if (o.group && o.group !== group) {
@@ -160,11 +164,13 @@ export function menu({ options, value, onChange, label = '', id, text = '', acti
       }
       const chosen = !action && o.value === current;
       const item = el('div', { class: `menu-item${chosen ? ' on' : ''}`, role: 'option', tabindex: '-1', 'aria-selected': String(chosen), 'data-value': String(o.value), text: o.item ?? o.label });
+      if (o.midi) item.dataset.midi = o.midi;
       item.addEventListener('click', () => pick(o.value));
       list.append(item);
     }
     if (!items.length) list.append(el('div', { class: 'menu-group', text: 'Nothing to choose' }));
     document.body.append(list);
+    onOpen?.(list);
     // Under the button if there is room, else above it; never off the page.
     const place = () => {
       const r = button.getBoundingClientRect();
@@ -173,7 +179,7 @@ export function menu({ options, value, onChange, label = '', id, text = '', acti
       const above = r.top - 8;
       list.style.maxHeight = '';
       const wanted = Math.min(list.scrollHeight + 2, 360);
-      const up = below < Math.min(wanted, 160) && above > below;
+      const up = below < Math.min(wanted, down ? 90 : 160) && above > below;
       list.style.maxHeight = `${Math.max(80, Math.min(wanted, up ? above : below))}px`;
       list.style.minWidth = `${r.width}px`;
       list.style.left = `${clamp(r.left, 8, Math.max(8, window.innerWidth - list.offsetWidth - 8))}px`;

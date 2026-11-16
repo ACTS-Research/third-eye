@@ -127,13 +127,23 @@ main { flex: 1; min-height: 0; }
 .tap b { font: 700 24px/1 var(--display); }
 .tap.beat { background: var(--ink); color: var(--on-ink); }
 .tempo input { padding: 6px 4px; text-align: right; }
-.inputs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-.inputs button { padding: 9px 0; position: relative; }
+/* The picture, and under it the inputs and the mix. */
+.center { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.center .monitor { flex: 1; }
+.mixrow { display: grid; grid-template-columns: 230px minmax(0, 1fr) 230px; gap: 8px; align-items: start; padding: 8px; border-top: 1px solid var(--line); flex-shrink: 0; }
+.inview { display: flex; flex-direction: column; min-width: 0; }
+.inview-pic { width: 100%; height: 54px; object-fit: cover; display: block; background: #000; border: 1px solid var(--ink); border-bottom: 0; cursor: pointer; }
+.inview.off .inview-pic { opacity: 0.35; }
 /* Which input, and what it is doing. One line, always the same height. */
-.input-line { border: 0; border-bottom: 1px solid transparent; padding: 0; background: none; text-align: left; text-transform: none; letter-spacing: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
-.input-line:hover { border-bottom-color: var(--ink); }
-.input-line.warn { border-bottom: 1px dashed var(--ink); }
-.input-line.bad { background: var(--ink); color: var(--on-ink); font-weight: 700; animation: blink 0.8s steps(2) infinite; }
+.inview-menu { width: 100%; padding: 4px 6px; }
+.inview-menu.warn { border-style: dashed; }
+.inview-menu.bad { background: var(--ink); color: var(--on-ink); font-weight: 700; animation: blink 0.8s steps(2) infinite; }
+.mixbar { position: relative; height: 54px; border: 1px solid var(--ink); cursor: ew-resize; touch-action: none; overflow: hidden; }
+.mixbar .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ink); }
+.mixbar-text { position: absolute; right: 8px; top: 0; bottom: 0; display: flex; align-items: center; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; pointer-events: none; mix-blend-mode: difference; }
+.mixbar.none { border-color: var(--line); cursor: default; }
+.mixbar.none .mixbar-text { color: var(--soft); mix-blend-mode: normal; }
+.mixbar:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 .monitor { position: relative; background: #000; min-height: 0; min-width: 0; display: grid; place-items: center; overflow: hidden; }
 .monitor canvas { width: 100%; height: 100%; object-fit: contain; display: block; }
@@ -263,6 +273,7 @@ input.bar-value:hover, input.bar-value:focus { border-color: var(--line); }
 .menu-item::before { content: '✓'; display: inline-block; width: 1.5em; visibility: hidden; }
 .menu-item.on::before { visibility: visible; }
 .menu-item:hover, .menu-item:focus { background: var(--ink); color: var(--on-ink); }
+.menu-list.compact .menu-item { padding-top: 4px; padding-bottom: 4px; }
 .menu-group { padding: 7px 10px 2px; color: var(--soft); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
 .switch { padding: 4px 10px; min-width: 52px; }
 
@@ -356,6 +367,8 @@ body.midi-map [data-midi][data-midi-label]::after {
   #view-perform { grid-template-columns: 1fr; grid-template-rows: auto; }
   .panic, .side { border: 0; border-bottom: 1px solid var(--line); }
   .monitor { aspect-ratio: 16 / 9; }
+  .center .monitor { flex: none; }
+  .mixrow { grid-template-columns: 120px minmax(0, 1fr) 120px; }
   .edit-body { grid-template-columns: 1fr; }
   .col { overflow: visible; }
 }

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Inputs as buttons under the small views</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button{font:inherit;cursor:pointer}
+.cap{text-transform:uppercase;letter-spacing:0.08em}
+.b{background:none;color:#ff6b5e;border:1px solid #5b2622;padding:8px 0;text-align:center}
+.b.on{background:#ff6b5e;color:#140302;border-color:#ff6b5e;font-weight:700}
+</style>
+</helmet>
+<div style="width: 920px; height: 600px; box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 12px; background: #060303; color: #ff6b5e; font: 500 12px/1.4 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+  <div class="cap" style="color: #ffb3ab">Perform screen · under the picture</div>
+
+  <div style="position: relative; height: 300px; flex-shrink: 0; background: repeating-linear-gradient(115deg, #ff9a3c 0 40px, #c2185b 40px 80px, #2a0a3a 80px 120px); overflow: hidden">
+    <div style="position: absolute; inset: 0; mix-blend-mode: screen; opacity: 0.6; background: radial-gradient(circle at 60% 45%, #e8fbff 0 12%, #2ad4ff 12% 24%, #0b3a8a 24% 40%, #02101f 40%)"></div>
+  </div>
+
+  <div style="display: flex; gap: 10px; align-items: flex-start">
+    <div style="width: 170px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px">
+      <div style="height: 62px; border: 1px solid #ff6b5e; background: repeating-linear-gradient(115deg, #ff9a3c 0 8px, #c2185b 8px 16px, #2a0a3a 16px 24px)"></div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px">
+        <button class="b on" aria-pressed="true" aria-label="Input A 1, iPhone">1</button>
+        <button class="b" aria-label="Input A 2, Mac camera">2</button>
+        <button class="b" aria-label="Input A 3, test pattern">3</button>
+        <button class="b" aria-label="Input A 4, video file">4</button>
+      </div>
+      <div><b>A</b> · iPhone · live</div>
+    </div>
+
+    <div style="flex-grow: 1; height: 62px; border: 1px solid #ff6b5e; position: relative">
+      <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 60%; background: repeating-linear-gradient(135deg, #5b2622 0 4px, #060303 4px 8px)"></div>
+      <div style="position: absolute; left: 60%; top: -4px; bottom: -4px; width: 10px; margin-left: -5px; background: #ff6b5e"></div>
+      <div class="cap" style="position: absolute; right: 8px; top: 22px">Screen</div>
+    </div>
+
+    <div style="width: 170px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px">
+      <div style="height: 62px; border: 1px solid #ff6b5e; background: radial-gradient(circle at 60% 45%, #e8fbff 0 12%, #2ad4ff 12% 24%, #0b3a8a 24% 40%, #02101f 40%)"></div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px">
+        <button class="b" aria-label="Input B 1, iPhone">1</button>
+        <button class="b" aria-label="Input B 2, Mac camera">2</button>
+        <button class="b" aria-label="Input B 3, test pattern">3</button>
+        <button class="b on" aria-pressed="true" aria-label="Input B 4, video file">4</button>
+      </div>
+      <div><b>B</b> · Video file · live</div>
+    </div>
+  </div>
+
+  <div style="color: #ffb3ab">The same four buttons as now, moved under each small view: one click to switch, nothing opens. It takes more height under the picture, and the numbers still have to be learned (1 iPhone, 2 Mac camera, 3 test pattern, 4 video file). Press B's lit button again to turn B off.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":920,"height":600}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

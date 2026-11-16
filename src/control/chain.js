@@ -197,7 +197,7 @@ export function mountChain(roots, ui) {
       return rowFor(key, label, control.node, [pin, modButton]);
     };
 
-    pane.append(slider('mix', 'wet / dry', { min: 0, max: 1, step: 0.01, default: 1 }, item.mix, (v) => store.patchItem('chain', item.uid, { mix: v })));
+    pane.append(slider('mix', def.mixLabel ?? 'wet / dry', { min: 0, max: 1, step: 0.01, default: 1 }, item.mix, (v) => store.patchItem('chain', item.uid, { mix: v })));
     for (const [key, spec] of Object.entries(def.params)) {
       const label = spec.label ?? key;
       if (spec.options) {
