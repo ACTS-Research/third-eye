@@ -15,34 +15,27 @@ with Freeze from the phone (tap twice: it should freeze, light up, release).
 
 **Decisions only you can make.**
 
-- Say whether the picture was sideways in the phone's preview on 14 November
-  because you had pressed Rotate or had Portrait Orientation Lock on. If
-  neither, the upright layout is still wrong and needs fixing.
-- Try Preview: Mac output on the phone (camera icon) and say whether the lag
-  is usable. If it is, say whether to make it work on a phone paired without
-  internet too.
-- Say what the running order still needs. Left out on purpose: several named
-  shows, and steps timed against an audio track.
-- Say whether you want a brightness control on the Mac side. Exposure cannot
-  be set from Safari on the iPhone.
+- Blending inputs: pick a direction from the advice given on 16 November
+  (summarised under "Blending inputs" below). Nothing is built yet.
+- Picture controls on the Mac (brightness, contrast, saturation and so on):
+  say whether they belong to each preset (the Contrast / Brightness effect
+  already does that) or should be one fixed set that holds across presets.
+- Board cover: send a screenshot of the real app to make the current one, or
+  say to use the session capture.
+- Recording: MP4 is now the default, but your Mac remembers WebM from
+  before. Choose MP4 once in Setup → Recordings.
 - Say whether the phone's Quality menu should be restyled. It is the
-  iPhone's own picker for now.
+  iPhone's own picker, first in the phone's Camera settings panel.
 - Say whether the browser-tab icon is good enough. You kept D2 (the camera);
   bolder alternatives T1 to T7 are on the icon sheet.
-- Say whether the app should be renamed. It is Third Eye Cam until you say.
-- Say whether 1280×720 is the right picture and recording size while no
-  output window is open.
-- Decide whether to rent a small server (about $5 a month) for your own
-  pairing server and relay. It is the only route to the university Wi-Fi
-  without the hotspot.
-- Pick the default recording format: WebM (written every second) or MP4
-  (opens in more players).
-- Say whether the board cover stays the design prototype
-  (`screenshots/third-eye-current.png`) or becomes a capture of the real app.
-- Export your presets (Setup → Preset library → Export presets). They and
-  the running order live only in your browser.
 - Tick **hold** again on any trigger that had it: settings saved before 13
   November are no longer read.
+
+**Settled on 16 November.** The sideways preview is fixed. Preview: Mac
+output is fine as it is (normal pairing only; no work for a phone paired
+without internet). Running order: on hold, including named running orders.
+Name stays Third Eye Cam; 1280×720 stays. No server of your own: you got
+pairing working without it (route not said). Old presets can be abandoned.
 
 **Built since 13 November, not yet tried on real hardware.**
 
@@ -496,14 +489,41 @@ Three static pages built by Vite, no framework.
 
 ### Ideas raised and not started
 
-Own pairing server plus a relay on port 443 (the route to university Wi-Fi);
+Own pairing server plus a relay on port 443 (not needed, 16 November);
 a local program on the Mac that serves the pages and the pairing itself
 (option B when Pair without internet was chosen); several named running
-orders, and steps timed against an audio track; the Mac-output preview on a
-phone paired without internet or with its camera off; a brightness control
+orders, and steps timed against an audio track (on hold); the Mac-output
+preview on a phone paired without internet or with its camera off (not
+wanted, 16 November); a brightness control
 on the Mac side; a larger XY pad in place of the phone's six buttons (the
 owner chose to leave the pad on the preview); tempo from the audio beat; a
 native wrapper for a true Syphon output; a MIDI mapping for the dimmer.
+
+### Blending inputs (advice given 16 November, nothing built)
+
+Today one input shows at a time; a second phone that pairs takes over from
+the first (`acceptCall` / `acceptData` in `remote.js` replace the link). The
+only blending is preset crossfades and the effects that mix the picture with
+its own past (Feedback, Trails, Delay).
+
+Advised, in two stages:
+
+1. **Input B and a Mix effect.** A second input slot fed by any local source
+   (Mac camera, file, pattern) beside the phone, uploaded to a second
+   texture. Mixing is an effect in the chain, so it is saved in presets,
+   every parameter can be mapped, it can sit anywhere in the chain, and the
+   effect's Person / Background target works with it unchanged. Modes:
+   crossfade, add, screen, multiply, difference, luma key, colour key, wipe,
+   B displaces A. Does not touch the phone link.
+2. **A second iPhone as input B.** `PhoneLink` holds two links instead of
+   one; first to pair is A, the next B; both ways of pairing; both phones
+   carried when the engine moves between windows; phone B's sensors as their
+   own modulation sources. Touches engine, remote, host and link. Two
+   720p60 streams are about 10 Mbit/s; on the iPhone hotspot phone B's video
+   goes through phone A's radio.
+
+Also raised: B's brightness or motion as modulation sources (an image as a
+control signal).
 
 ### Prompt to start a new session
 

@@ -15,6 +15,9 @@ try {
 
   console.log('recording');
   check('REC is offered in the top bar and is MIDI-mappable', (await control.locator('#rec').textContent()) === 'REC' && (await control.locator('#rec').getAttribute('data-midi')) === 'record');
+  check('MP4 is the default format', await control.evaluate(() => window.thirdEye.store.state.globals.recFormat === 'mp4'));
+  // WebM first: it is the one written to the file while recording.
+  await pickMenu(control, '#rec-format', 'webm');
   await control.keyboard.press('r');
   check('R starts recording', await settle(async () => (await status()).recording.active, 'recording'), (await status()).recording.error);
   check('WebM data reaches the file while still recording', await settle(async () => (await status()).recording.bytes > 20000, 'bytes', 20000), `${(await status()).recording.bytes} bytes after ${(await status()).recording.seconds.toFixed(0)} s`);

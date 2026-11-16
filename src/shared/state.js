@@ -95,7 +95,7 @@ export function defaultState() {
       renderScale: 1,
       fadeTime: 2,
       preview: true,
-      recFormat: 'webm',
+      recFormat: 'mp4',
     },
     presetIndex: -1,
     // The running order: which step it is at (-1 = not started), and whether
