@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C, Show screen: arrange the running order on its own screen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 100%; height: 100vh; min-height: 700px; box-sizing: border-box; display: grid; grid-template-rows: 48px minmax(0, 1fr); background: #060303; color: #ff6b5e; font: 500 12px/1.4 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+
+  <header style="display: flex; align-items: center; gap: 16px; padding: 0 14px; border-bottom: 1px solid #5b2622; min-width: 0">
+    <span style="font: 800 24px/1 'Big Shoulders Display', 'Arial Narrow', sans-serif; letter-spacing: 0.12em; white-space: nowrap">THIRD EYE CAM</span>
+    <span style="text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap">Output off · 60 fps</span>
+    <span style="text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; flex-grow: 1">Phone: streaming</span>
+    <button onClick="{{toPerform}}" aria-pressed="{{performPressed}}" style="background: {{performTab.bg}}; color: {{performTab.fg}}; border: 1px solid {{performTab.line}}; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Perform</button>
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Edit</button>
+    <button onClick="{{toShow}}" aria-pressed="{{showPressed}}" style="background: {{showTab.bg}}; color: {{showTab.fg}}; border: 1px solid {{showTab.line}}; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Show</button>
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Setup</button>
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; width: 104px; text-align: left; text-transform: uppercase; letter-spacing: 0.08em">Rec</button>
+  </header>
+
+  <sc-if value="{{onPerform}}" hint-placeholder-val="{{ false }}">
+    <div style="display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0">
+      <div style="display: grid; grid-template-columns: 220px minmax(0, 1fr) 290px; min-height: 0">
+        <aside style="border-right: 1px solid #5b2622; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 0">
+          <button style="flex-grow: 2; min-height: 96px; background: #ff6b5e; color: #140302; border: 2px solid #ff6b5e; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; padding: 10px 12px"><span>B</span><b style="font: 800 44px/0.9 'Big Shoulders Display', sans-serif">BLACKOUT</b></button>
+          <button style="flex-grow: 1; min-height: 62px; background: none; color: #ff6b5e; border: 2px solid #ff6b5e; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; padding: 8px 12px"><span>SPACE</span><b style="font: 700 30px/1 'Big Shoulders Display', sans-serif">FREEZE</b></button>
+          <button style="flex-grow: 1; min-height: 62px; background: none; color: #ff6b5e; border: 2px solid #ff6b5e; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; padding: 8px 12px"><span>X</span><b style="font: 700 30px/1 'Big Shoulders Display', sans-serif">BYPASS</b></button>
+          <button style="flex-grow: 1; min-height: 62px; background: none; color: #ff6b5e; border: 2px solid #ff6b5e; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; padding: 8px 12px"><span>G</span><b style="font: 700 30px/1 'Big Shoulders Display', sans-serif">GLITCH</b></button>
+          <span style="color: #cd564c">Input: iPhone</span>
+        </aside>
+        <div style="background: #000; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0 12px">
+          <div role="img" aria-label="The picture, standing in for live video" style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9; background: conic-gradient(from {{pic.turn}} at 50% 56%, #ff2a55, #ffd21e, #36ff8f, #1ec8ff, #7b45ff, #ff2a55); filter: hue-rotate({{pic.hue}}) saturate({{pic.sat}}); position: relative; overflow: hidden">
+            <div style="position: absolute; inset: 18% 30%; border-radius: 50%; background: radial-gradient(circle, #ffffff 0%, rgba(255,255,255,0) 62%); mix-blend-mode: screen"></div>
+            <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 9%; background: linear-gradient(90deg, #000, #fff)"></div>
+          </div>
+        </div>
+        <aside style="border-left: 1px solid #5b2622; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; min-height: 0">
+          <div style="display: flex; justify-content: space-between; text-transform: uppercase; letter-spacing: 0.08em"><span>Faders</span><span>{{liveName}}</span></div>
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; flex-grow: 1; min-height: 0">
+            <sc-for list="{{faders}}" as="f" hint-placeholder-count="4">
+              <div style="display: flex; flex-direction: column; gap: 6px; align-items: center; min-height: 0">
+                <div style="position: relative; width: 100%; flex-grow: 1; min-height: 120px; border: 1px solid #ff6b5e"><div style="position: absolute; left: 0; right: 0; bottom: 0; height: {{f.h}}; background: #ff6b5e"></div></div>
+                <span style="font: 700 12px/1.1 'Big Shoulders Display', sans-serif; letter-spacing: 0.03em; text-transform: uppercase">{{f.name}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </aside>
+      </div>
+      <footer style="border-top: 1px solid #5b2622; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+          <span style="text-transform: uppercase; letter-spacing: 0.08em">Friday show</span>
+          <button onClick="{{prev}}" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 12px; text-transform: uppercase; letter-spacing: 0.08em">[ Prev</button>
+          <button onClick="{{next}}" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 12px; text-transform: uppercase; letter-spacing: 0.08em">Next ]</button>
+          <span style="margin-left: auto; text-align: right"><b style="text-transform: uppercase; letter-spacing: 0.08em">Next: {{nextLine.title}}</b> <span style="color: #cd564c">{{nextLine.detail}}</span></span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat({{tileCount}}, minmax(0, 1fr)); gap: 8px">
+          <sc-for list="{{cues}}" as="c" hint-placeholder-count="8">
+            <button onClick="{{c.pick}}" style="min-height: 92px; background: {{c.bg}}; color: {{c.fg}}; border: {{c.border}}; border-radius: 2px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; padding: 8px 10px; min-width: 0">
+              <span style="font: 800 40px/0.9 'Big Shoulders Display', sans-serif">{{c.n}}</span>
+              <span style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em">{{c.name}}</span>
+            </button>
+          </sc-for>
+        </div>
+      </footer>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{onShow}}" hint-placeholder-val="{{ true }}">
+    <div style="display: grid; grid-template-columns: 400px minmax(0, 1fr); min-height: 0">
+      <section aria-label="All presets" style="border-right: 1px solid #5b2622; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-height: 0">
+        <div style="text-transform: uppercase; letter-spacing: 0.08em">All presets</div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+          <sc-for list="{{presets}}" as="p" hint-placeholder-count="9">
+            <button onClick="{{p.add}}" aria-label="{{p.addLabel}}" style="min-height: 84px; background: none; color: #ff6b5e; border: 1px solid #ff6b5e; border-radius: 2px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; padding: 8px 10px; min-width: 0">
+              <span style="display: flex; justify-content: space-between; width: 100%"><span style="font: 800 34px/0.9 'Big Shoulders Display', sans-serif">{{p.n}}</span><span style="font-size: 10px; border: 1px solid currentColor; padding: 1px 5px; align-self: flex-start">+ ADD</span></span>
+              <span style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px">{{p.name}}</span>
+            </button>
+          </sc-for>
+        </div>
+        <span style="color: #cd564c">Click a preset to add it to the end of the running order. The same preset can be used as often as you like; editing the preset changes it everywhere.</span>
+      </section>
+
+      <section aria-label="Running order" style="padding: 14px; display: flex; flex-direction: column; gap: 10px; min-height: 0; min-width: 0">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+          <span style="font: 800 30px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.06em; text-transform: uppercase">Friday show</span>
+          <span style="color: #cd564c; flex-grow: 1">{{count}} steps</span>
+          <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 12px; text-transform: uppercase; letter-spacing: 0.08em">Other shows</button>
+          <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 12px; text-transform: uppercase; letter-spacing: 0.08em">Export</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 4px; min-height: 0; overflow: auto">
+          <div style="display: grid; grid-template-columns: 44px 170px 64px minmax(0, 1fr) 120px 108px; column-gap: 10px; padding: 0 10px; color: #cd564c; text-transform: uppercase; letter-spacing: 0.08em; font-size: 10px">
+            <span>#</span><span>Preset</span><span>Fade</span><span>Note</span><span>Starts</span><span>Move</span>
+          </div>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+            <div style="display: grid; grid-template-columns: 44px 170px 64px minmax(0, 1fr) 120px 108px; column-gap: 10px; align-items: center; padding: 6px 10px; border: {{r.border}}; background: {{r.bg}}; color: {{r.fg}}; border-radius: 2px">
+              <span style="font: 800 28px/0.9 'Big Shoulders Display', sans-serif">{{r.n}}</span>
+              <button onClick="{{r.pick}}" style="background: none; color: inherit; border: 0; padding: 0; text-align: left; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em">{{r.name}}</button>
+              <span>{{r.fade}}</span>
+              <span style="text-transform: none; letter-spacing: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{r.note}}</span>
+              <span style="font-size: 11px">{{r.starts}}</span>
+              <span style="display: flex; gap: 4px">
+                <button onClick="{{r.up}}" aria-label="{{r.upLabel}}" style="width: 32px; height: 28px; background: none; color: inherit; border: 1px solid currentColor; padding: 0">↑</button>
+                <button onClick="{{r.down}}" aria-label="{{r.downLabel}}" style="width: 32px; height: 28px; background: none; color: inherit; border: 1px solid currentColor; padding: 0">↓</button>
+                <button onClick="{{r.remove}}" aria-label="{{r.removeLabel}}" style="width: 32px; height: 28px; background: none; color: inherit; border: 1px solid currentColor; padding: 0">×</button>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="margin-top: auto; border-top: 1px solid #5b2622; padding-top: 10px; display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap"><span style="text-transform: uppercase; letter-spacing: 0.08em">Optional: a track to time against</span><span style="color: #cd564c">friday-set.wav · 4:12</span></div>
+          <div style="position: relative; height: 34px; border: 1px solid #5b2622; background: repeating-linear-gradient(90deg, #1c0c0b 0 3px, #060303 3px 6px)">
+            <sc-for list="{{marks}}" as="m" hint-placeholder-count="3">
+              <div style="position: absolute; top: 0; bottom: 0; left: {{m.left}}; width: 2px; background: #ff6b5e"><span style="position: absolute; top: 2px; left: 6px; font-size: 10px; white-space: nowrap">{{m.label}}</span></div>
+            </sc-for>
+          </div>
+          <span style="color: #cd564c">Only if you play to a fixed track: a step with a start time fires by itself when the track gets there; every other step waits for Next. Without a track there is nothing to press but Next.</span>
+        </div>
+      </section>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  state = {
+    tab: 'show',
+    cue: 1,
+    // [preset, note, fade in seconds, start time against the track or '']
+    order: [
+      [0, 'Walk on. House lights down.', 0, '0:00'],
+      [1, 'First track. Phone on the drummer.', 2, '0:18'],
+      [2, 'Chorus.', 1, ''],
+      [1, 'Back for the verse.', 1, ''],
+      [3, 'Slow section. Dim the room.', 4, '2:05'],
+      [4, 'Build.', 2, ''],
+      [2, 'Last chorus.', 0.5, ''],
+      [0, 'Bows. Hold, then blackout.', 3, '4:02'],
+    ],
+  };
+
+  renderVals() {
+    const INK = '#ff6b5e';
+    const ON = '#140302';
+    const names = ['Clean', 'Tunnel', 'Kaleido', 'Thermal trails', 'Slit-scan', 'Neon edges', 'Liquid', 'Poster', 'Horizon lock'];
+    const looks = [[0, 0, 0.9], [40, 0, 1], [120, 60, 1.2], [200, 150, 1.4], [280, 220, 1], [20, 290, 1.6], [160, 100, 0.8], [240, 30, 2], [320, 180, 1.1]];
+    const { tab, order } = this.state;
+    const cue = Math.min(this.state.cue, order.length - 1);
+    const live = order[cue] ?? [0, '', 0, ''];
+    const nextCue = Math.min(order.length - 1, cue + 1);
+    const go = (i) => this.setState({ cue: Math.max(0, Math.min(order.length - 1, i)) });
+    const swap = (i, j) => {
+      if (j < 0 || j >= order.length) return;
+      const copy = order.slice();
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+      this.setState({ order: copy, cue: cue === i ? j : cue === j ? i : cue });
+    };
+    const look = looks[live[0]];
+    const seconds = (t) => Number(t.split(':')[0]) * 60 + Number(t.split(':')[1]);
+    const tabStyle = (on) => (on ? { bg: INK, fg: ON, line: INK } : { bg: 'transparent', fg: INK, line: '#5b2622' });
+    const next = order[nextCue];
+    return {
+      onPerform: tab === 'perform',
+      onShow: tab === 'show',
+      performPressed: String(tab === 'perform'),
+      showPressed: String(tab === 'show'),
+      performTab: tabStyle(tab === 'perform'),
+      showTab: tabStyle(tab === 'show'),
+      toPerform: () => this.setState({ tab: 'perform' }),
+      toShow: () => this.setState({ tab: 'show' }),
+      pic: { turn: look[0] + 'deg', hue: look[1] + 'deg', sat: String(look[2]) },
+      liveName: names[live[0]],
+      faders: [['Zoom', '42%'], ['Rotate', '30%'], ['Decay', '88%'], ['Shift', '55%']].map(([name, h]) => ({ name, h })),
+      prev: () => go(cue - 1),
+      next: () => go(cue + 1),
+      count: String(order.length),
+      tileCount: String(Math.max(1, order.length)),
+      nextLine: nextCue === cue ? { title: 'end of the show', detail: '' } : { title: nextCue + 1 + ' ' + names[next[0]], detail: next[1] + ' · ' + next[2] + ' s fade' },
+      cues: order.map(([p], i) => ({
+        n: String(i + 1),
+        name: names[p],
+        bg: i === cue ? INK : 'transparent',
+        fg: i === cue ? ON : INK,
+        border: i === nextCue && i !== cue ? '2px dashed ' + INK : '1px solid ' + INK,
+        pick: () => go(i),
+      })),
+      presets: names.map((name, i) => ({
+        n: String(i + 1),
+        name,
+        addLabel: 'Add ' + name + ' to the running order',
+        add: () => this.setState({ order: order.concat([[i, '', 1, '']]) }),
+      })),
+      rows: order.map(([p, note, fade, at], i) => ({
+        n: String(i + 1),
+        name: names[p],
+        fade: fade + ' s',
+        note: note || '—',
+        starts: at ? 'at ' + at : 'on Next',
+        bg: i === cue ? INK : 'transparent',
+        fg: i === cue ? ON : INK,
+        border: i === cue ? '1px solid ' + INK : i === nextCue ? '2px dashed ' + INK : '1px solid #5b2622',
+        pick: () => go(i),
+        up: () => swap(i, i - 1),
+        down: () => swap(i, i + 1),
+        remove: () => this.setState({ order: order.filter((_, k) => k !== i), cue: Math.max(0, cue > i ? cue - 1 : Math.min(cue, order.length - 2)) }),
+        upLabel: 'Move step ' + (i + 1) + ' up',
+        downLabel: 'Move step ' + (i + 1) + ' down',
+        removeLabel: 'Remove step ' + (i + 1),
+      })),
+      marks: order.map(([p, , , at], i) => ({ at, label: i + 1 + ' ' + names[p] })).filter((m) => m.at).map((m) => ({ left: (seconds(m.at) / 252) * 100 + '%', label: m.label })),
+    };
+  }
+}
+</script>
+</body>
+</html>

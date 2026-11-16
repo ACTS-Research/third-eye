@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Edit screen B, inspector</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button,select,input{font:inherit}
+button{cursor:pointer}
+input[type=range]{accent-color:#ff6b5e}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; background: #060303; color: #ff6b5e; font: 500 12px/1.4 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+
+  <header style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; min-height: 48px; padding: 0 14px; border-bottom: 1px solid #5b2622">
+    <span style="font: 800 24px/1 'Big Shoulders Display', 'Arial Narrow', sans-serif; letter-spacing: 0.12em; white-space: nowrap">THIRD EYE CAM</span>
+    <span style="text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap">Output off · 60 fps</span>
+    <span style="text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; flex-grow: 1">Phone: streaming</span>
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Perform</button>
+    <button aria-pressed="true" style="background: #ff6b5e; color: #140302; border: 1px solid #ff6b5e; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Edit</button>
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Setup</button>
+  </header>
+
+  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid #5b2622">
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">← Perform</button>
+    <span style="font: 800 40px/0.9 'Big Shoulders Display', sans-serif">4</span>
+    <input type="text" aria-label="Preset name" value="THERMAL TRAILS" readonly style="flex: 1 1 240px; min-width: 0; background: #060303; color: #ff6b5e; border: 1px solid #ff6b5e; padding: 6px 10px; font: 800 28px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.04em">
+    <label for="b-fade" style="text-transform: uppercase; letter-spacing: 0.08em">Fade in</label>
+    <input id="b-fade" type="number" value="2" readonly style="width: 64px; background: #060303; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 8px">
+    <span>s</span>
+    <span style="color: #cd564c; margin-left: 8px">Saved.</span>
+    <span style="flex-grow: 1"></span>
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Duplicate</button>
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Revert</button>
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Delete</button>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; padding: 14px">
+
+    <nav aria-label="Effects chain" style="flex: 1 1 250px; max-width: 300px; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+      <span style="text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700">Chain</span>
+      <div style="border: 1px dashed #5b2622; padding: 7px 10px; color: #cd564c">In: iPhone</div>
+      <sc-for list="{{chain}}" as="c" hint-placeholder-count="2">
+        <button onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="background: {{c.bg}}; color: {{c.fg}}; border: 1px solid #ff6b5e; padding: 8px 10px; display: grid; grid-template-columns: 16px 26px minmax(0, 1fr); column-gap: 8px; align-items: center; text-align: left">
+          <span aria-hidden="true" style="cursor: grab; font-size: 16px">≡</span>
+          <span style="font: 800 28px/0.9 'Big Shoulders Display', sans-serif">{{c.n}}</span>
+          <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+            <span style="font: 700 18px/1.05 'Big Shoulders Display', sans-serif; letter-spacing: 0.04em; text-transform: uppercase">{{c.name}}</span>
+            <span style="font-size: 11px">{{c.meta}}</span>
+          </span>
+        </button>
+      </sc-for>
+      <div style="border: 1px dashed #5b2622; padding: 7px 10px; color: #cd564c">Out: the picture</div>
+      <button onClick="{{toggleAdding}}" aria-expanded="{{addingText}}" style="background: none; color: #ff6b5e; border: 1px solid #ff6b5e; padding: 9px 12px; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 6px">+ Add effect</button>
+      <sc-if value="{{adding}}" hint-placeholder-val="{{ false }}">
+        <div style="border: 1px solid #ff6b5e; padding: 8px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+          <sc-for list="{{library}}" as="fx" hint-placeholder-count="12">
+            <button onClick="{{toggleAdding}}" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 6px; text-align: left; text-transform: uppercase; letter-spacing: 0.04em; font-size: 10px">{{fx}}</button>
+          </sc-for>
+        </div>
+      </sc-if>
+      <span style="color: #cd564c">Click an effect to open it. Drag by the handle to reorder.</span>
+    </nav>
+
+    <section aria-label="The open effect" style="flex: 999 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-bottom: 8px; border-bottom: 1px solid #5b2622">
+        <span style="font: 800 44px/0.9 'Big Shoulders Display', sans-serif">{{selN}}</span>
+        <span style="font: 800 32px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.04em; text-transform: uppercase; flex-grow: 1">{{selName}}</span>
+        <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Bypass</button>
+        <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Remove</button>
+      </div>
+
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="7">
+        <div>
+          <sc-if value="{{r.isSlider}}" hint-placeholder-val="{{ true }}">
+            <div style="display: grid; grid-template-columns: 130px minmax(0, 1fr) 70px 72px 96px; column-gap: 12px; align-items: center; padding: 9px 0">
+              <label for="{{r.inputId}}" style="font-size: 13px">{{r.label}}</label>
+              <input id="{{r.inputId}}" type="range" min="{{r.min}}" max="{{r.max}}" step="{{r.step}}" value="{{r.value}}" onChange="{{r.set}}" style="width: 100%; height: 30px; margin: 0">
+              <span style="text-align: right; font: 700 22px/1 'Big Shoulders Display', sans-serif">{{r.shown}}</span>
+              <button onClick="{{r.togglePin}}" aria-pressed="{{r.pinnedText}}" title="Show this as a fader on the perform screen" style="background: {{r.pinBg}}; color: {{r.pinFg}}; border: 1px solid {{r.pinLine}}; padding: 7px 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em">{{r.pinText}}</button>
+              <button onClick="{{r.toggleMod}}" aria-expanded="{{r.openText}}" title="What moves this parameter by itself" style="background: {{r.modBg}}; color: {{r.modFg}}; border: 1px solid {{r.modLine}}; padding: 7px 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.modText}}</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{r.isMenu}}" hint-placeholder-val="{{ false }}">
+            <div style="display: grid; grid-template-columns: 130px minmax(0, 1fr); column-gap: 12px; align-items: center; padding: 9px 0">
+              <label for="{{r.inputId}}" style="font-size: 13px">{{r.label}}</label>
+              <select id="{{r.inputId}}" style="max-width: 320px; background: #060303; color: #ff6b5e; border: 1px solid #5b2622; padding: 8px 10px">
+                <option>{{r.choice}}</option>
+              </select>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{r.isEditor}}" hint-placeholder-val="{{ false }}">
+            <div style="margin: 0 0 8px 142px; padding: 10px 12px; border: 1px dashed #ff6b5e; background: #150807; display: flex; flex-direction: column; gap: 8px">
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+                <span style="text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px">Moved by</span>
+                <button onClick="{{r.nextSource}}" title="Click for the next source" style="background: #060303; color: #ff6b5e; border: 1px solid #ff6b5e; padding: 6px 10px">{{r.source}} ▾</button>
+                <span style="flex-grow: 1"></span>
+                <button onClick="{{r.removeMod}}" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 10px; text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px">Remove</button>
+                <button onClick="{{r.toggleMod}}" style="background: none; color: #ff6b5e; border: 1px solid #ff6b5e; padding: 6px 10px; text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px">Done</button>
+              </div>
+              <div style="display: grid; grid-template-columns: 90px minmax(0, 1fr) 48px; column-gap: 10px; row-gap: 4px; align-items: center">
+                <label for="{{r.amountId}}" style="text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px">Amount</label>
+                <input id="{{r.amountId}}" type="range" min="-1" max="1" step="0.01" value="{{r.amount}}" onChange="{{r.setAmount}}" style="width: 100%; height: 22px; margin: 0">
+                <span style="text-align: right">{{r.amountShown}}</span>
+                <label for="{{r.smoothId}}" style="text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px">Smoothing</label>
+                <input id="{{r.smoothId}}" type="range" min="0" max="2" step="0.01" value="{{r.smooth}}" onChange="{{r.setSmooth}}" style="width: 100%; height: 22px; margin: 0">
+                <span style="text-align: right">{{r.smoothShown}}</span>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </section>
+
+    <aside style="flex: 1 1 340px; max-width: 440px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+      <div role="img" aria-label="The live picture, standing in for video" style="width: 100%; aspect-ratio: 16 / 9; border: 1px solid #5b2622; background: linear-gradient(100deg, #2a0a8f 0%, #5b1fd1 14%, #e0308a 30%, #ff7a1a 52%, #ffc21a 68%, #ff5a1a 84%, #3a12b0 100%); filter: {{pictureFilter}}"></div>
+
+      <section aria-label="Perform faders" style="border: 1px solid #5b2622; padding: 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; justify-content: space-between; text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700"><span>Perform faders</span><span style="color: #cd564c; font-weight: 500">{{pinCount}}</span></div>
+        <sc-for list="{{pinned}}" as="p" hint-placeholder-count="2">
+          <div style="display: grid; grid-template-columns: 22px minmax(0, 1fr) 30px 30px 30px; column-gap: 6px; align-items: center">
+            <span style="font: 800 20px/1 'Big Shoulders Display', sans-serif">{{p.n}}</span>
+            <button onClick="{{p.show}}" style="background: none; color: #ff6b5e; border: 0; padding: 0; text-align: left">{{p.label}}</button>
+            <button onClick="{{p.up}}" aria-label="{{p.upLabel}}" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 3px 0">↑</button>
+            <button onClick="{{p.down}}" aria-label="{{p.downLabel}}" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 3px 0">↓</button>
+            <button onClick="{{p.remove}}" aria-label="{{p.removeLabel}}" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 3px 0">×</button>
+          </div>
+        </sc-for>
+        <span style="color: #cd564c">{{pinHint}}</span>
+      </section>
+
+      <section aria-label="Modulation" style="border: 1px solid #5b2622; padding: 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700">Modulation</div>
+        <sc-for list="{{mods}}" as="m" hint-placeholder-count="2">
+          <button onClick="{{m.open}}" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 9px; text-align: left; line-height: 1.35">{{m.source}} → {{m.target}} <span style="color: #cd564c">· amount {{m.amount}}</span></button>
+        </sc-for>
+        <span style="color: #cd564c">{{modHint}}</span>
+      </section>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  state = {
+    sel: 'f1',
+    values: { 'f1.mix': 1, 'f1.contrast': 1.6, 'f1.shift': -0.095, 'f1.cycle': 0, 'f1.bands': 0, 'f2.mix': 1, 'f2.persistence': 0.93 },
+    pins: ['f1.mix', 'f2.persistence'],
+    mods: { 'f1.shift': { source: 0, amount: 0.3, smooth: 0.1 }, 'f1.contrast': { source: 3, amount: 0.5, smooth: 0.05 } },
+    open: 'f1.shift',
+    adding: false,
+  };
+
+  renderVals() {
+    const INK = '#ff6b5e';
+    const ON = '#140302';
+    const LINE = '#5b2622';
+    const SOURCES = ['LFO 1', 'LFO 2', 'Phone · Tilt left/right', 'Touch · Pad X', 'Touch · Pad Y', 'Audio · Level'];
+    const FX = [
+      { id: 'f1', name: 'False colour / Thermal', params: [
+        { k: 'target', label: 'Apply to', choice: 'Everything' },
+        { k: 'mix', label: 'Wet / dry', min: 0, max: 1, step: 0.01, digits: 2 },
+        { k: 'palette', label: 'Palette', choice: 'Thermal' },
+        { k: 'contrast', label: 'Contrast', min: 0.5, max: 3, step: 0.01, digits: 2 },
+        { k: 'shift', label: 'Shift', min: -0.5, max: 0.5, step: 0.005, digits: 3 },
+        { k: 'cycle', label: 'Cycle', min: -1, max: 1, step: 0.01, digits: 2 },
+        { k: 'bands', label: 'Bands', min: 0, max: 16, step: 1, digits: 0 },
+      ] },
+      { id: 'f2', name: 'Trails', params: [
+        { k: 'target', label: 'Apply to', choice: 'Everything' },
+        { k: 'mix', label: 'Wet / dry', min: 0, max: 1, step: 0.01, digits: 2 },
+        { k: 'persistence', label: 'Persistence', min: 0, max: 0.99, step: 0.005, digits: 3 },
+        { k: 'blend', label: 'Blend', choice: 'Lighten' },
+      ] },
+    ];
+    const { sel, values, pins, mods, open, adding } = this.state;
+    const nameOf = (id) => {
+      const [fx, k] = id.split('.');
+      const i = FX.findIndex((f) => f.id === fx);
+      return `${i + 1} ${FX[i].name} · ${FX[i].params.find((p) => p.k === k).label}`;
+    };
+    const setMod = (id, patch) => this.setState({ mods: { ...mods, [id]: { ...mods[id], ...patch } } });
+    const fx = FX.find((f) => f.id === sel) ?? FX[0];
+    const rows = [];
+    for (const p of fx.params) {
+      const id = `${fx.id}.${p.k}`;
+      if (p.choice) {
+        rows.push({ isMenu: true, label: p.label, choice: p.choice, inputId: `b-${fx.id}-${p.k}` });
+        continue;
+      }
+      const pinned = pins.includes(id);
+      const mod = mods[id];
+      const isOpen = open === id;
+      const toggleMod = () => {
+        if (!mod) this.setState({ mods: { ...mods, [id]: { source: 0, amount: 0.5, smooth: 0.1 } }, open: id });
+        else this.setState({ open: isOpen ? '' : id });
+      };
+      rows.push({
+        isSlider: true,
+        label: p.label,
+        inputId: `b-${fx.id}-${p.k}`,
+        min: String(p.min),
+        max: String(p.max),
+        step: String(p.step),
+        value: String(values[id]),
+        shown: values[id].toFixed(p.digits),
+        set: (e) => this.setState({ values: { ...values, [id]: Number(e.target.value) } }),
+        pinnedText: String(pinned),
+        pinText: pinned ? `Fader ${pins.indexOf(id) + 1}` : 'Fader',
+        pinBg: pinned ? INK : 'transparent',
+        pinFg: pinned ? ON : INK,
+        pinLine: pinned ? INK : LINE,
+        togglePin: () => this.setState({ pins: pinned ? pins.filter((x) => x !== id) : pins.length < 8 ? [...pins, id] : pins }),
+        openText: String(isOpen),
+        modText: mod ? `~ ${SOURCES[mod.source].split(' · ').pop()}` : '+ Mod',
+        modBg: mod ? INK : 'transparent',
+        modFg: mod ? ON : INK,
+        modLine: mod ? INK : LINE,
+        toggleMod,
+      });
+      if (mod && isOpen) {
+        rows.push({
+          isEditor: true,
+          source: SOURCES[mod.source],
+          nextSource: () => setMod(id, { source: (mod.source + 1) % SOURCES.length }),
+          amountId: `b-amt-${fx.id}-${p.k}`,
+          amount: String(mod.amount),
+          amountShown: mod.amount.toFixed(2),
+          setAmount: (e) => setMod(id, { amount: Number(e.target.value) }),
+          smoothId: `b-smo-${fx.id}-${p.k}`,
+          smooth: String(mod.smooth),
+          smoothShown: `${mod.smooth.toFixed(2)} s`,
+          setSmooth: (e) => setMod(id, { smooth: Number(e.target.value) }),
+          removeMod: () => {
+            const rest = { ...mods };
+            delete rest[id];
+            this.setState({ mods: rest, open: '' });
+          },
+          toggleMod,
+        });
+      }
+    }
+    const move = (i, j) => {
+      if (j < 0 || j >= pins.length) return;
+      const next = pins.slice();
+      [next[i], next[j]] = [next[j], next[i]];
+      this.setState({ pins: next });
+    };
+    const count = (list, word) => `${list} ${word}${list === 1 ? '' : 's'}`;
+    return {
+      adding,
+      addingText: String(adding),
+      toggleAdding: () => this.setState({ adding: !adding }),
+      library: ['Video feedback', 'Trails', 'Kaleidoscope', 'RGB shift', 'Edges', 'False colour', 'Slit-scan', 'Levels', 'Hue', 'Mirror', 'Pixelate', 'Posterise'],
+      chain: FX.map((f, i) => {
+        const moved = Object.keys(mods).filter((id) => id.startsWith(`${f.id}.`)).length;
+        const faders = pins.filter((id) => id.startsWith(`${f.id}.`)).length;
+        return {
+          n: String(i + 1),
+          name: f.name,
+          meta: [faders ? count(faders, 'fader') : '', moved ? `${moved} moved` : ''].filter(Boolean).join(' · ') || 'nothing pinned or moved',
+          pressed: String(f.id === fx.id),
+          bg: f.id === fx.id ? INK : 'transparent',
+          fg: f.id === fx.id ? ON : INK,
+          pick: () => this.setState({ sel: f.id }),
+        };
+      }),
+      selN: String(FX.indexOf(fx) + 1),
+      selName: fx.name,
+      rows,
+      pictureFilter: `contrast(${(0.6 + values['f1.contrast'] * 0.25).toFixed(2)}) hue-rotate(${Math.round(values['f1.shift'] * 360)}deg) saturate(${(0.4 + values['f1.mix'] * 0.8).toFixed(2)})`,
+      pinCount: `${pins.length} of 8`,
+      pinned: pins.map((id, i) => ({
+        n: String(i + 1),
+        label: nameOf(id),
+        show: () => this.setState({ sel: id.split('.')[0] }),
+        up: () => move(i, i - 1),
+        down: () => move(i, i + 1),
+        remove: () => this.setState({ pins: pins.filter((x) => x !== id) }),
+        upLabel: `Move fader ${i + 1} up`,
+        downLabel: `Move fader ${i + 1} down`,
+        removeLabel: `Take fader ${i + 1} off the perform screen`,
+      })),
+      pinHint: pins.length ? 'The faders on the perform screen, in this order. Click a name to open its effect.' : 'Nothing chosen: the perform screen shows the first sliders of each effect.',
+      mods: Object.entries(mods).map(([id, m]) => ({
+        source: SOURCES[m.source],
+        target: nameOf(id),
+        amount: m.amount.toFixed(2),
+        open: () => this.setState({ sel: id.split('.')[0], open: id }),
+      })),
+      modHint: Object.keys(mods).length ? 'Click one to open its effect and its settings.' : 'Nothing moves by itself yet. Press + Mod on a slider.',
+    };
+  }
+}
+</script>
+</body>
+</html>

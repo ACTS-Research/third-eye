@@ -140,7 +140,7 @@ export function mountPerform(root, ui) {
     });
     const any = macros.some(Boolean);
     const auto = macros.find(Boolean)?.auto;
-    faderNote.textContent = !any ? 'No effects in this preset, so there is nothing to put on the faders.' : auto ? 'Showing the first parameters of the chain. Pin your own under Edit.' : '';
+    faderNote.textContent = !any ? 'No effects in this preset, so there is nothing to put on the faders.' : auto ? 'Showing the first sliders of each effect. Choose your own with Fader, under Edit.' : '';
     syncFaders();
     ui.midiMap?.refresh();
   }

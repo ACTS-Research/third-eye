@@ -1,0 +1,18 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-13T05:10:00Z" },
+  "title": "Third Eye Cam: Running Order",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 900, "title": "A · Strip: the preset strip becomes the running order", "expand": "fill", "is_interactive": true },
+    "Stack.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 900, "title": "B · Stack: a column with room for notes", "expand": "fill", "is_interactive": true },
+    "Show.dc.html": { "x": 3040, "y": 0, "w": 1440, "h": 900, "title": "C · Show screen: arrange on its own screen", "expand": "fill", "is_interactive": true },
+    "Phone.dc.html": { "x": 4560, "y": 0, "w": 844, "h": 390, "title": "Phone: the six buttons follow the running order" }
+  },
+  "order": ["Main.dc.html", "Stack.dc.html", "Show.dc.html", "Phone.dc.html"],
+  "notes": {
+    "heading": { "x": 0, "y": -300, "text": "Running order: three directions", "kind": "title1", "maxW": 4480 }
+  },
+  "designSystems": []
+}

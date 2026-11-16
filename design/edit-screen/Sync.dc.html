@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>LFO tempo sync, three options</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 1240px; height: 330px; box-sizing: border-box; padding: 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; background: #060303; color: #ff6b5e; font: 500 12px/1.4 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+
+  <section aria-label="Option 1, a strip of lengths" style="border: 1px solid #5b2622; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+    <div style="font: 800 26px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.06em; text-transform: uppercase">1 · Strip</div>
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <div style="display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr; gap: 4px">
+        <sc-for list="{{strip}}" as="o" hint-placeholder-count="8">
+          <button onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" title="{{o.title}}" style="background: {{o.bg}}; color: {{o.fg}}; border: 1px solid {{o.line}}; padding: 7px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em">{{o.short}}</button>
+        </sc-for>
+      </div>
+      <div style="display: grid; grid-template-columns: 1.3fr 3fr 4fr; gap: 4px; color: #cd564c; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; text-align: center">
+        <span></span><span>bars</span><span>beats</span>
+      </div>
+    </div>
+    <span style="color: #cd564c">{{says}}</span>
+  </section>
+
+  <section aria-label="Option 2, note values" style="border: 1px solid #5b2622; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+    <div style="font: 800 26px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.06em; text-transform: uppercase">2 · Notes</div>
+    <div style="display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr; gap: 4px">
+      <button onClick="{{n0.pick}}" aria-pressed="{{n0.pressed}}" title="Free" style="background: {{n0.bg}}; color: {{n0.fg}}; border: 1px solid {{n0.line}}; padding: 0; height: 34px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em">Free</button>
+      <button onClick="{{n1.pick}}" aria-pressed="{{n1.pressed}}" aria-label="4 bars" title="4 bars" style="background: {{n1.bg}}; color: {{n1.fg}}; border: 1px solid {{n1.line}}; padding: 0; height: 34px; display: grid; place-items: center">
+        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4v16M20 4v16"></path><text x="12" y="16" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">4</text></svg>
+      </button>
+      <button onClick="{{n2.pick}}" aria-pressed="{{n2.pressed}}" aria-label="2 bars" title="2 bars" style="background: {{n2.bg}}; color: {{n2.fg}}; border: 1px solid {{n2.line}}; padding: 0; height: 34px; display: grid; place-items: center">
+        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4v16M20 4v16"></path><text x="12" y="16" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">2</text></svg>
+      </button>
+      <button onClick="{{n3.pick}}" aria-pressed="{{n3.pressed}}" aria-label="1 bar" title="1 bar" style="background: {{n3.bg}}; color: {{n3.fg}}; border: 1px solid {{n3.line}}; padding: 0; height: 34px; display: grid; place-items: center">
+        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4v16M20 4v16"></path><text x="12" y="16" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">1</text></svg>
+      </button>
+      <button onClick="{{n4.pick}}" aria-pressed="{{n4.pressed}}" aria-label="2 beats, a half note" title="2 beats" style="background: {{n4.bg}}; color: {{n4.fg}}; border: 1px solid {{n4.line}}; padding: 0; height: 34px; display: grid; place-items: center">
+        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="10" cy="17" rx="4" ry="2.8" transform="rotate(-20 10 17)"></ellipse><path d="M13.8 16V4"></path></svg>
+      </button>
+      <button onClick="{{n5.pick}}" aria-pressed="{{n5.pressed}}" aria-label="1 beat, a quarter note" title="1 beat" style="background: {{n5.bg}}; color: {{n5.fg}}; border: 1px solid {{n5.line}}; padding: 0; height: 34px; display: grid; place-items: center">
+        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="10" cy="17" rx="4" ry="2.8" transform="rotate(-20 10 17)" fill="currentColor"></ellipse><path d="M13.8 16V4"></path></svg>
+      </button>
+      <button onClick="{{n6.pick}}" aria-pressed="{{n6.pressed}}" aria-label="Half a beat, an eighth note" title="1/2 beat" style="background: {{n6.bg}}; color: {{n6.fg}}; border: 1px solid {{n6.line}}; padding: 0; height: 34px; display: grid; place-items: center">
+        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="10" cy="17" rx="4" ry="2.8" transform="rotate(-20 10 17)" fill="currentColor"></ellipse><path d="M13.8 16V4c3 1.5 4.5 4 3 7.5"></path></svg>
+      </button>
+      <button onClick="{{n7.pick}}" aria-pressed="{{n7.pressed}}" aria-label="A quarter of a beat, a sixteenth note" title="1/4 beat" style="background: {{n7.bg}}; color: {{n7.fg}}; border: 1px solid {{n7.line}}; padding: 0; height: 34px; display: grid; place-items: center">
+        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="10" cy="17" rx="4" ry="2.8" transform="rotate(-20 10 17)" fill="currentColor"></ellipse><path d="M13.8 16V4c3 1.5 4.5 4 3 7.5M13.8 8.5c3 1.5 4.5 4 3 7.5"></path></svg>
+      </button>
+    </div>
+    <span style="color: #cd564c">{{says}}</span>
+  </section>
+
+  <section aria-label="Option 3, a switch and a stepper" style="border: 1px solid #5b2622; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+    <div style="font: 800 26px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.06em; text-transform: uppercase">3 · Switch and step</div>
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px">
+        <button onClick="{{goFree}}" aria-pressed="{{freePressed}}" style="background: {{freeStyle.bg}}; color: {{freeStyle.fg}}; border: 1px solid {{freeStyle.line}}; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Free</button>
+        <button onClick="{{goSync}}" aria-pressed="{{syncPressed}}" style="background: {{syncStyle.bg}}; color: {{syncStyle.fg}}; border: 1px solid {{syncStyle.line}}; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Sync</button>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 96px 34px; gap: 4px; align-items: center; opacity: {{stepOpacity}}">
+        <button onClick="{{shorter}}" aria-label="Half as long" title="Half as long" style="background: none; color: #ff6b5e; border: 1px solid #ff6b5e; padding: 7px 0">÷2</button>
+        <span style="text-align: center; font: 700 20px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.04em; text-transform: uppercase">{{stepText}}</span>
+        <button onClick="{{longer}}" aria-label="Twice as long" title="Twice as long" style="background: none; color: #ff6b5e; border: 1px solid #ff6b5e; padding: 7px 0">×2</button>
+      </div>
+    </div>
+    <span style="color: #cd564c">{{says}}</span>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1240,"height":330}}'>
+class Component extends DCLogic {
+  // sync: the length of one cycle in beats; 0 runs free. `last` is the
+  // length to go back to when Sync is switched on again (option 3).
+  state = { sync: 4, last: 4 };
+
+  renderVals() {
+    const INK = '#ff6b5e';
+    const ON = '#140302';
+    const LINE = '#5b2622';
+    const OPTIONS = [
+      { value: 0, short: 'Free', title: 'Free: the rate below sets the speed' },
+      { value: 16, short: '4', title: '4 bars' },
+      { value: 8, short: '2', title: '2 bars' },
+      { value: 4, short: '1', title: '1 bar' },
+      { value: 2, short: '2', title: '2 beats' },
+      { value: 1, short: '1', title: '1 beat' },
+      { value: 0.5, short: '½', title: '1/2 beat' },
+      { value: 0.25, short: '¼', title: '1/4 beat' },
+    ];
+    const { sync, last } = this.state;
+    const style = (on) => ({ bg: on ? INK : 'transparent', fg: on ? ON : INK, line: on ? INK : LINE });
+    const set = (value) => this.setState({ sync: value, last: value > 0 ? value : last });
+    const item = (o) => ({ ...o, ...style(o.value === sync), pressed: String(o.value === sync), pick: () => set(o.value) });
+    const items = OPTIONS.map(item);
+    const lengths = OPTIONS.slice(1).map((o) => o.value); // longest first
+    const at = lengths.indexOf(sync > 0 ? sync : last);
+    const name = (value) => OPTIONS.find((o) => o.value === value)?.title ?? '';
+    const out = {
+      strip: items,
+      says: sync > 0 ? `One cycle every ${name(sync)}, in step with the tempo.` : 'Runs free: the rate below sets the speed.',
+      freePressed: String(sync === 0),
+      syncPressed: String(sync > 0),
+      freeStyle: style(sync === 0),
+      syncStyle: style(sync > 0),
+      goFree: () => set(0),
+      goSync: () => set(last),
+      stepOpacity: sync > 0 ? '1' : '0.35',
+      stepText: name(sync > 0 ? sync : last),
+      shorter: () => set(lengths[Math.min(lengths.length - 1, at + 1)]),
+      longer: () => set(lengths[Math.max(0, at - 1)]),
+    };
+    items.forEach((it, i) => {
+      out[`n${i}`] = it;
+    });
+    return out;
+  }
+}
+</script>
+</body>
+</html>

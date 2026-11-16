@@ -757,7 +757,9 @@ the files in `public/` (`icon.svg`, `icon-32.png`, `icon-180.png`,
 node scripts/make-icons.mjs
 ```
 
-The other options that were considered are in `design/third-eye-icons.html`
+The mock-ups for the running order and the edit screen are kept beside it
+(`design/README.md` says what each is). The other icon options that were
+considered are in `design/third-eye-icons.html`
 (open the file in a browser).
 
 ## Deploying to GitHub Pages
@@ -832,9 +834,11 @@ against the Mac's own screen (see [Latency](#latency)). At a coffee shop the
 Mac on the iPhone's hotspot works (the iPhone itself on the shop's Wi-Fi);
 the Mac and the phone both on the shop's Wi-Fi do not. On a university
 network the Mac could not reach the public pairing server at all. The
-iPhone's camera offers zoom, a torch and a white-balance lock, and the
-phone's rebuilt screen draws correctly in Safari; its last rework has not
-been tried there yet.
+iPhone's camera offers zoom, a torch and a white-balance lock (and no
+exposure or focus controls), and the phone's rebuilt screen draws correctly
+in Safari, upright included. After the reconnect changes of 14 November the
+phone was reported to reconnect better. The rebuilt edit screen was used on
+the Mac on 15 November, before its LFOs tab was added.
 
 **Only in headless Chromium**, with a fake camera and microphone: everything
 else. Check these the first time you use them:
@@ -847,10 +851,16 @@ else. Check these the first time you use them:
   clean picture of the code), the link forming on a hotspot or a Mac-made
   network, and the phone following the picture between windows. Only Chromium talking to
   Chromium has been tried.
-- **The phone's screen**, on a real iPhone: the two layouts, the preview
-  showing the same band of an upright frame that the Mac shows, Rotate, the
-  three camera icons, the zoom bar. The upright layout and the tap handling
-  for Freeze were reworked after the last time it was tried on the phone.
+- **The phone's screen**, on a real iPhone: the preview showing the same
+  band of an upright frame that the Mac shows (on 14 November the preview
+  showed the Mac's screen on its side; whether Rotate or the iPhone's
+  orientation lock was the cause is not known), Freeze as a switch, Rotate,
+  the camera icons dimmed on the front camera, **Preview: Mac output** and
+  how far it lags, and **Scan code** reading the Mac's ordinary QR code.
+- **The running order**: building and stepping it on the Mac, and the
+  phone's six buttons following a show of more than six steps.
+- **The edit screen's LFOs tab** (shape pictures, note-value tempo sync),
+  dragging effects to reorder, and **the Setup screen's menus and bars**.
 - **Running with no output window, and moving the picture** by opening and
   closing it: that the iPhone reconnects by itself each time and how long it
   takes (1.5–2.5 s in the tests), that the monitor on `/control` holds 60 fps,

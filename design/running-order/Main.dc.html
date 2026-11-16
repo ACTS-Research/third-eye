@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A, Strip: the running order in the preset strip</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 100%; height: 100vh; min-height: 700px; box-sizing: border-box; display: grid; grid-template-rows: 48px minmax(0, 1fr) auto; background: #060303; color: #ff6b5e; font: 500 12px/1.4 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+
+  <header style="display: flex; align-items: center; gap: 16px; padding: 0 14px; border-bottom: 1px solid #5b2622; min-width: 0">
+    <span style="font: 800 24px/1 'Big Shoulders Display', 'Arial Narrow', sans-serif; letter-spacing: 0.12em; white-space: nowrap">THIRD EYE CAM</span>
+    <span style="text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap">Output off · 60 fps</span>
+    <span style="text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap">iPhone: live</span>
+    <span style="text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; flex-grow: 1">Phone: streaming</span>
+    <button style="background: #ff6b5e; color: #140302; border: 1px solid #ff6b5e; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Perform</button>
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Edit</button>
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Setup</button>
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; width: 104px; text-align: left; text-transform: uppercase; letter-spacing: 0.08em">Rec</button>
+  </header>
+
+  <div style="display: grid; grid-template-columns: 220px minmax(0, 1fr) 290px; min-height: 0">
+    <aside style="border-right: 1px solid #5b2622; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 0">
+      <button style="flex-grow: 2; min-height: 96px; background: #ff6b5e; color: #140302; border: 2px solid #ff6b5e; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; padding: 10px 12px"><span>B</span><b style="font: 800 44px/0.9 'Big Shoulders Display', sans-serif">BLACKOUT</b></button>
+      <button style="flex-grow: 1; min-height: 62px; background: none; color: #ff6b5e; border: 2px solid #ff6b5e; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; padding: 8px 12px"><span>SPACE</span><b style="font: 700 30px/1 'Big Shoulders Display', sans-serif">FREEZE</b></button>
+      <button style="flex-grow: 1; min-height: 62px; background: none; color: #ff6b5e; border: 2px solid #ff6b5e; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; padding: 8px 12px"><span>X</span><b style="font: 700 30px/1 'Big Shoulders Display', sans-serif">BYPASS</b></button>
+      <button style="flex-grow: 1; min-height: 62px; background: none; color: #ff6b5e; border: 2px solid #ff6b5e; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; padding: 8px 12px"><span>G</span><b style="font: 700 30px/1 'Big Shoulders Display', sans-serif">GLITCH</b></button>
+      <span style="color: #cd564c">Input: iPhone</span>
+    </aside>
+
+    <div style="background: #000; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0 12px">
+      <div role="img" aria-label="The picture, standing in for live video" style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9; background: conic-gradient(from {{pic.turn}} at 50% 56%, #ff2a55, #ffd21e, #36ff8f, #1ec8ff, #7b45ff, #ff2a55); filter: hue-rotate({{pic.hue}}) saturate({{pic.sat}}); position: relative; overflow: hidden">
+        <div style="position: absolute; inset: 18% 30%; border-radius: 50%; background: radial-gradient(circle, #ffffff 0%, rgba(255,255,255,0) 62%); mix-blend-mode: screen"></div>
+        <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 9%; background: linear-gradient(90deg, #000, #fff)"></div>
+      </div>
+    </div>
+
+    <aside style="border-left: 1px solid #5b2622; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; min-height: 0">
+      <div style="display: flex; justify-content: space-between; text-transform: uppercase; letter-spacing: 0.08em"><span>Faders</span><span>{{liveName}}</span></div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; flex-grow: 1; min-height: 0">
+        <sc-for list="{{faders}}" as="f" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column; gap: 6px; align-items: center; min-height: 0">
+            <div style="position: relative; width: 100%; flex-grow: 1; min-height: 120px; border: 1px solid #ff6b5e"><div style="position: absolute; left: 0; right: 0; bottom: 0; height: {{f.h}}; background: #ff6b5e"></div></div>
+            <span style="font: 700 12px/1.1 'Big Shoulders Display', sans-serif; letter-spacing: 0.03em; text-transform: uppercase">{{f.name}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </aside>
+  </div>
+
+  <footer style="border-top: 1px solid #5b2622; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px">
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+      <button onClick="{{showSet}}" aria-pressed="{{setPressed}}" style="background: {{setTab.bg}}; color: {{setTab.fg}}; border: 1px solid #ff6b5e; padding: 6px 12px; text-transform: uppercase; letter-spacing: 0.08em">Running order: Friday show</button>
+      <button onClick="{{showLibrary}}" aria-pressed="{{libPressed}}" style="background: {{libTab.bg}}; color: {{libTab.fg}}; border: 1px solid #ff6b5e; padding: 6px 12px; text-transform: uppercase; letter-spacing: 0.08em">All presets</button>
+      <button onClick="{{prev}}" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 12px; text-transform: uppercase; letter-spacing: 0.08em">[ Prev</button>
+      <button onClick="{{next}}" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 12px; text-transform: uppercase; letter-spacing: 0.08em">Next ]</button>
+      <span style="margin-left: auto; color: #cd564c">{{hint}}</span>
+    </div>
+
+    <sc-if value="{{inSet}}" hint-placeholder-val="{{ true }}">
+      <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{cues}}" as="c" hint-placeholder-count="8">
+          <button onClick="{{c.pick}}" style="position: relative; min-height: 118px; background: {{c.bg}}; color: {{c.fg}}; border: {{c.border}}; border-radius: 2px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; padding: 8px 10px; min-width: 0">
+            <span style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%">
+              <span style="font: 800 40px/0.9 'Big Shoulders Display', sans-serif">{{c.n}}</span>
+              <span style="font-size: 10px; letter-spacing: 0.08em; border: 1px solid currentColor; padding: 1px 5px; visibility: {{c.tagShow}}">{{c.tag}}</span>
+            </span>
+            <span style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em">{{c.name}}</span>
+            <span style="font-size: 10px; line-height: 1.25; text-transform: none; letter-spacing: 0">{{c.note}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{inLibrary}}" hint-placeholder-val="{{ false }}">
+      <div style="display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{presets}}" as="p" hint-placeholder-count="9">
+          <button onClick="{{p.pick}}" style="min-height: 118px; background: {{p.bg}}; color: {{p.fg}}; border: 1px solid #ff6b5e; border-radius: 2px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; padding: 8px 10px; min-width: 0">
+            <span style="font: 800 40px/0.9 'Big Shoulders Display', sans-serif">{{p.n}}</span>
+            <span style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em">{{p.name}}</span>
+            <span style="font-size: 10px">{{p.used}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  state = { cue: 1, free: -1, view: 'set' };
+
+  renderVals() {
+    const INK = '#ff6b5e';
+    const ON = '#140302';
+    const names = ['Clean', 'Tunnel', 'Kaleido', 'Thermal trails', 'Slit-scan', 'Neon edges', 'Liquid', 'Poster', 'Horizon lock'];
+    const looks = [[0, 0, 0.9], [40, 0, 1], [120, 60, 1.2], [200, 150, 1.4], [280, 220, 1], [20, 290, 1.6], [160, 100, 0.8], [240, 30, 2], [320, 180, 1.1]];
+    // The running order: the same preset can come round more than once.
+    const order = [
+      [0, 'Walk on. House lights down.'],
+      [1, 'First track. Phone on the drummer.'],
+      [2, 'Chorus.'],
+      [1, 'Back for the verse.'],
+      [3, 'Slow section. Dim the room.'],
+      [4, 'Build.'],
+      [2, 'Last chorus.'],
+      [0, 'Bows. Hold, then blackout.'],
+    ];
+    const { cue, free, view } = this.state;
+    const livePreset = free >= 0 ? free : order[cue][0];
+    const nextCue = free >= 0 ? cue : Math.min(order.length - 1, cue + 1);
+    const go = (i) => this.setState({ cue: Math.max(0, Math.min(order.length - 1, i)), free: -1 });
+    const look = looks[livePreset];
+    return {
+      pic: { turn: look[0] + 'deg', hue: look[1] + 'deg', sat: String(look[2]) },
+      liveName: names[livePreset],
+      faders: [['Zoom', '42%'], ['Rotate', '30%'], ['Decay', '88%'], ['Shift', '55%']].map(([name, h]) => ({ name, h })),
+      inSet: view === 'set',
+      inLibrary: view === 'library',
+      setPressed: String(view === 'set'),
+      libPressed: String(view === 'library'),
+      setTab: view === 'set' ? { bg: INK, fg: ON } : { bg: 'transparent', fg: INK },
+      libTab: view === 'library' ? { bg: INK, fg: ON } : { bg: 'transparent', fg: INK },
+      showSet: () => this.setState({ view: 'set' }),
+      showLibrary: () => this.setState({ view: 'library' }),
+      prev: () => go(free >= 0 ? cue : cue - 1),
+      next: () => go(free >= 0 ? cue : cue + 1),
+      hint: free >= 0 ? 'Off the list on ' + names[free] + '. Next returns to cue ' + (cue + 1) + '.' : 'Click to load, drag to rearrange. Next ( ] ) steps down the list.',
+      cues: order.map(([p, note], i) => {
+        const live = free < 0 && i === cue;
+        const upNext = !live && i === nextCue && (free >= 0 || i !== cue);
+        return {
+          n: String(i + 1),
+          name: names[p],
+          note,
+          bg: live ? INK : 'transparent',
+          fg: live ? ON : INK,
+          border: upNext ? '2px dashed ' + INK : '1px solid ' + INK,
+          tag: free >= 0 && i === cue ? 'RETURN' : 'NEXT',
+          tagShow: upNext ? 'visible' : 'hidden',
+          pick: () => go(i),
+        };
+      }),
+      presets: names.map((name, i) => {
+        const count = order.filter(([p]) => p === i).length;
+        return {
+          n: String(i + 1),
+          name,
+          used: count ? 'in the order ' + count + '×' : 'not in the order',
+          bg: i === livePreset ? INK : 'transparent',
+          fg: i === livePreset ? ON : INK,
+          pick: () => this.setState({ free: i }),
+        };
+      }),
+    };
+  }
+}
+</script>
+</body>
+</html>

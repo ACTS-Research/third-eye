@@ -1,0 +1,19 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-15T02:30:00Z" },
+  "title": "Third Eye Cam: Edit Screen",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 900, "title": "A · Rows: today's layout, with full-width sliders", "expand": "fill", "is_interactive": true },
+    "Inspector.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 900, "title": "B · Inspector: the chain as a list, one effect open", "expand": "fill", "is_interactive": true },
+    "Picture.dc.html": { "x": 3040, "y": 0, "w": 1440, "h": 900, "title": "C · Picture first: a large monitor, settings at the side", "expand": "fill", "is_interactive": true },
+    "Sliders.dc.html": { "x": 3040, "y": 1020, "w": 1240, "h": 430, "title": "Slider styles: four to choose from", "is_interactive": true },
+    "Sync.dc.html": { "x": 3040, "y": 1570, "w": 1240, "h": 330, "title": "LFO tempo sync: three ways to set it", "is_interactive": true }
+  },
+  "order": ["Main.dc.html", "Inspector.dc.html", "Picture.dc.html", "Sliders.dc.html", "Sync.dc.html"],
+  "notes": {
+    "heading": { "x": 0, "y": -300, "text": "Edit screen: three directions", "kind": "title1", "maxW": 4480 }
+  },
+  "designSystems": []
+}

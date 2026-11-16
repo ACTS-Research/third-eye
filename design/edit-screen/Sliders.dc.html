@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Slider styles</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+input[type=range]{-webkit-appearance:none;appearance:none;margin:0;border:1px solid #ff6b5e;border-radius:0;background-color:#060303;background-repeat:no-repeat;cursor:ew-resize}
+input[type=range]::-webkit-slider-runnable-track{background:transparent;height:100%}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:3px;height:100%;background:#ff6b5e;border:0;border-radius:0}
+input[type=range]::-moz-range-track{background:transparent}
+input[type=range]::-moz-range-thumb{width:3px;height:100%;background:#ff6b5e;border:0;border-radius:0}
+input[type=range].tall{writing-mode:vertical-lr;direction:rtl;cursor:ns-resize}
+input[type=range].tall::-webkit-slider-thumb{width:100%;height:3px}
+input[type=range].tall::-moz-range-thumb{width:100%;height:3px}
+input[type=range].line{border-color:#5b2622;background-position:left bottom;background-size:100% 4px}
+input[type=range].line::-webkit-slider-thumb{background:transparent}
+input[type=range].line::-moz-range-thumb{background:transparent}
+</style>
+</helmet>
+<div style="width: 1240px; height: 430px; box-sizing: border-box; padding: 24px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; background: #060303; color: #ff6b5e; font: 500 12px/1.4 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+
+  <section aria-label="Style 1, bar" style="border: 1px solid #5b2622; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+    <div style="font: 800 26px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.06em; text-transform: uppercase">1 · Bar</div>
+    <sc-for list="{{items}}" as="p" hint-placeholder-count="3">
+      <div style="display: grid; grid-template-columns: 84px minmax(0, 1fr) 54px; column-gap: 8px; align-items: center">
+        <label for="{{p.barId}}">{{p.label}}</label>
+        <input id="{{p.barId}}" type="range" min="{{p.min}}" max="{{p.max}}" step="{{p.step}}" value="{{p.value}}" onChange="{{p.set}}" style="width: 100%; height: 22px; background-image: {{p.bar}}">
+        <span style="text-align: right; font: 700 18px/1 'Big Shoulders Display', sans-serif">{{p.shown}}</span>
+      </div>
+    </sc-for>
+  </section>
+
+  <section aria-label="Style 2, small faders" style="border: 1px solid #5b2622; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+    <div style="font: 800 26px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.06em; text-transform: uppercase">2 · Small faders</div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+      <sc-for list="{{items}}" as="p" hint-placeholder-count="3">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0">
+          <input id="{{p.tallId}}" class="tall" type="range" min="{{p.min}}" max="{{p.max}}" step="{{p.step}}" value="{{p.value}}" onChange="{{p.set}}" style="width: 100%; height: 150px; background-image: {{p.tall}}">
+          <span style="font: 700 22px/1 'Big Shoulders Display', sans-serif">{{p.shown}}</span>
+          <label for="{{p.tallId}}" style="font: 700 12px/1.1 'Big Shoulders Display', sans-serif; letter-spacing: 0.04em; text-transform: uppercase; text-align: center">{{p.label}}</label>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section aria-label="Style 3, blocks" style="border: 1px solid #5b2622; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+    <div style="font: 800 26px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.06em; text-transform: uppercase">3 · Blocks</div>
+    <sc-for list="{{items}}" as="p" hint-placeholder-count="3">
+      <div style="display: grid; grid-template-columns: 84px minmax(0, 1fr) 54px; column-gap: 8px; align-items: center">
+        <label for="{{p.segId}}">{{p.label}}</label>
+        <input id="{{p.segId}}" type="range" min="{{p.min}}" max="{{p.max}}" step="{{p.step}}" value="{{p.value}}" onChange="{{p.set}}" style="width: 100%; height: 22px; border-color: transparent; background-image: {{p.seg}}">
+        <span style="text-align: right; font: 700 18px/1 'Big Shoulders Display', sans-serif">{{p.shown}}</span>
+      </div>
+    </sc-for>
+  </section>
+
+  <section aria-label="Style 4, number you drag" style="border: 1px solid #5b2622; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+    <div style="font: 800 26px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.06em; text-transform: uppercase">4 · Number you drag</div>
+    <sc-for list="{{items}}" as="p" hint-placeholder-count="3">
+      <div style="display: grid; grid-template-columns: 84px 96px; column-gap: 8px; align-items: center">
+        <label for="{{p.numId}}">{{p.label}}</label>
+        <div style="position: relative; height: 34px">
+          <input id="{{p.numId}}" class="line" type="range" min="{{p.min}}" max="{{p.max}}" step="{{p.step}}" value="{{p.value}}" onChange="{{p.set}}" style="position: absolute; inset: 0; width: 100%; height: 34px; background-image: {{p.bar}}">
+          <span aria-hidden="true" style="position: absolute; inset: 0 0 4px 0; display: flex; align-items: center; justify-content: center; pointer-events: none; font: 700 20px/1 'Big Shoulders Display', sans-serif">{{p.shown}}</span>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1240,"height":430}}'>
+class Component extends DCLogic {
+  state = { values: { contrast: 1.6, shift: -0.095, persistence: 0.93 } };
+
+  renderVals() {
+    const INK = '#ff6b5e';
+    const GROUND = '#060303';
+    const params = [
+      { k: 'contrast', label: 'Contrast', min: 0.5, max: 3, step: 0.01, digits: 2 },
+      { k: 'shift', label: 'Shift', min: -0.5, max: 0.5, step: 0.005, digits: 3 },
+      { k: 'persistence', label: 'Persistence', min: 0, max: 0.99, step: 0.005, digits: 3 },
+    ];
+    const { values } = this.state;
+    // The filled part: from the start, or from the middle for a value that
+    // can go either way.
+    const fill = (angle, v, min, max) => {
+      const t = Math.round(((v - min) / (max - min)) * 1000) / 10;
+      if (min >= 0) return `linear-gradient(${angle}, ${INK} ${t}%, transparent ${t}%)`;
+      const a = Math.min(50, t);
+      const b = Math.max(50, t);
+      return `linear-gradient(${angle}, transparent ${a}%, ${INK} ${a}%, ${INK} ${b}%, transparent ${b}%)`;
+    };
+    return {
+      items: params.map((p) => {
+        const v = values[p.k];
+        return {
+          label: p.label,
+          min: String(p.min),
+          max: String(p.max),
+          step: String(p.step),
+          value: String(v),
+          shown: v.toFixed(p.digits),
+          barId: `s-bar-${p.k}`,
+          tallId: `s-tall-${p.k}`,
+          segId: `s-seg-${p.k}`,
+          numId: `s-num-${p.k}`,
+          bar: fill('90deg', v, p.min, p.max),
+          tall: fill('0deg', v, p.min, p.max),
+          // Sixteen blocks: the gaps are drawn over the fill, and the unlit
+          // blocks under it.
+          seg: `repeating-linear-gradient(90deg, transparent 0, transparent calc(6.25% - 2px), ${GROUND} calc(6.25% - 2px), ${GROUND} 6.25%), ${fill('90deg', v, p.min, p.max)}, linear-gradient(#3a1512, #3a1512)`,
+          set: (e) => this.setState({ values: { ...values, [p.k]: Number(e.target.value) } }),
+        };
+      }),
+    };
+  }
+}
+</script>
+</body>
+</html>

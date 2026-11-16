@@ -75,7 +75,12 @@ branch on GitHub (checked 16 November).
 (A, the strip, was built). Edit screen, slider styles and tempo sync:
 https://claude.ai/artifact/UEbbvKGUHsQo7CxCWFUVDT (C, the Bar, and Notes were
 built). Icons: https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo. All private
-to the owner.
+to the owner; their sources are in `design/` (see `design/README.md`).
+
+**What is backed up, and what is not.** The code, tests, docs, screenshots
+and mock-up sources are all on GitHub in `main`. Your presets, running order
+and recordings are not: they live in your browser on the Mac. Export presets
+from Setup; save recordings to disk from Setup → Recordings.
 
 ### Seen on the real iPhone and Mac this session
 
@@ -323,14 +328,14 @@ Three static pages built by Vite, no framework.
 
 | Path | What lives there |
 | --- | --- |
-| `src/engine/` | Everything live: the WebGL2 pipeline (`pipeline.js`), inputs, the host side of the phone link (`remote.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop. It runs in `/output` while an output window is open, otherwise in `/control` |
-| `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js` (+ `strip.js`, the strip of presets and the running order), `edit.js` (+ `chain.js` the chain row and Parameters tab, `mod-panel.js` the Modulation tab, `controls.js` the app's own bar slider, menu and switch), and the Setup panels. `host.js` decides which window hosts the engine and owns the monitor canvas. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts |
+| `src/engine/` | Everything live: the WebGL2 pipeline (`pipeline.js`), inputs, the host side of the phone link (`remote.js`), the small copy of the output sent back to the phone (`return-feed.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop. It runs in `/output` while an output window is open, otherwise in `/control` |
+| `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js` (+ `strip.js`, the strip of presets and the running order), `edit.js` (+ `chain.js` the chain row and Parameters tab, `mod-panel.js` the Modulation tab, `controls.js` the app's own bar slider, menu, switch and row of picture buttons), and the Setup panels. `host.js` decides which window hosts the engine and owns the monitor canvas. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts |
 | `src/phone/` | The iPhone page: `main.js`, `link.js` (reconnect watchdog, direct links), `sensors.js` (motion, the XY pad, triggers, presets), `camera-controls.js`, `orient.js` (page angle, the Rotate turn), `widgets.js` (the fader) |
 | `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js` (presets, each with a permanent id, and the running order: `loadOrder`, `orderView`, `applyStep`, `stepShow`), `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `direct.js` (pairing with no server), `qr.js`, `sources.js`, `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; the engine forwards them to the phone) |
 | `src/effects/` | One file per effect; `index.js` is the registry, `common.glsl.js` the shared GLSL |
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon, option D2 from the sheet at https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo) |
-| `design/` | `third-eye-icons.html`: the icon options shown to the owner (a page for a browser, not part of the site) |
+| `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `running-order/`, `edit-screen/`. `design/README.md` says which option of each was built |
 | `tests/` | Nineteen headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
@@ -441,17 +446,14 @@ Three static pages built by Vite, no framework.
 
 - The three design directions the redesign came from are on a design canvas:
   https://claude.ai/artifact/4bRZEX1Xp89CPKQF79ozx6 (private to the owner).
-  Direction C, "Darkroom", was chosen.
-- The icon sheet (three rounds) is at
-  https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo (private to the owner);
-  its source is kept in `design/third-eye-icons.html`.
+  Direction C, "Darkroom", was chosen. Its source is not in the repo.
+- The later mock-ups (icons, running order, edit screen) are on claude.ai
+  too, with their sources in `design/`; `design/README.md` has the links.
 - Presets and recordings live in the owner's browser storage. Nothing here
   backs them up.
 
 ### Known rough edges
 
-- The note under the perform faders still says "Pin your own under Edit";
-  the button there is now called Fader.
 - Several alerts at once stack over the top of the page; they are compact
   and each can be closed with its ×.
 - Below about 1000 px wide the top bar is tight: the phone readout is cut
@@ -505,20 +507,43 @@ native wrapper for a true Syphon output; a MIDI mapping for the dimmer.
 
 ### Prompt to start a new session
 
+Paste this as the first message, with the last paragraph filled in.
+
 ```
-You are picking up Third Eye Cam (repo ACTS-Research/third-eye, branch main).
-Read CLAUDE.md, then HANDOFF.md, then README.md before doing anything; the
-handoff says where things stand, the rules that are easy to break, how to
-work in the cloud sandbox, and the plan for this session.
+You are picking up Third Eye Cam (repo ACTS-Research/third-eye, branch main):
+a live video instrument that runs in the browser. An iPhone's camera streams
+over WebRTC into a WebGL2 effects chain on a Mac, which shows the result on
+its own page or on a second display.
 
-This session: <say what you want done>.
+Read CLAUDE.md, then HANDOFF.md, then README.md before doing anything. The
+handoff says where things stand, what has not yet been tried on the real
+iPhone and Mac, the decisions that are mine to make, the rules that are easy
+to break, and how to work in the cloud sandbox (it is slow: read that part
+before trusting or distrusting a failing test).
 
-Before writing code, tell me in a few lines how you will do it and what will
-change for me, and wait for my go.
+How I work:
+- Before writing code, tell me in a few lines how you will do it and what
+  will change for me, and wait for my go. A small change I have asked for
+  outright can simply be done.
+- For anything that changes how a screen looks or works, show me mock-ups
+  first (two or three options on a design canvas) and let me choose.
+- Work on main and push to main. After each push, check that the "Build and
+  deploy to GitHub Pages" run succeeded.
+- Run the test suites that cover what you change (one at a time, under two
+  minutes each, or in the background), and all of them before a push that
+  touches engine.js, remote.js, host.js or the phone's link.js.
+- Tell me plainly what you could not verify on real hardware. You cannot
+  reach the deployed site, the public pairing server or my devices.
+- Write to me in plain language, short, with what I need to do or decide
+  first.
+- When I say "wrap up", follow CLAUDE.md.
 
-Work on main and push to main. After each push, check that the "Build and
-deploy to GitHub Pages" run succeeded. Run the test suites that cover what
-you change (one at a time, under two minutes each, or in the background)
-and tell me plainly what you could not verify on real hardware. When I say
-"wrap up", follow CLAUDE.md.
+Start by telling me, in a few lines, where things stand and what is waiting
+on me (from the top of HANDOFF.md). Then:
+
+This session: <say what you want built or fixed. Ideas already raised are
+under "Ideas raised and not started" in HANDOFF.md: several named running
+orders, steps timed to an audio track, the Mac-output preview on a phone
+paired without internet, a brightness control on the Mac, a pairing server
+of my own for the university Wi-Fi.>
 ```

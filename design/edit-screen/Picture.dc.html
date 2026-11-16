@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Edit screen C, picture first</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button,select,input{font:inherit}
+button{cursor:pointer}
+input[type=range]{-webkit-appearance:none;appearance:none;margin:0;height:22px;border:1px solid #ff6b5e;border-radius:0;background-color:#060303;background-repeat:no-repeat;cursor:ew-resize}
+input[type=range]::-webkit-slider-runnable-track{background:transparent;height:100%}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:3px;height:22px;background:#ff6b5e;border:0;border-radius:0}
+input[type=range]::-moz-range-track{background:transparent}
+input[type=range]::-moz-range-thumb{width:3px;height:22px;background:#ff6b5e;border:0;border-radius:0}
+.opt{display:block;width:100%;background:none;color:#ff6b5e;border:0;padding:7px 10px;text-align:left;white-space:nowrap}
+.opt:hover,.opt:focus-visible{background:#ff6b5e;color:#140302;outline:0}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; background: #060303; color: #ff6b5e; font: 500 12px/1.4 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+
+  <header style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; min-height: 48px; padding: 0 14px; border-bottom: 1px solid #5b2622">
+    <span style="font: 800 24px/1 'Big Shoulders Display', 'Arial Narrow', sans-serif; letter-spacing: 0.12em; white-space: nowrap">THIRD EYE CAM</span>
+    <span style="text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap">Output off · 60 fps</span>
+    <span style="text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; flex-grow: 1">Phone: streaming</span>
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Perform</button>
+    <button aria-pressed="true" style="background: #ff6b5e; color: #140302; border: 1px solid #ff6b5e; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Edit</button>
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Setup</button>
+  </header>
+
+  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid #5b2622">
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">← Perform</button>
+    <span style="font: 800 40px/0.9 'Big Shoulders Display', sans-serif">4</span>
+    <input type="text" aria-label="Preset name" value="THERMAL TRAILS" readonly style="flex: 1 1 240px; min-width: 0; background: #060303; color: #ff6b5e; border: 1px solid #ff6b5e; padding: 6px 10px; font: 800 28px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.04em">
+    <label for="c-fade" style="text-transform: uppercase; letter-spacing: 0.08em">Fade in</label>
+    <input id="c-fade" type="number" value="2" readonly style="width: 64px; background: #060303; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 8px">
+    <span>s</span>
+    <span style="color: #cd564c; margin-left: 8px">Saved.</span>
+    <span style="flex-grow: 1"></span>
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Duplicate</button>
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Revert</button>
+    <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 12px; text-transform: uppercase; letter-spacing: 0.08em">Delete</button>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; padding: 14px">
+
+    <section aria-label="The picture and the chain" style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+      <div role="img" aria-label="The live picture, standing in for video" style="width: 100%; aspect-ratio: 16 / 9; border: 1px solid #5b2622; background: linear-gradient(100deg, #2a0a8f 0%, #5b1fd1 14%, #e0308a 30%, #ff7a1a 52%, #ffc21a 68%, #ff5a1a 84%, #3a12b0 100%); filter: {{pictureFilter}}"></div>
+
+      <nav aria-label="Effects chain" style="display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap">
+        <div style="border: 1px dashed #5b2622; padding: 8px 10px; color: #cd564c; display: flex; align-items: center">In: iPhone</div>
+        <sc-for list="{{chain}}" as="c" hint-placeholder-count="2">
+          <span aria-hidden="true" style="align-self: center; color: #cd564c">→</span>
+          <button onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="background: {{c.bg}}; color: {{c.fg}}; border: 1px solid #ff6b5e; padding: 8px 12px; display: flex; align-items: center; gap: 10px; text-align: left">
+            <span style="font: 800 28px/0.9 'Big Shoulders Display', sans-serif">{{c.n}}</span>
+            <span style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font: 700 18px/1.05 'Big Shoulders Display', sans-serif; letter-spacing: 0.04em; text-transform: uppercase">{{c.name}}</span>
+              <span style="font-size: 11px">{{c.meta}}</span>
+            </span>
+          </button>
+        </sc-for>
+        <span aria-hidden="true" style="align-self: center; color: #cd564c">→</span>
+        <button onClick="{{toggleAdding}}" aria-expanded="{{addingText}}" style="background: none; color: #ff6b5e; border: 1px dashed #ff6b5e; padding: 8px 12px; text-transform: uppercase; letter-spacing: 0.08em">+ Add effect</button>
+      </nav>
+      <sc-if value="{{adding}}" hint-placeholder-val="{{ false }}">
+        <div style="border: 1px solid #ff6b5e; padding: 10px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+          <sc-for list="{{library}}" as="fx" hint-placeholder-count="12">
+            <button onClick="{{toggleAdding}}" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 8px 6px; text-align: left; text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px">{{fx}}</button>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <div style="border-top: 1px solid #5b2622; padding-top: 10px; display: flex; flex-direction: column; gap: 8px">
+        <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap"><span style="text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700">As on the perform screen</span><span style="color: #cd564c">{{pinHint}}</span></div>
+        <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 10px">
+          <sc-for list="{{slots}}" as="s" hint-placeholder-count="8">
+            <div style="display: flex; flex-direction: column; gap: 4px; align-items: center; min-width: 0">
+              <div style="position: relative; width: 100%; height: 86px; border: 1px {{s.line}} #ff6b5e"><div style="position: absolute; left: 0; right: 0; bottom: 0; height: {{s.fill}}; background: #ff6b5e"></div></div>
+              <span style="font: 700 16px/1 'Big Shoulders Display', sans-serif">{{s.value}}</span>
+              <span style="font: 700 11px/1.1 'Big Shoulders Display', sans-serif; letter-spacing: 0.03em; text-transform: uppercase; text-align: center">{{s.label}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <aside style="flex: 1 1 420px; max-width: 560px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+          <button onClick="{{t.pick}}" aria-pressed="{{t.pressed}}" style="background: {{t.bg}}; color: {{t.fg}}; border: 1px solid {{t.line}}; padding: 8px 4px; text-transform: uppercase; letter-spacing: 0.08em">{{t.label}}</button>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{onParams}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 4px 0 8px; border-bottom: 1px solid #5b2622">
+            <span style="font: 800 34px/0.9 'Big Shoulders Display', sans-serif">{{selN}}</span>
+            <span style="font: 800 24px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.04em; text-transform: uppercase; flex-grow: 1">{{selName}}</span>
+            <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 5px 10px; text-transform: uppercase; letter-spacing: 0.08em">Bypass</button>
+            <button style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 5px 10px; text-transform: uppercase; letter-spacing: 0.08em">Remove</button>
+          </div>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="7">
+            <div>
+              <sc-if value="{{r.isSlider}}" hint-placeholder-val="{{ true }}">
+                <div style="display: grid; grid-template-columns: 96px minmax(80px, 180px) 54px 58px 70px; justify-content: start; column-gap: 8px; align-items: center; padding: 6px 0">
+                  <label for="{{r.inputId}}">{{r.label}}</label>
+                  <input id="{{r.inputId}}" type="range" min="{{r.min}}" max="{{r.max}}" step="{{r.step}}" value="{{r.value}}" onChange="{{r.set}}" style="width: 100%; background-image: {{r.bar}}">
+                  <span style="text-align: right; font: 700 18px/1 'Big Shoulders Display', sans-serif">{{r.shown}}</span>
+                  <button onClick="{{r.togglePin}}" aria-pressed="{{r.pinnedText}}" title="Show this as a fader on the perform screen" style="background: {{r.pinBg}}; color: {{r.pinFg}}; border: 1px solid {{r.pinLine}}; padding: 5px 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em">{{r.pinText}}</button>
+                  <button onClick="{{r.goMod}}" title="What moves this parameter by itself" style="background: {{r.modBg}}; color: {{r.modFg}}; border: 1px solid {{r.modLine}}; padding: 5px 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.modText}}</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{r.isMenu}}" hint-placeholder-val="{{ false }}">
+                <div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); column-gap: 8px; align-items: center; padding: 6px 0">
+                  <label for="{{r.inputId}}">{{r.label}}</label>
+                  <div style="position: relative; max-width: 240px">
+                    <button id="{{r.inputId}}" onClick="{{r.toggleMenu}}" aria-expanded="{{r.menuOpenText}}" style="width: 100%; display: flex; justify-content: space-between; gap: 8px; background: #060303; color: #ff6b5e; border: 1px solid #ff6b5e; padding: 6px 8px; text-align: left"><span>{{r.choice}}</span><span aria-hidden="true">▾</span></button>
+                    <sc-if value="{{r.menuOpen}}" hint-placeholder-val="{{ false }}">
+                      <div>
+                        <button aria-label="Close the menu" onClick="{{r.toggleMenu}}" style="position: fixed; inset: 0; z-index: 4; background: transparent; border: 0; cursor: default"></button>
+                        <div style="position: absolute; left: 0; top: 100%; z-index: 5; min-width: 100%; background: #060303; border: 1px solid #ff6b5e; border-top: 0">
+                          <button class="opt" onClick="{{r.pick0}}" style="display: {{r.optD0}}">{{r.mark0}}{{r.opt0}}</button>
+                          <button class="opt" onClick="{{r.pick1}}" style="display: {{r.optD1}}">{{r.mark1}}{{r.opt1}}</button>
+                          <button class="opt" onClick="{{r.pick2}}" style="display: {{r.optD2}}">{{r.mark2}}{{r.opt2}}</button>
+                          <button class="opt" onClick="{{r.pick3}}" style="display: {{r.optD3}}">{{r.mark3}}{{r.opt3}}</button>
+                        </div>
+                      </div>
+                    </sc-if>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{onFaders}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <sc-for list="{{pinned}}" as="p" hint-placeholder-count="2">
+            <div style="display: grid; grid-template-columns: 26px minmax(0, 1fr) 34px 34px 34px; column-gap: 6px; align-items: center; border: 1px solid #5b2622; padding: 6px 8px">
+              <span style="font: 800 24px/1 'Big Shoulders Display', sans-serif">{{p.n}}</span>
+              <span>{{p.label}}</span>
+              <button onClick="{{p.up}}" aria-label="{{p.upLabel}}" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 5px 0">↑</button>
+              <button onClick="{{p.down}}" aria-label="{{p.downLabel}}" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 5px 0">↓</button>
+              <button onClick="{{p.remove}}" aria-label="{{p.removeLabel}}" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 5px 0">×</button>
+            </div>
+          </sc-for>
+          <span style="color: #cd564c">Up to eight. Add one with Fader on its slider, under Parameters. With none chosen the perform screen shows the first sliders of each effect.</span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{onMods}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <sc-for list="{{mods}}" as="m" hint-placeholder-count="2">
+            <div style="border: {{m.border}}; padding: 10px; display: flex; flex-direction: column; gap: 8px">
+              <div style="display: flex; align-items: flex-start; gap: 8px">
+                <span style="flex-grow: 1; font: 700 16px/1.15 'Big Shoulders Display', sans-serif; letter-spacing: 0.04em; text-transform: uppercase">{{m.sentence}}</span>
+                <button onClick="{{m.remove}}" aria-label="{{m.removeLabel}}" title="Remove this one" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 2px 9px">×</button>
+              </div>
+              <div style="display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap">
+                <div style="flex: 1 1 150px; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+                  <label for="{{m.sourceId}}" style="text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px">Source</label>
+                  <div style="position: relative">
+                    <button id="{{m.sourceId}}" onClick="{{m.toggleSrc}}" aria-expanded="{{m.srcOpenText}}" style="width: 100%; display: flex; justify-content: space-between; gap: 8px; background: #060303; color: #ff6b5e; border: 1px solid #ff6b5e; padding: 6px 8px; text-align: left"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{m.sourceName}}</span><span aria-hidden="true">▾</span></button>
+                    <sc-if value="{{m.srcOpen}}" hint-placeholder-val="{{ false }}">
+                      <div>
+                        <button aria-label="Close the menu" onClick="{{m.toggleSrc}}" style="position: fixed; inset: 0; z-index: 4; background: transparent; border: 0; cursor: default"></button>
+                        <div style="position: absolute; left: 0; top: 100%; z-index: 5; min-width: 100%; background: #060303; border: 1px solid #ff6b5e; border-top: 0">
+                          <button class="opt" onClick="{{m.src0}}">{{m.srcMark0}}LFO 1</button>
+                          <button class="opt" onClick="{{m.src1}}">{{m.srcMark1}}LFO 2</button>
+                          <button class="opt" onClick="{{m.src2}}">{{m.srcMark2}}Phone · Tilt left/right</button>
+                          <button class="opt" onClick="{{m.src3}}">{{m.srcMark3}}Touch · Pad X</button>
+                          <button class="opt" onClick="{{m.src4}}">{{m.srcMark4}}Touch · Pad Y</button>
+                          <button class="opt" onClick="{{m.src5}}">{{m.srcMark5}}Audio · Level</button>
+                        </div>
+                      </div>
+                    </sc-if>
+                  </div>
+                </div>
+                <span aria-hidden="true" style="padding-bottom: 6px; font-size: 16px">→</span>
+                <div style="flex: 1.4 1 190px; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+                  <label for="{{m.targetId}}" style="text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px">Slider</label>
+                  <div style="position: relative">
+                    <button id="{{m.targetId}}" onClick="{{m.toggleTgt}}" aria-expanded="{{m.tgtOpenText}}" style="width: 100%; display: flex; justify-content: space-between; gap: 8px; background: #060303; color: #ff6b5e; border: 1px solid #ff6b5e; padding: 6px 8px; text-align: left"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{m.targetName}}</span><span aria-hidden="true">▾</span></button>
+                    <sc-if value="{{m.tgtOpen}}" hint-placeholder-val="{{ false }}">
+                      <div>
+                        <button aria-label="Close the menu" onClick="{{m.toggleTgt}}" style="position: fixed; inset: 0; z-index: 4; background: transparent; border: 0; cursor: default"></button>
+                        <div style="position: absolute; right: 0; top: 100%; z-index: 5; min-width: 100%; background: #060303; border: 1px solid #ff6b5e; border-top: 0">
+                          <button class="opt" onClick="{{m.tgt0}}">{{m.tgtMark0}}1 False colour · Wet / dry</button>
+                          <button class="opt" onClick="{{m.tgt1}}">{{m.tgtMark1}}1 False colour · Contrast</button>
+                          <button class="opt" onClick="{{m.tgt2}}">{{m.tgtMark2}}1 False colour · Shift</button>
+                          <button class="opt" onClick="{{m.tgt3}}">{{m.tgtMark3}}1 False colour · Cycle</button>
+                          <button class="opt" onClick="{{m.tgt4}}">{{m.tgtMark4}}1 False colour · Bands</button>
+                          <button class="opt" onClick="{{m.tgt5}}">{{m.tgtMark5}}2 Trails · Wet / dry</button>
+                          <button class="opt" onClick="{{m.tgt6}}">{{m.tgtMark6}}2 Trails · Persistence</button>
+                        </div>
+                      </div>
+                    </sc-if>
+                  </div>
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 84px minmax(80px, 180px) 60px; justify-content: start; column-gap: 8px; row-gap: 6px; align-items: center">
+                <label for="{{m.amountId}}" style="text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px">Amount</label>
+                <input id="{{m.amountId}}" type="range" min="-1" max="1" step="0.01" value="{{m.amount}}" onChange="{{m.setAmount}}" style="width: 100%; background-image: {{m.amountBar}}">
+                <span style="text-align: right; font: 700 18px/1 'Big Shoulders Display', sans-serif">{{m.amountShown}}</span>
+                <label for="{{m.smoothId}}" style="text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px">Smoothing</label>
+                <input id="{{m.smoothId}}" type="range" min="0" max="2" step="0.01" value="{{m.smooth}}" onChange="{{m.setSmooth}}" style="width: 100%; background-image: {{m.smoothBar}}">
+                <span style="text-align: right; font: 700 18px/1 'Big Shoulders Display', sans-serif">{{m.smoothShown}}</span>
+              </div>
+            </div>
+          </sc-for>
+          <button onClick="{{addMod}}" style="background: none; color: #ff6b5e; border: 1px solid #ff6b5e; padding: 9px 12px; text-transform: uppercase; letter-spacing: 0.08em">+ Add modulation</button>
+        </div>
+      </sc-if>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  state = {
+    sel: 'f1',
+    tab: 'params',
+    values: { 'f1.mix': 1, 'f1.contrast': 1.6, 'f1.shift': -0.095, 'f1.cycle': 0, 'f1.bands': 0, 'f2.mix': 1, 'f2.persistence': 0.93 },
+    pins: ['f1.mix', 'f2.persistence'],
+    // One entry per mapping: one source moving one slider. A preset can have
+    // any number, and a slider can be moved by more than one source.
+    mods: [
+      { id: 'm1', target: 'f1.shift', source: 0, amount: 0.3, smooth: 0.1 },
+      { id: 'm2', target: 'f1.contrast', source: 3, amount: 0.5, smooth: 0.05 },
+    ],
+    open: '',
+    adding: false,
+    menu: '', // which menu is open, if any
+    choices: { 'f1.target': 0, 'f1.palette': 0, 'f2.target': 0, 'f2.blend': 0 },
+  };
+
+  renderVals() {
+    const INK = '#ff6b5e';
+    const ON = '#140302';
+    const LINE = '#5b2622';
+    const SOURCES = ['LFO 1', 'LFO 2', 'Phone · Tilt left/right', 'Touch · Pad X', 'Touch · Pad Y', 'Audio · Level'];
+    const FX = [
+      { id: 'f1', name: 'False colour / Thermal', params: [
+        { k: 'target', label: 'Apply to', choice: 'Everything' },
+        { k: 'mix', label: 'Wet / dry', min: 0, max: 1, step: 0.01, digits: 2 },
+        { k: 'palette', label: 'Palette', choice: 'Thermal' },
+        { k: 'contrast', label: 'Contrast', min: 0.5, max: 3, step: 0.01, digits: 2 },
+        { k: 'shift', label: 'Shift', min: -0.5, max: 0.5, step: 0.005, digits: 3 },
+        { k: 'cycle', label: 'Cycle', min: -1, max: 1, step: 0.01, digits: 2 },
+        { k: 'bands', label: 'Bands', min: 0, max: 16, step: 1, digits: 0 },
+      ] },
+      { id: 'f2', name: 'Trails', params: [
+        { k: 'target', label: 'Apply to', choice: 'Everything' },
+        { k: 'mix', label: 'Wet / dry', min: 0, max: 1, step: 0.01, digits: 2 },
+        { k: 'persistence', label: 'Persistence', min: 0, max: 0.99, step: 0.005, digits: 3 },
+        { k: 'blend', label: 'Blend', choice: 'Lighten' },
+      ] },
+    ];
+    const { sel, tab, values, pins, mods, open, adding, menu, choices } = this.state;
+    const MENUS = { target: ['Everything', 'Person only', 'Background only'], palette: ['Thermal', 'Neon', 'Mono', 'Rainbow'], blend: ['Lighten', 'Screen', 'Add', 'Normal'] };
+    const TARGETS = ['f1.mix', 'f1.contrast', 'f1.shift', 'f1.cycle', 'f1.bands', 'f2.mix', 'f2.persistence'];
+    const find = (id) => {
+      const [fxId, k] = id.split('.');
+      const i = FX.findIndex((f) => f.id === fxId);
+      return { i, fx: FX[i], p: FX[i].params.find((x) => x.k === k) };
+    };
+    const nameOf = (id) => {
+      const { i, fx, p } = find(id);
+      return `${i + 1} ${fx.name} · ${p.label}`;
+    };
+    const setMod = (mid, patch) => this.setState({ mods: mods.map((m) => (m.id === mid ? { ...m, ...patch } : m)) });
+    const newMod = (target) => ({ id: `m${Date.now()}`, target, source: 0, amount: 0.5, smooth: 0.1 });
+    const short = (m) => SOURCES[m.source].split(' · ').pop();
+    // The slider as a small rectangular fader on its side: the fill runs from
+    // the left, or from the middle for a value that can go either way.
+    const bar = (v, min, max) => {
+      const t = Math.round(((v - min) / (max - min)) * 1000) / 10;
+      if (min >= 0) return `linear-gradient(90deg, ${INK} ${t}%, transparent ${t}%)`;
+      const a = Math.min(50, t);
+      const b = Math.max(50, t);
+      return `linear-gradient(90deg, transparent ${a}%, ${INK} ${a}%, ${INK} ${b}%, transparent ${b}%)`;
+    };
+    const fx = FX.find((f) => f.id === sel) ?? FX[0];
+    const rows = fx.params.map((p) => {
+      const id = `${fx.id}.${p.k}`;
+      if (p.choice) {
+        // A menu drawn by the page, not the browser, so it looks like the rest.
+        const options = MENUS[p.k];
+        const chosen = choices[id] ?? 0;
+        const row = { isMenu: true, label: p.label, choice: options[chosen], inputId: `c-${fx.id}-${p.k}`, menuOpen: menu === id, menuOpenText: String(menu === id), toggleMenu: () => this.setState({ menu: menu === id ? '' : id }) };
+        for (let i = 0; i < 4; i++) {
+          row[`opt${i}`] = options[i] ?? '';
+          row[`optD${i}`] = options[i] ? 'block' : 'none';
+          row[`mark${i}`] = i === chosen ? '✓ ' : '';
+          row[`pick${i}`] = () => this.setState({ choices: { ...choices, [id]: i }, menu: '' });
+        }
+        return row;
+      }
+      const pinned = pins.includes(id);
+      const mine = mods.filter((m) => m.target === id);
+      const mod = mine[0];
+      return {
+        isSlider: true,
+        label: p.label,
+        inputId: `c-${fx.id}-${p.k}`,
+        min: String(p.min),
+        max: String(p.max),
+        step: String(p.step),
+        value: String(values[id]),
+        shown: values[id].toFixed(p.digits),
+        bar: bar(values[id], p.min, p.max),
+        set: (e) => this.setState({ values: { ...values, [id]: Number(e.target.value) } }),
+        pinnedText: String(pinned),
+        pinText: pinned ? `Fader ${pins.indexOf(id) + 1}` : 'Fader',
+        pinBg: pinned ? INK : 'transparent',
+        pinFg: pinned ? ON : INK,
+        pinLine: pinned ? INK : LINE,
+        togglePin: () => this.setState({ pins: pinned ? pins.filter((x) => x !== id) : pins.length < 8 ? [...pins, id] : pins }),
+        modText: mod ? `~ ${short(mod)}${mine.length > 1 ? ` +${mine.length - 1}` : ''}` : '+ Mod',
+        modBg: mod ? INK : 'transparent',
+        modFg: mod ? ON : INK,
+        modLine: mod ? INK : LINE,
+        // Adds a source if there is none, and shows it under Modulation.
+        goMod: () => {
+          const added = mod ? null : newMod(id);
+          this.setState({ mods: added ? [...mods, added] : mods, tab: 'mods', open: (added ?? mod).id });
+        },
+      };
+    });
+    const move = (i, j) => {
+      if (j < 0 || j >= pins.length) return;
+      const next = pins.slice();
+      [next[i], next[j]] = [next[j], next[i]];
+      this.setState({ pins: next });
+    };
+    const tabStyle = (on) => ({ bg: on ? INK : 'transparent', fg: on ? ON : INK, line: on ? INK : LINE });
+    const slots = Array.from({ length: 8 }, (_, i) => {
+      const id = pins[i];
+      if (!id) return { line: 'dashed', fill: '0%', value: '', label: '' };
+      const { p } = find(id);
+      return { line: 'solid', fill: `${Math.round(((values[id] - p.min) / (p.max - p.min)) * 100)}%`, value: values[id].toFixed(p.digits), label: p.label };
+    });
+    const modCount = mods.length;
+    return {
+      adding,
+      addingText: String(adding),
+      toggleAdding: () => this.setState({ adding: !adding }),
+      library: ['Video feedback', 'Trails', 'Kaleidoscope', 'RGB shift', 'Edges', 'False colour', 'Slit-scan', 'Levels', 'Hue', 'Mirror', 'Pixelate', 'Posterise'],
+      chain: FX.map((f, i) => {
+        const moved = new Set(mods.filter((m) => m.target.startsWith(`${f.id}.`)).map((m) => m.target)).size;
+        const faders = pins.filter((id) => id.startsWith(`${f.id}.`)).length;
+        return {
+          n: String(i + 1),
+          name: f.name,
+          meta: [faders ? `${faders} fader${faders === 1 ? '' : 's'}` : '', moved ? `${moved} moved` : ''].filter(Boolean).join(' · ') || 'nothing pinned or moved',
+          pressed: String(f.id === fx.id),
+          bg: f.id === fx.id ? INK : 'transparent',
+          fg: f.id === fx.id ? ON : INK,
+          pick: () => this.setState({ sel: f.id, tab: 'params' }),
+        };
+      }),
+      tabs: [['params', 'Parameters'], ['faders', `Faders · ${pins.length}`], ['mods', `Modulation · ${modCount}`]].map(([id, label]) => ({ label, pressed: String(tab === id), ...tabStyle(tab === id), pick: () => this.setState({ tab: id }) })),
+      onParams: tab === 'params',
+      onFaders: tab === 'faders',
+      onMods: tab === 'mods',
+      selN: String(FX.indexOf(fx) + 1),
+      selName: fx.name,
+      rows,
+      slots,
+      pictureFilter: `contrast(${(0.6 + values['f1.contrast'] * 0.25).toFixed(2)}) hue-rotate(${Math.round(values['f1.shift'] * 360)}deg) saturate(${(0.4 + values['f1.mix'] * 0.8).toFixed(2)})`,
+      pinHint: pins.length ? `${pins.length} of 8 chosen` : 'None chosen: the first sliders of each effect are used',
+      pinned: pins.map((id, i) => ({
+        n: String(i + 1),
+        label: nameOf(id),
+        up: () => move(i, i - 1),
+        down: () => move(i, i + 1),
+        remove: () => this.setState({ pins: pins.filter((x) => x !== id) }),
+        upLabel: `Move fader ${i + 1} up`,
+        downLabel: `Move fader ${i + 1} down`,
+        removeLabel: `Take fader ${i + 1} off the perform screen`,
+      })),
+      mods: mods.map((m) => ({
+        sentence: `${SOURCES[m.source]} → ${find(m.target).p.label}`,
+        amountBar: bar(m.amount, -1, 1),
+        smoothBar: bar(m.smooth, 0, 2),
+        border: open === m.id ? `1px solid ${INK}` : `1px solid ${LINE}`,
+        sourceId: `c-src-${m.id}`,
+        sourceName: SOURCES[m.source],
+        srcOpen: menu === `${m.id}:src`,
+        srcOpenText: String(menu === `${m.id}:src`),
+        toggleSrc: () => this.setState({ menu: menu === `${m.id}:src` ? '' : `${m.id}:src` }),
+        ...Object.fromEntries(SOURCES.flatMap((_, i) => [
+          [`src${i}`, () => this.setState({ mods: mods.map((x) => (x.id === m.id ? { ...x, source: i } : x)), menu: '' })],
+          [`srcMark${i}`, i === m.source ? '✓ ' : ''],
+        ])),
+        targetId: `c-tgt-${m.id}`,
+        targetName: nameOf(m.target).replace(' / Thermal', ''),
+        tgtOpen: menu === `${m.id}:tgt`,
+        tgtOpenText: String(menu === `${m.id}:tgt`),
+        toggleTgt: () => this.setState({ menu: menu === `${m.id}:tgt` ? '' : `${m.id}:tgt` }),
+        ...Object.fromEntries(TARGETS.flatMap((t, i) => [
+          [`tgt${i}`, () => this.setState({ mods: mods.map((x) => (x.id === m.id ? { ...x, target: t } : x)), menu: '' })],
+          [`tgtMark${i}`, t === m.target ? '✓ ' : ''],
+        ])),
+        amountId: `c-amt-${m.id}`,
+        amount: String(m.amount),
+        amountShown: m.amount.toFixed(2),
+        setAmount: (e) => setMod(m.id, { amount: Number(e.target.value) }),
+        smoothId: `c-smo-${m.id}`,
+        smooth: String(m.smooth),
+        smoothShown: `${m.smooth.toFixed(2)} s`,
+        setSmooth: (e) => setMod(m.id, { smooth: Number(e.target.value) }),
+        removeLabel: `Remove: ${SOURCES[m.source]} moves ${nameOf(m.target)}`,
+        remove: () => this.setState({ mods: mods.filter((x) => x.id !== m.id) }),
+      })),
+      addMod: () => {
+        const added = newMod(`${fx.id}.${fx.params.find((p) => !p.choice).k}`);
+        this.setState({ mods: [...mods, added], open: added.id });
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>
