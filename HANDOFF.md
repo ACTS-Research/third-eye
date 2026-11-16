@@ -39,9 +39,6 @@ with Freeze from the phone (tap twice: it should freeze, light up, release).
   (opens in more players).
 - Say whether the board cover stays the design prototype
   (`screenshots/third-eye-current.png`) or becomes a capture of the real app.
-- Delete two branches on GitHub (Branches page, trash icon):
-  `claude/affectionate-gates-x6ngzx` and `claude/affectionate-tesla-hj7oki`.
-  Both are fully in `main`; a cloud session cannot delete them.
 - Export your presets (Setup → Preset library → Export presets). They and
   the running order live only in your browser.
 - Tick **hold** again on any trigger that had it: settings saved before 13
@@ -71,7 +68,8 @@ over). Try making a closed network on the Mac (README, Pairing without
 internet) and pairing by code on it.
 
 **Branch.** Work is on `main`, the default branch and the one that deploys.
-Nothing is waiting to be merged; everything is pushed.
+Nothing is waiting to be merged; everything is pushed. `main` is the only
+branch on GitHub (checked 16 November).
 
 **Mock-ups.** Running order: https://claude.ai/artifact/SiD1F7P89JLwXeC31BKhz4
 (A, the strip, was built). Edit screen, slider styles and tempo sync:
