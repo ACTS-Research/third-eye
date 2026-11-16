@@ -1,65 +1,65 @@
 # Handoff
 
-## 2026-11-13 (third session)
+## 2026-11-16 (end of the third session, 13 to 16 November)
 
-**Where things stand.** Four things were built this session and all are
-live on GitHub Pages from `main`: the output window is optional (`/control`
-runs the whole instrument by itself); the phone can be paired with no
-internet, by QR code both ways ("Pair without internet"); the phone's live
-screen was rebuilt around a large horizontal preview; and there is a running
-order (steps that point at presets, on the preset strip). All nineteen test
-suites pass in headless Chromium. The phone screen's last rework, the Freeze
-fix and the running order have not been tried on the real iPhone yet.
+**Where things stand.** Everything asked for in this session is built and
+live on GitHub Pages from `main`; the last push was the Setup screen's menus
+and LFO tempo sync as note values. Most of what was built after 13 November
+(running order, the phone's Mac-output preview, the rebuilt edit screen and
+Setup) has only been run in headless Chromium, not on the real iPhone and
+Mac.
 
-**Next step.** On the real iPhone, with every page reloaded: hold the phone
-upright and on its side and check the picture on the Mac and in the preview
-is horizontal with the world the right way up, then tap Freeze twice (it
-should freeze, light up, and release). Then add a few steps with **+** on the
-preset strip and check the phone's six buttons show them.
+**Next step.** On the real Mac and iPhone, with every page reloaded, go down
+"Built since 13 November, not yet tried on real hardware" below, starting
+with Freeze from the phone (tap twice: it should freeze, light up, release).
 
 **Decisions only you can make.**
 
-- Try the rebuilt edit screen (15 November) and say what to change. You chose
-  mock-up C (picture first), the Bar slider, and the app's own menus; the
-  mock-ups are at https://claude.ai/artifact/UEbbvKGUHsQo7CxCWFUVDT. The Setup
-  screen has the same menus and bars. LFO shape and tempo sync are rows of
-  small pictures (you chose note values for sync). The phone's Quality menu
-  stays the iPhone's own picker unless you say otherwise.
-- Try the running order and say what is missing. Left out of this first
-  version on purpose: several named shows (there is one running order),
-  and steps timed against an audio track. (Since 14 November the phone's
-  six buttons follow the show: `sendPresets` in `engine.js` sends the steps
-  from one before the live step.) The three designs it was chosen from are at
-  https://claude.ai/artifact/SiD1F7P89JLwXeC31BKhz4 (you chose A, the strip,
-  with "Next returns to the step you left").
-
-- Say whether the browser-tab icon is good enough. You kept option D2 (the
-  camera) after saying it is hard to read at tab size; seven bolder
-  alternatives (T1–T7, an upright eye with a therefore sign) are on the icon
-  sheet if you change your mind.
-- Say whether the app should be renamed. A rename to "3rdEyeCam" was started
-  and you stopped it; the name is Third Eye Cam until you say otherwise.
-- Say whether 1280×720 is the right size for the picture (and recordings)
-  while no output window is open. It is fixed so recordings do not depend on
-  the size of the monitor on the page.
+- Say whether the picture was sideways in the phone's preview on 14 November
+  because you had pressed Rotate or had Portrait Orientation Lock on. If
+  neither, the upright layout is still wrong and needs fixing.
+- Try Preview: Mac output on the phone (camera icon) and say whether the lag
+  is usable. If it is, say whether to make it work on a phone paired without
+  internet too.
+- Say what the running order still needs. Left out on purpose: several named
+  shows, and steps timed against an audio track.
+- Say whether you want a brightness control on the Mac side. Exposure cannot
+  be set from Safari on the iPhone.
+- Say whether the phone's Quality menu should be restyled. It is the
+  iPhone's own picker for now.
+- Say whether the browser-tab icon is good enough. You kept D2 (the camera);
+  bolder alternatives T1 to T7 are on the icon sheet.
+- Say whether the app should be renamed. It is Third Eye Cam until you say.
+- Say whether 1280×720 is the right picture and recording size while no
+  output window is open.
 - Decide whether to rent a small server (about $5 a month) for your own
-  pairing server and a relay on port 443. That is the only way to make the
-  university Wi-Fi work without the hotspot; Pair without internet covers
-  the hotspot and a Mac-made network, not a network that keeps the phone and
-  the Mac apart.
-- Pick the default recording format. It is WebM because Chrome writes it to
-  disk every second; MP4 opens in more players but is written in large pieces.
-- Say whether the board cover should stay the design prototype
-  (`screenshots/third-eye-current.png`) or become a capture of the real app.
-- Delete two branches on GitHub (Branches page, trash icon), and their rules
-  under Settings → Environments → `github-pages` if listed:
+  pairing server and relay. It is the only route to the university Wi-Fi
+  without the hotspot.
+- Pick the default recording format: WebM (written every second) or MP4
+  (opens in more players).
+- Say whether the board cover stays the design prototype
+  (`screenshots/third-eye-current.png`) or becomes a capture of the real app.
+- Delete two branches on GitHub (Branches page, trash icon):
   `claude/affectionate-gates-x6ngzx` and `claude/affectionate-tesla-hj7oki`.
-  Both are fully contained in `main`; a cloud session cannot delete them.
-- Export your presets (Setup → Preset library → Export presets). They live
-  only in your browser; nothing in this repo or on GitHub backs them up, and
-  the same goes for recordings.
-- If you had ticked **hold** on any trigger under Setup, tick it again: hold
-  settings saved before 13 November are no longer read.
+  Both are fully in `main`; a cloud session cannot delete them.
+- Export your presets (Setup → Preset library → Export presets). They and
+  the running order live only in your browser.
+- Tick **hold** again on any trigger that had it: settings saved before 13
+  November are no longer read.
+
+**Built since 13 November, not yet tried on real hardware.**
+
+- Phone: Freeze as a switch; the six buttons following a running order of
+  more than six steps; Preview: Mac output; torch and W-lock dimmed on the
+  front camera; Scan code reading the Mac's ordinary QR code.
+- Mac, perform screen: the running order (+ on a tile, the switch, Next and
+  Prev, Return after going off the list, notes and fades); the input line
+  under the input buttons; input button 4 opening the file picker; the
+  pairing pop-over closing once paired.
+- Mac, edit screen: seen by the owner on 15 November (Modulation and LFOs
+  tabs); everything on it since then is unseen, namely the LFOs tab, shape
+  pictures, note-value tempo sync, and dragging effects to reorder.
+- Mac, Setup: the app's own menus and bars.
 
 **When you are next in the studio.** Open the output window before the
 show, then: measure real latency fullscreen on the projector at 720p · 60 (so
@@ -72,6 +72,12 @@ internet) and pairing by code on it.
 
 **Branch.** Work is on `main`, the default branch and the one that deploys.
 Nothing is waiting to be merged; everything is pushed.
+
+**Mock-ups.** Running order: https://claude.ai/artifact/SiD1F7P89JLwXeC31BKhz4
+(A, the strip, was built). Edit screen, slider styles and tempo sync:
+https://claude.ai/artifact/UEbbvKGUHsQo7CxCWFUVDT (C, the Bar, and Notes were
+built). Icons: https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo. All private
+to the owner.
 
 ### Seen on the real iPhone and Mac this session
 
@@ -88,6 +94,15 @@ Nothing is waiting to be merged; everything is pushed.
 - The first rebuild's sideways picture was rejected (see below). Freeze from
   the phone was reported not working twice; the fix that followed (every tap
   its own press) is not yet confirmed.
+- 14 November: on the hotspot (phone on 5G) the upright phone screen showed
+  its six presets, triggers, icons and zoom bar; the preview showed the
+  Mac's screen on its side, cause not yet known (see the first decision).
+- 14 November: after the reconnect changes the owner said reconnecting
+  "works better", and later that pairing "seems to work fine".
+- 15 November: the owner used the rebuilt edit screen on the Mac (in a blue
+  palette) and asked for the LFOs tab and picture buttons that followed.
+- The iPhone's camera offers a web page no exposure or focus controls (the
+  settings panel was empty apart from Quality and Camera).
 
 ### This session, in short
 
@@ -114,8 +129,25 @@ Nothing is waiting to be merged; everything is pushed.
   suites had finished; and a rename the owner had stopped was pushed because
   it was sitting uncommitted. Both are now rules under "Working in the cloud
   sandbox".
+- **Running order** (14 November). Steps that point at presets, on the
+  preset strip; the phone's six buttons follow it.
+- **Reconnecting** (14 November). The phone's scanner reads either code, the
+  phone notices a silent Mac, the Mac keeps its room code for 75 seconds.
+- **Preview: Mac output** on the phone (14 November), normal pairing only.
+- **Edit screen rebuilt** (15 November) as mock-up C with the app's own
+  sliders, menus and picture buttons; Tweakpane removed; Setup followed.
+- **Small things:** the pairing pop-over closes once paired; modulation
+  meters say what they move; input button 4 opens the file picker; the
+  person mask no longer flickers on a slow machine.
+- **The cloud sandbox got slower during the session** and several suites
+  began failing on timing alone. Each was traced before being touched: the
+  stand-in camera, the smoke test's clip, and four checks that sampled once
+  now wait for the state they test. None was skipped or loosened in what it
+  checks. If a suite fails, run it again alone before believing it, and
+  compare against the previous commit before blaming a change.
 - **Suites added:** `handover`, `standalone`, `offline-pair`,
-  `offline-pair-online`, `offline-handover`, `phone-screen`.
+  `offline-pair-online`, `offline-handover`, `phone-screen`, `running-order`,
+  `reconnect`, `output-preview`, `edit-screen`.
 
 ### Pair without internet (built 2026-11-13)
 
@@ -420,6 +452,8 @@ Three static pages built by Vite, no framework.
 
 ### Known rough edges
 
+- The note under the perform faders still says "Pin your own under Edit";
+  the button there is now called Fader.
 - Several alerts at once stack over the top of the page; they are compact
   and each can be closed with its ×.
 - Below about 1000 px wide the top bar is tight: the phone readout is cut
@@ -464,10 +498,12 @@ Three static pages built by Vite, no framework.
 
 Own pairing server plus a relay on port 443 (the route to university Wi-Fi);
 a local program on the Mac that serves the pages and the pairing itself
-(option B when Pair without internet was chosen); presets beyond the sixth
-on the phone; a cue list beyond per-preset fade and order; tempo from the
-audio beat; a native wrapper for a true Syphon output; a MIDI mapping for
-the dimmer.
+(option B when Pair without internet was chosen); several named running
+orders, and steps timed against an audio track; the Mac-output preview on a
+phone paired without internet or with its camera off; a brightness control
+on the Mac side; a larger XY pad in place of the phone's six buttons (the
+owner chose to leave the pad on the preview); tempo from the audio beat; a
+native wrapper for a true Syphon output; a MIDI mapping for the dimmer.
 
 ### Prompt to start a new session
 
