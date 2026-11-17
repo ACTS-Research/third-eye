@@ -1,0 +1,284 @@
+<title>Signal Loss Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one reading column; each scenario is a row of three short cells
+   (today / gap / plan) that stack on a phone. Dark-first, after the app. */
+:root {
+  --bg: #0b0707; --panel: #150d0c; --line: #3a1e1b; --fg: #f3dcd8; --soft: #c9a29c;
+  --ink: #ff6b5e; --on-ink: #1a0503; --ok: #7fd6a4; --warn: #f2c14e;
+  --display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  --body: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) { --bg: #fbf6f5; --panel: #ffffff; --line: #e4cfcb; --fg: #2a1512; --soft: #6d4a45; --ink: #b3271b; --on-ink: #ffffff; --ok: #1d6b41; --warn: #7a5600; color-scheme: light; }
+}
+:root[data-theme="light"] { --bg: #fbf6f5; --panel: #ffffff; --line: #e4cfcb; --fg: #2a1512; --soft: #6d4a45; --ink: #b3271b; --on-ink: #ffffff; --ok: #1d6b41; --warn: #7a5600; color-scheme: light; }
+body { background: var(--bg); color: var(--fg); font: 400 15px/1.55 var(--body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 36px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 28px; }
+h1 { font: 800 46px/1 var(--display); letter-spacing: 0.04em; text-transform: uppercase; margin: 0; color: var(--ink); text-wrap: balance; }
+h2 { font: 800 28px/1.05 var(--display); letter-spacing: 0.05em; text-transform: uppercase; margin: 0; text-wrap: balance; }
+h3 { font: 600 16px/1.3 var(--body); margin: 0; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--soft); font-size: 16px; }
+section { display: flex; flex-direction: column; gap: 14px; }
+.box { background: var(--panel); border: 1px solid var(--line); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+ul, ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; max-width: 70ch; }
+.sc { background: var(--panel); border: 1px solid var(--line); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.sc-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.n { font: 700 12px/1 var(--mono); color: var(--soft); }
+.tag { font: 700 11px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 7px; border: 1px solid var(--line); color: var(--soft); white-space: nowrap; }
+.tag.p1 { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
+.tag.p2 { border-color: var(--ink); color: var(--ink); }
+.cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.cols > div { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.k { font: 700 11px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--soft); }
+.cols p { font-size: 14px; line-height: 1.5; }
+.plan p { color: var(--fg); }
+.note { color: var(--soft); font-size: 13.5px; }
+.steps { counter-reset: s; list-style: none; padding: 0; gap: 10px; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; }
+.steps li::before { content: counter(s); font: 800 26px/1 var(--display); color: var(--ink); }
+.steps b { display: block; }
+@media (max-width: 760px) { .cols { grid-template-columns: minmax(0, 1fr); } h1 { font-size: 36px; } }
+</style>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:12px">
+    <h1>Signal loss plan</h1>
+    <p class="lede">Every way the link between an iPhone and the Mac can break in Third Eye Cam, what the app does about it today, where that falls short for one operator holding the phone, and what I propose. One phone first, in order of importance; then two phones. Nothing here is built yet.</p>
+  </header>
+
+  <section>
+    <h2>First: the phone that got kicked off</h2>
+    <div class="box">
+      <p>Pairing the second phone should not have touched the first: in the new version each phone has its own connection. I see three possible causes, and cannot tell which from here.</p>
+      <ol>
+        <li><b>The Mac was still on the old version.</b> Your screenshot from the same hour showed it (numbered input buttons, no strip). In the old version there is one code, and any phone that scans it takes the place of the phone before it. That matches what you saw exactly.</li>
+        <li><b>The second phone scanned the first phone's code</b> (the iPhone tab, or the code under Setup → Phone) rather than the iPhone B tab. Same result: it takes over.</li>
+        <li><b>The hotspot stumbled</b> when a second device joined it or when two video streams started through the first phone's radio, and the first phone's ten-second "Mac not answering" check redialled.</li>
+      </ol>
+      <p><b>To tell them apart:</b> did the pairing pop-over have two tabs, and did the second phone's bar read <span style="font-family:var(--mono)">PHONE B</span>? If not, it was 1 or 2. Whatever the cause, scenario 3 below removes it: a phone that is paired can no longer be pushed out by another.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>What the plan is built on</h2>
+    <div class="box">
+      <ul>
+        <li><b>The audience never sees the failure.</b> The Mac decides by itself what the picture does when a phone goes: the operator cannot tell it anything over a link that is down.</li>
+        <li><b>The phone gets itself back.</b> Everything that can be retried is retried without a tap, for as long as it takes.</li>
+        <li><b>When a tap is needed, it is one tap, on the phone,</b> on a button big enough to hit without looking for it, with words that say what is wrong.</li>
+        <li><b>Walking to the Mac is the last resort,</b> and the phone says plainly when it has come to that.</li>
+        <li><b>Problems are caught before the show,</b> not during it.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>One phone</h2>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">1</span><h3>The phone drops and the audience is watching</h3><span class="tag p1">First</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>The Mac holds the phone's last frame, frozen, for as long as the phone is gone. Effects keep running on it. An alert appears on the control page.</p></div>
+        <div><span class="k">Gap</span><p>A frozen frame for thirty seconds reads as a fault. There is no way to say "do something else if this lasts".</p></div>
+        <div class="plan"><span class="k">Plan</span><p>A setting, <b>If the phone drops</b>: hold the last frame (as now), or after a few seconds fade to a stand-by source (input B, the video file, the Mac camera or the test pattern), or fade to black. When the phone returns the picture fades back by itself. The delay and the fade time are yours to set.</p></div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">2</span><h3>The phone's screen when the link is down</h3><span class="tag p1">First</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>A thin bar turns red with a few words ("Mac not answering", "No signaling"), and a small Reconnect or Scan code button appears in it.</p></div>
+        <div><span class="k">Gap</span><p>Easy to miss while filming, and small to hit. It does not say whether the phone is trying by itself or waiting for you.</p></div>
+        <div class="plan"><span class="k">Plan</span><p>A band across the preview whenever the Mac is not receiving: what is wrong in three or four words, whether it is retrying ("Retrying · 12 s") or needs you, and one large button when it does. The live controls stay where they are. The edge of the screen pulses red so it is seen from the corner of the eye. (Safari on the iPhone cannot vibrate.)</p></div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">3</span><h3>Another phone scans the code</h3><span class="tag p1">First</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>The newcomer takes over and the paired phone is dropped. The dropped phone then redials and takes it back, and so on.</p></div>
+        <div><span class="k">Gap</span><p>One stray scan, by an audience member or your own second phone, interrupts the show.</p></div>
+        <div class="plan"><span class="k">Plan</span><p>A phone that is paired and answering keeps its place. A newcomer is told "This Mac already has an iPhone" and offered the iPhone B code if that is switched on. Only a phone that has been silent for a while can be replaced.</p></div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">4</span><h3>A short break in Wi-Fi or the hotspot (seconds)</h3><span class="tag p1">First</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>The phone notices within ten seconds, throws the connection away and dials again through the pairing server. Back in a few seconds once the network is.</p></div>
+        <div><span class="k">Gap</span><p>Throwing the connection away is the slow path, and it needs the internet. A link left alone often heals by itself in a second or two when the network returns.</p></div>
+        <div class="plan"><span class="k">Plan</span><p>Wait for the existing link to heal first, and redial only when it is truly dead. If the pairing server cannot be reached at that moment, keep holding on to the old link rather than dropping it for nothing.</p></div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">5</span><h3>The phone locks, Safari goes to the background, or a call comes in</h3><span class="tag p1">First</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>iOS stops the camera. The Mac holds the last frame and says "Safari is in the background". When Safari is in front again the phone resumes by itself and shows how long it was away. The page asks iOS to keep the screen awake; iOS refuses in Low Power Mode.</p></div>
+        <div><span class="k">Gap</span><p>Nothing warns you beforehand that the screen may lock, or that a call or a notification can take the screen.</p></div>
+        <div class="plan"><span class="k">Plan</span><p>A short <b>check before the show</b> on the phone's start screen: screen will stay awake (or why not), motion allowed, camera allowed, and two reminders the page cannot check for you: turn on a Focus so calls stay silent, and consider Guided Access so a swipe cannot leave Safari.</p></div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">6</span><h3>The room code changes under the phone</h3><span class="tag p1">First</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>If the Mac's code reads as taken for 75 seconds, the Mac makes a new one. The phone is then stranded: "Mac not found", and the only way back is to scan the new code at the Mac.</p></div>
+        <div><span class="k">Gap</span><p>This is the one failure that forces a walk to the Mac, and the app chooses it by itself.</p></div>
+        <div class="plan"><span class="k">Plan</span><p>Never change the code without being asked once a phone has paired in this session. Keep trying the old code and say so on the Mac, with a New room code button for when you really want one.</p></div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">7</span><h3>The Mac changes network by itself</h3><span class="tag p2">Second</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>macOS can leave the iPhone's hotspot for a Wi-Fi it knows, or lose the hotspot when the phone sleeps. Pairing then still "works" but no video link forms; the pop-over's step 4 fails.</p></div>
+        <div><span class="k">Gap</span><p>Nothing names the cause. From the phone it looks like any other failure.</p></div>
+        <div class="plan"><span class="k">Plan</span><p>The Mac watches for its network changing and says so in an alert, and tells the phone, so the phone can show "The Mac left this network: rejoin it to the hotspot". The page cannot read the network's name or switch it for you. The pre-show check reminds you to turn off Auto-Join on other networks.</p></div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">8</span><h3>Weak signal: the picture stutters but the link holds</h3><span class="tag p2">Second</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>The phone keeps its frame rate and lets sharpness fall. Quality is changed only by hand, in the phone's camera settings.</p></div>
+        <div><span class="k">Gap</span><p>At the edge of range a 720p · 60 stream breaks up or stalls where 720p · 30 would have held.</p></div>
+        <div class="plan"><span class="k">Plan</span><p>Step down by itself when frames are being lost for several seconds (60 → 30 fps, then 720p → 360p), step back up when the link is clean, and show a small signal mark on the phone so you can see it coming. A switch to keep it fixed if you prefer.</p></div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">9</span><h3>The Mac's page reloads, Chrome crashes, or the Mac sleeps</h3><span class="tag p2">Second</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>The phone sees silence, redials, and finds the Mac again under the same code once the page is back. Nothing stops the Mac from sleeping.</p></div>
+        <div><span class="k">Gap</span><p>A sleeping Mac ends the show from the far side of the room.</p></div>
+        <div class="plan"><span class="k">Plan</span><p>The control and output pages ask the Mac to stay awake while a phone is paired, and say so if refused. The phone's band reads "Mac not answering · retrying" with the time, so you know it is the Mac and not you.</p></div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">10</span><h3>The phone's page is reloaded or closed</h3><span class="tag p2">Second</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>The page opens on its start screen with the room remembered. You tap START and allow motion again.</p></div>
+        <div><span class="k">Gap</span><p>The start screen looks like first-time setup, not like "carry on".</p></div>
+        <div class="plan"><span class="k">Plan</span><p>When the page has been live in the last few minutes it opens on one large RESUME button. iOS insists on a tap before motion sensors can be read, so it cannot be none.</p></div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">11</span><h3>The internet goes but the local network stays</h3><span class="tag p2">Second</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>A link that is up keeps working: video never goes through the internet. If it then breaks, it cannot be rebuilt without the pairing server, except by Pair without internet at the Mac.</p></div>
+        <div><span class="k">Gap</span><p>The phone keeps saying "No signaling" as if something were wrong while the picture is fine, and gives no warning that a break now would be costly.</p></div>
+        <div class="plan"><span class="k">Plan</span><p>While the link is up, say nothing alarming: a quiet mark for "no internet, link is fine". With scenario 4's change the link is also much less likely to be dropped in this state.</p></div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">12</span><h3>A phone paired without internet loses its link</h3><span class="tag">Third</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>It can only come back by a new exchange of codes at the Mac. The Mac says so; the phone offers Scan code.</p></div>
+        <div><span class="k">Gap</span><p>No way round the walk. You have said you rarely need this route now.</p></div>
+        <div class="plan"><span class="k">Plan</span><p>Leave as it is, with scenario 2's band saying "Go to the Mac and scan its code" in so many words.</p></div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">13</span><h3>The camera is taken or refused</h3><span class="tag">Third</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>The bar shows the camera's error. The phone stays linked as a controller.</p></div>
+        <div><span class="k">Gap</span><p>The error is iOS's wording.</p></div>
+        <div class="plan"><span class="k">Plan</span><p>Plain words and the one thing to do for each case (another app has the camera; camera access is off for Safari), in the band, with a Try again button.</p></div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">14</span><h3>The output window closes or the projector is unplugged</h3><span class="tag">Covered</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>The picture moves to the control page and the phone follows in a couple of seconds. A window that stops drawing is reported.</p></div>
+        <div><span class="k">Gap</span><p>None found.</p></div>
+        <div class="plan"><span class="k">Plan</span><p>No change.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Two phones</h2>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">15</span><h3>One phone of the two drops while they are mixed</h3><span class="tag p1">First</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>Its half of the mix freezes on its last frame.</p></div>
+        <div><span class="k">Gap</span><p>A frozen layer in a live mix is very visible.</p></div>
+        <div class="plan"><span class="k">Plan</span><p>Scenario 1's setting, for each input: when B's source drops, the mix can ease to A alone and come back when B returns; when A's drops, B can stand in for it.</p></div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">16</span><h3>The phone that is the hotspot leaves</h3><span class="tag p2">Second</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>If the first phone locks or walks out of range, the Mac loses its network and both phones go with it.</p></div>
+        <div><span class="k">Gap</span><p>One phone carries the whole show. Software cannot change that.</p></div>
+        <div class="plan"><span class="k">Plan</span><p>Say it in the pre-show check when two phones are on. The sturdier arrangement is a small travel router, or the venue's own Wi-Fi if devices on it can see each other: then neither phone is the network.</p></div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">17</span><h3>The second phone goes silent or to the background</h3><span class="tag p2">Second</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>Only its readout in the top bar says so. The first phone gets full alerts.</p></div>
+        <div><span class="k">Gap</span><p>Uneven.</p></div>
+        <div class="plan"><span class="k">Plan</span><p>The same alerts for both, each naming its phone. The phone's own band (scenario 2) works on both already.</p></div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">18</span><h3>Two streams are too much for the network</h3><span class="tag p2">Second</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>Both send at whatever quality each was set to.</p></div>
+        <div><span class="k">Gap</span><p>On a hotspot, two 720p · 60 streams can starve each other.</p></div>
+        <div class="plan"><span class="k">Plan</span><p>Scenario 8's stepping down, on each phone by itself; and the second phone starts at 720p · 30.</p></div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-head"><span class="n">19</span><h3>Pairing the second phone without internet</h3><span class="tag">Third</span></div>
+      <div class="cols">
+        <div><span class="k">Today</span><p>Not built.</p></div>
+        <div><span class="k">Gap</span><p>Only matters where there is no internet at all.</p></div>
+        <div class="plan"><span class="k">Plan</span><p>Leave until you need it.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The order I would build it in</h2>
+    <div class="box">
+      <ol class="steps">
+        <li><div><b>Keep what is paired.</b> A paired phone cannot be pushed out (3); the code never changes by itself (6); a link is left to heal before it is redialled (4). Small changes in the connection code, and the ones most likely to stop what you saw last night.</div></li>
+        <li><div><b>If the phone drops.</b> The Mac's stand-by setting for the picture, for A and for B (1, 15). The one piece the audience would notice.</div></li>
+        <li><div><b>The phone's band and big button</b> (2, 12, 13), with mock-ups first. Then the resume screen (10).</div></li>
+        <li><div><b>The check before the show</b>, on the phone and the Mac (5, 9, 16), with mock-ups. The new start screen you asked for belongs with this.</div></li>
+        <li><div><b>Stepping quality down and up</b> (8, 18), the network-changed alert (7), quiet "no internet" (11), even alerts for the second phone (17).</div></li>
+      </ol>
+      <p class="note">Steps 1 and 2 need no new screens beyond one setting, so they can go ahead without mock-ups. Steps 3 and 4 change how the phone looks and get mock-ups first.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>What this rests on, and what I cannot check</h2>
+    <div class="box">
+      <ul>
+        <li>"Today" is read from the code as it stands, not observed on your devices.</li>
+        <li>What iOS and macOS do (stopping the camera in the background, refusing to keep the screen awake in Low Power Mode, leaving a hotspot for a known Wi-Fi) is from how they are known to behave. I cannot run either here.</li>
+        <li>Leaving a link to heal (4) should help on a real network, but how often it heals, and how fast, can only be seen on yours. The tests can break a link; they cannot imitate a weak one.</li>
+        <li>The web page cannot: vibrate the iPhone, read its battery, read or change the Wi-Fi network, stop a phone call, or start the motion sensors without a tap.</li>
+      </ul>
+    </div>
+  </section>
+</div>

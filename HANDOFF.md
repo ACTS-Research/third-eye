@@ -8,14 +8,22 @@ from `main`: input B with the Mix B effect, the strip under the picture
 of it has only been run in headless Chromium, as has most of what was built
 after 13 November.
 
-**Next step.** Build the second half of the second iPhone: Pair without
-internet for it, and carrying it over a direct link when the picture moves
-between windows (see "A second iPhone" below). Before that, if you can, try
-the first half on two real iPhones: phone pill → the iPhone B tab → scan
-with the second phone → press 2.
+**Next step.** The owner tried two phones on 16 November (the Mac on the
+first phone's hotspot): the second worked but the first was kicked off and
+had to reconnect. Cause not known; the Mac may still have been on the old
+version (see the signal loss plan, top). The owner then asked for a full
+plan for lost signal: https://claude.ai/artifact/PqZU5qNH73BYugN5Y2TZiH,
+source `design/signal-loss-plan.html`. Nothing in it is built. Wait for the
+owner's go on its build order (step 1: keep what is paired), then a new
+start screen (logo, name, an animation, how to connect), which belongs
+with the plan's "check before the show".
 
 **Decisions only you can make.**
 
+- Say whether the pairing pop-over had two tabs, and the second phone's bar
+  read PHONE B, when the first phone was kicked off. If not, the Mac was on
+  the old version or the second phone scanned the first one's code.
+- Read the signal loss plan and say go, or change its order.
 - Try the new strip under the picture on the real Mac and say what still
   needs changing (it is its second version).
 - Say whether a Mix B added by dragging the bar should be saved into the
