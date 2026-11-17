@@ -1,0 +1,18 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-17T16:00:00Z" },
+  "title": "Third Eye Cam: Phone When the Link Is Down",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 884, "h": 1010, "title": "L1 · A band across the foot of the preview" },
+    "Cover.dc.html": { "x": 964, "y": 0, "w": 884, "h": 1010, "title": "L2 · The preview itself carries the message" },
+    "Bar.dc.html": { "x": 1928, "y": 0, "w": 884, "h": 1010, "title": "L3 · The status bar grows" },
+    "Resume.dc.html": { "x": 0, "y": 1350, "w": 884, "h": 520, "title": "Reopening the page mid-show: Resume" }
+  },
+  "order": ["Main.dc.html", "Cover.dc.html", "Bar.dc.html", "Resume.dc.html"],
+  "notes": {
+    "heading": { "x": 0, "y": -300, "text": "The phone when the Mac is not receiving: three ways", "kind": "title1", "maxW": 2812 }
+  },
+  "designSystems": []
+}

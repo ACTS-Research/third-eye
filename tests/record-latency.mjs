@@ -15,6 +15,9 @@ try {
 
   console.log('recording');
   check('REC is offered in the top bar and is MIDI-mappable', (await control.locator('#rec').textContent()) === 'REC' && (await control.locator('#rec').getAttribute('data-midi')) === 'record');
+  check('recordings are saved to Downloads by default', await control.evaluate(() => window.thirdEye.store.state.globals.recAutoSave === true));
+  // (Off for the first recording, which is saved by hand below.)
+  await control.evaluate(() => window.thirdEye.store.merge('globals', { recAutoSave: false }));
   check('MP4 is the default format', await control.evaluate(() => window.thirdEye.store.state.globals.recFormat === 'mp4'));
   // WebM first: it is the one written to the file while recording.
   await pickMenu(control, '#rec-format', 'webm');
@@ -63,7 +66,9 @@ try {
   await settle(async () => (await status()).recording.active, 'mp4 recording');
   await sleep(2500);
   const mp4 = (await status()).recording.name;
-  await control.keyboard.press('r');
+  await control.evaluate(() => window.thirdEye.store.merge('globals', { recAutoSave: true }));
+  const [saved] = await Promise.all([control.waitForEvent('download', { timeout: 30000 }).catch(() => null), control.keyboard.press('r')]);
+  check('a recording that stops is saved to Downloads by itself, named ThirdEyeCam_ and the date', saved?.suggestedFilename() === mp4 && /^ThirdEyeCam_\d{4}-\d\d-\d\d_\d\d-\d\d-\d\d\.mp4$/.test(mp4), `${mp4} → ${saved?.suggestedFilename() ?? 'no download'}`);
   await settle(async () => (await status()).recording.finished === 2, 'mp4 stopped', 20000);
   const mp4Head = await control.evaluate(async (file) => {
     const dir = await (await navigator.storage.getDirectory()).getDirectoryHandle('recordings');

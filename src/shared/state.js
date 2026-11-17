@@ -106,6 +106,8 @@ export function defaultState() {
       fadeTime: 2,
       preview: true,
       recFormat: 'mp4',
+      // Save each recording to the Downloads folder as it stops.
+      recAutoSave: true,
     },
     presetIndex: -1,
     // The running order: which step it is at (-1 = not started), and whether

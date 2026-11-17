@@ -12,7 +12,7 @@ function pickType(format) {
 function stamp() {
   const d = new Date();
   const p = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}-${p(d.getSeconds())}`;
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}-${p(d.getSeconds())}`;
 }
 
 export class Recorder {
@@ -52,7 +52,8 @@ export class Recorder {
         mimeType: type,
         videoBitsPerSecond: Math.min(40e6, Math.max(6e6, pixels * 6)),
       });
-      this.name = `third-eye-${stamp()}.${type.includes('mp4') ? 'mp4' : 'webm'}`;
+      // ThirdEyeCam_2026-11-17_14-55-45.mp4: the date, then the time it began.
+      this.name = `ThirdEyeCam_${stamp()}.${type.includes('mp4') ? 'mp4' : 'webm'}`;
       this.bytes = 0;
       this.worker = new Worker(new URL('./recorder.worker.js', import.meta.url), { type: 'module' });
       this.worker.onmessage = (e) => this.onWorker(e.data);

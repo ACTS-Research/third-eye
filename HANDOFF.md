@@ -24,8 +24,9 @@ an animation, how to connect.
   plan is meant to stop that, but it has not been tried on real phones.)
 - Choose what the picture should do when a phone drops: Setup → Input → If
   a source drops. It holds the last frame until you say otherwise.
-- Say go for step 3 of the signal loss plan (mock-ups of the phone's
-  screen when the link is down), or change its order.
+- Choose L1, L2 or L3 for the phone's screen when the link is down, and say
+  whether the Resume screen is right: https://claude.ai/artifact/VMB991eaoBVQQPhwQJ9Bak
+  (sources in `design/link-down/`). Nothing of it is built.
 - Try the new strip under the picture on the real Mac and say what still
   needs changing (it is its second version).
 - Say whether a Mix B added by dragging the bar should be saved into the
@@ -35,7 +36,11 @@ an animation, how to connect.
   say whether they belong to each preset (the Contrast / Brightness effect
   already does that) or should be one fixed set that holds across presets.
 - Recording: MP4 is now the default, but your Mac remembers WebM from
-  before. Choose MP4 once in Setup → Recordings.
+  before. Choose MP4 once in Setup → Recordings. Recordings are now named
+  ThirdEyeCam_ and the date, and save to Downloads as they stop (17
+  November): the first time, allow Chrome to download several files. Say
+  if you want a folder of your own choosing instead; Chrome would ask for
+  it again each time the page is opened.
 - Say whether the phone's Quality menu should be restyled. It is the
   iPhone's own picker, first in the phone's Camera settings panel.
 - Say whether the browser-tab icon is good enough. You kept D2 (the camera);

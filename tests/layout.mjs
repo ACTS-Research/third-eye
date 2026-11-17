@@ -128,7 +128,7 @@ try {
     trouble.camera = { state: 'error', error: 'Camera permission needed — click "Find cameras" on the control page', label: '' };
     trouble.midi = { ...real.midi, state: 'denied', error: 'SecurityError: permission denied by system' };
     trouble.audio = { ...real.audio, state: 'error', error: 'Microphone permission needed — enable audio on the control page' };
-    trouble.recording = { active: true, name: 'third-eye-2026-11-12-0101-01.webm', seconds: 5999, bytes: 12.3e9, finished: real.recording.finished, error: 'Recording stopped: the disk is full' };
+    trouble.recording = { active: true, name: 'ThirdEyeCam_2026-11-12_01-01-01.webm', seconds: 5999, bytes: 12.3e9, finished: real.recording.finished, error: 'Recording stopped: the disk is full' };
     trouble.latencyTest = { state: 'failed', ms: null, message: 'Only 1 of 5 flashes were seen. Point the phone at the output so it fills most of the frame, and dim other light.' };
     const streaming = structuredClone(real);
     streaming.phone = { ...real.phone, phone: 'connected', media: 'connected', route: 'direct (LAN)', rttMs: 5, kbps: 14000, codec: 'H264', jitterBufferMs: 34, info: { controllerOnly: false, hidden: false } };

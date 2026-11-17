@@ -769,16 +769,24 @@ With no output window the picture is rendered, and recorded, at 1280×720
 whatever the size of the monitor on the page. Opening or closing the output
 window stops a recording; what was recorded up to then is kept.
 
-Recordings are written inside the browser's own storage as they are made, so
-nothing is held in memory and nothing needs choosing mid-show. Afterwards,
-**Setup → Recordings** lists them: **Save to disk** downloads a file,
-**Delete** frees the space. They stay there across reloads until you do one
-or the other.
+Each recording is named `ThirdEyeCam_` with the date and the time it began
+(`ThirdEyeCam_2026-11-17_14-55-45.mp4`) and is saved to the **Downloads**
+folder the moment it stops (the folder Chrome downloads to: Chrome →
+Settings → Downloads). The control page does the saving, so keep it open
+while recording. The first time, Chrome may ask to allow this site to
+download several files: allow it. **Setup → Recordings** has the switch
+(**Save to Downloads when a recording stops**, on to start with).
 
-Two formats: **WebM** (the default) reaches the file every second, so a crash
-loses at most the last second; **MP4** opens in more players but Chrome writes
-it in large pieces, so more is at risk if the browser dies. WebM plays in
-Chrome and VLC, not in QuickTime.
+While it records, the file is written inside the browser's own storage, so
+nothing is held in memory and nothing needs choosing mid-show; that copy
+stays, listed under **Setup → Recordings**, until you **Delete** it there.
+**Save to disk** downloads it again. A web page cannot write straight into
+a folder of your choosing without asking for it each time it is opened.
+
+Two formats: **MP4** (the default) opens in most players, but Chrome writes
+it in large pieces, so if the browser dies mid-recording most of it can be
+lost; **WebM** reaches the file every second, so a crash loses at most the
+last second. WebM plays in Chrome and VLC, not in QuickTime.
 
 Recording costs GPU and CPU. Check that the first readout in the top bar
 (`Output 60 fps`, or `Output off · 60 fps`) still reads 60 fps while it runs;

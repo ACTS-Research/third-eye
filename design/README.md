@@ -11,6 +11,7 @@ of the site; nothing here is deployed or tested.
 | `mix/` | Input B and mixing. Round 1: three directions (`Main` A an effect, `Crossfader` B, `Both` C) and two places for the inputs (`InputsMenu` C1, `InputsRow` C2); C with C1 was built first. Round 2, the strip redone: `StripGrid` S1, `StripSlim` S2, `StripHover` S3, `Modes` (menu or grid), `StripModes` (mode button right of B, or left of A). S3, the grid and the button right of B were built, pop-ups opening upward | https://claude.ai/artifact/4yrzjrjTVfZ4qgMexUNNn3 |
 | `phone2/` | Pairing a second iPhone: `Main` P1 a tab for each phone, `Side` P2 both codes side by side, `OneCode` P3 one code and the phone says which it is, `Strip` the top bar and the strip with five sources. P1 was built | https://claude.ai/artifact/Ee4tdXfFVVeuFct1gv7JH9 |
 | `signal-loss-plan.html` | The review of every way the phone's link can break, with what happens today and what is proposed, in build order (17 November). A plain page: open it in a browser. Nothing in it is built | https://claude.ai/artifact/PqZU5qNH73BYugN5Y2TZiH |
+| `link-down/` | The phone when the Mac is not receiving (step 3 of the signal loss plan): `Main` L1 a band across the foot of the preview, `Cover` L2 the preview carries the message, `Bar` L3 the status bar grows, `Resume` the resume screen. None built yet | https://claude.ai/artifact/VMB991eaoBVQQPhwQJ9Bak |
 
 The `.dc.html` files are artboards for a claude.ai design canvas, with
 `canvas.json` saying where each sits. They do not render by themselves in a

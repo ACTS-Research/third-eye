@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Link down L1, a band across the preview</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button{font:inherit;cursor:pointer}
+.cap{text-transform:uppercase;letter-spacing:0.08em}
+.phone{width:844px;height:390px;box-sizing:border-box;background:#060303;border:1px solid #5b2622;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.phone.alarm{box-shadow:inset 0 0 0 5px #ff6b5e}
+.bar{height:30px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #5b2622}
+.bar.bad{background:#ff6b5e;color:#140302;font-weight:700}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.main{flex:1;display:flex;gap:8px;padding:8px;min-height:0}
+.pre{width:604px;flex-shrink:0;position:relative;background:repeating-linear-gradient(115deg,#ff9a3c 0 40px,#c2185b 40px 80px,#2a0a3a 80px 120px);overflow:hidden}
+.pre.stale{filter:grayscale(1) brightness(0.45)}
+.side{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.t{flex:1;min-height:62px;background:none;color:#ff6b5e;border:2px solid #ff6b5e;font:700 18px/1 'Big Shoulders Display',sans-serif;text-transform:uppercase}
+.p{min-height:44px;background:none;color:#ff6b5e;border:1px solid #5b2622;text-align:left;padding:4px 6px;font-size:10px;overflow:hidden}
+.p b{font:800 18px/1 'Big Shoulders Display',sans-serif;display:block}
+.zoom{width:34px;flex-shrink:0;border:1px solid #ff6b5e;position:relative}
+.zoom i{position:absolute;left:0;right:0;bottom:0;height:30%;background:#ff6b5e}
+.big{min-height:56px;padding:0 22px;background:#140302;color:#ff6b5e;border:2px solid #140302;font:800 24px/1 'Big Shoulders Display',sans-serif;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 884px; height: 1010px; box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 10px; background: #060303; color: #ff6b5e; font: 500 12px/1.4 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+
+  <div class="cap" style="color: #ffb3ab">The phone is getting itself back: nothing for you to do</div>
+  <div class="phone alarm">
+    <div class="bar"><span class="dot"></span><span class="cap">Retrying</span><span style="margin-left: auto" class="cap">PSAQ2</span></div>
+    <div class="main">
+      <div style="width: 604px; flex-shrink: 0; position: relative">
+        <div class="pre stale" style="position: absolute; inset: 0; width: auto"></div>
+        <div style="position: absolute; left: 0; right: 0; bottom: 0; background: #ff6b5e; color: #140302; padding: 10px 14px; display: flex; align-items: center; gap: 14px">
+          <div style="flex-grow: 1; min-width: 0">
+            <div style="font: 800 30px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.05em; text-transform: uppercase">Mac not answering</div>
+            <div style="font-weight: 700; margin-top: 4px">Retrying by itself · 12 s</div>
+          </div>
+        </div>
+      </div>
+      <div class="side">
+        <div style="display: flex; gap: 6px"><button class="t">Glitch</button><button class="t">Freeze</button></div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+          <button class="p"><b>1</b>Clean</button><button class="p"><b>2</b>Tunnel</button><button class="p"><b>3</b>Kaleido</button><button class="p"><b>4</b>Thermal</button><button class="p"><b>5</b>Slit-scan</button><button class="p"><b>6</b>Neon</button>
+        </div>
+      </div>
+      <div class="zoom" role="img" aria-label="Zoom"><i></i></div>
+    </div>
+  </div>
+
+  <div class="cap" style="color: #ffb3ab; margin-top: 12px">It needs you: one large button</div>
+  <div class="phone alarm">
+    <div class="bar"><span class="dot"></span><span class="cap">Needs you</span><span style="margin-left: auto" class="cap">PSAQ2</span></div>
+    <div class="main">
+      <div style="width: 604px; flex-shrink: 0; position: relative">
+        <div class="pre stale" style="position: absolute; inset: 0; width: auto"></div>
+        <div style="position: absolute; left: 0; right: 0; bottom: 0; background: #ff6b5e; color: #140302; padding: 10px 14px; display: flex; align-items: center; gap: 14px">
+          <div style="flex-grow: 1; min-width: 0">
+            <div style="font: 800 30px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.05em; text-transform: uppercase">Mac not found</div>
+            <div style="font-weight: 700; margin-top: 4px">Its room code has changed. Go to the Mac and scan its code.</div>
+          </div>
+          <button class="big">Scan code</button>
+        </div>
+      </div>
+      <div class="side">
+        <div style="display: flex; gap: 6px"><button class="t">Glitch</button><button class="t">Freeze</button></div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+          <button class="p"><b>1</b>Clean</button><button class="p"><b>2</b>Tunnel</button><button class="p"><b>3</b>Kaleido</button><button class="p"><b>4</b>Thermal</button><button class="p"><b>5</b>Slit-scan</button><button class="p"><b>6</b>Neon</button>
+        </div>
+      </div>
+      <div class="zoom" role="img" aria-label="Zoom"><i></i></div>
+    </div>
+  </div>
+
+  <div style="color: #ffb3ab; margin-top: auto">A solid band along the foot of the preview: what is wrong in large letters, then one line saying whether the phone is retrying or what you must do, and a button only when a tap is needed. The preview above it goes grey so a stale picture is never taken for a live one, and the edge of the screen pulses. Triggers, presets and zoom stay exactly where they are.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":884,"height":1010}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

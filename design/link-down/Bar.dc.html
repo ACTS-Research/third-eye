@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Link down L3, the status bar grows</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button{font:inherit;cursor:pointer}
+.cap{text-transform:uppercase;letter-spacing:0.08em}
+.phone{width:844px;height:390px;box-sizing:border-box;background:#060303;border:1px solid #5b2622;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.bar{height:72px;flex-shrink:0;display:flex;align-items:center;gap:14px;padding:0 14px;background:#ff6b5e;color:#140302}
+.main{flex:1;display:flex;gap:8px;padding:8px;min-height:0}
+.pre{width:528px;flex-shrink:0;background:repeating-linear-gradient(115deg,#ff9a3c 0 40px,#c2185b 40px 80px,#2a0a3a 80px 120px);filter:grayscale(1) brightness(0.45)}
+.side{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.t{flex:1;min-height:54px;background:none;color:#ff6b5e;border:2px solid #ff6b5e;font:700 18px/1 'Big Shoulders Display',sans-serif;text-transform:uppercase}
+.p{min-height:40px;background:none;color:#ff6b5e;border:1px solid #5b2622;text-align:left;padding:3px 6px;font-size:10px;overflow:hidden}
+.p b{font:800 16px/1 'Big Shoulders Display',sans-serif;display:block}
+.zoom{width:34px;flex-shrink:0;border:1px solid #ff6b5e;position:relative}
+.zoom i{position:absolute;left:0;right:0;bottom:0;height:30%;background:#ff6b5e}
+.big{min-height:52px;padding:0 24px;background:#140302;color:#ff6b5e;border:0;font:800 24px/1 'Big Shoulders Display',sans-serif;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 884px; height: 1010px; box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 10px; background: #060303; color: #ff6b5e; font: 500 12px/1.4 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+
+  <div class="cap" style="color: #ffb3ab">The phone is getting itself back: nothing for you to do</div>
+  <div class="phone">
+    <div class="bar">
+      <div style="flex-grow: 1; min-width: 0">
+        <div style="font: 800 30px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.05em; text-transform: uppercase">Mac not answering</div>
+        <div style="font-weight: 700; margin-top: 4px">Retrying by itself · 12 s</div>
+      </div>
+      <span class="cap" style="font-weight: 700">PSAQ2</span>
+    </div>
+    <div class="main">
+      <div class="pre"></div>
+      <div class="side">
+        <div style="display: flex; gap: 6px"><button class="t">Glitch</button><button class="t">Freeze</button></div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+          <button class="p"><b>1</b>Clean</button><button class="p"><b>2</b>Tunnel</button><button class="p"><b>3</b>Kaleido</button><button class="p"><b>4</b>Thermal</button><button class="p"><b>5</b>Slit-scan</button><button class="p"><b>6</b>Neon</button>
+        </div>
+      </div>
+      <div class="zoom" role="img" aria-label="Zoom"><i></i></div>
+    </div>
+  </div>
+
+  <div class="cap" style="color: #ffb3ab; margin-top: 12px">It needs you: one large button</div>
+  <div class="phone">
+    <div class="bar">
+      <div style="flex-grow: 1; min-width: 0">
+        <div style="font: 800 30px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.05em; text-transform: uppercase">Mac not found</div>
+        <div style="font-weight: 700; margin-top: 4px">Its room code has changed. Go to the Mac and scan its code.</div>
+      </div>
+      <button class="big">Scan code</button>
+    </div>
+    <div class="main">
+      <div class="pre"></div>
+      <div class="side">
+        <div style="display: flex; gap: 6px"><button class="t">Glitch</button><button class="t">Freeze</button></div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+          <button class="p"><b>1</b>Clean</button><button class="p"><b>2</b>Tunnel</button><button class="p"><b>3</b>Kaleido</button><button class="p"><b>4</b>Thermal</button><button class="p"><b>5</b>Slit-scan</button><button class="p"><b>6</b>Neon</button>
+        </div>
+      </div>
+      <div class="zoom" role="img" aria-label="Zoom"><i></i></div>
+    </div>
+  </div>
+
+  <div style="color: #ffb3ab; margin-top: auto">The status bar you already glance at grows from a thin line to a full band across the top, with the same words and button. Nothing lies over the preview. The cost: everything below shifts down and shrinks while the band is up, so the triggers and presets are not quite where your thumb left them.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":884,"height":1010}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
