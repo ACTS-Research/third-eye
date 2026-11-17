@@ -459,6 +459,25 @@ The sources:
 
 **Fill / Fit / Stretch** and **Mirror** apply to every video input.
 
+**If a source drops.** A phone can lose its link, and iOS stops its camera
+whenever Safari leaves the front. Under **Setup → Input → If a source
+drops** you choose what the picture does by itself when that happens,
+because the phone cannot tell the Mac anything over a link that is down:
+
+- **Input A:** hold its last frame (the default, and what always happened
+  before), fade to black, fade to input B, or fade to another source (the
+  test pattern, the video file, the Mac camera, the other iPhone). Effects
+  keep running on whatever stands in.
+- **Input B:** hold its last frame, or ease B out of the mix so the picture
+  is A alone.
+- **Wait** is how long the source must be gone first (3 s to start with), and
+  **Fade** how long the change takes. When the source sends again the
+  picture fades back by itself.
+
+An alert on the control page says which source stopped. A stand-by source
+must already be running to show a picture: the video file loaded, the other
+phone paired. A source that has none gives black.
+
 ## Effects
 
 The chain belongs to a preset and is edited on the **Edit** screen. It is an
@@ -902,6 +921,7 @@ npm test
 | `tests/mix.mjs` | Input B and Mix B: the strip under the picture (uncropped small views, source icons that slide out, looking at a source without choosing it, tooltips and the mode grid opening upward), the bar adding Mix B on its first drag, the nine modes on both screens, A and B trading places, B off passing A through, the iPhone as B, B carrying on when the picture moves to `/control` |
 | `tests/two-phones.mjs` | A second iPhone: its tab and room code, pairing beside the first without disturbing it, the Phone B readout, iPhone B as input A or B with both live, its sensors as their own sources, its triggers and preset buttons, both phones following the picture to `/control`, one dropping alone, Stop using iPhone B |
 | `tests/keep-paired.mjs` | Keeping what is paired: a second phone on the same code is turned away and told why while the paired one carries on; the paired phone redials and reloads freely; a phone with no pairing server holds a silent link and carries on when the Mac answers; a taken room code is kept under a paired phone |
+| `tests/drop.mjs` | If a source drops: hold, fade to black, fade to a stand-by source and back when the phone returns, a newly chosen source getting its full wait, input B easing out of the mix and returning, the settings and the alert |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |

@@ -1,7 +1,7 @@
 import { runAction } from '../shared/actions.js';
 import { INPUT_KINDS, INPUT_LABELS } from '../shared/state.js';
 import { el } from '../shared/util.js';
-import { menu } from './controls.js';
+import { bar, menu } from './controls.js';
 
 export function mountInputPanel(root, ui) {
   const { store, bus } = ui;
@@ -30,6 +30,36 @@ export function mountInputPanel(root, ui) {
     onChange: (v) => store.merge('input', { fit: v }),
   });
   const mirror = el('button', { text: 'Mirror', onclick: () => store.merge('input', { mirror: !store.state.input.mirror }) });
+
+  // What the picture does when a source stops sending: the phone drops,
+  // or Safari goes to the background. The Mac acts by itself, because the
+  // operator cannot tell it anything over a link that is down.
+  const dropA = menu({
+    id: 'drop-a',
+    cls: 'grow',
+    label: 'If input A\'s source drops',
+    options: () => [
+      { value: 'hold', label: 'Hold its last frame' },
+      { value: 'black', label: 'Fade to black' },
+      { value: 'b', label: 'Fade to input B' },
+      ...INPUT_KINDS.map((kind) => ({ value: kind, label: `Fade to: ${INPUT_LABELS[kind]}` })),
+    ],
+    value: store.state.input.dropA,
+    onChange: (v) => store.merge('input', { dropA: v }),
+  });
+  const dropB = menu({
+    id: 'drop-b',
+    cls: 'grow',
+    label: 'If input B\'s source drops',
+    options: [
+      { value: 'hold', label: 'Hold its last frame' },
+      { value: 'out', label: 'Ease B out of the mix' },
+    ],
+    value: store.state.input.dropB,
+    onChange: (v) => store.merge('input', { dropB: v }),
+  });
+  const dropAfter = bar({ id: 'drop-after', label: 'Wait before acting', min: 0.5, max: 30, step: 0.5, unit: ' s', value: store.state.input.dropAfter, reset: 3, onInput: (v) => store.merge('input', { dropAfter: v }) });
+  const dropFade = bar({ id: 'drop-fade', label: 'Fade time', min: 0, max: 10, step: 0.1, unit: ' s', value: store.state.input.dropFade, reset: 1, onInput: (v) => store.merge('input', { dropFade: v }) });
 
   const fileName = el('span', { class: 'dim grow', text: 'No video file loaded' });
   const picker = el('input', {
@@ -109,6 +139,10 @@ export function mountInputPanel(root, ui) {
     for (const kind of INPUT_KINDS) kindButtons[kind].classList.toggle('on', input.kind === kind);
     fit.set(input.fit);
     mirror.classList.toggle('on', input.mirror);
+    dropA.set(input.dropA);
+    dropB.set(input.dropB);
+    dropAfter.set(input.dropAfter);
+    dropFade.set(input.dropFade);
     if (cameras.some((d) => d.deviceId === input.cameraId)) camera.set(input.cameraId);
   };
   store.subscribe(sync);
@@ -120,6 +154,12 @@ export function mountInputPanel(root, ui) {
     el('div', { class: 'row' }, [camera.node, findCameras]),
     cameraNote,
     fileRow,
+    el('h3', { text: 'If a source drops' }),
+    el('div', { class: 'dim small', text: 'When a phone loses its link or Safari goes to the background, the picture can change by itself, and comes back by itself when the source returns.' }),
+    el('div', { class: 'row' }, [el('span', { class: 'caps drop-label', text: 'Input A' }), dropA.node]),
+    el('div', { class: 'row' }, [el('span', { class: 'caps drop-label', text: 'Input B' }), dropB.node]),
+    el('div', { class: 'row' }, [el('span', { class: 'caps drop-label', text: 'Wait' }), dropAfter.node]),
+    el('div', { class: 'row' }, [el('span', { class: 'caps drop-label', text: 'Fade' }), dropFade.node]),
   ]);
   root.append(panel);
   listCameras(false);

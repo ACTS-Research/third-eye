@@ -60,6 +60,9 @@ try {
   await control.keyboard.press('Escape');
 
   console.log('recording');
+  // WebM: the format that is written to the file while still recording.
+  // (MP4, the default, keeps most of it back until recording stops.)
+  await control.evaluate(() => window.thirdEye.store.merge('globals', { recFormat: 'webm' }));
   await control.keyboard.press('r');
   check('R records on the control page', await settle(async () => (await status()).recording.active, 'recording'), (await status()).recording.error);
   check('data reaches the file', await settle(async () => (await status()).recording.bytes > 20000, 'bytes', 20000));

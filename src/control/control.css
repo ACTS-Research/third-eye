@@ -376,6 +376,7 @@ input.bar-value:hover, input.bar-value:focus { border-color: var(--line); }
 /* Tempo sync: the word Free, then seven note values. */
 .choice.mode-grid { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 300px; }
 .choice.mode-grid button { font-size: 11px; text-transform: none; letter-spacing: 0; white-space: nowrap; }
+.drop-label { flex: 0 0 64px; }
 .choice.sync { grid-auto-flow: row; grid-template-columns: minmax(0, 1.5fr) repeat(7, minmax(0, 1fr)); max-width: 330px; }
 .choice.sync button { height: 30px; font-size: 10px; letter-spacing: 0.02em; }
 .choice.sync button svg { max-width: 22px; height: 22px; }

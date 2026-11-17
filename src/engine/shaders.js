@@ -31,6 +31,15 @@ uniform sampler2D uTex;
 void main() { outColor = vec4(texture(uTex, vUv).rgb, 1.0); }
 `;
 
+// Two pictures and how much of the second: the stand-by picture coming in
+// over an input whose source has dropped.
+export const MIX_FRAG = HEAD + /* glsl */ `
+uniform sampler2D uA;
+uniform sampler2D uB;
+uniform float uT;
+void main() { outColor = vec4(mix(texture(uA, vUv).rgb, texture(uB, vUv).rgb, uT), 1.0); }
+`;
+
 // Last pass: preset crossfade, glitch burst, master level (blackout).
 export const FINAL_FRAG = HEAD + /* glsl */ `
 uniform sampler2D uA;       // current scene

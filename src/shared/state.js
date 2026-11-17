@@ -84,7 +84,12 @@ export function defaultState() {
     v: 1,
     // kindB is the second input, mixed in by the Mix B effect ('' = off). It
     // is never the same source as kind.
-    input: { kind: 'pattern', kindB: '', cameraId: '', fit: 'cover', mirror: false },
+    // If a source stops sending (the phone drops, Safari goes to the
+    // background): dropA is what the picture does when input A's source
+    // has been gone for dropAfter seconds: 'hold' its last frame, fade to
+    // 'black', to input 'b', or to another source by name. dropB: 'hold',
+    // or 'out' (ease B out of the mix). dropFade is the fade, in seconds.
+    input: { kind: 'pattern', kindB: '', cameraId: '', fit: 'cover', mirror: false, dropA: 'hold', dropB: 'hold', dropAfter: 3, dropFade: 1 },
     // second: a second iPhone may pair (under roomB(room)). Off until the
     // operator asks for it, so a one-phone show registers one code only.
     net: { room: randomRoom(), signal: '', codec: DEFAULT_CODEC, second: false },
@@ -220,6 +225,10 @@ export function sanitizeState(raw) {
   if (!Number.isInteger(state.order.cue) || state.order.cue < -1) state.order.cue = -1;
   if (!INPUT_KINDS.includes(state.input.kind)) state.input.kind = 'pattern';
   if (!INPUT_KINDS.includes(state.input.kindB) || state.input.kindB === state.input.kind) state.input.kindB = '';
+  if (!['hold', 'black', 'b', ...INPUT_KINDS].includes(state.input.dropA)) state.input.dropA = 'hold';
+  if (!['hold', 'out'].includes(state.input.dropB)) state.input.dropB = 'hold';
+  state.input.dropAfter = clamp(Number(state.input.dropAfter) || 0, 0.5, 30);
+  state.input.dropFade = clamp(Number(state.input.dropFade) || 0, 0, 10);
   if (!CODECS[state.net.codec]) state.net.codec = DEFAULT_CODEC;
   state.tempo.bpm = clamp(Number(state.tempo.bpm) || 120, 30, 300);
   state.net.room = normalizeRoom(state.net.room);

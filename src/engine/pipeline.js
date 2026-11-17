@@ -7,7 +7,7 @@
 import { EFFECT_BY_ID } from '../effects/index.js';
 import { FOOTER, HEADER } from '../effects/common.glsl.js';
 import { Program, Target, createTexture, drawFullscreen } from './gl.js';
-import { COPY_FRAG, FINAL_FRAG, PATTERN_FRAG, SOURCE_FRAG } from './shaders.js';
+import { COPY_FRAG, FINAL_FRAG, MIX_FRAG, PATTERN_FRAG, SOURCE_FRAG } from './shaders.js';
 
 // Monitor image sent to /control (read back asynchronously, ~10 per second).
 const PREVIEW_W = 480;
@@ -174,7 +174,8 @@ class EffectInstance {
     p.tex('uMask', 3, ctx.maskTex);
     p.i('uMaskMode', MASK_MODES[item.target] ?? 0);
     p.v4('uMaskFit', ctx.maskFit[0], ctx.maskFit[1], ctx.maskFit[2], ctx.maskFit[3]);
-    p.f('uMix', this.values.mix);
+    // (bLevel eases input B out of the mix while its source has dropped.)
+    p.f('uMix', this.def.uses?.inputB ? this.values.mix * (ctx.bLevel ?? 1) : this.values.mix);
     p.v2('uResolution', dst.w, dst.h);
     p.f('uTime', ctx.time);
     p.v3('uPhone', ctx.phone[0], ctx.phone[1], ctx.phone[2]);
@@ -242,7 +243,7 @@ class Runner {
       if (resolve) resolve(item, inst);
       if (item.bypass || inst.values.mix <= 0) continue;
       // An effect that mixes input B in passes A through while B is off.
-      if (inst.def.uses?.inputB && !ctx.texB) continue;
+      if (inst.def.uses?.inputB && (!ctx.texB || ctx.bLevel === 0)) continue;
       const scratch = tex === this.a.tex ? this.b : this.a;
       tex = inst.render(ctx, tex, scratch, item);
     }
@@ -274,6 +275,7 @@ export class Pipeline {
     this.patternProgram = new Program(gl, PATTERN_FRAG, 'pattern');
     this.copyProgram = new Program(gl, COPY_FRAG, 'copy');
     this.finalProgram = new Program(gl, FINAL_FRAG, 'final');
+    this.mixProgram = new Program(gl, MIX_FRAG, 'mix');
 
     this.src = new Target(gl, this.width, this.height);
     this.srcDirty = true;
@@ -281,6 +283,10 @@ export class Pipeline {
     this.srcB = new Target(gl, this.width, this.height);
     this.srcBDirty = true;
     this.patternTime = 0;
+    // The stand-by picture, and input A with it faded in over the top:
+    // only drawn while input A's source has dropped (ctx.standby).
+    this.sby = new Target(gl, this.width, this.height);
+    this.srcOut = new Target(gl, this.width, this.height);
     this.thumbs = new Readback(gl, THUMB_W * 2, THUMB_H);
 
     // 1x1 white stand-in until a segmentation mask exists.
@@ -336,6 +342,8 @@ export class Pipeline {
     this.srcDirty = true;
     this.srcB.resize(w, h);
     this.srcBDirty = true;
+    this.sby.resize(w, h);
+    this.srcOut.resize(w, h);
     this.cur.resize(w, h);
     this.prev?.resize(w, h);
   }
@@ -386,6 +394,48 @@ export class Pipeline {
     this[dirtyKey] = false;
   }
 
+  // What the chain starts from: input A, or while its source has dropped
+  // (ctx.standby = { to, level }) input A's last frame with the stand-by
+  // picture faded in over it. `to` is 'black', 'b', or a source by name.
+  chainSource(ctx) {
+    const gl = this.gl;
+    const sb = ctx.standby;
+    if (!sb || sb.level <= 0) return this.src.tex;
+    const { inputs } = this;
+    let tex = null;
+    if (sb.to === 'b' || (sb.to === inputs.b.kind && sb.to)) tex = ctx.texB;
+    else if (sb.to === 'pattern') {
+      this.sby.bind();
+      this.patternProgram.use().f('uTime', ctx.time).v2('uResolution', this.width, this.height);
+      drawFullscreen(gl);
+      tex = this.sby.tex;
+    } else if (sb.to !== 'black' && sb.to !== inputs.kind) {
+      const slot = inputs.standby;
+      if (slot.kind !== sb.to) {
+        slot.setKind(sb.to);
+        slot.hasFrame = false;
+      }
+      slot.update();
+      if (slot.hasFrame) {
+        const [sx, sy] = this.fitScale(ctx.input.fit, slot);
+        this.sby.bind();
+        this.sourceProgram.use().tex('uTex', 0, slot.tex).v2('uFit', sx, sy).f('uMirror', ctx.input.mirror ? 1 : 0).f('uTurn', slot.quarter);
+        drawFullscreen(gl);
+        tex = this.sby.tex;
+      }
+    }
+    // Nothing to stand by with (black was asked for, or that source has no
+    // picture either): black.
+    if (!tex) {
+      this.sby.clear();
+      tex = this.sby.tex;
+    }
+    this.srcOut.bind();
+    this.mixProgram.use().tex('uA', 0, this.src.tex).tex('uB', 1, tex).f('uT', sb.level);
+    drawFullscreen(gl);
+    return this.srcOut.tex;
+  }
+
   // Whether input B has a picture to mix in.
   hasB() {
     const b = this.inputs.b;
@@ -413,11 +463,12 @@ export class Pipeline {
       }
     }
 
-    let outA = this.src.tex;
-    let outB = this.src.tex;
+    const start = this.chainSource(ctx);
+    let outA = start;
+    let outB = start;
     if (!ctx.bypassAll) {
-      outA = this.cur.render(ctx, this.src.tex, ctx.resolve);
-      if (this.prev) outB = this.prev.render(ctx, this.src.tex, null);
+      outA = this.cur.render(ctx, start, ctx.resolve);
+      if (this.prev) outB = this.prev.render(ctx, start, null);
     }
     if (!this.prev) outB = outA;
 

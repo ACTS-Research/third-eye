@@ -170,12 +170,16 @@ export class InputManager extends Slot {
     // nor B is showing, looked at without being chosen.
     this.peek = new Slot(this.feeds, '');
     this.peek.turns = this.turns;
+    // And a fourth: the stand-by source shown while input A's has dropped.
+    this.standby = new Slot(this.feeds, '');
+    this.standby.turns = this.turns;
   }
 
   initGL(gl) {
     super.initGL(gl);
     this.b.initGL(gl);
     this.peek.initGL(gl);
+    this.standby.initGL(gl);
   }
 
   // Both at once, so that when A and B change places neither is for a

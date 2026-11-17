@@ -196,6 +196,16 @@ export function mountStatus(root, ui) {
     const sn = status.sensors;
     rows.sensors.textContent = sn?.live ? `${sn.hz.toFixed(0)} Hz${sn.orientation ? '' : ' · no orientation'}${sn.motion ? '' : ' · no motion'}` : '—';
     ui.setAlert('phone', info?.hidden ? 'Phone: Safari is in the background — the camera is paused until it returns' : p.phone === 'silent' ? 'Phone stopped responding — it will reconnect by itself when it can' : null, 'bad', ui.alertTo.pairing);
+    // The picture has gone to its stand-by because a source stopped sending.
+    const standA = input.standby > 0;
+    const standB = (status.inputB?.standby ?? 0) > 0;
+    const gone = (i) => INPUT_LABELS[i.kind] ?? i.kind;
+    ui.setAlert(
+      'standby',
+      standA ? `${gone(input)} has stopped sending: the picture is on stand-by until it returns.` : standB ? `${gone(status.inputB)} has stopped sending: input B is out of the mix until it returns.` : null,
+      'warn',
+      [input, status.inputB].some((i) => i && i.standby > 0 && i.kind.startsWith('phone')) ? ui.alertTo.pairing : ui.alertTo.panel('input-panel', 'Go to Input'),
+    );
     ui.setAlert('camera', (input.kind === 'camera' || status.inputB?.kind === 'camera') && status.camera.state === 'error' ? `Local camera: ${status.camera.error}` : null, 'warn', ui.alertTo.panel('input-panel', 'Go to Input'));
     ui.setAlert(
       'direct-lost',

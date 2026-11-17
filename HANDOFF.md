@@ -8,12 +8,13 @@ from `main`: input B with the Mix B effect, the strip under the picture
 of it has only been run in headless Chromium, as has most of what was built
 after 13 November.
 
-**Next step.** Step 2 of the signal loss plan
+**Next step.** Step 3 of the signal loss plan
 (https://claude.ai/artifact/PqZU5qNH73BYugN5Y2TZiH, source
-`design/signal-loss-plan.html`): the "If the phone drops" setting on the
-Mac. Step 1 (keep what is paired) is built; see "Signal loss plan" below.
-After the plan's steps 3 and 4 (which get mock-ups) comes a new start
-screen: logo, name, an animation, how to connect.
+`design/signal-loss-plan.html`): the phone's screen when the link is down,
+with mock-ups first. Steps 1 (keep what is paired) and 2 (if a source
+drops) are built; see "Signal loss plan" below. With step 4 (the check
+before the show, also mock-ups first) comes a new start screen: logo, name,
+an animation, how to connect.
 
 **Decisions only you can make.**
 
@@ -21,7 +22,10 @@ screen: logo, name, an animation, how to connect.
   kicked off. (On 16 November it did, with the two tabs and PHONE B both
   seen, so the likeliest cause was the hotspot stumbling. Step 1 of the
   plan is meant to stop that, but it has not been tried on real phones.)
-- Say go for step 2 of the signal loss plan, or change its order.
+- Choose what the picture should do when a phone drops: Setup → Input → If
+  a source drops. It holds the last frame until you say otherwise.
+- Say go for step 3 of the signal loss plan (mock-ups of the phone's
+  screen when the link is down), or change its order.
 - Try the new strip under the picture on the real Mac and say what still
   needs changing (it is its second version).
 - Say whether a Mix B added by dragging the bar should be saved into the
@@ -346,7 +350,7 @@ Three static pages built by Vite, no framework.
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon, option D2 from the sheet at https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo) |
 | `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `running-order/`, `edit-screen/`, `mix/`, `phone2/`. `design/README.md` says which option of each was built |
-| `tests/` | Twenty-two headless suites and `lib.mjs` |
+| `tests/` | Twenty-three headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 
@@ -573,7 +577,7 @@ image as a control signal" are not started; see the end of this section.
 - **Not done:** a hatched "moved by modulation" band on the bar; a second
   video file; saving a Mix B added from the perform screen into the preset.
 
-### Signal loss plan (step 1 built 2026-11-17)
+### Signal loss plan (steps 1 and 2 built 2026-11-17)
 
 The plan is `design/signal-loss-plan.html`: nineteen scenarios and a build
 order of five steps. Built so far, step 1, "keep what is paired":
@@ -595,6 +599,16 @@ order of five steps. Built so far, step 1, "keep what is paired":
   `HostLink.tick` and `isBad` (`phone/link.js`), with no pairing server
   (`canRedial` false) a silent or `disconnected` link is kept; only
   `failed` or `closed` ends it. With a server it redials as before.
+- **If a source drops** (step 2). `input.dropA` (`hold`, `black`, `b` or a
+  source) and `input.dropB` (`hold`, `out`), with `dropAfter` and
+  `dropFade`. `Engine.dropped` counts a slot's source as gone when its feed
+  has sent nothing usable for `dropAfter` seconds (a gated feed, as when
+  the phone's page is hidden, counts as gone; the pattern never does; a
+  newly chosen source starts its wait afresh). `updateCover` fades
+  `cover.a` / `cover.b`. The pipeline draws the stand-by over input A's
+  last frame in `chainSource` (through the spare `inputs.standby` slot when
+  the source is not A's or B's), and scales Mix B by `ctx.bLevel`. Nothing
+  is drawn or uploaded for it while nothing has dropped.
 - Not done from scenario 4: making the new link before breaking the old one
   when the server can be reached. The phone still drops a link after ten
   seconds of silence and dials again.

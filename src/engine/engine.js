@@ -99,6 +99,10 @@ export class Engine {
     // Sources the perform screen is pointing at: shown in the small views
     // without being chosen. { a: kind | '', b: kind | '' }
     this.peek = { a: '', b: '' };
+    // Stand-by: when each input's source was last seen sending, and how far
+    // the stand-by has faded in over A (0..1) and B has eased out (0..1).
+    this.goodAt = { a: 0, b: 0 };
+    this.cover = { a: 0, b: 0 };
     this.worstFrameMs = 0;
     this.lastFrameAt = 0;
 
@@ -275,9 +279,35 @@ export class Engine {
     this.pipeline.setChain(this.store.state.chain, 0, performance.now());
   }
 
+  // Whether an input's source has stopped sending for longer than the
+  // operator allows (input.dropAfter). The test pattern never drops.
+  dropped(slot, key, now) {
+    if (!slot.kind || slot.kind === 'pattern') return false;
+    const feed = slot.feed;
+    if (feed?.ready && !feed.gated && now - feed.lastFrameAt < 600) this.goodAt[key] = now;
+    return now - this.goodAt[key] > this.store.state.input.dropAfter * 1000;
+  }
+
+  // Moves the two stand-by fades toward where they should be.
+  updateCover(dt, now) {
+    const { dropA, dropB, dropFade } = this.store.state.input;
+    const step = dropFade > 0 ? dt / dropFade : 1;
+    const wantA = this.dropped(this.inputs, 'a', now) && dropA !== 'hold' ? 1 : 0;
+    const wantB = this.dropped(this.inputs.b, 'b', now) && dropB !== 'hold' ? 1 : 0;
+    this.cover.a = clamp(this.cover.a + Math.sign(wantA - this.cover.a) * step, 0, 1);
+    this.cover.b = clamp(this.cover.b + Math.sign(wantB - this.cover.b) * step, 0, 1);
+    // (A step can overshoot a target of 0 or 1 by less than itself.)
+    if (Math.abs(wantA - this.cover.a) < step) this.cover.a = wantA;
+    if (Math.abs(wantB - this.cover.b) < step) this.cover.b = wantB;
+  }
+
   // Which sources inputs A and B show, from the store.
   setInputs() {
     const { kind, kindB } = this.store.state.input;
+    // A newly chosen source gets the full wait before it counts as dropped.
+    const now = performance.now();
+    if (kind !== this.inputs.kind) this.goodAt.a = now;
+    if ((kindB || '') !== this.inputs.b.kind) this.goodAt.b = now;
     this.inputs.setKinds(kind, kindB);
     if (this.pipeline) {
       this.pipeline.srcDirty = true;
@@ -372,7 +402,7 @@ export class Engine {
     this.returnFeed.on = this.links.some((link) => link.wantsPreview);
     const input = this.store.state.input;
     // Once opened the camera stays warm so switching back to it is instant.
-    if (input.kind === 'camera' || input.kindB === 'camera' || this.camera.stream) this.camera.ensure(input.cameraId);
+    if (input.kind === 'camera' || input.kindB === 'camera' || input.dropA === 'camera' || this.camera.stream) this.camera.ensure(input.cameraId);
 
     const { midi, audio } = this.store.state;
     if (midi.enabled) this.midi.enable();
@@ -506,6 +536,8 @@ export class Engine {
   start() {
     if (this.running) return;
     this.running = true;
+    this.goodAt.a = performance.now();
+    this.goodAt.b = this.goodAt.a;
     this.session = Math.random().toString(36).slice(2, 10);
     this.lastStatusAt = performance.now();
     this.lastFrameAt = 0;
@@ -571,6 +603,7 @@ export class Engine {
       this.maskFit[1] = fitY;
       this.maskFit[2] = state.input.mirror ? 1 : 0;
       this.maskFit[3] = maskTex ? 1 : 0;
+      this.updateCover(dt, now);
       const flash = this.probe.frame(now, 1000 / Math.max(this.renderFps, 30));
       const remoteWatched = now - this.remoteControlSeenAt < CONTROL_TIMEOUT_MS;
       const wantPreview = remoteWatched && g.preview && now - this.lastPreviewAt >= PREVIEW_INTERVAL_MS;
@@ -604,6 +637,8 @@ export class Engine {
           wantPreview,
           wantThumbs,
           peek: this.peek,
+          standby: this.cover.a > 0 ? { to: state.input.dropA, level: this.cover.a * this.cover.a * (3 - 2 * this.cover.a) } : null,
+          bLevel: 1 - this.cover.b * this.cover.b * (3 - 2 * this.cover.b),
         });
       } catch (err) {
         // Never let one bad frame stop the show.
@@ -703,9 +738,10 @@ export class Engine {
       height: this.canvas.height,
       contextLost: this.lost,
       fullscreen: !!document.fullscreenElement,
-      input: { ...this.inputStatus(now), fps: this.inputFps },
+      // standby: how far the stand-by picture has come in over input A.
+      input: { ...this.inputStatus(now), fps: this.inputFps, standby: this.cover.a },
       // Input B, or null while it is off.
-      inputB: this.inputs.b.kind ? this.inputStatus(now, this.inputs.b) : null,
+      inputB: this.inputs.b.kind ? { ...this.inputStatus(now, this.inputs.b), standby: this.cover.b } : null,
       // Which sources have a picture to show right now.
       sources: { pattern: true, phone: this.inputs.feeds.phone.ready, phone2: this.inputs.feeds.phone2.ready, camera: this.inputs.feeds.camera.ready, file: this.inputs.feeds.file.ready },
     };
