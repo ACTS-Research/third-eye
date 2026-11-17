@@ -25,6 +25,26 @@ import { PhoneLink } from './remote.js';
 import { Tempo } from './tempo.js';
 import { Vision } from './vision.js';
 
+// When a phone last paired in this browser (any window). While that is
+// recent the room code is never changed without being asked: see
+// onRoomTaken.
+const PAIRED_KEY = 'thirdeye.pairedAt';
+const PAIRED_LATELY_MS = 12 * 3600 * 1000;
+function notePaired() {
+  try {
+    localStorage.setItem(PAIRED_KEY, String(Date.now()));
+  } catch {
+    /* private window: the code may then change as before */
+  }
+}
+function pairedLately() {
+  try {
+    return Date.now() - Number(localStorage.getItem(PAIRED_KEY) || 0) < PAIRED_LATELY_MS;
+  } catch {
+    return false;
+  }
+}
+
 // How many buttons the phone has for presets or steps.
 const PHONE_BANK = 6;
 
@@ -93,8 +113,10 @@ export class Engine {
     const wire = (link, sensors) => {
       link.onData = (conn) => sensors.attach(conn);
       link.onOpenData = () => {
-        // A phone on the new room code clears the "scan again" notice.
-        link.notice = '';
+        // A phone on the room code clears the "scan again" notice.
+        this.link.notice = '';
+        this.link.keepingRoom = false;
+        notePaired();
         // Which run of which engine this is. When the picture moves between
         // /control and the output window the phone sees a new one, and calls
         // again at once instead of waiting to notice its old call went dead.
@@ -105,6 +127,14 @@ export class Engine {
       link.getReturnStream = () => this.returnFeed.stream;
       link.onRoomTaken = () => {
         const old = this.store.state.net.room;
+        // A phone has paired on this code lately: a new code would strand
+        // it, with no way back but a scan at the Mac. Keep trying the old
+        // one and leave the choice to the operator.
+        if (pairedLately()) {
+          this.link.keepingRoom = true;
+          this.link.notice = `Room code ${old} reads as in use somewhere else. Still trying it, because a phone has paired on it: a new code would make the phone scan again. For a new one anyway, press New room code.`;
+          return;
+        }
         this.link.notice = `Room code ${old} was in use somewhere else, so a new one was made. Scan the QR code again.`;
         this.store.merge('net', { room: randomRoom() });
       };
@@ -112,6 +142,7 @@ export class Engine {
     };
     this.link = wire(new PhoneLink(this.inputs.feeds.phone, () => this.store.state.net, (msg) => this.onPhoneMessage(msg, this.link)), this.sensors);
     this.linkB = wire(new PhoneLink(this.inputs.feeds.phone2, () => ({ ...this.store.state.net, room: roomB(this.store.state.net.room) }), (msg) => this.onPhoneMessage(msg, this.linkB)), this.sensorsB);
+    this.linkB.isSecond = true;
     this.links = [this.link, this.linkB];
     // Palette and dimmer are set on /control and kept in this browser's
     // storage; a change there fires here, and the phone follows. (No storage
@@ -308,6 +339,10 @@ export class Engine {
           this.setInputs();
           this.housekeeping();
         } else if (op.key === 'net') {
+          if ('room' in op.patch && this.link.keepingRoom) {
+            this.link.keepingRoom = false;
+            this.link.notice = '';
+          }
           this.refreshLinks();
           if ('codec' in op.patch) this.sendPhones({ t: 'config', codec: state.net.codec });
         } else if (op.key === 'midi' || op.key === 'audio' || op.key === 'vision') {
@@ -329,6 +364,11 @@ export class Engine {
     // No phone, nobody to draw the return picture for; a phone that comes
     // back asks again.
     for (const link of this.links) if (!link.conn?.open) link.wantsPreview = false;
+    // The code is no longer taken: the "still trying it" notice has done.
+    if (this.link.keepingRoom && this.links.every((l) => l.stopped || l.signal === 'open')) {
+      this.link.keepingRoom = false;
+      this.link.notice = '';
+    }
     this.returnFeed.on = this.links.some((link) => link.wantsPreview);
     const input = this.store.state.input;
     // Once opened the camera stays warm so switching back to it is instant.

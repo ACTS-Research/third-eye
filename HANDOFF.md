@@ -8,22 +8,20 @@ from `main`: input B with the Mix B effect, the strip under the picture
 of it has only been run in headless Chromium, as has most of what was built
 after 13 November.
 
-**Next step.** The owner tried two phones on 16 November (the Mac on the
-first phone's hotspot): the second worked but the first was kicked off and
-had to reconnect. Cause not known; the Mac may still have been on the old
-version (see the signal loss plan, top). The owner then asked for a full
-plan for lost signal: https://claude.ai/artifact/PqZU5qNH73BYugN5Y2TZiH,
-source `design/signal-loss-plan.html`. Nothing in it is built. Wait for the
-owner's go on its build order (step 1: keep what is paired), then a new
-start screen (logo, name, an animation, how to connect), which belongs
-with the plan's "check before the show".
+**Next step.** Step 2 of the signal loss plan
+(https://claude.ai/artifact/PqZU5qNH73BYugN5Y2TZiH, source
+`design/signal-loss-plan.html`): the "If the phone drops" setting on the
+Mac. Step 1 (keep what is paired) is built; see "Signal loss plan" below.
+After the plan's steps 3 and 4 (which get mock-ups) comes a new start
+screen: logo, name, an animation, how to connect.
 
 **Decisions only you can make.**
 
-- Say whether the pairing pop-over had two tabs, and the second phone's bar
-  read PHONE B, when the first phone was kicked off. If not, the Mac was on
-  the old version or the second phone scanned the first one's code.
-- Read the signal loss plan and say go, or change its order.
+- Try two phones again on the hotspot and say whether the first still gets
+  kicked off. (On 16 November it did, with the two tabs and PHONE B both
+  seen, so the likeliest cause was the hotspot stumbling. Step 1 of the
+  plan is meant to stop that, but it has not been tried on real phones.)
+- Say go for step 2 of the signal loss plan, or change its order.
 - Try the new strip under the picture on the real Mac and say what still
   needs changing (it is its second version).
 - Say whether a Mix B added by dragging the bar should be saved into the
@@ -348,7 +346,7 @@ Three static pages built by Vite, no framework.
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon, option D2 from the sheet at https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo) |
 | `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `running-order/`, `edit-screen/`, `mix/`, `phone2/`. `design/README.md` says which option of each was built |
-| `tests/` | Twenty-one headless suites and `lib.mjs` |
+| `tests/` | Twenty-two headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 
@@ -478,11 +476,13 @@ Three static pages built by Vite, no framework.
 - One `control-ui` check ("it says what is wrong and what to try") is
   timing-dependent and occasionally fails; it passes on a rerun. So does
   "the output flashes black and white during the test" in `record-latency`.
-- `offline-pair`'s "the link is lost: the Mac says so" failed in two of three
-  full runs on 16 November and passed four times out of four run alone. It
-  waits twenty seconds for the Mac to notice a phone page that was closed
-  on a direct link, which depends on how fast Chromium gives the link up.
-  Not traced further.
+- `offline-pair`'s "the link is lost: the Mac says so" failed in three of
+  four full runs on 16 and 17 November and passed every time run alone. A
+  closed phone page does not always tell the Mac it is going, and the Mac
+  then only learns when Chromium gives the link up, up to half a minute
+  later. The check now waits fifty seconds, not twenty. On real devices
+  this means the "link to the phone was lost" alert for a phone paired
+  without internet can be that slow to appear.
 - In the sandbox a busy output can go quiet for two seconds, and `/control`
   then shows "not drawing" for a moment. Not seen to matter; on a real Mac
   it should only appear for a window that is really hidden.
@@ -572,6 +572,32 @@ image as a control signal" are not started; see the end of this section.
   which is MIDI-mappable.
 - **Not done:** a hatched "moved by modulation" band on the bar; a second
   video file; saving a Mix B added from the perform screen into the preset.
+
+### Signal loss plan (step 1 built 2026-11-17)
+
+The plan is `design/signal-loss-plan.html`: nineteen scenarios and a build
+order of five steps. Built so far, step 1, "keep what is paired":
+
+- **A paired phone keeps its place.** Each phone page keeps an id
+  (`prefs.device`) and sends it as PeerJS `metadata` on its data connection
+  and its call. `PhoneLink.holdsAgainst(device)` (`remote.js`) turns away a
+  different id while the paired phone has been heard from in the last
+  thirty seconds (`holdMs`): the newcomer gets `{ t: 'busy', second }` and
+  is closed; its page says so (`state.busy`). The same id, a page that sends
+  none (an old cached phone page), and a direct link are always let in. Do
+  not go back to "the newest connection wins": two phones on one code then
+  push each other out in turn.
+- **The room code is not changed under a phone.** `onRoomTaken` in
+  `engine.js` keeps the code when a phone has paired in this browser in the
+  last twelve hours (`thirdeye.pairedAt` in localStorage, shared by the
+  windows), sets a notice, and leaves New room code to the operator.
+- **The phone holds on to a link it could not make again.** In
+  `HostLink.tick` and `isBad` (`phone/link.js`), with no pairing server
+  (`canRedial` false) a silent or `disconnected` link is kept; only
+  `failed` or `closed` ends it. With a server it redials as before.
+- Not done from scenario 4: making the new link before breaking the old one
+  when the server can be reached. The phone still drops a link after ten
+  seconds of silence and dials again.
 
 ### A second iPhone (first half built 2026-11-16)
 

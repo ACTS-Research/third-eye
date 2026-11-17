@@ -37,8 +37,12 @@ export class HostLink {
   // gives up on it), even if the pairing server happens to be reachable:
   // otherwise the phone would pair the usual way a moment before showing
   // its code, and never show it.
-  constructor({ room, signal, onChange, onMessage, onDataOpen, directFirst = false }) {
+  // device: this phone's own id, sent with every connection so the Mac can
+  // tell this phone redialling from another phone on the same code.
+  constructor({ room, signal, device = '', onChange, onMessage, onDataOpen, directFirst = false }) {
     this.directFirst = directFirst;
+    this.device = device;
+    this.busy = null; // the Mac has another phone: { second } says whether an iPhone B code is on offer
     this.hostId = hostPeerId(room);
     this.signalUrl = signal;
     this.onChange = onChange;
@@ -147,6 +151,7 @@ export class HostLink {
     this.callTriedAt = -1e9;
     this.misses = 0;
     this.notFound = false;
+    this.busy = null;
     this.changed();
   }
 
@@ -293,7 +298,7 @@ export class HostLink {
   connectData() {
     this.connTriedAt = performance.now();
     this.session = null;
-    const conn = this.peer.connect(this.hostId, { reliable: true, serialization: 'json' });
+    const conn = this.peer.connect(this.hostId, { reliable: true, serialization: 'json', metadata: { device: this.device } });
     this.conn = conn;
     // Second channel on the same connection for sensor data: unordered and
     // never retransmitted, so a late sample cannot delay a fresh one.
@@ -326,6 +331,15 @@ export class HostLink {
     if (conn !== this.conn || !msg) return;
     this.heardAt = performance.now();
     this.silent = false;
+    if (msg.t === 'busy') {
+      // Another phone is paired with this Mac. The Mac closes this
+      // connection; the dial is tried again, and gets in once that phone
+      // has been gone a while.
+      this.busy = { second: !!msg.second };
+      this.changed();
+      return;
+    }
+    this.busy = null;
     if (msg.t === 'pong') this.rttMs = performance.now() - msg.ts;
     else if (msg.t === 'config') {
       this.setCodec(msg.codec);
@@ -440,7 +454,7 @@ export class HostLink {
   callMedia() {
     this.callTriedAt = performance.now();
     this.dropCall();
-    const call = this.peer.call(this.hostId, this.stream, { sdpTransform: (sdp) => preferCodec(sdp, this.codec) });
+    const call = this.peer.call(this.hostId, this.stream, { metadata: { device: this.device }, sdpTransform: (sdp) => preferCodec(sdp, this.codec) });
     if (!call) return;
     this.call = call;
     this.callSession = this.session;
@@ -472,7 +486,11 @@ export class HostLink {
 
   // A connection is bad when it failed, closed, hung while connecting, or
   // has been "disconnected" for a few seconds.
-  isBad(connection, triedAt, sinceKey, now) {
+  // `canRedial`: the pairing server can be reached. Without it a link
+  // cannot be made again, so one that might yet recover is never given up:
+  // a short break in the network often heals by itself, and throwing the
+  // link away then would turn seconds into "go and scan the code".
+  isBad(connection, triedAt, sinceKey, now, canRedial = true) {
     const state = pcState(connection);
     if (state === 'failed' || state === 'closed') return true;
     // A direct link cannot be rebuilt without a new handshake, so it is
@@ -483,6 +501,7 @@ export class HostLink {
       return false;
     }
     if (state === 'disconnected') {
+      if (!canRedial) return false;
       this[sinceKey] ||= now;
       return now - this[sinceKey] > 4000;
     }
@@ -508,7 +527,8 @@ export class HostLink {
       }
     }
 
-    if (this.conn && this.isBad(this.conn, this.connTriedAt, 'connBadSince', now)) {
+    const canRedial = !!peer?.open;
+    if (this.conn && this.isBad(this.conn, this.connTriedAt, 'connBadSince', now, canRedial)) {
       // An attempt that hung without ever opening: after two in a row the
       // signaling side is suspect too (a socket that died quietly while the
       // phone slept still reads as open), so start that over as well.
@@ -520,13 +540,15 @@ export class HostLink {
         this.dropConn();
       }
     }
-    if (this.call && this.isBad(this.call, this.callTriedAt, 'callBadSince', now)) this.dropCall();
+    if (this.call && this.isBad(this.call, this.callTriedAt, 'callBadSince', now, canRedial)) this.dropCall();
     // An open link the Mac no longer answers on. One made through the
     // pairing server is dropped and dialled again at once. A direct one is
     // kept, in case it recovers, unless the pairing server can be reached:
     // then that route is tried instead.
     this.silent = !!this.conn?.open && now - this.heardAt > SILENT_MS;
-    if (this.silent && (!this.direct || (peer?.open && now - this.heardAt > DIRECT_SILENT_MS))) {
+    // A silent link is dropped and dialled again only while there is a
+    // pairing server to dial through (see isBad).
+    if (this.silent && canRedial && (!this.direct || now - this.heardAt > DIRECT_SILENT_MS)) {
       this.dropCall();
       this.dropConn();
       this.silent = false;
@@ -553,7 +575,7 @@ export class HostLink {
   get state() {
     const data = this.conn?.open ? 'open' : this.conn ? 'connecting' : 'closed';
     const media = this.call ? pcState(this.call) : 'idle';
-    return { signal: this.signal, data, media, error: this.error, rttMs: this.rttMs, direct: this.direct, silent: this.silent, notFound: this.notFound };
+    return { signal: this.signal, data, media, error: this.error, rttMs: this.rttMs, direct: this.direct, silent: this.silent, notFound: this.notFound, busy: this.busy };
   }
 
   changed() {

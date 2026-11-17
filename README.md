@@ -185,6 +185,19 @@ connection as five steps (picture running, pairing server reached, phone
 found, video link, picture arriving) with the one it is stuck at marked. It also has
 **Restart output** and **New room code**.
 
+**A paired phone keeps its place.** If another phone scans the same code
+while one is paired and answering, the newcomer is turned away ("This Mac
+already has an iPhone", with a pointer to the iPhone B code when that is
+on) and the paired phone never notices. The paired phone itself may redial
+or reload at any time. Another phone can only take the place once the
+paired one has been silent for thirty seconds. Likewise the room code is
+never changed under a phone: if the code reads as in use somewhere else
+after a phone has paired on it (in the last twelve hours, in this browser),
+the Mac keeps trying it and says so, and **New room code** is yours to
+press. And a phone that cannot reach the pairing server holds on to the
+link it has, even a silent one, rather than drop it and be left with no way
+to dial again.
+
 **A second iPhone.** The pop-over has a tab for each phone. Open the
 **iPhone B** tab and scan its code with the second phone (or type its room
 code, the first phone's with a B after it: `PSAQ2-B`). Opening that tab is
@@ -888,6 +901,7 @@ npm test
 | `tests/edit-screen.mjs` | The edit screen's own controls: the bar slider (click, typed value, double-click reset), the app's menus by mouse and keyboard without the page's shortcuts firing, a menu whose button scrolls into view, the chain row (add, drag, remove, bypass), modulation boxes and their extra settings, LFOs, autosave, a narrow window |
 | `tests/mix.mjs` | Input B and Mix B: the strip under the picture (uncropped small views, source icons that slide out, looking at a source without choosing it, tooltips and the mode grid opening upward), the bar adding Mix B on its first drag, the nine modes on both screens, A and B trading places, B off passing A through, the iPhone as B, B carrying on when the picture moves to `/control` |
 | `tests/two-phones.mjs` | A second iPhone: its tab and room code, pairing beside the first without disturbing it, the Phone B readout, iPhone B as input A or B with both live, its sensors as their own sources, its triggers and preset buttons, both phones following the picture to `/control`, one dropping alone, Stop using iPhone B |
+| `tests/keep-paired.mjs` | Keeping what is paired: a second phone on the same code is turned away and told why while the paired one carries on; the paired phone redials and reloads freely; a phone with no pairing server holds a silent link and carries on when the Mac answers; a taken room code is kept under a paired phone |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |

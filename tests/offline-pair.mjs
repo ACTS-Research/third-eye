@@ -97,8 +97,10 @@ try {
   check('and the phone stays paired', (await status()).phone.phone === 'connected' && (await status()).phone.direct);
 
   console.log('the link is lost');
+  // (A closed page does not always say goodbye: the Mac then learns of it
+  // only when Chromium gives the link up, which can take half a minute.)
   await phone.close();
-  check('the Mac says so, with the way back', await settle(async () => (await alertKeys()).includes('direct-lost'), 'alert', 20000) && (await control.locator('#alerts [data-key="direct-lost"] .act').textContent()).includes('Pair without internet'));
+  check('the Mac says so, with the way back', await settle(async () => (await alertKeys()).includes('direct-lost'), 'alert', 50000) && (await control.locator('#alerts [data-key="direct-lost"] .act').textContent()).includes('Pair without internet'));
 
   console.log('pairing again, slowly');
   ({ phone, url, code, picture } = await begin(() => control.locator('#alerts [data-key="direct-lost"] .go').dispatchEvent('click')));

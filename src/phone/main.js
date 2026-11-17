@@ -25,7 +25,13 @@ applyDim(new URLSearchParams(location.search).get('dim'), { save: false });
 // `room`: the last room joined, so the page can be reopened without the
 // QR code. `turn`: how far the Rotate button has turned the picture.
 // `preview`: what the preview shows, the camera or the Mac's finished picture.
-const prefs = { quality: DEFAULT_QUALITY, facing: 'environment', room: '', turn: 0, preview: 'camera', ...readJSON(PREFS_KEY, {}) };
+const prefs = { quality: DEFAULT_QUALITY, facing: 'environment', room: '', turn: 0, preview: 'camera', device: '', ...readJSON(PREFS_KEY, {}) };
+// This phone's own id: how the Mac tells it from another phone on the same
+// room code, so that a phone that is paired cannot be pushed out.
+if (!prefs.device) {
+  prefs.device = Math.random().toString(36).slice(2, 12);
+  writeJSON(PREFS_KEY, prefs);
+}
 if (!QUALITY[prefs.quality]) prefs.quality = DEFAULT_QUALITY;
 if (prefs.preview !== 'output') prefs.preview = 'camera';
 setTurn(Number(prefs.turn) || 0);
@@ -111,6 +117,7 @@ async function start() {
   app.link = new HostLink({
     room: app.room,
     signal: app.signal,
+    device: prefs.device,
     onChange: renderState,
     onDataOpen: () => {
       sendInfo();
@@ -571,7 +578,11 @@ function renderState(state) {
   const tight = !$('reconnect').hidden && $('root').classList.contains('upright');
   if (tight && scanTimer) $('reconnect').textContent = 'Stop';
   if (!$('pair').hidden) text = 'Show the code to the Mac';
-  else if (state.silent) {
+  else if (state.busy) {
+    // Another phone is paired with the Mac and keeps its place.
+    level = 'bad';
+    text = tight ? 'Mac has a phone' : state.busy.second ? 'This Mac already has an iPhone. Scan its iPhone B code.' : 'This Mac already has an iPhone.';
+  } else if (state.silent) {
     level = 'bad';
     text = 'Mac not answering';
   } else if (state.data === 'open') {

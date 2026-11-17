@@ -30,6 +30,11 @@ const HANDOVER_MS = 4000;
 // the pairing server within a minute; a phone on the old code then finds
 // this Mac again by itself, which it never could on a new code.
 const ROOM_TAKEN_MS = 75000;
+// A phone that is paired keeps its place: another phone that dials the same
+// room code is turned away until the paired one has been silent this long.
+// (Phones are told apart by an id each keeps in its own storage and sends
+// as it connects; the paired phone itself may redial at any time.)
+const HOLD_PLACE_MS = 30000;
 
 export class PhoneLink {
   constructor(feed, getNet, onMessage) {
@@ -45,6 +50,9 @@ export class PhoneLink {
     this.lastReconnectAt = 0;
     this.lastHeardAt = 0;
     this.phoneInfo = null;
+    this.device = ''; // the id of the phone that is paired
+    this.turnedAway = 0; // other phones refused, for the status and the tests
+    this.holdMs = HOLD_PLACE_MS;
     // True while the phone is deliberately not sending (camera restart, page
     // hidden): frames that still trickle in are ignored so the last good
     // one stays up.
@@ -308,7 +316,22 @@ export class PhoneLink {
   // The phone's call is answered with the small copy of the finished
   // picture (return-feed.js), which stays silent until the phone asks to
   // see it.
+  // Whether a connection from `device` must wait: another phone is paired
+  // here and has been heard from lately. A page that sends no id (an older
+  // copy of the phone page) is never turned away.
+  holdsAgainst(device) {
+    return !!device && !!this.device && device !== this.device && !!this.conn?.open && performance.now() - this.lastHeardAt < this.holdMs;
+  }
+
   acceptCall(call) {
+    if (this.holdsAgainst(call.metadata?.device)) {
+      try {
+        call.close();
+      } catch {
+        /* never answered */
+      }
+      return;
+    }
     this.watchCall(call);
     call.answer(this.getReturnStream?.() ?? undefined, { sdpTransform: (sdp) => preferCodec(sdp, this.getCodec?.()) });
     const pc = call.peerConnection;
@@ -360,8 +383,25 @@ export class PhoneLink {
   }
 
   acceptData(conn) {
+    const device = conn.metadata?.device ?? '';
+    if (this.holdsAgainst(device)) {
+      // Told why, then let go. The paired phone never notices.
+      this.turnedAway++;
+      conn.on('open', () => {
+        try {
+          conn.send({ t: 'busy', second: !!this.getNet().second && !this.isSecond });
+        } catch {
+          /* gone already */
+        }
+        setTimeout(() => this.closeLink(conn), 800);
+      });
+      conn.on('error', () => {});
+      return;
+    }
     const old = this.conn;
     this.conn = conn;
+    // (A direct link is made at the Mac, by the operator: it always may.)
+    if (!conn.direct) this.device = device;
     // Whatever the last link was, this one says which kind is in use now.
     this.direct = !!conn.direct;
     if (!conn.direct) this.lostDirect = false;
@@ -509,6 +549,7 @@ export class PhoneLink {
       error: this.error,
       notice: this.notice ?? '',
       phone: alive ? 'connected' : dataOpen ? 'silent' : 'none',
+      turnedAway: this.turnedAway,
       direct: this.direct,
       lostDirect: this.lostDirect,
       media: mediaState,
