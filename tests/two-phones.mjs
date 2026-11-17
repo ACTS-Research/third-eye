@@ -81,6 +81,9 @@ try {
   await press(phoneB, '.trig >> nth=1');
   check('its Freeze button freezes', await settle(async () => (await freeze()) === true, 'freeze from B'));
   check('and lights on both phones', await settle(async () => (await phone.evaluate(() => document.querySelectorAll('.trig')[1].classList.contains('on'))) && (await phoneB.evaluate(() => document.querySelectorAll('.trig')[1].classList.contains('on'))), 'lit'));
+  // (Both phones' buttons are one trigger: a press that lands while the
+  // other phone's is still down is the same press. Wait for B to let go.)
+  await settle(() => engine(() => !window.thirdEye.engine.sensorsB.shown[1] && !((window.thirdEye.engine.sensorsB.held >> 1) & 1)), 'B released');
   await press(phone, '.trig >> nth=1');
   check('the first phone releases it', await settle(async () => (await freeze()) === false, 'release from A'));
   await press(phoneB, '.preset >> nth=2');

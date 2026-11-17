@@ -168,9 +168,8 @@ try {
   console.log('reconnecting');
   check('no Reconnect button while live', await phone.locator('#reconnect').isHidden());
   await phone.evaluate(() => window.thirdEyePhone.link.dropConn());
-  check('Reconnect appears when the link is down', await settle(async () => !(await phone.locator('#reconnect').isHidden()) && (await phone.locator('#reconnect').textContent()) === 'Reconnect', 'button'));
-  await phone.locator('#reconnect').dispatchEvent('click');
-  check('and brings the phone back', await settle(async () => (await phone.locator('#state').textContent()).startsWith('LIVE'), 'live again', 25000), await phone.locator('#state').textContent());
+  check('with the link down the band says the phone is retrying by itself', await settle(async () => (await phone.locator('#down').isVisible()) && (await phone.locator('#down-line').textContent()).includes('Retrying by itself'), 'band'), await phone.locator('#down').textContent());
+  check('and it comes back with no tap', await settle(async () => (await phone.locator('#state').textContent()).startsWith('LIVE'), 'live again', 25000), await phone.locator('#state').textContent());
   await phone.goto(`${site.url}/phone/`);
   check('opened again with no code, the page remembers the room', (await phone.inputValue('#room-input')) === room, await phone.inputValue('#room-input'));
   await context.close();

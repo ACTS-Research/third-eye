@@ -166,7 +166,7 @@ try {
   await phone.setViewportSize({ width: 390, height: 844 });
   watch(phone, 'phone', errors);
   await phone.goto(url);
-  await phone.click('#start');
+  await phone.click('#resume-go'); // reloaded while live: the Resume screen
   await waitStatus(control, (st) => st.input.state === 'live', 'phone rejoined');
   check('phone rejoins after a reload', true);
   check('the room-code strip goes away once the phone pairs', await waitFor(() => control.locator('#alerts .alert[data-key="room"]').count().then((n) => n === 0), { label: 'room strip gone' }).then(() => true, () => false));

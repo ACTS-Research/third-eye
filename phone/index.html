@@ -24,6 +24,14 @@
       <p id="offline-note"></p>
     </div>
 
+    <!-- The page was live a few minutes ago and has been reloaded or
+         reopened: one button carries on where it was. -->
+    <div id="resume" hidden>
+      <div class="resume-head"><span class="resume-name">Third Eye Cam</span><span id="resume-room"></span></div>
+      <button id="resume-go"><b>RESUME</b><span>Tap anywhere here. Same room, same camera, same settings.</span></button>
+      <div class="resume-foot"><span id="resume-error"></span><button id="resume-other">Another room…</button></div>
+    </div>
+
     <div id="live" hidden>
       <!-- #root is the whole live screen; phone.css lays it out for an
            upright page and for one on its side. -->
@@ -34,7 +42,6 @@
                  they never take room from the preview. -->
             <div id="note"></div>
             <span id="dot"></span><span id="state">Starting…</span>
-            <button id="reconnect" hidden>Reconnect</button>
             <span class="room" id="room-label"></span>
             <button id="rotate" class="icon" title="Turn the picture a quarter turn" aria-label="Rotate the picture">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 1 2.6 5.4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M2.5 15.5l5.4 3.3.4-6.2z" fill="currentColor"/></svg>
@@ -45,7 +52,16 @@
           </div>
           <div id="main">
             <div id="stage-cell">
-              <div id="stage"><video id="self" playsinline muted autoplay></video><span id="stage-label">Camera off</span><span id="scan-hint" hidden>Point at the code on the Mac</span></div>
+              <div id="stage"><video id="self" playsinline muted autoplay></video><span id="stage-label">Camera off</span><span id="scan-hint" hidden>Point at the code on the Mac</span>
+                <!-- Whenever the Mac is not receiving: what is wrong, whether
+                     the phone is retrying by itself, and one button when a
+                     tap is needed. Along the foot of the preview, so the
+                     camera stays in view and no control moves. -->
+                <div id="down" hidden>
+                  <div class="down-text"><b id="down-title"></b><span id="down-line"></span></div>
+                  <button id="reconnect" hidden>Reconnect</button>
+                </div>
+              </div>
             </div>
             <div id="trigs"></div>
             <div id="presets-cell">

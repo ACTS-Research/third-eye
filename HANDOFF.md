@@ -8,13 +8,12 @@ from `main`: input B with the Mix B effect, the strip under the picture
 of it has only been run in headless Chromium, as has most of what was built
 after 13 November.
 
-**Next step.** Step 3 of the signal loss plan
+**Next step.** Step 4 of the signal loss plan
 (https://claude.ai/artifact/PqZU5qNH73BYugN5Y2TZiH, source
-`design/signal-loss-plan.html`): the phone's screen when the link is down,
-with mock-ups first. Steps 1 (keep what is paired) and 2 (if a source
-drops) are built; see "Signal loss plan" below. With step 4 (the check
-before the show, also mock-ups first) comes a new start screen: logo, name,
-an animation, how to connect.
+`design/signal-loss-plan.html`): the check before the show, on the phone
+and the Mac, with mock-ups first; and with it the new start screen the
+owner asked for (logo, name, a tasteful animation, how to connect). Steps
+1 to 3 are built; see "Signal loss plan" below.
 
 **Decisions only you can make.**
 
@@ -24,9 +23,10 @@ an animation, how to connect.
   plan is meant to stop that, but it has not been tried on real phones.)
 - Choose what the picture should do when a phone drops: Setup → Input → If
   a source drops. It holds the last frame until you say otherwise.
-- Choose L1, L2 or L3 for the phone's screen when the link is down, and say
-  whether the Resume screen is right: https://claude.ai/artifact/VMB991eaoBVQQPhwQJ9Bak
-  (sources in `design/link-down/`). Nothing of it is built.
+- Try the phone's band and Resume on a real iPhone (step 3, built 17
+  November): walk out of range, lock the phone, reload its page.
+- Say go for step 4 of the signal loss plan (mock-ups of the check before
+  the show and the new start screen), or change its order.
 - Try the new strip under the picture on the real Mac and say what still
   needs changing (it is its second version).
 - Say whether a Mix B added by dragging the bar should be saved into the
@@ -355,7 +355,7 @@ Three static pages built by Vite, no framework.
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon, option D2 from the sheet at https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo) |
 | `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `running-order/`, `edit-screen/`, `mix/`, `phone2/`. `design/README.md` says which option of each was built |
-| `tests/` | Twenty-three headless suites and `lib.mjs` |
+| `tests/` | Twenty-four headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 
@@ -582,7 +582,7 @@ image as a control signal" are not started; see the end of this section.
 - **Not done:** a hatched "moved by modulation" band on the bar; a second
   video file; saving a Mix B added from the perform screen into the preset.
 
-### Signal loss plan (steps 1 and 2 built 2026-11-17)
+### Signal loss plan (steps 1 to 3 built 2026-11-17)
 
 The plan is `design/signal-loss-plan.html`: nineteen scenarios and a build
 order of five steps. Built so far, step 1, "keep what is paired":
@@ -614,6 +614,17 @@ order of five steps. Built so far, step 1, "keep what is paired":
   last frame in `chainSource` (through the spare `inputs.standby` slot when
   the source is not A's or B's), and scales Mix B by `ctx.bLevel`. Nothing
   is drawn or uploaded for it while nothing has dropped.
+- **The band and Resume** (step 3; mock-up L1,
+  https://claude.ai/artifact/VMB991eaoBVQQPhwQJ9Bak, sources in
+  `design/link-down/`). `downInfo(state)` in `phone/main.js` decides what
+  the band says and which button it offers; `showDown` draws it. `#down`
+  sits inside `#stage` (the XY pad) and stops its own taps reaching the
+  pad. `#reconnect` moved from the bar into the band: it is only there
+  when a tap is needed, or after eight seconds of retrying
+  (`RETRY_BUTTON_AFTER_S`). Resume: `prefs.liveAt` is refreshed every ten
+  seconds while live; within five minutes of it the page opens on
+  `#resume`. Tests that reload a live phone page click `#resume-go`, not
+  `#start`.
 - Not done from scenario 4: making the new link before breaking the old one
   when the server can be reached. The phone still drops a link after ten
   seconds of silence and dials again.
@@ -636,7 +647,8 @@ each phone, was built; iPhone B is key 2). Sources in `design/phone2/`.
   (`Engine.refreshLinks`); opening the iPhone B tab turns it on, Stop using
   iPhone B turns it off.
 - **Triggers are shared**: `PhoneSensors` no longer writes `trig.N`; the
-  engine ORs the two phones' `shown` each frame. Presets, labels, look and
+  engine ORs the two phones' `shown` each frame. So a press on one phone
+  while the same button is down on the other is not a second press. Presets, labels, look and
   config go to both (`sendPhones`). The Mac-output preview runs while
   either phone asks (`link.wantsPreview`).
 - **`phone2` is a fifth source**, second in `INPUT_KINDS`, so the keys moved:

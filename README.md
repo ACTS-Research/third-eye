@@ -185,6 +185,24 @@ connection as five steps (picture running, pairing server reached, phone
 found, video link, picture arriving) with the one it is stuck at marked. It also has
 **Restart output** and **New room code**.
 
+**When the Mac is not receiving.** A band appears along the foot of the
+phone's preview, the preview goes grey and the edge of the screen pulses.
+The band says what is wrong in large letters (`MAC NOT ANSWERING`, `NO
+NETWORK`, `MAC NOT FOUND`, `CAMERA STOPPED`, `NO VIDEO LINK`), then whether
+the phone is getting itself back (`Retrying by itself · 12 s`) or what you
+must do, and shows a button only when a tap is needed: **Scan code** when
+the Mac must be scanned again, **Try again** for the camera, and
+**Reconnect** once retrying has gone on for eight seconds. The triggers,
+presets and zoom do not move, and the camera stays in view so the shot can
+be kept framed.
+
+**Reopening the page mid-show.** If the phone's page was live in the last
+five minutes and is reloaded or reopened, it opens on one screen-sized
+**RESUME** button: one tap carries on in the same room with the same camera
+and settings. (iOS requires a tap before a page may read the motion
+sensors.) **Another room…** gives the ordinary start screen, as does a
+pairing link for a different room.
+
 **A paired phone keeps its place.** If another phone scans the same code
 while one is paired and answering, the newcomer is turned away ("This Mac
 already has an iPhone", with a pointer to the iPhone B code when that is
@@ -930,6 +948,7 @@ npm test
 | `tests/two-phones.mjs` | A second iPhone: its tab and room code, pairing beside the first without disturbing it, the Phone B readout, iPhone B as input A or B with both live, its sensors as their own sources, its triggers and preset buttons, both phones following the picture to `/control`, one dropping alone, Stop using iPhone B |
 | `tests/keep-paired.mjs` | Keeping what is paired: a second phone on the same code is turned away and told why while the paired one carries on; the paired phone redials and reloads freely; a phone with no pairing server holds a silent link and carries on when the Mac answers; a taken room code is kept under a paired phone |
 | `tests/drop.mjs` | If a source drops: hold, fade to black, fade to a stand-by source and back when the phone returns, a newly chosen source getting its full wait, input B easing out of the mix and returning, the settings and the alert |
+| `tests/link-down.mjs` | The phone when the Mac is not receiving: the band at the foot of the preview in both layouts (what is wrong, retrying with the time, a button only when needed and large enough), the grey preview and pulsing edge, the pad and the controls left alone, the phone returning by itself; the Resume screen and when it is not offered |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |

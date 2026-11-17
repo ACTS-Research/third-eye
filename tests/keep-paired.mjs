@@ -43,7 +43,7 @@ try {
   await phone.evaluate(() => window.thirdEyePhone.link.restart());
   check('a redial from the paired phone is let in at once', await settle(async () => (await paired()) && (await bar(phone)).startsWith('LIVE') && (await mac(() => window.thirdEye.engine.link.device)) === (await phone.evaluate(() => window.thirdEyePhone.link.device)), 'redial', 30000), await bar(phone));
   await phone.reload();
-  await phone.click('#start');
+  await phone.click('#resume-go');
   check('and so is the same phone after its page reloads', await settle(async () => (await paired()) && (await bar(phone)).startsWith('LIVE'), 'reload', 30000), await bar(phone));
   check('the other phone is still waiting', (await bar(stranger)).startsWith('This Mac already has an iPhone'), await bar(stranger));
 

@@ -25,7 +25,9 @@ applyDim(new URLSearchParams(location.search).get('dim'), { save: false });
 // `room`: the last room joined, so the page can be reopened without the
 // QR code. `turn`: how far the Rotate button has turned the picture.
 // `preview`: what the preview shows, the camera or the Mac's finished picture.
-const prefs = { quality: DEFAULT_QUALITY, facing: 'environment', room: '', turn: 0, preview: 'camera', device: '', ...readJSON(PREFS_KEY, {}) };
+// `liveAt`: when the page was last live (kept fresh while it is), and
+// `controllerOnly` as it was then: what Resume carries on from.
+const prefs = { quality: DEFAULT_QUALITY, facing: 'environment', room: '', turn: 0, preview: 'camera', device: '', liveAt: 0, controllerOnly: false, ...readJSON(PREFS_KEY, {}) };
 // This phone's own id: how the Mac tells it from another phone on the same
 // room code, so that a phone that is paired cannot be pushed out.
 if (!prefs.device) {
@@ -75,6 +77,32 @@ roomInput.addEventListener('input', () => {
 
 $('start').addEventListener('click', start);
 
+// Reopened within a few minutes of being live (a reload, a crash, Safari
+// closed by mistake): one large button carries on, with no form to read.
+// iOS wants a tap before the motion sensors may be read, so it cannot be
+// none. Not when the page was opened from a fresh pairing link: that is a
+// new start.
+const RESUME_WITHIN_MS = 5 * 60 * 1000;
+const freshLink = !!offer || (!!params.room && params.room !== normalizeRoom(prefs.room));
+if (!freshLink && normalizeRoom(prefs.room).length >= 4 && Date.now() - Number(prefs.liveAt || 0) < RESUME_WITHIN_MS) {
+  const ago = Math.max(1, Math.round((Date.now() - prefs.liveAt) / 1000));
+  $('resume-room').textContent = `Room ${normalizeRoom(prefs.room)} · was live ${ago < 90 ? `${ago} s` : `${Math.round(ago / 60)} min`} ago`;
+  $('controller-only').checked = !!prefs.controllerOnly;
+  $('resume').hidden = false;
+  $('join').hidden = true;
+}
+const leaveResume = () => {
+  $('resume').hidden = true;
+  $('join').hidden = false;
+};
+$('resume-other').addEventListener('click', leaveResume);
+$('resume-go').addEventListener('click', start);
+setInterval(() => {
+  if (!app.started || document.hidden) return;
+  prefs.liveAt = Date.now();
+  savePrefs();
+}, 10000);
+
 async function start() {
   const room = normalizeRoom(roomInput.value);
   if (room.length < 4) {
@@ -83,8 +111,9 @@ async function start() {
   }
   app.room = room;
   prefs.room = room;
-  savePrefs();
   app.controllerOnly = $('controller-only').checked;
+  prefs.controllerOnly = app.controllerOnly;
+  savePrefs();
   $('start').disabled = true;
   $('join-error').textContent = '';
 
@@ -98,11 +127,16 @@ async function start() {
   } catch (err) {
     $('start').disabled = false;
     $('join-error').textContent = cameraErrorText(err);
+    // (Resume could not carry on: the ordinary start screen says why.)
+    leaveResume();
     return;
   }
   motionReady.then(syncMotionAsk);
 
   app.started = true;
+  prefs.liveAt = Date.now();
+  savePrefs();
+  $('resume').hidden = true;
   $('join').hidden = true;
   $('live').hidden = false;
   $('room-label').textContent = app.room;
@@ -376,6 +410,7 @@ function joinRoom(room, signal) {
 const wantsScan = (state) => app.byCode || !!state?.notFound;
 $('reconnect').addEventListener('click', () => {
   if (scanTimer) return stopScan();
+  if ($('reconnect').dataset.does === 'camera') return restartCamera();
   if (wantsScan(app.link?.state)) startScan();
   else app.link?.restart();
 });
@@ -561,6 +596,63 @@ function sendInfo() {
   });
 }
 
+// ---- the band along the foot of the preview, whenever the Mac is not
+// receiving. `downInfo` says what is wrong (title), whether the phone is
+// getting itself back or what the operator must do (line), and which button,
+// if any, to offer. Null while all is well.
+const RETRY_BUTTON_AFTER_S = 8; // a way to try by hand, once retrying has gone on a while
+const VIDEO_GRACE_MS = 5000; // the video call takes a moment after the link opens
+let downSince = 0;
+let videoBadSince = 0;
+function downInfo(state) {
+  const now = performance.now();
+  const linked = state.data === 'open' && !state.silent && !state.busy;
+  const videoOk = app.controllerOnly || state.media === 'connected';
+  if (linked && !videoOk) videoBadSince ||= now;
+  else videoBadSince = 0;
+  let info = null;
+  if (!$('pair').hidden) info = null; // the code for the Mac is up: that screen says what to do
+  else if (scanTimer) info = { title: 'Scanning', line: 'Point the camera at the code on the Mac.', button: 'Stop', scanning: true };
+  else if (app.cameraError && !app.controllerOnly) info = { title: 'Camera stopped', line: app.cameraError, button: 'Try again', camera: true };
+  else if (state.busy) info = { title: 'Mac has a phone', line: state.busy.second ? 'Another iPhone is paired with it. Scan its iPhone B code.' : 'Another iPhone is paired with it. This one gets in when that one has gone.', retrying: true };
+  else if (state.silent) info = { title: 'Mac not answering', retrying: true, held: state.signal !== 'open' };
+  else if (state.data !== 'open') {
+    if (wantsScan(state)) info = { title: app.byCode ? 'Link lost' : 'Mac not found', line: app.byCode ? 'It was paired by code. Go to the Mac and scan its code.' : `Nothing under room ${app.room}. If its control page is open, go to the Mac and scan its code.`, button: 'Scan code' };
+    else if (state.signal === 'lost') info = { title: 'No network', line: 'Cannot reach the pairing server.', retrying: true };
+    else info = { title: app.everLinked ? 'Reconnecting' : 'Connecting', retrying: true };
+  } else if (!videoOk && now - videoBadSince > VIDEO_GRACE_MS) info = { title: 'No video link', line: 'Linked, but the picture is not getting through.', retrying: true };
+  if (state.data === 'open') app.everLinked = true;
+  if (!info) {
+    downSince = 0;
+    return null;
+  }
+  downSince ||= now;
+  const seconds = Math.round((now - downSince) / 1000);
+  if (info.retrying) {
+    const how = info.held ? 'Holding the link until it does' : 'Retrying by itself';
+    info.line = `${info.line ? `${info.line} ` : ''}${how} · ${seconds} s`;
+    if (seconds >= RETRY_BUTTON_AFTER_S && !info.held && !state.busy) info.button = 'Reconnect';
+  }
+  return info;
+}
+
+function showDown(info) {
+  $('down').hidden = !info;
+  // Grey for a picture the Mac is not getting; not while the camera is
+  // being used to read a code.
+  $('stage').classList.toggle('stale', !!info && !info.scanning);
+  $('root').classList.toggle('alarm', !!info && !info.scanning);
+  $('reconnect').hidden = !info?.button;
+  if (!info) return;
+  $('down-title').textContent = info.title;
+  $('down-line').textContent = info.line ?? '';
+  $('reconnect').textContent = info.button ?? '';
+  $('reconnect').dataset.does = info.camera ? 'camera' : '';
+}
+// The band lies over the preview, which is also the XY pad: a tap on it is
+// not a touch on the pad.
+for (const type of ['pointerdown', 'touchstart']) $('down').addEventListener(type, (e) => e.stopPropagation());
+
 function renderState(state) {
   if (!state || !app.started) return;
   const bar = $('bar');
@@ -569,14 +661,10 @@ function renderState(state) {
   if (state.data === 'open') $('pair').hidden = true;
   if (state.direct) app.byCode = true;
   if (scanTimer && scanForLink && state.data === 'open') return stopScan();
-  // Offered whenever the link is down or the Mac has gone quiet: redial, or
-  // read the code on the Mac again (see wantsScan).
-  $('reconnect').hidden = state.data === 'open' && !state.silent && !scanTimer;
-  $('reconnect').textContent = scanTimer ? 'Stop scanning' : wantsScan(state) ? 'Scan code' : 'Reconnect';
-  // Upright the bar is narrow: with the button in it the words are kept
-  // short and the room code gives way (phone.css).
-  const tight = !$('reconnect').hidden && $('root').classList.contains('upright');
-  if (tight && scanTimer) $('reconnect').textContent = 'Stop';
+  const down = downInfo(state);
+  // Upright the bar is narrow: while the band is up it says the rest, and
+  // the bar's words are kept short and the room code gives way (phone.css).
+  const tight = !!down && $('root').classList.contains('upright');
   if (!$('pair').hidden) text = 'Show the code to the Mac';
   else if (state.busy) {
     // Another phone is paired with the Mac and keeps its place.
@@ -612,6 +700,7 @@ function renderState(state) {
   }
   bar.className = tight ? `${level} tight` : level;
   $('state').textContent = text;
+  showDown(down);
   syncPreview(state);
 }
 
