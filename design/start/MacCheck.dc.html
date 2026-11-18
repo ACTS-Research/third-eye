@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mac, the check before the show</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button{font:inherit;cursor:pointer}
+.cap{text-transform:uppercase;letter-spacing:0.08em}
+.row{display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:10px;align-items:start;padding:9px 0;border-top:1px solid #5b2622}
+.no{background:#ff6b5e;color:#140302;font-weight:700;padding:0 4px;justify-self:start}
+.fix{background:none;color:#ff6b5e;border:1px solid #5b2622;padding:4px 8px;text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 620px; height: 520px; box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 10px; background: #060303; color: #ff6b5e; font: 500 12px/1.45 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+  <div class="cap" style="color: #ffb3ab">Setup · a panel at the top, and a button in the top bar that turns solid when a line reads CHECK</div>
+  <div style="border: 1px solid #ff6b5e; padding: 16px; display: flex; flex-direction: column; gap: 6px">
+    <div style="font: 800 30px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.06em">BEFORE THE SHOW</div>
+    <div>
+      <div class="row"><b>OK</b><span>The Mac will stay awake while a phone is paired</span><span></span></div>
+      <div class="row"><b>OK</b><span>Phone paired and streaming · 720p · 60 fps · direct</span><span></span></div>
+      <div class="row"><b>OK</b><span>Picture drawing at 60 fps in the output window</span><span></span></div>
+      <div class="row"><span class="no">CHECK</span><span><b>If the phone drops, the picture freezes.</b> Choose a stand-by under Input.</span><button class="fix">Go to Input</button></div>
+      <div class="row"><span class="no">CHECK</span><span><b>Recordings will not save by themselves.</b> Chrome is blocking downloads from this page.</span><button class="fix">How to allow</button></div>
+      <div class="row"><span>YOU</span><span>Turn off Auto-Join for other Wi-Fi networks, so the Mac does not leave the hotspot mid-show.</span><span></span></div>
+      <div class="row"><span>YOU</span><span>Plug in the power. Close other tabs that use the camera or play video.</span><span></span></div>
+    </div>
+  </div>
+  <div style="color: #ffb3ab; margin-top: auto">The same three marks as on the phone: OK, CHECK with what to do and a button that goes there, and YOU for what the page cannot see.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":620,"height":520}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

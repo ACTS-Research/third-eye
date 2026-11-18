@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mac splash M1, in the picture's place</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+button{font:inherit;cursor:pointer}
+.cap{text-transform:uppercase;letter-spacing:0.08em}
+.qr{width:150px;height:150px;flex-shrink:0;background-color:#fff;background-image:repeating-linear-gradient(0deg,#000 0 6px,transparent 6px 14px),repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 12px);border:10px solid #fff;box-sizing:border-box}
+.lid{transform-origin:35px 37px;animation:blink 6s ease-in-out infinite}
+.iris{transform-origin:35px 37px;animation:look 9s ease-in-out infinite}
+.ring{transform-origin:35px 37px;animation:ring 3s ease-out infinite;fill:none;stroke:#ff6b5e;stroke-width:1}
+@keyframes blink{0%,91%,100%{transform:scaleY(1)}94%{transform:scaleY(0.08)}}
+@keyframes look{0%,100%{transform:translateX(0)}30%{transform:translateX(-3px)}60%{transform:translateX(3px)}}
+@keyframes ring{0%{transform:scale(0.5);opacity:0.9}100%{transform:scale(2.6);opacity:0}}
+@media (prefers-reduced-motion: reduce){.lid,.iris,.ring{animation:none}}
+.step{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:baseline}
+.step b{font:800 28px/1 'Big Shoulders Display',sans-serif}
+</style>
+</helmet>
+<div style="width: 1000px; height: 700px; box-sizing: border-box; display: flex; flex-direction: column; background: #060303; color: #ff6b5e; font: 500 12px/1.45 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.02em">
+
+  <header style="display: flex; align-items: center; gap: 18px; height: 46px; padding: 0 14px; border-bottom: 1px solid #5b2622; flex-shrink: 0">
+    <span style="font: 800 24px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.12em">THIRD EYE CAM</span>
+    <span class="cap" style="border-bottom: 1px dashed #ff6b5e">Output off · 60 fps</span>
+    <span class="cap" style="border-bottom: 1px dashed #ff6b5e; flex-grow: 1">Phone: not paired</span>
+    <span class="cap" style="background: #ff6b5e; color: #140302; padding: 6px 10px; font-weight: 700">Perform</span>
+    <span class="cap" style="border: 1px solid #5b2622; padding: 6px 10px">Edit</span>
+    <span class="cap" style="border: 1px solid #5b2622; padding: 6px 10px">Setup</span>
+  </header>
+
+  <div style="flex-grow: 1; display: flex; min-height: 0">
+    <aside style="width: 150px; border-right: 1px solid #5b2622; padding: 10px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0">
+      <div style="flex: 2; background: #ff6b5e; color: #140302; padding: 8px; display: flex; align-items: flex-end; font: 800 26px/1 'Big Shoulders Display', sans-serif">BLACKOUT</div>
+      <div style="flex: 1; border: 2px solid #ff6b5e; padding: 8px; display: flex; align-items: flex-end; font: 700 20px/1 'Big Shoulders Display', sans-serif">FREEZE</div>
+      <div style="flex: 1; border: 2px solid #ff6b5e; padding: 8px; display: flex; align-items: flex-end; font: 700 20px/1 'Big Shoulders Display', sans-serif">BYPASS</div>
+    </aside>
+
+    <div style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0">
+      <div style="flex-grow: 1; background: #000; display: flex; align-items: center; justify-content: center; gap: 34px; padding: 24px; min-height: 0">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; flex-shrink: 0">
+          <svg viewBox="0 6 64 58" width="170" height="154" role="img" aria-label="Third Eye Cam: a camera with an eye for a lens">
+            <path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z" fill="#ff6b5e"></path>
+            <rect x="9" y="20" width="9" height="5" rx="1.5" fill="#060303"></rect>
+            <g class="lid"><path d="M35 18Q53 37 35 56Q17 37 35 18Z" fill="#060303"></path>
+              <g class="iris"><circle cx="35" cy="37" r="7" fill="#ff6b5e"></circle><circle cx="35" cy="37" r="2.6" fill="#060303"></circle></g>
+              <circle class="ring" cx="35" cy="37" r="4"></circle>
+            </g>
+          </svg>
+          <div style="font: 800 44px/0.9 'Big Shoulders Display', sans-serif; letter-spacing: 0.1em; text-align: center">THIRD EYE<br>CAM</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 14px; max-width: 360px">
+          <div class="cap" style="color: #ffb3ab">Bring in a camera</div>
+          <div style="display: flex; gap: 14px; align-items: center">
+            <div class="qr" role="img" aria-label="QR code for pairing"></div>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <div class="step"><b>1</b><span>Point the iPhone's camera at this code and open the link.</span></div>
+              <div class="step"><b>2</b><span>Tap START and allow the camera and motion.</span></div>
+              <div class="step"><b>3</b><span>The picture appears here.</span></div>
+            </div>
+          </div>
+          <div>Room code <b style="font: 800 22px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.14em">PSAQ2</b> · Ready for the phone</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <button class="cap" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 8px 12px">Use the Mac camera</button>
+            <button class="cap" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 8px 12px">Test pattern</button>
+            <button class="cap" style="background: none; color: #ff6b5e; border: 1px solid #5b2622; padding: 8px 12px">Video file…</button>
+          </div>
+        </div>
+      </div>
+      <div style="height: 54px; border-top: 1px solid #5b2622; flex-shrink: 0; display: flex; align-items: center; padding: 0 10px; color: #8a3a34" class="cap">Inputs and mix</div>
+    </div>
+
+    <aside style="width: 170px; border-left: 1px solid #5b2622; padding: 10px; flex-shrink: 0" class="cap">Faders</aside>
+  </div>
+  <div style="height: 80px; border-top: 1px solid #5b2622; flex-shrink: 0; display: flex; align-items: center; padding: 0 14px" class="cap">Presets</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

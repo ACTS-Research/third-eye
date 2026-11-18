@@ -12,6 +12,7 @@ of the site; nothing here is deployed or tested.
 | `phone2/` | Pairing a second iPhone: `Main` P1 a tab for each phone, `Side` P2 both codes side by side, `OneCode` P3 one code and the phone says which it is, `Strip` the top bar and the strip with five sources. P1 was built | https://claude.ai/artifact/Ee4tdXfFVVeuFct1gv7JH9 |
 | `signal-loss-plan.html` | The review of every way the phone's link can break, with what happens today and what is proposed, in build order (17 November). A plain page: open it in a browser. Nothing in it is built | https://claude.ai/artifact/PqZU5qNH73BYugN5Y2TZiH |
 | `link-down/` | The phone when the Mac is not receiving (step 3 of the signal loss plan): `Main` L1 a band across the foot of the preview, `Cover` L2 the preview carries the message, `Bar` L3 the status bar grows, `Resume` the resume screen. L1 and Resume were built | https://claude.ai/artifact/VMB991eaoBVQQPhwQJ9Bak |
+| `start/` | Start screens and the check before the show (step 4 of the signal loss plan): `Main` M1 the Mac's splash in the picture's place, `MacWhole` M2 a welcome over the whole window, `PhoneCheck` P1 start then a check, `PhoneList` P2 the check on the start screen, `MacCheck` the Mac's check. None built yet | https://claude.ai/artifact/N87fpc4XRa3ZSzKKChNwLi |
 
 The `.dc.html` files are artboards for a claude.ai design canvas, with
 `canvas.json` saying where each sits. They do not render by themselves in a

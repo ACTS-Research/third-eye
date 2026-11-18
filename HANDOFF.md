@@ -25,8 +25,10 @@ owner asked for (logo, name, a tasteful animation, how to connect). Steps
   a source drops. It holds the last frame until you say otherwise.
 - Try the phone's band and Resume on a real iPhone (step 3, built 17
   November): walk out of range, lock the phone, reload its page.
-- Say go for step 4 of the signal loss plan (mock-ups of the check before
-  the show and the new start screen), or change its order.
+- Choose M1 or M2 for the Mac's splash and P1 or P2 for the phone's start
+  screen, and say whether the Mac's check is right:
+  https://claude.ai/artifact/N87fpc4XRa3ZSzKKChNwLi (sources in
+  `design/start/`). Nothing of it is built.
 - Try the new strip under the picture on the real Mac and say what still
   needs changing (it is its second version).
 - Say whether a Mix B added by dragging the bar should be saved into the

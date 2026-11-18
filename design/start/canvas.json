@@ -1,0 +1,20 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-18T03:00:00Z" },
+  "title": "Third Eye Cam: Start Screens",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1000, "h": 700, "title": "M1 · Mac: the splash sits where the picture will be" },
+    "MacWhole.dc.html": { "x": 1080, "y": 0, "w": 1000, "h": 700, "title": "M2 · Mac: a welcome over the whole window" },
+    "PhoneCheck.dc.html": { "x": 0, "y": 1040, "w": 880, "h": 900, "title": "P1 · Phone: start, then a check that shows itself" },
+    "PhoneList.dc.html": { "x": 960, "y": 1040, "w": 880, "h": 900, "title": "P2 · Phone: the check is part of the start screen" },
+    "MacCheck.dc.html": { "x": 1920, "y": 1040, "w": 620, "h": 520, "title": "Mac: the check before the show" }
+  },
+  "order": ["Main.dc.html", "MacWhole.dc.html", "PhoneCheck.dc.html", "PhoneList.dc.html", "MacCheck.dc.html"],
+  "notes": {
+    "heading": { "x": 0, "y": -300, "text": "Starting up: the splash on the Mac", "kind": "title1", "maxW": 2080 },
+    "heading2": { "x": 0, "y": 740, "text": "The phone's start screen and the check before the show", "kind": "title1", "maxW": 2540 }
+  },
+  "designSystems": []
+}
