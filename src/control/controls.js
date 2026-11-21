@@ -185,6 +185,8 @@ export function menu({ options, value, onChange, onOpen, label = '', id, text = 
       list.style.bottom = up ? `${window.innerHeight - r.top}px` : '';
     };
     place();
+    // (A button that is off the screen: place() has closed the list again.)
+    if (!list) return;
     button.setAttribute('aria-expanded', 'true');
     openMenu = { close, place, list, contains: (node) => list.contains(node) || button.contains(node) };
     const choices = [...list.querySelectorAll('.menu-item')];

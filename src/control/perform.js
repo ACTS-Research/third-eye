@@ -9,6 +9,8 @@ import { macroUnit, macroValue, resolveMacros } from '../shared/macros.js';
 import { describeSource } from '../shared/sources.js';
 import { INPUT_KINDS, INPUT_LABELS, makeEffect, sceneOf } from '../shared/state.js';
 import { el } from '../shared/util.js';
+import { mark } from '../shared/mark.js';
+import { drawQr } from '../shared/qr.js';
 import { attachPreview } from './preview.js';
 import { mountStrip } from './strip.js';
 
@@ -57,7 +59,43 @@ export function mountPerform(root, ui) {
   const noteTitle = el('b');
   const noteText = el('span', { class: 'dim' });
   const note = el('div', { class: 'monitor-note' }, [noteTitle, noteText]);
-  const monitor = el('div', { class: 'monitor' }, [canvas, note]);
+  // The splash: where the picture will be, while the input is the iPhone
+  // and no phone has yet paired. The mark, the pairing code, what to do with
+  // it, and the ways on without a phone. Only ever on this page: the output
+  // and recordings never show it. (With the operator's "Monitor off" it is
+  // one of the two things allowed over the monitor; the owner asked for it.)
+  const splashQr = el('canvas', { class: 'splash-qr', width: 320, height: 320 });
+  const splashRoom = el('div', { class: 'splash-room' });
+  const other = (text, kind) =>
+    el('button', {
+      text,
+      onclick: () => {
+        runAction(store, 'input', kind);
+        if (kind === 'file' && !ui.hasVideoFile?.()) ui.pickVideoFile?.();
+      },
+    });
+  const splash = el('div', { class: 'splash', id: 'splash', hidden: true }, [
+    mark(64),
+    splashQr,
+    el('div', { class: 'splash-do', text: 'Point the iPhone\'s camera at this code and open the link.' }),
+    splashRoom,
+    el('div', { class: 'splash-other' }, [other('Use the Mac camera', 'camera'), other('Test pattern', 'pattern'), other('Video file…', 'file')]),
+  ]);
+  let splashUrl = '';
+  function syncSplash() {
+    const st = ui.status;
+    const show = store.state.input.kind === 'phone' && !!st && st.phone.phone !== 'connected' && st.input.kind === 'phone' && st.input.state === 'no-signal';
+    splash.hidden = !show;
+    if (!show) return;
+    const url = ui.phoneLink?.() ?? '';
+    if (url && url !== splashUrl) {
+      splashUrl = url;
+      splashQr.width = 320;
+      drawQr(splashQr, url);
+    }
+    splashRoom.textContent = `Room code ${store.state.net.room}`;
+  }
+  const monitor = el('div', { class: 'monitor' }, [canvas, note, splash]);
   ui.monitors.perform = monitor;
 
   // The only thing that ever covers the monitor is the operator's own choice
@@ -472,7 +510,10 @@ export function mountPerform(root, ui) {
     } else if (op.op === 'item' && op.list === 'mappings') {
       buildMini();
     }
-    if (op.op === 'merge' || op.op === 'replace') syncState();
+    if (op.op === 'merge' || op.op === 'replace') {
+      syncState();
+      syncSplash();
+    }
   });
   store.onEvent((name) => {
     if (name !== 'glitch') return;
@@ -480,6 +521,7 @@ export function mountPerform(root, ui) {
     setTimeout(() => glitch.classList.remove('on'), 300);
   });
   ui.onStatus(syncMonitor);
+  ui.onStatus(syncSplash);
   ui.onStatus(syncInputs);
   ui.onHost(syncMonitor);
 

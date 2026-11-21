@@ -464,3 +464,17 @@ main { position: relative; }
   #top { position: sticky; top: 0; z-index: 16; background: var(--bg); gap: 10px; }
   .wordmark { display: none; }
 }
+
+/* The splash where the picture will be, and the check before the show. */
+.splash { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 14px; background: #000; text-align: center; overflow: hidden; }
+.splash-qr { width: min(260px, 46cqh, 60%); height: auto; aspect-ratio: 1; image-rendering: pixelated; flex-shrink: 1; min-height: 0; }
+.monitor { container-type: size; }
+.splash-do { font-size: 15px; font-weight: 700; text-transform: none; letter-spacing: 0; }
+.splash-room { text-transform: uppercase; letter-spacing: 0.14em; }
+.splash-other { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.check-flag { background: var(--ink); color: var(--on-ink); border-color: var(--ink); font-weight: 700; padding: 2px 8px; white-space: nowrap; }
+/* A fixed height: its lines come and go, and the page must not jump. */
+.checks { height: 340px; overflow-y: auto; scrollbar-gutter: stable; }
+.check-row { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 8px 0; border-top: 1px solid var(--line); text-transform: none; letter-spacing: 0; }
+.check-row.check .check-mark { background: var(--ink); color: var(--on-ink); padding: 0 4px; justify-self: start; }
+.check-fix { padding: 3px 8px; white-space: nowrap; }

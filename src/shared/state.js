@@ -89,7 +89,9 @@ export function defaultState() {
     // has been gone for dropAfter seconds: 'hold' its last frame, fade to
     // 'black', to input 'b', or to another source by name. dropB: 'hold',
     // or 'out' (ease B out of the mix). dropFade is the fade, in seconds.
-    input: { kind: 'pattern', kindB: '', cameraId: '', fit: 'cover', mirror: false, dropA: 'hold', dropB: 'hold', dropAfter: 3, dropFade: 1 },
+    // (A fresh page opens on the iPhone: with none paired, the control page
+    // shows how to pair one where the picture will be.)
+    input: { kind: 'phone', kindB: '', cameraId: '', fit: 'cover', mirror: false, dropA: 'hold', dropB: 'hold', dropAfter: 3, dropFade: 1 },
     // second: a second iPhone may pair (under roomB(room)). Off until the
     // operator asks for it, so a one-phone show registers one code only.
     net: { room: randomRoom(), signal: '', codec: DEFAULT_CODEC, second: false },

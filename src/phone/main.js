@@ -10,6 +10,7 @@ import { el, readJSON, writeJSON } from '../shared/util.js';
 import { CameraControls } from './camera-controls.js';
 import { SENSOR_HZ } from '../shared/protocol.js';
 import { HostLink } from './link.js';
+import { mark } from '../shared/mark.js';
 import { enableOffline } from '../shared/offline.js';
 import { measure, onOrient, orient, setTurn } from './orient.js';
 import { Sensors } from './sensors.js';
@@ -27,7 +28,7 @@ applyDim(new URLSearchParams(location.search).get('dim'), { save: false });
 // `preview`: what the preview shows, the camera or the Mac's finished picture.
 // `liveAt`: when the page was last live (kept fresh while it is), and
 // `controllerOnly` as it was then: what Resume carries on from.
-const prefs = { quality: DEFAULT_QUALITY, facing: 'environment', room: '', turn: 0, preview: 'camera', device: '', liveAt: 0, controllerOnly: false, ...readJSON(PREFS_KEY, {}) };
+const prefs = { quality: DEFAULT_QUALITY, facing: 'environment', room: '', turn: 0, preview: 'camera', device: '', liveAt: 0, controllerOnly: false, check: true, youDay: '', ...readJSON(PREFS_KEY, {}) };
 // This phone's own id: how the Mac tells it from another phone on the same
 // room code, so that a phone that is paired cannot be pushed out.
 if (!prefs.device) {
@@ -76,6 +77,7 @@ roomInput.addEventListener('input', () => {
 });
 
 $('start').addEventListener('click', start);
+$('join-mark').append(mark(150));
 
 // Reopened within a few minutes of being live (a reload, a crash, Safari
 // closed by mistake): one large button carries on, with no form to read.
@@ -133,6 +135,8 @@ async function start() {
   }
   motionReady.then(syncMotionAsk);
 
+  // Carrying on (Resume) goes straight back to the live screen.
+  const resumed = !$('resume').hidden;
   app.started = true;
   prefs.liveAt = Date.now();
   savePrefs();
@@ -177,7 +181,67 @@ async function start() {
   requestWakeLock();
   renderState(app.link.state);
   if (offer) showPairCode(offer);
+  else if (prefs.check !== false && !resumed) runCheck();
 }
+
+// ------------------------------------------------- before the show ---
+// What the page could secure for the show, straight after START (only then
+// does it know what iOS allowed). OK lines pass; a CHECK line says what to
+// do; YOU lines are things the page cannot see, shown once a day. With
+// nothing to read it goes by itself after a moment; otherwise it waits for
+// GO LIVE. The live screen is already running underneath.
+const CHECK_LINK_WAIT_MS = 8000;
+let checkTimer = 0;
+let checkSince = 0;
+const today = () => new Date().toISOString().slice(0, 10);
+function checkRows() {
+  const rows = [];
+  const add = (markText, text, detail = '') => rows.push({ mark: markText, text, detail });
+  if (app.controllerOnly) add('OK', 'Controller only: no camera');
+  else if (app.cameraError) add('CHECK', 'The camera is not sending.', app.cameraError);
+  else add('OK', 'Camera');
+  if (sensors.permission === 'denied') add('CHECK', 'Motion is blocked.', 'Tilt and shake will not reach the Mac. In iOS Settings → Safari, allow Motion & Orientation Access, then reload.');
+  else add('OK', 'Motion and orientation');
+  const state = app.link?.state;
+  if (state?.data === 'open' && !state.silent) add('OK', `Linked to the Mac · room ${app.room}`);
+  else if (performance.now() - checkSince < CHECK_LINK_WAIT_MS && !state?.notFound && !state?.busy) add('··', `Looking for the Mac under room ${app.room}…`);
+  else add('CHECK', 'Not linked to the Mac yet.', state?.busy ? 'Another iPhone is paired with it.' : state?.notFound ? `Nothing under room ${app.room}. Is its control page open?` : 'The live screen keeps trying and says what it is doing.');
+  if (app.wakeLockOk) add('OK', 'The screen will stay awake');
+  else add('CHECK', 'The screen may lock.', 'iOS would not promise to keep it awake, which usually means Low Power Mode is on. Turn it off in Control Centre, or set Auto-Lock to Never.');
+  if (prefs.youDay !== today()) {
+    add('YOU', 'Silence calls.', 'A call takes the screen and stops the camera. Turn on a Focus, or Airplane Mode with Wi-Fi back on.');
+    add('YOU', 'Keep Safari in front.', 'Guided Access (triple-click the side button) stops a stray swipe leaving it.');
+  }
+  return rows;
+}
+function renderCheck() {
+  const rows = checkRows();
+  $('check-list').replaceChildren(...rows.map((r) => el('div', { class: `check-row ${r.mark === 'CHECK' ? 'needs' : ''}` }, [el('b', { class: 'check-mark', text: r.mark }), el('span', {}, r.detail ? [el('b', { text: `${r.text} ` }), r.detail] : [r.text])])));
+  const waiting = rows.some((r) => r.mark === '··');
+  const needsEyes = rows.some((r) => r.mark === 'CHECK' || r.mark === 'YOU');
+  $('check-go').textContent = rows.some((r) => r.mark === 'CHECK') ? 'GO LIVE ANYWAY' : 'GO LIVE';
+  // Everything passed and nothing to read: on to the live screen.
+  if (!waiting && !needsEyes && performance.now() - checkSince > 1200) endCheck();
+}
+function runCheck() {
+  checkSince = performance.now();
+  $('check').hidden = false;
+  clearInterval(checkTimer);
+  checkTimer = setInterval(renderCheck, 400);
+  renderCheck();
+}
+function endCheck() {
+  clearInterval(checkTimer);
+  $('check').hidden = true;
+  prefs.youDay = today();
+  savePrefs();
+}
+$('check-go').addEventListener('click', endCheck);
+$('check-again').addEventListener('click', () => {
+  requestWakeLock();
+  checkSince = performance.now();
+  renderCheck();
+});
 
 // ------------------------------------------------------------- layout ---
 
@@ -544,8 +608,14 @@ function buildTools() {
     Object.entries(QUALITY).map(([key, q]) => el('option', { value: key, text: q.label })),
   );
   tools.camera = el('button', { text: 'Camera', onclick: () => setControllerOnly(!app.controllerOnly) });
+  // The check after START can be switched off by someone who knows it.
+  tools.check = el('button', { id: 'check-pref', onclick: () => {
+    prefs.check = prefs.check === false;
+    savePrefs();
+    syncTools();
+  } });
   tools.preview = el('button', { id: 'preview-kind', text: 'Preview: camera', onclick: () => setPreview(prefs.preview === 'output' ? 'camera' : 'output') });
-  $('tools').replaceChildren(tools.quality, tools.camera, tools.preview);
+  $('tools').replaceChildren(tools.quality, tools.camera, tools.preview, tools.check);
 }
 
 function syncTools() {
@@ -554,6 +624,8 @@ function syncTools() {
   tools.quality.disabled = !camOn;
   tools.quality.value = prefs.quality;
   tools.camera.classList.toggle('on', camOn);
+  tools.check.classList.toggle('on', prefs.check !== false);
+  tools.check.textContent = prefs.check !== false ? 'Check before the show: on' : 'Check before the show: off';
   tools.camera.textContent = camOn ? 'Camera on' : 'Camera off';
   $('quick-flip').disabled = !camOn;
   // A switch this camera does not have is dimmed, not removed: the row

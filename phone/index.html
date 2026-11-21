@@ -12,8 +12,8 @@
   </head>
   <body>
     <div id="join">
-      <h1>Third Eye Cam</h1>
-      <p>Point the iPhone camera at the QR code on the Mac, or type the room code.</p>
+      <div id="join-mark"></div>
+      <p class="join-what">This phone becomes the camera and the controller for the Mac.</p>
       <label>Room code
         <input id="room-input" type="text" inputmode="latin" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="8" placeholder="•••••" />
       </label>
@@ -100,6 +100,16 @@
       <canvas id="pair-qr" width="640" height="640"></canvas>
       <span>Hold the phone up to the camera above the Mac's screen, about a hand's length away. This closes by itself once paired.</span>
       <button id="pair-hide">Hide the code</button>
+    </div>
+
+    <!-- After START: what the page could and could not secure for the show.
+         It goes by itself when every line passes, and waits for GO LIVE
+         when one needs the operator. -->
+    <div id="check" hidden>
+      <strong>Before the show</strong>
+      <div id="check-list"></div>
+      <button id="check-go">GO LIVE</button>
+      <button id="check-again">Check again</button>
     </div>
 
     <div id="warning" hidden>

@@ -15,7 +15,33 @@ export async function startSite({ port = 4173 } = {}) {
   return { url: `http://localhost:${port}`, close: () => server.close() };
 }
 
-export async function launch(extraArgs = []) {
+// Every page the tests open starts as a browser that has been used before:
+// a saved session whose input is the test pattern (a fresh one opens on the
+// iPhone, with the splash where the picture will be), and a phone whose
+// "check before the show" is switched off (it would wait for GO LIVE).
+// tests/start.mjs covers the fresh start; it passes `fresh: true`.
+const SEED = () => {
+  try {
+    if (!localStorage.getItem('thirdeye.session.v1')) localStorage.setItem('thirdeye.session.v1', JSON.stringify({ input: { kind: 'pattern' } }));
+    if (!localStorage.getItem('thirdeye.phone.v1')) localStorage.setItem('thirdeye.phone.v1', JSON.stringify({ check: false }));
+  } catch {
+    /* no storage on this page */
+  }
+};
+
+export async function launch(extraArgs = [], { fresh = false } = {}) {
+  const browser = await launchBrowser(extraArgs);
+  if (fresh) return browser;
+  const make = browser.newContext.bind(browser);
+  browser.newContext = async (options) => {
+    const context = await make(options);
+    await context.addInitScript(SEED);
+    return context;
+  };
+  return browser;
+}
+
+function launchBrowser(extraArgs) {
   return chromium.launch({
     args: [
       '--use-angle=swiftshader',
@@ -215,6 +241,8 @@ export async function clickBar(page, selector, at = 0.5) {
 
 // Chooses a value from one of the app's menus: `button` opens it.
 export async function pickMenu(page, button, value) {
+  // (A menu only opens for a button that is on the screen.)
+  await page.locator(button).scrollIntoViewIfNeeded({ timeout: 2000 }).catch(() => {}); // (or on a screen that is not showing)
   await page.locator(button).dispatchEvent('click');
   await page.locator(`.menu-list .menu-item[data-value="${value}"]`).dispatchEvent('click');
 }

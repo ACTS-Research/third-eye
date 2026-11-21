@@ -8,12 +8,13 @@ from `main`: input B with the Mix B effect, the strip under the picture
 of it has only been run in headless Chromium, as has most of what was built
 after 13 November.
 
-**Next step.** Step 4 of the signal loss plan
+**Next step.** Step 5 of the signal loss plan
 (https://claude.ai/artifact/PqZU5qNH73BYugN5Y2TZiH, source
-`design/signal-loss-plan.html`): the check before the show, on the phone
-and the Mac, with mock-ups first; and with it the new start screen the
-owner asked for (logo, name, a tasteful animation, how to connect). Steps
-1 to 3 are built; see "Signal loss plan" below.
+`design/signal-loss-plan.html`): video quality stepping down and up by
+itself, an alert when the Mac changes network, a quiet "no internet" mark,
+and the same alerts for the second phone as the first. Steps 1 to 4 are
+built; see "Signal loss plan" below. The owner also wants the logo
+revisited: the splash and start screen draw it from `src/shared/mark.js`.
 
 **Decisions only you can make.**
 
@@ -25,10 +26,12 @@ owner asked for (logo, name, a tasteful animation, how to connect). Steps
   a source drops. It holds the last frame until you say otherwise.
 - Try the phone's band and Resume on a real iPhone (step 3, built 17
   November): walk out of range, lock the phone, reload its page.
-- Choose M1 or M2 for the Mac's splash and P1 or P2 for the phone's start
-  screen, and say whether the Mac's check is right:
-  https://claude.ai/artifact/N87fpc4XRa3ZSzKKChNwLi (sources in
-  `design/start/`). Nothing of it is built.
+- Try the new start (step 4, built 21 November): your Mac remembers its
+  last input, so to see the splash press 1 with no phone paired. On the
+  phone, START is now followed by a check.
+- Say when you want a round of logo options. The mark on the splash and the
+  phone's start screen is the current icon, standing in.
+- Say go for step 5 of the signal loss plan, or change its order.
 - Try the new strip under the picture on the real Mac and say what still
   needs changing (it is its second version).
 - Say whether a Mix B added by dragging the bar should be saved into the
@@ -357,7 +360,7 @@ Three static pages built by Vite, no framework.
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon, option D2 from the sheet at https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo) |
 | `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `running-order/`, `edit-screen/`, `mix/`, `phone2/`. `design/README.md` says which option of each was built |
-| `tests/` | Twenty-four headless suites and `lib.mjs` |
+| `tests/` | Twenty-five headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 
@@ -584,7 +587,7 @@ image as a control signal" are not started; see the end of this section.
 - **Not done:** a hatched "moved by modulation" band on the bar; a second
   video file; saving a Mix B added from the perform screen into the preset.
 
-### Signal loss plan (steps 1 to 3 built 2026-11-17)
+### Signal loss plan (steps 1 to 4 built, 17 to 21 November)
 
 The plan is `design/signal-loss-plan.html`: nineteen scenarios and a build
 order of five steps. Built so far, step 1, "keep what is paired":
@@ -627,6 +630,31 @@ order of five steps. Built so far, step 1, "keep what is paired":
   seconds while live; within five minutes of it the page opens on
   `#resume`. Tests that reload a live phone page click `#resume-go`, not
   `#start`.
+- **Start screens and the checks** (step 4; mock-ups
+  https://claude.ai/artifact/N87fpc4XRa3ZSzKKChNwLi, sources in
+  `design/start/`: M1 as revised by the owner, P1, and the Mac's check).
+  - A fresh state opens on the iPhone (`input.kind: 'phone'` in
+    `defaultState`). The splash is `#splash` in the perform monitor
+    (`perform.js`), shown while the input is the iPhone, none is paired and
+    the input has never had a frame. The owner asked for it: with "Monitor
+    off" it is the second thing allowed over the monitor. No name on it,
+    by the owner's choice; the mark small above a large code.
+  - The mark is `src/shared/mark.js` (inline SVG, animated by CSS). It
+    repeats the shapes of `public/icon.svg`: change both when the logo is
+    redrawn.
+  - `src/control/check-panel.js`: Before the show, its `CHECK n` flag in
+    the top bar, and the screen wake lock that keeps the Mac awake while a
+    phone is paired. Its list has a fixed height so Setup does not jump.
+    It cannot tell whether Chrome is blocking downloads: it only reports
+    the Save to Downloads switch.
+  - Phone: `runCheck` in `phone/main.js` after START (not after Resume, not
+    when pairing by code). `prefs.check` switches it off; `prefs.youDay`
+    keeps the two reminders to once a day.
+  - **Every test but `start.mjs` begins from a used browser**: `launch()`
+    in `tests/lib.mjs` seeds a saved session on the test pattern and the
+    phone's check off, because the suites were written for that start.
+    `launch([], { fresh: true })` gives a browser that has never opened
+    the app.
 - Not done from scenario 4: making the new link before breaking the old one
   when the server can be reached. The phone still drops a link after ten
   seconds of silence and dials again.

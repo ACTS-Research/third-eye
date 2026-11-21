@@ -167,6 +167,30 @@ other shows a small copy of it.
 
 ## Pairing the phone
 
+**Starting up.** A browser that has never opened the app opens the control
+page on the iPhone input, and until a phone pairs the place where the
+picture will be shows the mark, the pairing code, what to do with it, and
+three ways on without a phone (the Mac camera, the test pattern, a video
+file). It gives way to the picture when a phone pairs, and is only ever on
+the control page: never on the output, never in a recording. (After that the
+page opens on whichever input you last used.)
+
+**Before the show.** **Setup → Before the show** lists what the page can
+check: that the Mac will stay awake (the page asks Chrome to keep it awake
+while a phone is paired), the phone's link, the frame rate, whether a
+stand-by is set for a dropped phone, and whether recordings save by
+themselves. A line reads `OK`, or `CHECK` with what to do and a button that
+goes there, or `YOU` for what the page cannot see. A `CHECK n` flag in the
+top bar counts the lines that need a look.
+
+On the phone, **START** is followed by the same kind of check: camera,
+motion, the link to the Mac, and whether iOS will keep the screen awake
+(it will not in Low Power Mode). If every line passes it goes to the live
+screen by itself; if one reads `CHECK`, or on the first run of the day (when
+it reminds you to silence calls and keep Safari in front), it waits for **GO
+LIVE**. It can be switched off in the phone's camera settings (**Check
+before the show**), and Resume skips it.
+
 1. **Setup → Phone** on `/control` shows a QR code and a five-character room
    code. (So does a click on the phone status in the top bar.) The output
    window does not need to be open.
@@ -949,6 +973,7 @@ npm test
 | `tests/keep-paired.mjs` | Keeping what is paired: a second phone on the same code is turned away and told why while the paired one carries on; the paired phone redials and reloads freely; a phone with no pairing server holds a silent link and carries on when the Mac answers; a taken room code is kept under a paired phone |
 | `tests/drop.mjs` | If a source drops: hold, fade to black, fade to a stand-by source and back when the phone returns, a newly chosen source getting its full wait, input B easing out of the mix and returning, the settings and the alert |
 | `tests/link-down.mjs` | The phone when the Mac is not receiving: the band at the foot of the preview in both layouts (what is wrong, retrying with the time, a button only when needed and large enough), the grey preview and pulsing edge, the pad and the controls left alone, the phone returning by itself; the Resume screen and when it is not offered |
+| `tests/start.mjs` | A browser that has never opened the app: the Mac opening on the iPhone input with the splash where the picture will be, the Before the show check and its flag, the phone's start screen and its check after START. (Every other suite starts from a saved session on the test pattern with the phone's check off: `launch()` in `lib.mjs`) |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |
