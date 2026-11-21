@@ -1,83 +1,87 @@
 # Handoff
 
-## 2026-11-16 (fourth session)
+## 2026-11-21 (end of the fourth session, 16 to 21 November)
 
-**Where things stand.** Three things were built this session and are live
-from `main`: input B with the Mix B effect, the strip under the picture
-(second version), and a second iPhone pairing under its own room code. All
-of it has only been run in headless Chromium, as has most of what was built
-after 13 November.
+**Where things stand.** Everything asked for in this session is built and
+live on GitHub Pages from `main`: a second input mixed in by the Mix B
+effect, the strip under the picture, a second iPhone, the first four steps
+of the signal loss plan (keep what is paired, a stand-by when a phone
+drops, the phone's band and Resume, start screens and the checks before
+the show), and recordings that name and save themselves. Almost none of it
+has been tried on the real iPhone and Mac: it has run in headless Chromium.
 
-**Next step.** Step 5 of the signal loss plan
+**Next step.** On the real Mac and iPhones, with every page reloaded (twice
+if the old layout still shows), go down "Built this session, not yet tried
+on real hardware" below. Then, to build: step 5 of the signal loss plan
 (https://claude.ai/artifact/PqZU5qNH73BYugN5Y2TZiH, source
-`design/signal-loss-plan.html`): video quality stepping down and up by
-itself, an alert when the Mac changes network, a quiet "no internet" mark,
-and the same alerts for the second phone as the first. Steps 1 to 4 are
-built; see "Signal loss plan" below. The owner also wants the logo
-revisited: the splash and start screen draw it from `src/shared/mark.js`.
+`design/signal-loss-plan.html`), or a round of logo options.
 
 **Decisions only you can make.**
 
 - Try two phones again on the hotspot and say whether the first still gets
-  kicked off. (On 16 November it did, with the two tabs and PHONE B both
-  seen, so the likeliest cause was the hotspot stumbling. Step 1 of the
-  plan is meant to stop that, but it has not been tried on real phones.)
-- Choose what the picture should do when a phone drops: Setup → Input → If
-  a source drops. It holds the last frame until you say otherwise.
-- Try the phone's band and Resume on a real iPhone (step 3, built 17
-  November): walk out of range, lock the phone, reload its page.
-- Try the new start (step 4, built 21 November): your Mac remembers its
-  last input, so to see the splash press 1 with no phone paired. On the
-  phone, START is now followed by a check.
-- Say when you want a round of logo options. The mark on the splash and the
-  phone's start screen is the current icon, standing in.
-- Say go for step 5 of the signal loss plan, or change its order.
-- Try the new strip under the picture on the real Mac and say what still
-  needs changing (it is its second version).
+  kicked off when the second starts. (On 16 November it did, with the two
+  tabs and PHONE B both seen. Keeping what is paired was built after that
+  and has not been tried on real phones.)
+- Choose what the picture does when a phone drops: Setup → Input → If a
+  source drops. It holds the last frame until you choose.
+- Say when you want a round of logo options. The mark on the Mac's splash
+  and the phone's start screen is the current icon, standing in.
+- Say go for step 5 of the signal loss plan (quality stepping down by
+  itself, an alert when the Mac changes network, full alerts for the second
+  phone), or change its order.
+- Say what the strip under the picture, the phone's band and the start
+  screens still need, once you have used them.
 - Say whether a Mix B added by dragging the bar should be saved into the
   preset by itself. For now it lasts until the preset is loaded again.
-- After the second iPhone is finished: "an image as a control signal".
+- Say whether Pair without internet is still wanted for the second phone.
+  You have not needed that route lately.
+- Say whether "an image as a control signal" is still wanted, and when.
 - Picture controls on the Mac (brightness, contrast, saturation and so on):
   say whether they belong to each preset (the Contrast / Brightness effect
   already does that) or should be one fixed set that holds across presets.
-- Recording: MP4 is now the default, but your Mac remembers WebM from
-  before. Choose MP4 once in Setup → Recordings. Recordings are now named
-  ThirdEyeCam_ and the date, and save to Downloads as they stop (17
-  November): the first time, allow Chrome to download several files. Say
-  if you want a folder of your own choosing instead; Chrome would ask for
-  it again each time the page is opened.
+- Recording: your Mac remembers WebM from before; choose MP4 once in Setup →
+  Recordings. The first time a recording saves itself, allow Chrome to
+  download several files. Say if you want a folder of your own choosing
+  instead of Downloads; Chrome would ask for it again each time the page
+  is opened.
+- Board cover: it is your screenshot of 16 November, which shows the layout
+  from before this session. Send a new one when you want it replaced.
 - Say whether the phone's Quality menu should be restyled. It is the
   iPhone's own picker, first in the phone's Camera settings panel.
-- Say whether the browser-tab icon is good enough. You kept D2 (the camera);
-  bolder alternatives T1 to T7 are on the icon sheet.
 - Tick **hold** again on any trigger that had it: settings saved before 13
   November are no longer read.
 
-**Settled on 16 November.** The sideways preview is fixed. Preview: Mac
-output is fine as it is (normal pairing only; no work for a phone paired
-without internet). Running order: on hold, including named running orders.
-Name stays Third Eye Cam; 1280×720 stays. No server of your own: you got
-pairing working without it (route not said). Old presets can be abandoned.
-Mixing: option C (an effect, with its bar under the picture). The strip:
-S3 (source icons on rollover), the mode button right of B, the bar always
-working, modes as a grid on both screens, pop-ups opening upward.
+**Settled this session.** The sideways preview is fixed. Preview: Mac output
+is fine as it is. Running order: on hold, including named running orders.
+Name stays Third Eye Cam; 1280×720 stays. No server of your own. Old
+presets can be abandoned. MP4 is the default recording format. Mixing: an
+effect with its bar under the picture; the strip S3 with the mode button
+right of B, the bar always working, modes as a grid, pop-ups opening
+upward. Second phone: a tab for each phone, iPhone B on key 2. Signal loss:
+the plan's order; the band L1 and Resume; the Mac's splash with the mark
+small above a large code, one instruction and no name; the phone's start
+P1 with no name; the Mac's check as drawn.
 
-**Built since 13 November, not yet tried on real hardware.**
+**Built this session, not yet tried on real hardware.**
 
-- Phone: Freeze as a switch; the six buttons following a running order of
-  more than six steps; Preview: Mac output; torch and W-lock dimmed on the
-  front camera; Scan code reading the Mac's ordinary QR code.
-- Mac, perform screen: the running order (+ on a tile, the switch, Next and
-  Prev, Return after going off the list, notes and fades); the input line
-  under the input buttons; input button 4 opening the file picker; the
-  pairing pop-over closing once paired.
-- Mac, edit screen: seen by the owner on 15 November (Modulation and LFOs
-  tabs); everything on it since then is unseen, namely the LFOs tab, shape
-  pictures, note-value tempo sync, and dragging effects to reorder.
-- Mac, Setup: the app's own menus and bars.
-- Mac, input B and Mix B (16 November): all of it. Two real pictures mixed,
-  the iPhone as A or B, 60 fps with two live videos, the strip's rollover.
-- A second iPhone (16 November): all of it, on two real phones.
+- Input B and Mix B: two real pictures mixed, the iPhone as A or B, 60 fps
+  with two live videos, each of the nine modes.
+- The strip under the picture: the rollover on the source icons with a
+  real trackpad, the first drag of the bar, the mode grid.
+- A second iPhone: tried once on the hotspot on 16 November (it worked; the
+  first phone was kicked off and came back). Not since.
+- Keep what is paired: a second phone scanning the first one's code being
+  turned away; the room code holding; a link held through a short break.
+- If a source drops: each choice, with a real phone going out of range or
+  to the background, and whether three seconds is the right wait.
+- The phone's band and Resume: out of range and back, the phone locked,
+  the page reloaded; whether the band reads at arm's length.
+- Start screens and checks: the splash's code scanned from where you
+  stand; whether iOS reports "the screen may lock" in Low Power Mode;
+  whether the Mac stays awake with a phone paired.
+- Recordings landing in Downloads by themselves.
+- From the session before: the running order, the rebuilt edit screen's
+  LFOs tab and tempo sync, Setup's own menus, Preview: Mac output.
 
 **When you are next in the studio.** Open the output window before the
 show, then: measure real latency fullscreen on the projector at 720p · 60 (so
@@ -85,28 +89,50 @@ far only against the Mac's own screen: 200 ms at 30 fps, 167 ms at 60), check
 the Latency line reads close to it, move the Dim strip with the phone paired
 to see the phone follow, and cover or minimise the output window for a few
 seconds to see `/control` say it is not drawing (it must not take the picture
-over). Try making a closed network on the Mac (README, Pairing without
-internet) and pairing by code on it.
+over).
 
 **Branch.** Work is on `main`, the default branch and the one that deploys.
 Nothing is waiting to be merged; everything is pushed. `main` is the only
-branch on GitHub (checked 16 November). A cloud session starts on a
+branch on GitHub (checked 21 November). A cloud session starts on a
 temporary local branch: switch to `main` (`git checkout -B main
 origin/main`) before committing, and push `main` only.
 
-**Mock-ups.** Input B and mixing: https://claude.ai/artifact/4yrzjrjTVfZ4qgMexUNNn3
-(C, then strip S3 with layout R, were built). Running order: https://claude.ai/artifact/SiD1F7P89JLwXeC31BKhz4
-(A, the strip, was built). Edit screen, slider styles and tempo sync:
-https://claude.ai/artifact/UEbbvKGUHsQo7CxCWFUVDT (C, the Bar, and Notes were
-built). Icons: https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo. All private
-to the owner; their sources are in `design/` (see `design/README.md`).
+**Mock-ups and the plan.** All private to the owner on claude.ai; their
+sources are in `design/` (`design/README.md` says which option of each was
+built).
 
-**What is backed up, and what is not.** The code, tests, docs, screenshots
-and mock-up sources are all on GitHub in `main`. Your presets, running order
-and recordings are not: they live in your browser on the Mac. Export presets
-from Setup; save recordings to disk from Setup → Recordings.
+- Signal loss plan: https://claude.ai/artifact/PqZU5qNH73BYugN5Y2TZiH
+- Start screens and checks: https://claude.ai/artifact/N87fpc4XRa3ZSzKKChNwLi
+- The phone when the link is down: https://claude.ai/artifact/VMB991eaoBVQQPhwQJ9Bak
+- A second iPhone: https://claude.ai/artifact/Ee4tdXfFVVeuFct1gv7JH9
+- Input B and mixing, and the strip: https://claude.ai/artifact/4yrzjrjTVfZ4qgMexUNNn3
+- Running order: https://claude.ai/artifact/SiD1F7P89JLwXeC31BKhz4
+- Edit screen, slider styles and tempo sync: https://claude.ai/artifact/UEbbvKGUHsQo7CxCWFUVDT
+- Icons: https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo
 
-### Seen on the real iPhone and Mac this session
+**What is backed up, and what is not.** The code, tests, docs, screenshots,
+the plan and every mock-up's source are on GitHub in `main`. Your presets,
+running order and settings are not: they live in your browser on the Mac
+(Setup → Preset library → Export presets). Recordings now save to your
+Downloads folder as they stop; a copy also stays in the browser until
+deleted under Setup → Recordings.
+
+### Seen on the real iPhone and Mac in the fourth session
+
+- 16 November: the owner's Mac was still showing the layout from before the
+  session an hour after it was deployed (a screenshot showed the numbered
+  input buttons). A reload, sometimes two, or closing every tab of the app,
+  brings the new version.
+- 16 November: two iPhones with the Mac on the first one's hotspot. The
+  second phone paired from its own tab and read PHONE B, and worked; the
+  first phone was kicked off as it did, and reconnected. Cause not known
+  (the hotspot stumbling is the likeliest). Not tried again since "keep
+  what is paired" was built.
+- The owner reports no longer needing Pair without internet: any Wi-Fi on
+  the phone and the Mac on the phone's hotspot has been working.
+- Nothing else built in this session has been seen on real devices.
+
+### Seen on the real iPhone and Mac in the third session
 
 - Normal pairing and streaming with the Mac on the iPhone's hotspot (the
   phone on cellular): works.
@@ -131,7 +157,35 @@ from Setup; save recordings to disk from Setup → Recordings.
 - The iPhone's camera offers a web page no exposure or focus controls (the
   settings panel was empty apart from Quality and Camera).
 
-### This session, in short
+### Fourth session (16 to 21 November), in short
+
+Each of these has its own section further down ("Input B and Mix B",
+"Signal loss plan", "A second iPhone").
+
+- **Input B and Mix B.** A second input, mixed in by an effect in the chain;
+  nine modes.
+- **The strip under the picture.** Two small live views, source icons on
+  rollover, the mix bar, the mode grid. Rebuilt once after the owner tried
+  the first version.
+- **A second iPhone,** under its own room code, as a fifth source and a
+  second controller. The keys moved: 1 iPhone, 2 iPhone B, 3 camera, 4
+  pattern, 5 file.
+- **Signal loss plan,** steps 1 to 4 of 5: a paired phone keeps its place
+  and its room code; a stand-by when a source drops; the band and Resume on
+  the phone; the Mac's splash, both checks before the show.
+- **Recordings** are MP4 by default, named `ThirdEyeCam_` and the date, and
+  save to Downloads as they stop.
+- **Suites added:** `mix`, `two-phones`, `keep-paired`, `drop`, `link-down`,
+  `start`. Twenty-five in all.
+- **Test failures met on the way, all traced:** hard-coded counts (effects,
+  readouts); checks that MP4 as the default had made a matter of luck;
+  `offline-pair` waiting too short a time for a closed phone page to be
+  noticed; a lost trigger press when two phones press at once (a real
+  limit, see "A second iPhone"); the new Setup panel making the page jump
+  (fixed in the app); a menu opened while off the screen (fixed in the
+  app). None was skipped or loosened in what it checks.
+
+### Third session (13 to 16 November), in short
 
 - **Optional output window.** The engine moves between windows; `/control`
   hosts it when no output is open. Details below.
@@ -352,11 +406,11 @@ Three static pages built by Vite, no framework.
 
 | Path | What lives there |
 | --- | --- |
-| `src/engine/` | Everything live: the WebGL2 pipeline (`pipeline.js`), inputs, the host side of the phone link (`remote.js`), the small copy of the output sent back to the phone (`return-feed.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop. It runs in `/output` while an output window is open, otherwise in `/control` |
-| `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js` (+ `strip.js`, the strip of presets and the running order), `edit.js` (+ `chain.js` the chain row and Parameters tab, `mod-panel.js` the Modulation tab, `controls.js` the app's own bar slider, menu, switch and row of picture buttons), and the Setup panels. `host.js` decides which window hosts the engine and owns the monitor canvas. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts |
+| `src/engine/` | Everything live: the WebGL2 pipeline (`pipeline.js`, with the stand-by picture and the small input views), inputs (`inputs.js`: input A, input B and two spare slots over one set of feeds), the host side of the phone link (`remote.js`), the small copy of the output sent back to the phone (`return-feed.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop. It runs in `/output` while an output window is open, otherwise in `/control` |
+| `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js` (+ `strip.js`, the strip of presets and the running order), `edit.js` (+ `chain.js` the chain row and Parameters tab, `mod-panel.js` the Modulation tab, `controls.js` the app's own bar slider, menu, switch and row of picture buttons), and the Setup panels. `host.js` decides which window hosts the engine and owns the monitor canvas. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts; `check-panel.js` is Before the show and keeps the Mac awake; `phone-panel.js` the pairing pop-over with a tab for each phone; `record-panel.js` saves recordings to Downloads |
 | `src/phone/` | The iPhone page: `main.js`, `link.js` (reconnect watchdog, direct links), `sensors.js` (motion, the XY pad, triggers, presets), `camera-controls.js`, `orient.js` (page angle, the Rotate turn), `widgets.js` (the fader) |
-| `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js` (presets, each with a permanent id, and the running order: `loadOrder`, `orderView`, `applyStep`, `stepShow`), `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `direct.js` (pairing with no server), `qr.js`, `sources.js`, `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; the engine forwards them to the phone) |
-| `src/effects/` | One file per effect; `index.js` is the registry, `common.glsl.js` the shared GLSL |
+| `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js` (presets, each with a permanent id, and the running order: `loadOrder`, `orderView`, `applyStep`, `stepShow`), `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `direct.js` (pairing with no server), `qr.js`, `sources.js`, `mark.js` (the animated mark on the splash and the phone's start screen), `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; the engine forwards them to the phone) |
+| `src/effects/` | One file per effect (`mixb.js` mixes input B in); `index.js` is the registry, `common.glsl.js` the shared GLSL |
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon, option D2 from the sheet at https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo) |
 | `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `running-order/`, `edit-screen/`, `mix/`, `phone2/`. `design/README.md` says which option of each was built |
@@ -435,6 +489,15 @@ Three static pages built by Vite, no framework.
 
 ### Working in the cloud sandbox
 
+- **A fresh container has no packages installed:** run `npm ci` before the
+  first suite, or every suite fails at once on a missing `playwright`.
+- **To run every suite,** loop over them in one background command, each
+  under `timeout` with `SKIP_BUILD=1` after one build, writing a log each
+  and a line per result; twenty-five take about forty minutes. A suite
+  that fails in the full run and passes alone is not thereby innocent:
+  read which check failed.
+- **Write commit messages to a file** and use `git commit -F`: one with
+  quotation marks in it broke the shell.
 - **Push straight to `main`** (the owner's instruction). Every push deploys;
   check the "Build and deploy to GitHub Pages" run afterwards.
 - **The deployed site and the public PeerJS server cannot be reached from the
@@ -527,15 +590,20 @@ Three static pages built by Vite, no framework.
 
 ### Ideas raised and not started
 
-Own pairing server plus a relay on port 443 (not needed, 16 November);
-a local program on the Mac that serves the pages and the pairing itself
-(option B when Pair without internet was chosen); several named running
-orders, and steps timed against an audio track (on hold); the Mac-output
-preview on a phone paired without internet or with its camera off (not
-wanted, 16 November); a brightness control
-on the Mac side; a larger XY pad in place of the phone's six buttons (the
-owner chose to leave the pad on the preview); tempo from the audio beat; a
-native wrapper for a true Syphon output; a MIDI mapping for the dimmer.
+Step 5 of the signal loss plan (quality stepping down and up by itself, an
+alert when the Mac changes network, a quiet "no internet" mark, alerts for
+the second phone); making the new link before breaking the old one (plan,
+scenario 4); a new logo; an image as a control signal (input B's
+brightness or motion as modulation sources); Pair without internet for the
+second phone; picture controls on the Mac that hold across presets; saving
+a Mix B added from the perform screen into the preset; a folder of the
+owner's choosing for recordings; several named running orders, and steps
+timed against an audio track (on hold); a local program on the Mac that
+serves the pages and the pairing itself; a larger XY pad in place of the
+phone's six buttons; tempo from the audio beat; a native wrapper for a
+true Syphon output; a MIDI mapping for the dimmer. Not wanted: a pairing
+server of the owner's own; the Mac-output preview on a phone paired
+without internet.
 
 ### Input B and Mix B (built 2026-11-16)
 
@@ -710,6 +778,7 @@ a live video instrument that runs in the browser. An iPhone's camera streams
 over WebRTC into a WebGL2 effects chain on a Mac, which shows the result on
 its own page or on a second display.
 
+Switch to main first (git checkout -B main origin/main) and run npm ci.
 Read CLAUDE.md, then HANDOFF.md, then README.md before doing anything. The
 handoff says where things stand, what has not yet been tried on the real
 iPhone and Mac, the decisions that are mine to make, the rules that are easy
@@ -736,9 +805,9 @@ How I work:
 Start by telling me, in a few lines, where things stand and what is waiting
 on me (from the top of HANDOFF.md). Then:
 
-This session: <say what you want built or fixed. Ideas already raised are
-under "Ideas raised and not started" in HANDOFF.md: several named running
-orders, steps timed to an audio track, the Mac-output preview on a phone
-paired without internet, a brightness control on the Mac, a pairing server
-of my own for the university Wi-Fi.>
+This session: <say what you want built or fixed, or what you found when
+you tried the last session's work on the real iPhones and Mac. Waiting, from
+HANDOFF.md: step 5 of the signal loss plan (video quality stepping down by
+itself, an alert when the Mac changes network, full alerts for the second
+phone); a round of logo options; an image as a control signal.>
 ```

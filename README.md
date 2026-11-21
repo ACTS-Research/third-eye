@@ -283,7 +283,7 @@ to use the whole sensor.
 | Rotate (the circling arrow, top right) | Turns the picture a quarter turn, on the Mac and in the preview, each time it is pressed |
 | Camera (top right) | Opens the settings panel: Quality (360p / 720p / 1080p at 30 or 60 fps, default 720p · 60), Camera on / off, **Preview: camera / Mac output**, any exposure and focus controls the camera reports (an iPhone in Safari reports none, and the panel says so), and **Scan the Mac's code** |
 | Preview: Mac output | The preview shows the Mac's finished picture instead of the camera: effects, Freeze and Blackout as the audience sees them. The Mac sends it back small (480 pixels wide, 15 pictures a second, at most 500 kbit/s) on the video call the phone already has, and only while a phone asks for it. It runs a moment behind the camera, because the picture has been to the Mac and back. It needs the camera on, and is not available on a phone paired without internet; the preview then shows the camera and the panel says why. The setting is remembered |
-| **Reconnect** | Appears in the top line whenever the link is down. It redials. It reads **Scan code** instead when the phone was paired by code, or when no Mac is found under the phone's room code (the code may have changed): it then reads a code on the Mac's screen through the camera, without leaving the page. Either code works: the ordinary pairing code (click **Phone** in the Mac's top bar) or the one from Pair without internet. While it is reading, the instruction lies along the foot of the preview and the status line stays readable; it stops by itself if the link comes back |
+| **Reconnect** | In the band at the foot of the preview (see "When the Mac is not receiving"), once the phone has been retrying for eight seconds. It redials. It reads **Scan code** instead when the phone was paired by code, or when no Mac is found under the phone's room code (the code may have changed): it then reads a code on the Mac's screen through the camera, without leaving the page. Either code works: the ordinary pairing code (click **Phone** in the Mac's top bar) or the one from Pair without internet. While it is reading, the instruction lies along the foot of the preview and the status line stays readable; it stops by itself if the link comes back |
 | By itself | The phone redials whenever the link drops, and also when the Mac has said nothing for ten seconds, whatever the browser reports about the connection. After a Mac reload it is back in a few seconds with no tap |
 
 A message (a camera that refused a setting, a screen that will not stay awake)
@@ -992,7 +992,15 @@ iPhone's camera offers zoom, a torch and a white-balance lock (and no
 exposure or focus controls), and the phone's rebuilt screen draws correctly
 in Safari, upright included. After the reconnect changes of 14 November the
 phone was reported to reconnect better. The rebuilt edit screen was used on
-the Mac on 15 November, before its LFOs tab was added.
+the Mac on 15 November, before its LFOs tab was added. On 16 November two
+iPhones were paired at once with the Mac on the first one's hotspot: the
+second worked, and the first was dropped as it joined and reconnected by
+itself (before "a paired phone keeps its place" was built). The same day the
+Mac was seen still running the previous version an hour after a deploy,
+until it was reloaded. Nothing else from 16 to 21 November (input B and Mix
+B, the strip under the picture, the stand-by for a dropped source, the
+phone's band and Resume, the start screens and checks, recordings saving
+themselves) has been seen on real devices.
 
 **Only in headless Chromium**, with a fake camera and microphone: everything
 else. Check these the first time you use them:
