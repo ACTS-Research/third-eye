@@ -48,7 +48,22 @@ export function mountEdit(root, ui) {
     presets.update(opened.index, structuredClone(opened.preset));
     store.dispatch({ op: 'scene', scene: opened.preset.scene, fade: 0, presetIndex: opened.index });
     saved.textContent = 'Reverted.';
+    ui.markChanges?.();
   } });
+  // What Revert would go back to, for the marks on the Parameters tab.
+  ui.openedScene = () => (opened && opened.index === presets.current ? opened.preset.scene : null);
+  // Revert says how many sliders it would put back, and is dim with nothing to undo.
+  let changeCount = 0;
+  function labelRevert() {
+    const p = presets.list[presets.current];
+    const dirty = !!opened && opened.index === presets.current && !!p && (changeCount > 0 || JSON.stringify(sceneOf(store.state)) !== JSON.stringify(opened.preset.scene) || p.name !== opened.preset.name);
+    revert.textContent = changeCount ? `Revert ${changeCount} change${changeCount === 1 ? '' : 's'}` : 'Revert';
+    revert.classList.toggle('idle', !dirty);
+  }
+  ui.onChangeCount = (n) => {
+    changeCount = n;
+    labelRevert();
+  };
   const remove = el('button', { text: 'Delete', onclick: () => {
     const p = presets.list[presets.current];
     if (!p || !confirm(`Delete preset "${p.name}"?`)) return;
@@ -193,7 +208,10 @@ export function mountEdit(root, ui) {
     if (p) {
       if (document.activeElement !== name) name.value = p.name;
       if (document.activeElement !== fade) fade.value = String(p.fade ?? store.state.globals.fadeTime);
-      if (!opened || opened.index !== i) opened = { index: i, preset: structuredClone(p) };
+      if (!opened || opened.index !== i) {
+        opened = { index: i, preset: structuredClone(p) };
+        ui.markChanges?.();
+      }
     } else {
       opened = null;
       saved.textContent = 'This look is not saved as a preset yet.';

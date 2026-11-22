@@ -315,7 +315,18 @@ input.bar-value:hover, input.bar-value:focus { border-color: var(--line); }
 .fx-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .fx .name { font: 700 18px/1.05 var(--display); letter-spacing: 0.04em; text-transform: uppercase; }
 .fx .meta { font-size: 11px; text-transform: none; letter-spacing: 0; }
-.fx.bypassed { opacity: 0.5; }
+/* The number is the effect's switch (click it to bypass). */
+.fx { padding: 0; gap: 0; align-items: stretch; }
+.fx .num { display: flex; align-items: center; padding: 8px 11px; border-right: 1px solid currentColor; cursor: pointer; }
+.fx .num:hover { background: var(--ink); color: var(--on-ink); }
+.fx[aria-pressed="true"] .num:hover { background: var(--bg); color: var(--ink); }
+.fx-text { padding: 8px 12px; justify-content: center; }
+.fx.bypassed { border-style: dashed; }
+.fx.bypassed .num { text-decoration: line-through; border-right-style: dashed; }
+.fx.bypassed .fx-text { opacity: 0.6; }
+/* Changed since the edit screen was opened. */
+.param label.changed::after { content: ''; display: inline-block; width: 7px; height: 7px; margin-left: 7px; border-radius: 50%; background: var(--ink); vertical-align: middle; }
+button.idle { opacity: 0.45; }
 .fx.drop-here { box-shadow: -5px 0 0 var(--ink); }
 .menu.add-effect { border-style: dashed; text-transform: uppercase; letter-spacing: 0.08em; }
 .preview-wrap { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); flex-shrink: 0; }

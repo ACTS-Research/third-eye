@@ -42,6 +42,9 @@ export function paramValue(spec, unit) {
   const u = Math.min(1, Math.max(0, unit));
   const n = spec.curve;
   if (!n) return min + u * (max - min);
+  // The ends are exactly the ends, whatever the arithmetic below would give.
+  if (u === 0) return min;
+  if (u === 1) return max;
   if (spec.center !== undefined) {
     const d = u * 2 - 1;
     return d >= 0 ? spec.center + d ** n * (max - spec.center) : spec.center - (-d) ** n * (spec.center - min);

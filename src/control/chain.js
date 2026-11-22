@@ -16,11 +16,12 @@ const TARGETS = [
 ];
 
 export function mountChain(roots, ui) {
-  const { store } = ui;
+  const { store, bus } = ui;
   const row = roots.chain;
   const pane = roots.params;
   let selected = null; // uid of the effect that is open
   let controls = new Map(); // key -> { set(value) } for the open effect
+  let bars = new Map(); // key -> { control, label() } for its sliders
   let dragFrom = -1;
 
   // Structural edits replace the scene; effects that survive keep their uid
@@ -61,12 +62,16 @@ export function mountChain(roots, ui) {
     row.replaceChildren(el('span', { class: 'chain-end', text: `In: ${INPUT_LABELS[store.state.input.kind] ?? store.state.input.kind}` }));
     chain.forEach((item, i) => {
       const def = EFFECT_BY_ID[item.type];
-      const faders = (store.state.macros ?? []).filter((s) => s?.fx === item.uid).length;
-      const moved = new Set(store.state.mappings.filter((m) => m.fx === item.uid).map((m) => m.key)).size;
-      const meta = [faders ? `${faders} fader${faders === 1 ? '' : 's'}` : '', moved ? `${moved} moved` : '', item.bypass ? 'bypassed' : ''].filter(Boolean).join(' · ');
-      const button = el('button', { class: `fx${item.bypass ? ' bypassed' : ''}`, 'data-uid': item.uid, 'data-type': item.type, 'aria-pressed': String(item === open), title: 'Click to open. Drag to reorder.', draggable: true, onclick: () => select(item.uid) }, [
-        el('span', { class: 'num', text: String(i + 1) }),
-        el('span', { class: 'fx-text' }, [el('span', { class: 'name', text: def.name }), el('span', { class: 'meta', text: meta || ' ' })]),
+      // The number is the effect's switch: a click on it bypasses the effect
+      // (or brings it back) without opening it. The Bypass switch on the
+      // Parameters tab does the same from the keyboard.
+      const num = el('span', { class: 'num', text: String(i + 1), title: item.bypass ? `Bypassed. Click to bring ${def.name} back.` : `Click to bypass ${def.name}.`, onclick: (e) => {
+        e.stopPropagation();
+        store.patchItem('chain', item.uid, { bypass: !store.findEffect(item.uid)?.bypass });
+      } });
+      const button = el('button', { class: `fx${item.bypass ? ' bypassed' : ''}`, 'data-uid': item.uid, 'data-type': item.type, 'aria-pressed': String(item === open), title: 'Click the name to open, the number to bypass. Drag to reorder.', draggable: true, onclick: () => select(item.uid) }, [
+        num,
+        el('span', { class: 'fx-text' }, [el('span', { class: 'name', text: def.name }), el('span', { class: 'meta', text: item.bypass ? 'bypassed' : '\u00a0' })]),
       ]);
       button.addEventListener('dragstart', (e) => {
         dragFrom = i;
@@ -118,6 +123,7 @@ export function mountChain(roots, ui) {
 
   function buildParams() {
     controls = new Map();
+    bars = new Map();
     pane.replaceChildren();
     const item = current();
     if (!item) {
@@ -191,6 +197,7 @@ export function mountChain(roots, ui) {
       const mod = modText(item.uid, key);
       const modButton = el('button', { class: 'mod-toggle', 'aria-pressed': String(mod.on), text: mod.text, title: mod.on ? 'Moved by itself. Click to see what moves it.' : 'Have something move this by itself', onclick: () => ui.openMod?.(item.uid, key) });
       controls.set(key, control);
+      bars.set(key, { control, label: () => pane.querySelector(`.param[data-key="${key}"] label`) });
       controls.set(`${key}$mod`, { set: () => {
         const now = modText(item.uid, key);
         modButton.textContent = now.text;
@@ -250,11 +257,45 @@ export function mountChain(roots, ui) {
     }
   }
 
+  // Marks what has changed since the edit screen was opened: a dot by the
+  // slider's name and a mark on its bar where the value was. Tells the edit
+  // screen how many sliders of the whole chain differ, for Revert.
+  function markChanges() {
+    const before = ui.openedScene?.();
+    const then = (uid) => before?.chain.find((it) => it.uid === uid);
+    const open = current();
+    const old = open && then(open.uid);
+    for (const [key, { control, label }] of bars) {
+      const now = key === 'mix' ? open?.mix : open?.params[key];
+      const prev = old && (key === 'mix' ? old.mix : old.params?.[key]);
+      const changed = prev !== undefined && prev !== null && now !== prev;
+      control.setWas(changed ? prev : undefined);
+      label()?.classList.toggle('changed', changed);
+    }
+    let count = 0;
+    for (const item of store.state.chain) {
+      const prev = then(item.uid);
+      if (!prev) continue;
+      if (item.mix !== prev.mix) count++;
+      for (const key of Object.keys(item.params)) if (prev.params?.[key] !== undefined && item.params[key] !== prev.params[key]) count++;
+    }
+    ui.onChangeCount?.(count);
+  }
+  ui.markChanges = markChanges;
+
+  // Where modulation has each moved slider of the open effect right now.
+  bus?.on('sources', (m) => {
+    const open = current();
+    if (!open) return;
+    for (const [key, { control }] of bars) control.setLive(m.mods?.[`${open.uid}:${key}`] ?? null);
+  });
+
   function build() {
     // Keep the open effect open while it exists.
     if (!store.findEffect(selected)) selected = store.state.chain[0]?.uid ?? null;
     buildRow();
     buildParams();
+    markChanges();
   }
 
   // Brings the open effect's controls up to date without rebuilding them.
@@ -264,6 +305,7 @@ export function mountChain(roots, ui) {
     controls.get('$bypass')?.set(item.bypass);
     controls.get('mix')?.set(item.mix);
     for (const key of Object.keys(EFFECT_BY_ID[item.type].params)) controls.get(key)?.set(item.params[key]);
+    markChanges();
   }
 
   store.subscribe((op) => {

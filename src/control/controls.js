@@ -37,22 +37,43 @@ export function bar({ min, max, step = 0.01, value = min, label = '', id, reset,
     ? el('input', { type: 'text', class: 'bar-value', inputMode: 'decimal', 'aria-label': label ? `${label}, value` : 'Value', autocomplete: 'off', spellcheck: false })
     : null;
   let current = value;
+  let live = null; // where modulation has it now, 0..1, or null
+  let was; // the value it had when the edit screen was opened, if it differs
+  // One layer of the bar's background, from a% to b% of its width.
+  const span = (image, a, b) => {
+    const size = Math.max(0.5, b - a);
+    return `${image} ${size >= 100 ? 0 : (a / (100 - size)) * 100}% 0 / ${size}% 100% no-repeat`;
+  };
 
   // The fill runs from the left, or from zero for a value that goes both ways.
   function paint() {
     const t = unitOf(current) * 100;
+    const marks = [];
+    // A mark where the value was, readable on the fill and off it.
+    if (was !== undefined) {
+      const w = unitOf(was) * 100;
+      marks.push(`linear-gradient(90deg, transparent calc(${w}% - 3px), var(--bg) calc(${w}% - 3px), var(--bg) calc(${w}% - 1px), var(--ink) calc(${w}% - 1px), var(--ink) calc(${w}% + 1px), var(--bg) calc(${w}% + 1px), var(--bg) calc(${w}% + 3px), transparent calc(${w}% + 3px))`);
+    }
+    // A hatched band from where it is set to where modulation has it, as
+    // on the perform faders: ink stripes past the fill, dark ones cut into it.
+    if (live !== null && Math.abs(live * 100 - t) > 0.4) {
+      const up = live * 100 > t;
+      const filled = origin === null ? !up : (t > unitOf(origin) * 100 ? !up : up);
+      marks.push(span(`repeating-linear-gradient(135deg, var(${filled ? '--bg' : '--ink'}) 0 2px, transparent 2px 6px)`, Math.min(t, live * 100), Math.max(t, live * 100)));
+    }
+    const under = marks.length ? `${marks.join(', ')}, ` : '';
     if (look === 'hue') {
       // The colour circle laid flat, with a white mark where the value is.
-      input.style.backgroundImage = `linear-gradient(90deg, transparent calc(${t}% - 2px), #000 calc(${t}% - 2px), #fff calc(${t}% - 1px), #fff calc(${t}% + 1px), #000 calc(${t}% + 2px), transparent calc(${t}% + 2px)), linear-gradient(90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)`;
+      input.style.background = `${under}linear-gradient(90deg, transparent calc(${t}% - 2px), #000 calc(${t}% - 2px), #fff calc(${t}% - 1px), #fff calc(${t}% + 1px), #000 calc(${t}% + 2px), transparent calc(${t}% + 2px)), linear-gradient(90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)`;
       return;
     }
     if (origin !== null) {
       const zero = unitOf(origin) * 100;
       const a = Math.min(zero, t);
       const b = Math.max(zero, t);
-      input.style.backgroundImage = `linear-gradient(90deg, transparent ${a}%, var(--ink) ${a}%, var(--ink) ${b}%, transparent ${b}%)`;
+      input.style.background = `${under}linear-gradient(90deg, transparent ${a}%, var(--ink) ${a}%, var(--ink) ${b}%, transparent ${b}%), var(--bg)`;
     } else {
-      input.style.backgroundImage = `linear-gradient(90deg, var(--ink) ${t}%, transparent ${t}%)`;
+      input.style.background = `${under}linear-gradient(90deg, var(--ink) ${t}%, transparent ${t}%), var(--bg)`;
     }
   }
   function show() {
@@ -99,6 +120,19 @@ export function bar({ min, max, step = 0.01, value = min, label = '', id, reset,
     },
     get value() {
       return current;
+    },
+    // Where modulation has the value now (0..1 along the bar), or null.
+    setLive(unit) {
+      const next = unit === null || unit === undefined ? null : clamp(unit, 0, 1);
+      if (next === live) return;
+      live = next;
+      paint();
+    },
+    // The value to mark as "where it was", or undefined for no mark.
+    setWas(v) {
+      if (v === was) return;
+      was = v;
+      paint();
     },
   };
 }

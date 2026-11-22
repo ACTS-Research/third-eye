@@ -10,6 +10,7 @@ import { LocalCamera } from './camera.js';
 import { MidiInput } from './midi.js';
 import { TOGGLE_ACTIONS, describeAction } from '../shared/actions.js';
 import { ORDER_KEY, PRESETS_KEY, applyPreset, applyStep, loadPresets, orderView } from '../shared/presets.js';
+import { paramUnit } from '../effects/index.js';
 import { macroUnit, resolveMacros } from '../shared/macros.js';
 import { randomRoom, roomB } from '../shared/net.js';
 import { TRIGGER_COUNT } from '../shared/protocol.js';
@@ -511,6 +512,22 @@ export class Engine {
     });
   }
 
+  // Where modulation has each slider it moves (0..1 along the slider), keyed
+  // `effect:slider`, so the edit screen can draw it on the slider's bar.
+  modLevels() {
+    const out = {};
+    for (const m of this.store.state.mappings) {
+      const id = `${m.fx}:${m.key}`;
+      if (m.enabled === false || id in out) continue;
+      const inst = this.pipeline.cur.instances.get(m.fx);
+      const live = inst?.values[m.key];
+      if (live === undefined) continue;
+      const spec = m.key === 'mix' ? { min: 0, max: 1 } : inst.def.params[m.key];
+      if (spec) out[id] = Math.round(paramUnit(spec, live) * 1000) / 1000;
+    }
+    return out;
+  }
+
   // The phone labels its trigger buttons with whatever they are bound to.
   sendTriggerLabels() {
     const labels = [];
@@ -585,7 +602,7 @@ export class Engine {
     const watched = now - this.controlSeenAt < CONTROL_TIMEOUT_MS;
     if (watched && now - this.lastSourcesAt >= SOURCES_INTERVAL_MS) {
       this.lastSourcesAt = now;
-      this.bus.send('sources', { values: this.mod.snapshot(), macros: this.macroLevels() });
+      this.bus.send('sources', { values: this.mod.snapshot(), macros: this.macroLevels(), mods: this.modLevels() });
     }
 
     this.inputs.feeds.phone.gated = this.link.hold;

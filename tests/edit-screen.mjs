@@ -34,7 +34,8 @@ try {
     return r.top >= m.bottom - 1 && t.left > m.right && m.width > 500;
   }));
   check('the chain row reads input, then each effect in order', (await control.locator('.chain-row .chain-end').textContent()).startsWith('In: ') && (await control.locator('.chain-row .fx .name').allTextContents()).join(',') === 'Video Feedback,RGB Offset');
-  check('the first effect is open, with what is pinned and moved on its button', (await control.locator('#tab-params .fx-head .name').textContent()) === 'Video Feedback' && (await control.locator('.chain-row .fx').first().locator('.meta').textContent()) === '3 moved');
+  check('the first effect is open, and its button says nothing while it is on', (await control.locator('#tab-params .fx-head .name').textContent()) === 'Video Feedback' && (await control.locator('.chain-row .fx').first().locator('.meta').textContent()).trim() === '');
+  check('a slider that something moves shows where it is now, as a hatched band on its bar', await settle(() => control.locator(paramBar('hue')).evaluate((b) => b.style.background.includes('repeating-linear-gradient')), 'band', 15000));
   check('no system menus and nothing left of the old control library', (await control.locator('#view-edit select').count()) === 0 && (await control.locator('[class*="tp-"]').count()) === 0);
 
   console.log('the bar');
@@ -77,6 +78,22 @@ try {
   await control.locator('#tab-params .fx-head >> text=Bypass').click();
   check('Bypass dims the effect on the chain row', await settle(() => control.locator('.chain-row .fx.bypassed').count().then((n) => n === 1), 'bypassed'));
   await control.locator('#tab-params .fx-head >> text=Bypass').click();
+
+  console.log('the number is the switch, and what has changed');
+  const firstFx = control.locator('.chain-row .fx').first();
+  const openBefore = await control.locator('.chain-row .fx[aria-pressed=true]').getAttribute('data-uid');
+  await firstFx.locator('.num').click();
+  check('a click on the number bypasses the effect and says so', await settle(async () => (await firstFx.getAttribute('class')).includes('bypassed') && (await firstFx.locator('.meta').textContent()) === 'bypassed' && (await state(() => window.thirdEye.store.state.chain[0].bypass)) === true, 'bypassed by number'));
+  check('without opening another effect', (await control.locator('.chain-row .fx[aria-pressed=true]').getAttribute('data-uid')) === openBefore);
+  await control.locator('.chain-row .fx').first().locator('.num').click();
+  check('and a second click brings it back', await settle(async () => (await state(() => window.thirdEye.store.state.chain[0].bypass)) === false && (await control.locator('.chain-row .fx.bypassed').count()) === 0, 'back'));
+  const keyLabel = control.locator('#tab-params .param[data-key="key"] label');
+  const dotsBefore = await control.locator('#tab-params .param label.changed').count();
+  await clickBar(control, paramBar('key'), 0.9);
+  check('a changed slider gets a dot by its name and a mark where it was', await settle(async () => (await keyLabel.getAttribute('class') ?? '').includes('changed') && (await control.locator(paramBar('key')).evaluate((b) => b.style.background.includes('calc('))), 'changed'));
+  check('Revert says how many sliders it would put back', /^Revert \d+ changes?$/.test(await control.locator('button', { hasText: /^Revert/ }).textContent()), await control.locator('button', { hasText: /^Revert/ }).textContent());
+  await control.locator(paramBar('key')).dblclick();
+  check('put back by hand, the dot goes', await settle(async () => (await control.locator('#tab-params .param label.changed').count()) === dotsBefore, 'unchanged'));
 
   console.log('modulation');
   await control.locator('.tabs button[data-tab=mods]').click();

@@ -1,0 +1,120 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-22T05:00:00Z"
+  },
+  "title": "Third Eye Cam: bypass and changes on the edit screen",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1180,
+      "h": 130,
+      "title": "B1 \u00b7 The number is the switch"
+    },
+    "Power.dc.html": {
+      "x": 0,
+      "y": 250,
+      "w": 1180,
+      "h": 130,
+      "title": "B2 \u00b7 A power mark on each block"
+    },
+    "Lamp.dc.html": {
+      "x": 0,
+      "y": 500,
+      "w": 1180,
+      "h": 140,
+      "title": "B3 \u00b7 A lamp along the top edge"
+    },
+    "Params.dc.html": {
+      "x": 0,
+      "y": 760,
+      "w": 720,
+      "h": 330,
+      "title": "Sliders: the modulation band, a dot for changed, a mark where it was"
+    },
+    "ModLine.dc.html": {
+      "x": 0,
+      "y": 1500,
+      "w": 720,
+      "h": 380,
+      "title": "M1 \u00b7 A line opens under the slider"
+    },
+    "ModHandle.dc.html": {
+      "x": 800,
+      "y": 1500,
+      "w": 720,
+      "h": 380,
+      "title": "M2 \u00b7 The button is the menu, the band is the amount"
+    },
+    "ModCard.dc.html": {
+      "x": 1600,
+      "y": 1500,
+      "w": 720,
+      "h": 380,
+      "title": "M3 \u00b7 A card beside the button"
+    },
+    "DirectMenu.dc.html": {
+      "x": 0,
+      "y": 2480,
+      "w": 760,
+      "h": 400,
+      "title": "N1 \u00b7 More is at the foot of the menu; the handle is a tab"
+    },
+    "DirectDots.dc.html": {
+      "x": 840,
+      "y": 2480,
+      "w": 760,
+      "h": 400,
+      "title": "N2 \u00b7 A \u2022\u2022\u2022 button beside a moved slider; the handle is a bracket"
+    },
+    "DirectAmount.dc.html": {
+      "x": 1680,
+      "y": 2480,
+      "w": 760,
+      "h": 400,
+      "title": "N3 \u00b7 The amount under the value leads to the rest; the handle is a pointer"
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Power.dc.html",
+    "Lamp.dc.html",
+    "Params.dc.html",
+    "ModLine.dc.html",
+    "ModHandle.dc.html",
+    "ModCard.dc.html",
+    "DirectMenu.dc.html",
+    "DirectDots.dc.html",
+    "DirectAmount.dc.html"
+  ],
+  "notes": {
+    "heading": {
+      "x": 0,
+      "y": -300,
+      "text": "Bypass on the block, and what has changed",
+      "kind": "title1",
+      "maxW": 1180
+    },
+    "heading2": {
+      "x": 0,
+      "y": 1200,
+      "text": "Modulation set from the Parameters tab",
+      "kind": "title1",
+      "maxW": 2320
+    },
+    "heading3": {
+      "x": 0,
+      "y": 2180,
+      "text": "M2, second round: where More goes, and the handle",
+      "kind": "title1",
+      "maxW": 2440
+    }
+  },
+  "designSystems": []
+}
