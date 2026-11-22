@@ -42,7 +42,10 @@ try {
   });
   check('the mark is small and above a large code', splash.order[0] === 'mark-box' && splash.order[1] === 'splash-qr' && splash.mark < 80 && splash.qr > splash.mark * 2.5 && splash.dark > 0.2, JSON.stringify(splash));
   check('with the one instruction and the room code, and no title', splash.text.includes('Point the iPhone\'s camera at this code and open the link.') && splash.text.includes(await mac(() => window.thirdEye.store.state.net.room)) && !/third eye cam/i.test(splash.text) && !splash.text.includes('START'), splash.text);
-  check('the mark moves', await control.evaluate(() => getComputedStyle(document.querySelector('#splash .mark-lid')).animationName === 'mark-blink'));
+  check('the mark moves', await settle(() => control.evaluate(() => {
+    const m = document.querySelector('#splash .mark');
+    return !!m.querySelector('animate[attributeName="d"]') && !!m.querySelector('feTurbulence animate') && !m.animationsPaused() && m.getCurrentTime() > 0;
+  }), 'mark'));
   await control.locator('#splash >> text=Test pattern').click();
   check('Test pattern takes its place', (await mac(() => window.thirdEye.store.state.input.kind)) === 'pattern' && (await settle(() => control.locator('#splash').isHidden(), 'gone')));
   await control.keyboard.press('1');

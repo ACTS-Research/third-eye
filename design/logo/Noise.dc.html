@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Outline with a light noise fill</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#060303}
+</style>
+</helmet>
+<div style="width: 440px; height: 520px; box-sizing: border-box; padding: 32px; display: flex; flex-direction: column; justify-content: space-between; background: #060303; color: {{ink}}; font: 500 12px/1 system-ui, sans-serif">
+  <svg width="0" height="0" aria-hidden="true" style="position: absolute"><defs><filter id="nz-noise" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="1.5" numOctaves="2" seed="7" result="t"/><feColorMatrix in="t" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  14 0 0 0 -8.7" result="a"/><feComposite in="SourceGraphic" in2="a" operator="in"/></filter></defs></svg>
+  <div style="display: flex; justify-content: center; align-items: center; height: 290px">
+    <svg viewBox="0 5 64 58" width="300" height="272" role="img" aria-label="Camera in outline filled with light noise"><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z M11.5 38Q32 18 52.5 38Q32 58 11.5 38Z" fill-rule="evenodd" fill="currentColor" filter="url(#nz-noise)"/><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><rect x="10" y="20.5" width="8" height="4" rx="1.5" fill="currentColor"/><path d="M11.5 38Q32 18 52.5 38Q32 58 11.5 38Z" fill="#060303" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="32" cy="38" r="6" fill="currentColor"/><circle cx="32" cy="38" r="2.2" fill="#060303"/></svg>
+  </div>
+  <div style="display: flex; align-items: center; gap: 24px">
+    <div style="width: 96px; height: 96px; flex-shrink: 0; border-radius: 21px; border: 1px solid #3a2a27; display: flex; align-items: center; justify-content: center">
+      <svg viewBox="0 5 64 58" width="70" height="63" aria-hidden="true"><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z M11.5 38Q32 18 52.5 38Q32 58 11.5 38Z" fill-rule="evenodd" fill="currentColor" filter="url(#nz-noise)"/><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><rect x="10" y="20.5" width="8" height="4" rx="1.5" fill="currentColor"/><path d="M11.5 38Q32 18 52.5 38Q32 58 11.5 38Z" fill="#060303" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="32" cy="38" r="6" fill="currentColor"/><circle cx="32" cy="38" r="2.2" fill="#060303"/></svg>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; flex-grow: 1">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 8px; background: #2b2a2e; color: #e6e6ea">
+        <span style="width: 32px; height: 32px; border-radius: 7px; background: #060303; color: {{ink}}; display: flex; align-items: center; justify-content: center"><svg viewBox="0 5 64 58" width="27" height="24" aria-hidden="true"><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z M11.5 38Q32 18 52.5 38Q32 58 11.5 38Z" fill-rule="evenodd" fill="currentColor" filter="url(#nz-noise)"/><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><rect x="10" y="20.5" width="8" height="4" rx="1.5" fill="currentColor"/><path d="M11.5 38Q32 18 52.5 38Q32 58 11.5 38Z" fill="#060303" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="32" cy="38" r="6" fill="currentColor"/><circle cx="32" cy="38" r="2.2" fill="#060303"/></svg></span>
+        <span style="width: 16px; height: 16px; border-radius: 3px; background: #060303; color: {{ink}}; display: flex; align-items: center; justify-content: center"><svg viewBox="0 5 64 58" width="14" height="13" aria-hidden="true"><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z M11.5 38Q32 18 52.5 38Q32 58 11.5 38Z" fill-rule="evenodd" fill="currentColor" filter="url(#nz-noise)"/><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><rect x="10" y="20.5" width="8" height="4" rx="1.5" fill="currentColor"/><path d="M11.5 38Q32 18 52.5 38Q32 58 11.5 38Z" fill="#060303" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="32" cy="38" r="6" fill="currentColor"/><circle cx="32" cy="38" r="2.2" fill="#060303"/></svg></span>
+        <span>Third Eye Cam</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 8px; background: #eeeef0; color: #2a2a2e">
+        <span style="width: 32px; height: 32px; border-radius: 7px; background: #060303; color: {{ink}}; display: flex; align-items: center; justify-content: center"><svg viewBox="0 5 64 58" width="27" height="24" aria-hidden="true"><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z M11.5 38Q32 18 52.5 38Q32 58 11.5 38Z" fill-rule="evenodd" fill="currentColor" filter="url(#nz-noise)"/><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><rect x="10" y="20.5" width="8" height="4" rx="1.5" fill="currentColor"/><path d="M11.5 38Q32 18 52.5 38Q32 58 11.5 38Z" fill="#060303" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="32" cy="38" r="6" fill="currentColor"/><circle cx="32" cy="38" r="2.2" fill="#060303"/></svg></span>
+        <span style="width: 16px; height: 16px; border-radius: 3px; background: #060303; color: {{ink}}; display: flex; align-items: center; justify-content: center"><svg viewBox="0 5 64 58" width="14" height="13" aria-hidden="true"><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z M11.5 38Q32 18 52.5 38Q32 58 11.5 38Z" fill-rule="evenodd" fill="currentColor" filter="url(#nz-noise)"/><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><rect x="10" y="20.5" width="8" height="4" rx="1.5" fill="currentColor"/><path d="M11.5 38Q32 18 52.5 38Q32 58 11.5 38Z" fill="#060303" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="32" cy="38" r="6" fill="currentColor"/><circle cx="32" cy="38" r="2.2" fill="#060303"/></svg></span>
+        <span>Third Eye Cam</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"ink":{"editor":"color","default":"#ff6b5e","options":["#ff6b5e","#ffb347","#e8e4dc","#7ce3ff"]},"$preview":{"width":440,"height":520}}'>
+class Component extends DCLogic {
+renderVals() {
+return { ink: this.props.ink ?? '#ff6b5e' };
+}
+}
+</script>
+</body>
+</html>

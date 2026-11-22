@@ -1,0 +1,27 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-22T12:00:00Z" },
+  "title": "Third Eye Cam logo, round 4",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 440, "h": 520, "title": "Now · the upright eye" },
+    "Horizontal.dc.html": { "x": 520, "y": 0, "w": 440, "h": 520, "title": "H1 · Horizontal eye" },
+    "Therefore.dc.html": { "x": 1040, "y": 0, "w": 440, "h": 520, "title": "H2 · Therefore sign in the eye" },
+    "Outline.dc.html": { "x": 1560, "y": 0, "w": 440, "h": 520, "title": "H3 · Outline only" },
+    "Noise.dc.html": { "x": 2080, "y": 0, "w": 440, "h": 520, "title": "H4 · Outline with a light noise fill" },
+    "Lenses.dc.html": { "x": 0, "y": 940, "w": 440, "h": 520, "title": "H5 · Three lenses as the therefore sign" },
+    "Wide.dc.html": { "x": 520, "y": 940, "w": 440, "h": 520, "title": "H6 · The eye wider than the camera" },
+    "Scan.dc.html": { "x": 1040, "y": 940, "w": 440, "h": 520, "title": "H7 · An eye of scan lines" },
+    "Solid.dc.html": { "x": 1560, "y": 940, "w": 440, "h": 520, "title": "H8 · Outline camera, solid eye" },
+    "Logo.dc.html": { "x": 0, "y": 1880, "w": 440, "h": 520, "title": "Logo · H3 with the line 10% thinner" },
+    "Animated.dc.html": { "x": 520, "y": 1880, "w": 440, "h": 520, "title": "Animated logo · H4, blinking, noise moving" }
+  },
+  "order": ["Main.dc.html", "Horizontal.dc.html", "Therefore.dc.html", "Outline.dc.html", "Noise.dc.html", "Lenses.dc.html", "Wide.dc.html", "Scan.dc.html", "Solid.dc.html", "Logo.dc.html", "Animated.dc.html"],
+  "notes": {
+    "heading": { "x": 0, "y": -300, "text": "What you asked for", "kind": "title1", "maxW": 2520 },
+    "heading2": { "x": 0, "y": 640, "text": "Four more", "kind": "title1", "maxW": 2000 },
+    "heading3": { "x": 0, "y": 1580, "text": "Chosen: the logo and its animated form", "kind": "title1", "maxW": 960 }
+  },
+  "designSystems": []
+}

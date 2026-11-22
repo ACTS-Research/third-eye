@@ -896,19 +896,21 @@ true Syphon server; it is not part of this project yet.
 
 ## Icon
 
-The browser-tab and Home Screen icon is a compact camera with an upright eye,
-in the app's red on its black. `scripts/make-icons.mjs` draws it and writes
-the files in `public/` (`icon.svg`, `icon-32.png`, `icon-180.png`,
-`icon-512.png`); change the drawing there and run it again.
+The browser-tab and Home Screen icon is a compact camera drawn in outline
+with a horizontal eye in the same line, in the app's red on its black.
+`scripts/make-icons.mjs` draws it and writes the files in `public/`
+(`icon.svg`, `icon-32.png`, `icon-180.png`, `icon-512.png`); change the
+drawing there and run it again. The mark on the Mac's splash and the phone's
+start screen is the same drawing in motion (`src/shared/mark.js`): light
+video noise inside the camera, and an eye that blinks now and then.
 
 ```bash
 node scripts/make-icons.mjs
 ```
 
-The mock-ups for the running order and the edit screen are kept beside it
-(`design/README.md` says what each is). The other icon options that were
-considered are in `design/third-eye-icons.html`
-(open the file in a browser).
+The mock-ups are kept in `design/` (`design/README.md` says what each is).
+The logo options of 22 November are in `design/logo/`; the earlier icon
+options are in `design/third-eye-icons.html` (open the file in a browser).
 
 ## Deploying to GitHub Pages
 

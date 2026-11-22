@@ -5,7 +5,8 @@ of the site; nothing here is deployed or tested.
 
 | Folder or file | What it is | Where it can be seen |
 | --- | --- | --- |
-| `third-eye-icons.html` | The icon options, three rounds. Open it in a browser. D2 was chosen | https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo |
+| `third-eye-icons.html` | The icon options, three rounds. Open it in a browser. D2 was chosen, and replaced on 22 November by the logo below | https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo |
+| `logo/` | The logo, round 4 (22 November): `Main` the upright eye as it was, `Horizontal` H1, `Therefore` H2, `Outline` H3, `Noise` H4, `Lenses` H5, `Wide` H6, `Scan` H7, `Solid` H8, then the two that were built: `Logo` (H3 with the line 10% thinner and the iris a ring in the same line) for the icon, and `Animated` (H4 the same way, noise moving, the eye blinking at uneven gaps) for the mark on the splash and the phone's start screen | https://claude.ai/artifact/E6D3gZSjwHWBqA6rbMSN6m |
 | `running-order/` | Three directions for the running order (`Main` A strip, `Stack` B, `Show` C) and the phone board. A was built | https://claude.ai/artifact/SiD1F7P89JLwXeC31BKhz4 |
 | `edit-screen/` | Three directions for the edit screen (`Main` A rows, `Inspector` B, `Picture` C), four slider styles (`Sliders`) and three ways to set LFO tempo sync (`Sync`). C, the Bar and Notes were built | https://claude.ai/artifact/UEbbvKGUHsQo7CxCWFUVDT |
 | `mix/` | Input B and mixing. Round 1: three directions (`Main` A an effect, `Crossfader` B, `Both` C) and two places for the inputs (`InputsMenu` C1, `InputsRow` C2); C with C1 was built first. Round 2, the strip redone: `StripGrid` S1, `StripSlim` S2, `StripHover` S3, `Modes` (menu or grid), `StripModes` (mode button right of B, or left of A). S3, the grid and the button right of B were built, pop-ups opening upward | https://claude.ai/artifact/4yrzjrjTVfZ4qgMexUNNn3 |
