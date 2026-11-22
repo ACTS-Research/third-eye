@@ -544,7 +544,15 @@ to fold its card.
 | Tone | Brightness, contrast and colour in one place. **exposure** runs from an eighth of the light to eight times. **contrast** leaves the picture alone mid-slider; to the left it flattens to grey and then turns over into a negative. **saturation** and **hue** as usual. The **tint** gives the dark parts one colour (**shadows**) and the bright parts another (**highlights**), each chosen on a bar of the colour circle; **tint** is how much of the picture's own colour they replace. (This replaced Contrast / Brightness and Hue Shift on 22 November 2026; a saved preset that used either now has Tone, set to match) |
 | Blur / Glow | One wide blur, used three ways. **size** runs from a pixel or two to a third of the picture. **soften** to the right gives the picture over to the blur; to the left it sharpens, and at the far left haloes. **glow** adds the blurred highlights back over the picture. **stretch** turns the blur into a streak along **angle** |
 | Noise | Video static that takes the picture over speck by speck: **amount** from a little grain to nothing but static, **grain** from single pixels to large blocks, **speed** from frozen to changing every frame, **colour** from black-and-white to coloured, and **bite** for where it eats first (right: the bright parts; left: the dark) |
+| Motion | Shows only what moves, or only what is still (**show**). **sensitivity** is how little movement counts, **softness** the edge, **memory** how long a point that moved goes on counting. **rest** is what fills the remainder: black, the picture as it last was there (so movement paints the picture in, or, showing what is still, people who move never appear), or the picture dimmed. **movement of** chooses whose movement decides: input A's or input B's |
+| Gravity | The picture keeps what it showed and lets it fall. **pull** is how fast; "down" is real down when a phone is paired (roll the phone and it pours the other way; point it at the floor and it stops), turned by **angle**, and the foot of the picture when none is. **drag** lets movement in the picture carry it along, **hold** is how long what has fallen stays, **spread** widens it as it goes, and **blend** chooses what falls: everything (Pour), the bright parts, or the dark parts |
 | Mix B | Mixes input B in: nine modes (see [Inputs](#inputs)) |
+
+Motion and Gravity read the **motion map**: a small picture of where the
+input is moving, made by comparing each frame with the one before. It is
+made once a frame however many effects read it, and not at all in a preset
+that does not use it. It sees change, not objects: a light switched on
+counts as movement, and so does the whole picture when the camera moves.
 
 **Apply to** (on every effect) limits it to the person or to the background.
 That needs **Segmentation** switched on under Setup → Vision.
@@ -586,6 +594,7 @@ resolution if the GPU is struggling.
 | LFO | four oscillators: sine, triangle, ramp, square, random steps, drift; free-running or locked to the tempo |
 | Tempo | beat pulse, beat ramp, bar ramp |
 | Audio | level, bass, mid, high, beat |
+| Motion A, Motion B | movement in input A's picture, and in input B's: overall, left half, right half, top half, bottom half, and where the movement is (left to right, bottom to top). Listed under **Setup → Sources** once a preset uses one |
 | MIDI | every CC and note, created the first time it is seen |
 | Face / Hand / Gesture / Pose / Segment | see [vision](#midi-audio-and-vision) |
 
@@ -816,6 +825,12 @@ modulated.
   (see `feedback.js`, `trails.js`).
 - `uses: { history: { frames, maxWidth } }` gives a ring buffer of past input
   frames as `uHistory` (see `delay.js`).
+- `uses: { motion: true }` gives the motion maps of inputs A and B as
+  `uMotion` and `uMotionB`. Read one with `motionAt(uMotion, uv)`: `.x` is
+  movement now (0 to 1), `.y` the same with a short wake, `.zw` roughly which
+  way it is going (see `motion.js`, `gravity.js`). An effect with
+  `uses.prev` may also keep a value of its own in the alpha of what it
+  returns, and read it back from `uPrev`.
 - `uses: { inputB: true }` gives input B as `uTexB`, fitted like A; the
   effect is skipped while B is off (see `mixb.js`). `mixLabel` renames the
   effect's wet / dry slider.
@@ -999,7 +1014,7 @@ npm test
 | `tests/drop.mjs` | If a source drops: hold, fade to black, fade to a stand-by source and back when the phone returns, a newly chosen source getting its full wait, input B easing out of the mix and returning, the settings and the alert |
 | `tests/link-down.mjs` | The phone when the Mac is not receiving: the band at the foot of the preview in both layouts (what is wrong, retrying with the time, a button only when needed and large enough), the grey preview and pulsing edge, the pad and the controls left alone, the phone returning by itself; the Resume screen and when it is not offered |
 | `tests/start.mjs` | A browser that has never opened the app: the Mac opening on the iPhone input with the splash where the picture will be, the Before the show check and its flag, the phone's start screen and its check after START. (Every other suite starts from a saved session on the test pattern with the phone's check off: `launch()` in `lib.mjs`) |
-| `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, triggers, presets, crossfade |
+| `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, the motion map (built only when read, its modulation sources, the Motion and Gravity effects), triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |
 
@@ -1029,16 +1044,24 @@ themselves) has been seen on real devices.
 
 On 22 November the owner tried the new effects (Tone, Blur / Glow, Noise and
 the wider slider ranges) on the Mac with the iPhone as input and reported
-that they work well.
+that they work well, and later that drawing a modulation's range on a
+slider and the number on an effect's button as its bypass switch work well
+too.
 
 **Only in headless Chromium**, with a fake camera and microphone: everything
 else. Check these the first time you use them:
 
+- **The motion map, Motion, Gravity and the Motion sources** (22
+  November): all of it with a real camera. The tests use the moving test
+  pattern, which has no grain. To find out: whether camera grain or the
+  phone's video compression reads as movement at the default
+  **sensitivity**; whether Gravity's "down" is the room's down (if it
+  pours upward or sideways, set **angle**, and say so); how the Motion
+  sources read with a person in a lit room; the frame rate.
 - **From 22 November:** the moving mark on the iPhone's start screen in
-  Safari; the frame rate with Blur / Glow on a large output; drawing a
-  modulation's range on a slider's bar; the number on an effect's button
-  as its bypass switch; a paired phone keeping its place through a reload
-  while another phone waits on the same code.
+  Safari; the frame rate with Blur / Glow on a large output; a paired
+  phone keeping its place through a reload while another phone waits on
+  the same code.
 
 - **Input B and Mix B** (16 November): two real pictures mixed, the iPhone
   as A or B beside the Mac's camera, and whether the Mac holds 60 fps with

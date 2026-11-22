@@ -7,6 +7,7 @@
 import { EFFECT_BY_ID } from '../effects/index.js';
 import { FOOTER, HEADER } from '../effects/common.glsl.js';
 import { Program, Target, createTexture, drawFullscreen } from './gl.js';
+import { GREY_FRAG, MOTION_FRAG, MotionMap, STATS_FRAG } from './motion.js';
 import { COPY_FRAG, FINAL_FRAG, MIX_FRAG, PATTERN_FRAG, SOURCE_FRAG } from './shaders.js';
 
 // Monitor image sent to /control (read back asynchronously, ~10 per second).
@@ -196,6 +197,7 @@ class EffectInstance {
     dst.bind();
     p.tex('uTex', 0, inTex);
     if (this.def.uses?.inputB) p.tex('uTexB', 4, ctx.texB);
+    if (this.def.uses?.motion) p.tex('uMotion', 6, ctx.motionTex).tex('uMotionB', 7, ctx.motionTexB);
     p.tex('uMask', 3, ctx.maskTex);
     p.i('uMaskMode', MASK_MODES[item.target] ?? 0);
     p.v4('uMaskFit', ctx.maskFit[0], ctx.maskFit[1], ctx.maskFit[2], ctx.maskFit[3]);
@@ -277,6 +279,14 @@ class Runner {
     return tex;
   }
 
+  // Whether an effect that will be drawn reads the motion map.
+  usesMotion() {
+    for (const item of this.items) {
+      if (!item.bypass && this.instances.get(item.uid)?.def.uses?.motion) return true;
+    }
+    return false;
+  }
+
   dispose() {
     for (const inst of this.instances.values()) inst.dispose();
     this.instances.clear();
@@ -318,6 +328,14 @@ export class Pipeline {
     // 1x1 white stand-in until a segmentation mask exists.
     this.noMask = createTexture(gl, 1, 1);
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
+
+    // The motion maps of inputs A and B, and a stand-in that says "nothing
+    // is moving". Each map is only refreshed while something reads it.
+    const motionPrograms = { grey: new Program(gl, GREY_FRAG, 'motion grey'), motion: new Program(gl, MOTION_FRAG, 'motion map'), stats: new Program(gl, STATS_FRAG, 'motion stats') };
+    this.motionA = new MotionMap(gl, motionPrograms, Readback);
+    this.motionB = new MotionMap(gl, motionPrograms, Readback);
+    this.noMotion = createTexture(gl, 1, 1);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 128, 128]));
 
     this.cur = new Runner(this);
     this.prev = null;
@@ -370,6 +388,8 @@ export class Pipeline {
     this.srcBDirty = true;
     this.sby.resize(w, h);
     this.srcOut.resize(w, h);
+    this.motionA.resize(w, h);
+    this.motionB.resize(w, h);
     this.cur.resize(w, h);
     this.prev?.resize(w, h);
   }
@@ -396,7 +416,8 @@ export class Pipeline {
     return [Math.min(1, r), Math.min(1, 1 / r)];
   }
 
-  // Draws one input (A, or B with `second`) into its working buffer.
+  // Draws one input (A, or B with `second`) into its working buffer. True
+  // when the buffer has a new picture.
   updateSource(ctx, input, frozen, second = false) {
     const gl = this.gl;
     const slot = second ? this.inputs.b : this.inputs;
@@ -404,20 +425,21 @@ export class Pipeline {
     const dirtyKey = second ? 'srcBDirty' : 'srcDirty';
     if (slot.kind === 'pattern') {
       if (!frozen) this.patternTime = ctx.time;
-      if (frozen && !this[dirtyKey]) return;
+      if (frozen && !this[dirtyKey]) return false;
       target.bind();
       this.patternProgram.use().f('uTime', this.patternTime).v2('uResolution', this.width, this.height);
       drawFullscreen(gl);
       this[dirtyKey] = false;
-      return;
+      return true;
     }
     const uploaded = frozen ? false : slot.update();
-    if (!(uploaded || this[dirtyKey]) || !slot.hasFrame) return;
+    if (!(uploaded || this[dirtyKey]) || !slot.hasFrame) return false;
     const [sx, sy] = this.fitScale(input.fit, slot);
     target.bind();
     this.sourceProgram.use().tex('uTex', 0, slot.tex).v2('uFit', sx, sy).f('uMirror', input.mirror ? 1 : 0).f('uTurn', slot.quarter);
     drawFullscreen(gl);
     this[dirtyKey] = false;
+    return true;
   }
 
   // What the chain starts from: input A, or while its source has dropped
@@ -469,14 +491,32 @@ export class Pipeline {
   }
 
   // ctx: { time, now, phone, maskTex, maskFit, glitch, master, bypassAll,
-  //        frozen, input, resolve, canvasWidth, canvasHeight, wantPreview }
+  //        frozen, input, resolve, canvasWidth, canvasHeight, wantPreview,
+  //        motion }
   render(ctx) {
     const gl = this.gl;
     ctx.maskTex = ctx.maskTex ?? this.noMask;
 
-    this.updateSource(ctx, ctx.input, ctx.frozen);
-    if (this.inputs.b.kind) this.updateSource(ctx, ctx.input, ctx.frozen, true);
+    const newA = this.updateSource(ctx, ctx.input, ctx.frozen);
+    const newB = this.inputs.b.kind ? this.updateSource(ctx, ctx.input, ctx.frozen, true) : false;
     ctx.texB = this.hasB() ? this.srcB.tex : null;
+
+    // The motion maps, for the effects that read them (ctx.motion asks for
+    // them on behalf of the modulation sources: { a, b }).
+    const fx = !ctx.bypassAll && (this.cur.usesMotion() || !!this.prev?.usesMotion());
+    const hasA = this.inputs.kind === 'pattern' || this.inputs.hasFrame;
+    ctx.motionTex = this.noMotion;
+    ctx.motionTexB = this.noMotion;
+    if ((fx || ctx.motion?.a) && hasA) {
+      this.motionA.update(this.src.tex, newA, ctx.now);
+      ctx.motionTex = this.motionA.tex;
+      if (ctx.motion?.a) this.motionA.readStats();
+    }
+    if ((fx || ctx.motion?.b) && ctx.texB) {
+      this.motionB.update(this.srcB.tex, newB, ctx.now);
+      ctx.motionTexB = this.motionB.tex;
+      if (ctx.motion?.b) this.motionB.readStats();
+    }
 
     let fadeT = 1;
     if (this.fade) {
@@ -561,6 +601,11 @@ export class Pipeline {
   // { width, height, pixels } once the GPU has finished, otherwise null.
   pollPreview() {
     return this.preview.poll();
+  }
+
+  // The averaged motion map of input A ('a') or B, for the modulation sources.
+  pollMotion(which) {
+    return (which === 'b' ? this.motionB : this.motionA).stats.poll();
   }
 
   // The same for the strip of small input views.

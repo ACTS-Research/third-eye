@@ -1,36 +1,34 @@
 # Handoff
 
-## 2026-11-22 (end of the fifth session, 21 to 22 November)
+## 2026-11-22 (sixth session)
 
-**Where things stand.** A new logo, the first stage of the effects rework
-(curved sliders, Tone, Blur / Glow, Noise) and a reworked edit screen
-(bypass on the block's number, marks for what has changed, modulation set
-on the slider itself) are built and live on GitHub Pages from `main`. The
-owner tried the new effects on the Mac on 22 November ("they work well");
-nothing else from this session, and almost nothing from the one before,
-has been tried on the real iPhones and Mac.
+**Where things stand.** Stage 2 of the effects plan is built and live on
+GitHub Pages from `main`: the motion map, the Motion and Gravity effects,
+and movement in the picture as modulation sources (Motion A, Motion B). It
+has only been seen on the moving test pattern in the sandbox, never with a
+real camera. From the session before, the owner reports that the new
+effects, drawing a modulation's range on a slider and the number as a
+bypass switch all work well on the real iPhone and Mac.
 
-**Next step.** Stage 2 of the effects plan below: the motion map, then the
-Motion and Gravity effects on top of it, and motion as modulation sources
-(which is also "an image as a control signal"). Before that, on the real
-Mac: the edit screen's new modulation editing, and the frame rate with
-Blur / Glow.
+**Next step.** On the real Mac with the iPhone: try Motion, Gravity and a
+Motion source on a slider, and say what the defaults should be (see "Stage
+2, what to try" below). Then Glitch (the owner's choice, 22 November), then
+stage 3 of the effects plan.
 
 **Decisions only you can make.**
 
-- On the Mac, switch on Setup → Vision → Segmentation with a camera or the
-  phone as input and say how many milliseconds a pass takes. That decides
-  how far the body-mask effects are worth pushing.
+- Try stage 2 on the real devices and say: whether a still room reads as
+  still at Motion's default sensitivity; whether Gravity pours toward the
+  room's floor when you roll the phone (if not, which way); whether the
+  Motion sources are lively enough or too jumpy.
+- Say what Glitch should become (next after stage 2). You asked for a
+  chosen, sudden move of one or more sliders of the effects already in the
+  preset.
 - Say whether the bars on the Parameters tab are too narrow for drawing a
   modulation's range (about 100 px in a 1440-wide window). If so: shorten
   "Fader" to a mark, or widen that column.
-- Say what Glitch should become. You asked for a chosen, sudden move of one
-  or more sliders of the effects already in the preset; we parked it.
 - Say whether the Kaleido factory preset should get its slow colour
   cycling back (an LFO on Tone's hue). Tone has no cycle control.
-- Look at the new icon in a real Chrome tab, and at the moving mark on the
-  iPhone's start screen in Safari. If the noise sits still there, say so.
-  Remove the old Home Screen icon and add it again to get the new one.
 - Try two phones again on the hotspot and say whether the first still gets
   kicked off when the second starts.
 - Choose what the picture does when a phone drops: Setup → Input → If a
@@ -52,7 +50,27 @@ Blur / Glow.
 - Tick **hold** again on any trigger that had it: settings saved before 13
   November are no longer read.
 
-**Settled this session.** Logo: H3 (outline camera, horizontal eye, line
+**Settled in the sixth session.** The logo is fine for now. The
+segmentation timing on the owner's Mac is not needed: the app will run on
+several machines, so the body-mask effects of stage 4 are to be built to
+tolerate a slow mask (soften, delay) instead of being tuned to one figure.
+Glitch comes after stage 2. No mock-ups for Motion and Gravity (their
+controls are the generated sliders).
+
+**Stage 2, what to try** (none of it seen with a real camera).
+
+- Motion: add it alone, wave a hand. A still room should be black; if it
+  sparkles, sensitivity is too high for the camera's grain (the floor is
+  in `MOTION_FRAG`, `engine/motion.js`: `change - 0.012`). Then **rest:
+  Held picture**, and **show: What is still** with it.
+- Gravity: add it alone, roll the phone. "Down" follows `uPhone.x` the same
+  way Rotate / Counter-rotate does, and that direction has never been
+  confirmed; if it is mirrored, negate `uPhone.x` in `gravity.js`.
+- A Motion source: Mod on any slider → Motion A → Overall. The readings are
+  shaped in `MotionSources.read` (a square root of the share of the picture
+  that moves, times four).
+
+**Settled in the fifth session.** Logo: H3 (outline camera, horizontal eye, line
 2.7, the iris a ring in the same line) for the icon; H4 for the moving mark
 (noise ten times a second, quick blinks at uneven gaps over twenty seconds,
 the noise dimming and softening slightly at each blink, no wandering
@@ -69,7 +87,7 @@ paired phone's place is held for thirty seconds across a closed link.
 **The effects plan** (approved 22 November; stage 1 is built).
 
 1. *Done.* Curved slider ranges; Blur / Glow; Noise; Tone.
-2. The motion map, built once and shared (a frame compared with the last,
+2. *Done, 22 November.* The motion map, built once and shared (a frame compared with the last,
    in the shader, no model): the Motion effect (only what moves, or only
    what is still), Gravity (the picture drifts toward real "down" as the
    phone tilts, and is dragged along with movement), and motion as
@@ -92,6 +110,9 @@ control that blurs or sharpens inside the loop; Kaleidoscope and Edge Glow
 simplified (seven controls each). Not recommended: object detection.
 Cross-feedback between A and B: later, if at all.
 
+**Built in the sixth session, not yet tried on real hardware.** All of
+stage 2: see "Stage 2, what to try" above.
+
 **Built in the fifth session, not yet tried on real hardware.**
 
 - The moving mark in Safari on the iPhone (SVG animation of a filter's
@@ -100,8 +121,8 @@ Cross-feedback between A and B: later, if at all.
   display; how the curved sliders feel under a hand, a fader and a MIDI
   knob; a saved preset with Contrast / Brightness or Hue Shift becoming
   Tone.
-- Drawing a modulation's range on a bar with a trackpad; the pinned top of
-  the source menu; the number as a bypass switch.
+- The pinned top of the source menu. (Drawing a modulation's range on a
+  bar and the number as a bypass switch: confirmed by the owner.)
 - The paired phone keeping its place through a reload with another phone
   waiting on the same code.
 
@@ -203,6 +224,35 @@ deleted under Setup → Recordings.
   palette) and asked for the LFOs tab and picture buttons that followed.
 - The iPhone's camera offers a web page no exposure or focus controls (the
   settings panel was empty apart from Quality and Camera).
+
+### Sixth session (22 November), in short
+
+- **The motion map** is `src/engine/motion.js`. `MotionMap` (one for input
+  A, one for B, owned by the pipeline) keeps a 320-wide grey copy of the
+  last two frames and a map: r = movement now, g = the same with a wake,
+  b / a = a rough direction (brightness change against the gradient, read
+  a quarter-size so fast movement registers). It is refreshed in
+  `Pipeline.render` only when an effect with `uses: { motion: true }` is
+  in a chain being drawn, or `ctx.motion` asks (the engine's
+  `wantMotion()`: a mapping or trigger whose source starts `motionA.` /
+  `motionB.`). It is refreshed when the input has a new frame, and after
+  100 ms without one so that a frozen picture reads as still; after half a
+  second unread it starts again from nothing.
+- **Effects read it** as `uMotion` / `uMotionB` through `motionAt()`
+  (`common.glsl.js`).
+- **An effect's alpha is now its own.** The footer writes `wet.a`, not 1,
+  so an effect with `uses.prev` can keep a value in `uPrev`'s alpha:
+  Motion keeps how recently each point moved there. Every other effect
+  returns 1 or passes its input's alpha on, and the final pass writes 1.
+  If a later effect ever needs alpha to mean something, this is where to
+  look.
+- **The sources** are `MotionSources` in the same file: the map averaged
+  to 16×9 in the shader, read back without waiting, summed per half in
+  script. They are `lazy` in `sources.js`, so they are in every source
+  menu but only get a meter under Setup → Sources once one is in use. A
+  side nobody maps reads zero.
+- **Tests.** `modulation` counts sixteen effects and has a `motion`
+  section. Still twenty-five suites.
 
 ### Fifth session (21 to 22 November), in short
 
@@ -496,7 +546,7 @@ Three static pages built by Vite, no framework.
 
 | Path | What lives there |
 | --- | --- |
-| `src/engine/` | Everything live: the WebGL2 pipeline (`pipeline.js`, with the stand-by picture and the small input views), inputs (`inputs.js`: input A, input B and two spare slots over one set of feeds), the host side of the phone link (`remote.js`), the small copy of the output sent back to the phone (`return-feed.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop. It runs in `/output` while an output window is open, otherwise in `/control` |
+| `src/engine/` | Everything live: the motion map and its modulation sources (`motion.js`), the WebGL2 pipeline (`pipeline.js`, with the stand-by picture and the small input views), inputs (`inputs.js`: input A, input B and two spare slots over one set of feeds), the host side of the phone link (`remote.js`), the small copy of the output sent back to the phone (`return-feed.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop. It runs in `/output` while an output window is open, otherwise in `/control` |
 | `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js` (+ `strip.js`, the strip of presets and the running order), `edit.js` (+ `chain.js` the chain row and Parameters tab, `mod-panel.js` the Modulation tab, `controls.js` the app's own bar slider, menu, switch and row of picture buttons), and the Setup panels. `host.js` decides which window hosts the engine and owns the monitor canvas. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts; `check-panel.js` is Before the show and keeps the Mac awake; `phone-panel.js` the pairing pop-over with a tab for each phone; `record-panel.js` saves recordings to Downloads |
 | `src/phone/` | The iPhone page: `main.js`, `link.js` (reconnect watchdog, direct links), `sensors.js` (motion, the XY pad, triggers, presets), `camera-controls.js`, `orient.js` (page angle, the Rotate turn), `widgets.js` (the fader) |
 | `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js` (presets, each with a permanent id, and the running order: `loadOrder`, `orderView`, `applyStep`, `stepShow`), `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `direct.js` (pairing with no server), `qr.js`, `sources.js`, `mark.js` (the animated mark on the splash and the phone's start screen), `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; the engine forwards them to the phone) |
@@ -873,8 +923,7 @@ Still to come:
 ### Prompt to start a new session
 
 Paste this as the first message. Replace the bracketed part of the last
-paragraph with what you found on the devices, or delete it. When stage 2 is
-done, change the task it names.
+paragraph with what you found on the devices, or delete it. Change the task it names when that one is done.
 
 ```
 You are picking up Third Eye Cam (repo ACTS-Research/third-eye, branch main):
@@ -910,11 +959,10 @@ How I work:
 Start by telling me, in a few lines, where things stand and what is waiting
 on me (from the top of HANDOFF.md). Then:
 
-This session: build stage 2 of the effects plan in HANDOFF.md: the motion
-map, then the Motion and Gravity effects on top of it, and motion as
-modulation sources. Tell me your approach first and wait for my go.
-<Add what you found when you tried the last session's work on the real
-iPhone and Mac: the new effects, drawing a modulation's range on a slider,
-the number as a bypass switch, the new logo, two phones. And, if you have
-it, the milliseconds per pass that Setup → Vision → Segmentation shows.>
+This session: rework Glitch (see the decisions at the top of HANDOFF.md),
+then stage 3 of the effects plan. Tell me your approach first and wait for
+my go.
+<Add what you found when you tried stage 2 on the real iPhone and Mac:
+Motion in a still room and with a hand waved, Gravity when the phone is
+rolled (which way it pours), a Motion source on a slider.>
 ```

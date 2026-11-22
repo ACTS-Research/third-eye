@@ -12,6 +12,8 @@
 //   uHistory      sampler2DArray  ring buffer of past input frames   (uses.history)
 //   uHistoryHead  float           layer index of the newest frame
 //   uHistoryCount float           number of layers in the ring buffer
+//   uMotion       sampler2D       the motion map of input A; read it with
+//   uMotionB      sampler2D       motionAt(). uMotionB is input B's  (uses.motion)
 //   uResolution   vec2            render size in pixels
 //   uTime         float           seconds since the engine was created
 //   uPhone        vec3            phone roll, pitch, yaw in radians
@@ -34,6 +36,8 @@ uniform sampler2D uTexMip;
 uniform sampler2DArray uHistory;
 uniform float uHistoryHead;
 uniform float uHistoryCount;
+uniform sampler2D uMotion;
+uniform sampler2D uMotionB;
 uniform sampler2D uMask;
 uniform int uMaskMode;      // 0 everything, 1 person only, 2 background only
 uniform vec4 uMaskFit;      // xy scale, z mirror, w mask available
@@ -45,6 +49,9 @@ uniform vec3 uPhone;
 #define PI 3.14159265359
 #define TAU 6.28318530718
 #define ASPECT (uResolution.x / uResolution.y)
+
+// How far the motion map's direction reaches: this share of the picture a frame.
+#define FLOW_RANGE 0.05
 
 float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
 
@@ -81,6 +88,14 @@ vec3 hueRotate(vec3 c, float turns) {
   return c * ca + cross(k, c) * sin(a) + k * dot(k, c) * (1.0 - ca);
 }
 
+// The motion map at a point: x = movement now (0..1), y = the same with a
+// short wake, zw = which way it is moving (-1..1; times FLOW_RANGE it is the
+// share of the picture crossed in a frame). A rough reading, not a measure.
+vec4 motionAt(sampler2D map, vec2 uv) {
+  vec4 t = texture(map, uv);
+  return vec4(t.rg, (t.ba - 128.0 / 255.0) * 2.0);
+}
+
 float hash21(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
   p += dot(p, p + 45.32);
@@ -106,7 +121,8 @@ void main() {
     float person = smoothstep(0.35, 0.65, texture(uMask, muv).r) * inFrame(muv);
     amount *= (uMaskMode == 1) ? person : 1.0 - person;
   }
-  outColor = vec4(mix(dry.rgb, wet.rgb, amount), 1.0);
+  // (Alpha is the effect's own: one that reads uPrev can keep a value there.)
+  outColor = vec4(mix(dry.rgb, wet.rgb, amount), wet.a);
 }
 `;
 

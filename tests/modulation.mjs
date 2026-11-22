@@ -17,7 +17,7 @@ try {
 
   console.log('effects');
   const effects = await output.evaluate(() => [...window.thirdEye.engine.pipeline.programs.keys()]);
-  check('all 14 effects compiled', effects.length === 14, effects.join(', '));
+  check('all 16 effects compiled', effects.length === 16, effects.join(', '));
   await control.keyboard.press('4'); // test pattern
   // Each effect alone must change the picture compared with a clean chain.
   const setChain = (types) => control.evaluate(async (list) => {
@@ -45,16 +45,16 @@ try {
   }
   check('every effect alters the picture', dead.length === 0, dead.length ? `no change from: ${dead.join(', ')}` : '');
   await control.keyboard.press(' ');
-  // Fourteen effects at once is more than the sandbox's software graphics
+  // Sixteen effects at once is more than the sandbox's software graphics
   // can draw at full size without starving every page, so this check uses
   // the app's own 50% render resolution (Setup → Output).
   await control.evaluate(() => window.thirdEye.store.merge('globals', { renderScale: 0.5 }));
   await setChain(effects);
   await sleep(600);
-  check('all 14 chained render without error', (await outputStats(output)).mean >= 0 && !(await state(() => window.thirdEye.engine.renderErrorLogged)));
-  check('chain editor shows 14 cards', (await control.locator('.fx').count()) === 14);
+  check('all 16 chained render without error', (await outputStats(output)).mean >= 0 && !(await state(() => window.thirdEye.engine.renderErrorLogged)));
+  check('chain editor shows 16 cards', (await control.locator('.fx').count()) === 16);
   // What follows needs only the first effect (Video Feedback), and the phone
-  // cannot hold its link while fourteen are drawn in software.
+  // cannot hold its link while sixteen are drawn in software.
   await setChain(['feedback', 'rgbshift']);
   await control.evaluate(() => window.thirdEye.store.merge('globals', { renderScale: 1 }));
 
@@ -171,6 +171,41 @@ try {
   const z1 = await resolved();
   check('LFO modulates a parameter', await settle(async () => Math.abs((await resolved()) - z1) > 0.02, 'lfo moved zoom'), `from ${z1.toFixed(3)} to ${(await resolved()).toFixed(3)}`);
   check('source meters update on control', await control.evaluate(() => [...document.querySelectorAll('.meter .bar i')].some((i) => parseFloat(i.style.width) > 0)));
+
+  console.log('motion');
+  // The motion map is only built while something reads it.
+  const mapAge = () => state(() => performance.now() - window.thirdEye.engine.pipeline.motionA.updatedAt);
+  await setChain(['tone']);
+  await sleep(800);
+  check('no motion map is built for a preset that reads none', (await mapAge()) > 600, `${Math.round(await mapAge())} ms`);
+  check('and the motion sources are not listed', (await source('motionA.all')) === 0 && !(await state(() => window.thirdEye.engine.mod.values.has('motionA.all'))));
+  // A mapping to a motion source: the moving test pattern gives a reading.
+  await control.evaluate(() => {
+    const { store } = window.thirdEye;
+    const fx = store.state.chain[0].uid;
+    store.setScene({ chain: store.state.chain, lfos: store.state.lfos, mappings: [{ id: 'mo1', source: 'motionA.all', fx, key: 'hue', amount: 0.2, smooth: 0, offset: 0, invert: false, mode: 'add', enabled: true }] });
+  });
+  check('movement in the picture is a modulation source', await settle(async () => (await source('motionA.all')) > 0.05, 'motionA.all', 10000), `${await source('motionA.all')}`);
+  const sides = await state(() => ['left', 'right', 'top', 'bottom', 'x', 'y'].map((k) => window.thirdEye.engine.mod.get(`motionA.${k}`)));
+  check('with a reading for each half and where it is', sides.slice(0, 4).some((v) => v > 0.03) && sides.every((v) => v >= 0 && v <= 1), sides.map((v) => v.toFixed(2)).join(' '));
+  check('input B off: its motion reads nothing', (await source('motionB.all')) === 0);
+  await control.keyboard.press(' ');
+  check('a frozen picture has no movement', await settle(async () => (await source('motionA.all')) < 0.01, 'still', 10000), `${await source('motionA.all')}`);
+  // Motion, showing what moves: a frozen picture goes black.
+  await setChain(['motion']);
+  check('Motion shows nothing of a still picture', await settle(async () => (await outputStats(output)).mean < 3, 'black', 10000), `${(await outputStats(output)).mean}`);
+  await control.keyboard.press(' ');
+  check('and what moves once it does', await settle(async () => (await outputStats(output)).mean > 1, 'moving', 10000), `${(await outputStats(output)).mean}`);
+  check('the map is built for an effect that reads it', (await mapAge()) < 500, `${Math.round(await mapAge())} ms`);
+  check('and the sources read nothing once no mapping asks', await settle(async () => (await source('motionA.all')) === 0, 'released', 6000));
+  // Gravity: the picture keeps falling while the input is frozen.
+  await setChain(['gravity']);
+  await sleep(500);
+  await control.keyboard.press(' ');
+  const g1 = (await outputStats(output)).hash;
+  check('Gravity goes on pulling a frozen picture down', await settle(async () => (await outputStats(output)).hash !== g1, 'falling', 8000));
+  await control.keyboard.press(' ');
+  check('neither effect raised a render error', !(await state(() => window.thirdEye.engine.renderErrorLogged)));
 
   console.log('triggers and presets');
   await control.evaluate(() => window.thirdEye.ui.setView('perform'));

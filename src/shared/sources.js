@@ -51,6 +51,18 @@ export const SOURCES = [
   def('audio.high', 'High', 'Audio'),
   def('audio.beat', 'Beat', 'Audio'),
 
+  // Movement in the picture (engine/motion.js): listed once something uses
+  // one, because the motion map is only built while it is wanted.
+  ...['A', 'B'].flatMap((t) => [
+    lazy(`motion${t}.all`, 'Overall', `Motion ${t}`),
+    lazy(`motion${t}.left`, 'Left half', `Motion ${t}`),
+    lazy(`motion${t}.right`, 'Right half', `Motion ${t}`),
+    lazy(`motion${t}.top`, 'Top half', `Motion ${t}`),
+    lazy(`motion${t}.bottom`, 'Bottom half', `Motion ${t}`),
+    lazy(`motion${t}.x`, 'Where, left to right', `Motion ${t}`),
+    lazy(`motion${t}.y`, 'Where, bottom to top', `Motion ${t}`),
+  ]),
+
   lazy('face.present', 'Face seen', 'Face'),
   lazy('face.x', 'Position X', 'Face'),
   lazy('face.y', 'Position Y', 'Face'),

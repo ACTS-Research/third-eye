@@ -21,6 +21,7 @@ import { Recorder } from './recorder.js';
 import { ReturnFeed } from './return-feed.js';
 import { Modulation } from './modulation.js';
 import { PhoneSensors } from './phone-sensors.js';
+import { MotionSources } from './motion.js';
 import { Pipeline } from './pipeline.js';
 import { PhoneLink } from './remote.js';
 import { Tempo } from './tempo.js';
@@ -74,6 +75,8 @@ export class Engine {
     this.t0 = performance.now();
     this.glitchStart = -1e9;
     this.mod = new Modulation(store);
+    this.motion = new MotionSources(this.mod);
+    this.motionWanted = { A: false, B: false };
     this.sensors = new PhoneSensors(this.mod);
     // The second iPhone's motion and touch pad: sources of their own.
     this.sensorsB = new PhoneSensors(this.mod, 'B');
@@ -598,6 +601,8 @@ export class Engine {
     // Either phone's four buttons are the four triggers.
     for (let i = 0; i < TRIGGER_COUNT; i++) this.mod.set(`trig.${i + 1}`, this.sensors.shown[i] || this.sensorsB.shown[i] ? 1 : 0);
     this.audio.frame(dt, now, this.store.state.audio);
+    const wantMotion = this.wantMotion();
+    this.motion.frame(dt, wantMotion);
     this.mod.frame(dt, this.tempo.frame(now));
     const watched = now - this.controlSeenAt < CONTROL_TIMEOUT_MS;
     if (watched && now - this.lastSourcesAt >= SOURCES_INTERVAL_MS) {
@@ -636,6 +641,10 @@ export class Engine {
         if (preview) this.bus.send('preview', preview);
         const thumbs = this.pipeline.pollThumbs();
         if (thumbs) this.bus.send('thumbs', thumbs);
+        const movedA = this.pipeline.pollMotion('a');
+        if (movedA) this.motion.read('A', movedA);
+        const movedB = this.pipeline.pollMotion('b');
+        if (movedB) this.motion.read('B', movedB);
         this.pipeline.render({
           now,
           time: (now - this.t0) / 1000,
@@ -654,6 +663,7 @@ export class Engine {
           wantPreview,
           wantThumbs,
           peek: this.peek,
+          motion: { a: wantMotion.A, b: wantMotion.B },
           standby: this.cover.a > 0 ? { to: state.input.dropA, level: this.cover.a * this.cover.a * (3 - 2 * this.cover.a) } : null,
           bLevel: 1 - this.cover.b * this.cover.b * (3 - 2 * this.cover.b),
         });
@@ -667,6 +677,24 @@ export class Engine {
     }
 
     if (now - this.lastStatusAt >= STATUS_INTERVAL_MS) this.sendStatus(now);
+  }
+
+  // Which motion maps the modulation sources need: one that a mapping or a
+  // trigger of the live preset reads.
+  wantMotion() {
+    const out = this.motionWanted;
+    out.A = false;
+    out.B = false;
+    const { mappings, actions } = this.store.state;
+    for (const list of [mappings, actions]) {
+      for (const m of list) {
+        const s = m.source;
+        if (typeof s !== 'string' || !s.startsWith('motion') || m.enabled === false) continue;
+        if (s[6] === 'A') out.A = true;
+        else if (s[6] === 'B') out.B = true;
+      }
+    }
+    return out;
   }
 
   // The link a source's picture comes over, if it is one of the phones.
