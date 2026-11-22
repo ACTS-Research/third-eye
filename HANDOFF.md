@@ -872,7 +872,9 @@ Still to come:
 
 ### Prompt to start a new session
 
-Paste this as the first message, with the last paragraph filled in.
+Paste this as the first message. Replace the bracketed part of the last
+paragraph with what you found on the devices, or delete it. When stage 2 is
+done, change the task it names.
 
 ```
 You are picking up Third Eye Cam (repo ACTS-Research/third-eye, branch main):
@@ -895,9 +897,10 @@ How I work:
   first (two or three options on a design canvas) and let me choose.
 - Work on main and push to main. After each push, check that the "Build and
   deploy to GitHub Pages" run succeeded.
-- Run the test suites that cover what you change (one at a time, under two
-  minutes each, or in the background), and all of them before a push that
-  touches engine.js, remote.js, host.js or the phone's link.js.
+- Run the test suites that cover what you change (one at a time, or in the
+  background), and all of them before a push that touches engine.js,
+  remote.js, host.js or the phone's link.js. Do not push until they pass,
+  or until you have shown that a failure also happens on the commit before.
 - Tell me plainly what you could not verify on real hardware. You cannot
   reach the deployed site, the public pairing server or my devices.
 - Write to me in plain language, short, with what I need to do or decide
@@ -907,10 +910,11 @@ How I work:
 Start by telling me, in a few lines, where things stand and what is waiting
 on me (from the top of HANDOFF.md). Then:
 
-This session: <say what you want built or fixed, or what you found when
-you tried the last session's work on the real iPhones and Mac. Waiting, from
-HANDOFF.md: step 5 of the signal loss plan (video quality stepping down by
-itself, an alert when the Mac changes network, full alerts for the second
-phone); stage 2 of the effects plan (the motion map, Motion, Gravity,
-motion as modulation sources); Glitch as a chosen move of sliders.>
+This session: build stage 2 of the effects plan in HANDOFF.md: the motion
+map, then the Motion and Gravity effects on top of it, and motion as
+modulation sources. Tell me your approach first and wait for my go.
+<Add what you found when you tried the last session's work on the real
+iPhone and Mac: the new effects, drawing a modulation's range on a slider,
+the number as a bypass switch, the new logo, two phones. And, if you have
+it, the milliseconds per pass that Setup → Vision → Segmentation shows.>
 ```
