@@ -144,6 +144,10 @@ origin/main`) before committing, and push `main` only.
 sources are in `design/` (`design/README.md` says which option of each was
 built).
 
+- The logo, round 4: https://claude.ai/artifact/E6D3gZSjwHWBqA6rbMSN6m
+- Tone's colour controls: https://claude.ai/artifact/LQquh24inx3yagJ4bcuwUi
+- Bypass, change marks and modulation on the edit screen:
+  https://claude.ai/artifact/1DVQ6Ag15uNCUn4eKtHVeU
 - Signal loss plan: https://claude.ai/artifact/PqZU5qNH73BYugN5Y2TZiH
 - Start screens and checks: https://claude.ai/artifact/N87fpc4XRa3ZSzKKChNwLi
 - The phone when the link is down: https://claude.ai/artifact/VMB991eaoBVQQPhwQJ9Bak
