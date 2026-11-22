@@ -529,7 +529,7 @@ to fold its card.
 
 | Effect | Notes |
 | --- | --- |
-| Video Feedback | Zoom / rotate / shift / decay of its own previous output; four blend modes |
+| Video Feedback | Zoom / rotate / shift / decay of its own previous output; four blend modes. Each runs from nothing at all to violent: zoom from half to double on every frame, rotate up to a quarter turn a frame, decay from none to never fading |
 | Trails | Lighten, smear, add or darken persistence |
 | Time Delay / Slit-scan | 64-frame ring buffer; whole-frame delay or per-pixel delay by row, column, radius or brightness |
 | Kaleidoscope / Mirror | Segments, spin, or plain left/right, top/bottom and quad mirrors |
@@ -539,8 +539,9 @@ to fold its card.
 | Edge Glow | Sobel edges with a halo, tint and direction-based rainbow |
 | Posterize | Levels, gamma, dither, pixelate |
 | False Colour / Thermal | Five palettes, banding, cycling |
-| Hue Shift | Shift, cycle, saturation |
-| Contrast / Brightness | Plus saturation, gamma, invert |
+| Tone | Brightness, contrast and colour in one place. **exposure** runs from an eighth of the light to eight times. **contrast** leaves the picture alone mid-slider; to the left it flattens to grey and then turns over into a negative. **saturation** and **hue** as usual. The **tint** gives the dark parts one colour (**shadows**) and the bright parts another (**highlights**), each chosen on a bar of the colour circle; **tint** is how much of the picture's own colour they replace. (This replaced Contrast / Brightness and Hue Shift on 22 November 2026; a saved preset that used either now has Tone, set to match) |
+| Blur / Glow | One wide blur, used three ways. **size** runs from a pixel or two to a third of the picture. **soften** to the right gives the picture over to the blur; to the left it sharpens, and at the far left haloes. **glow** adds the blurred highlights back over the picture. **stretch** turns the blur into a streak along **angle** |
+| Noise | Video static that takes the picture over speck by speck: **amount** from a little grain to nothing but static, **grain** from single pixels to large blocks, **speed** from frozen to changing every frame, **colour** from black-and-white to coloured, and **bite** for where it eats first (right: the bright parts; left: the dark) |
 | Mix B | Mixes input B in: nine modes (see [Inputs](#inputs)) |
 
 **Apply to** (on every effect) limits it to the person or to the background.
@@ -551,7 +552,12 @@ left to right: the input, each effect, then **+ Add effect**. Click an effect
 to open its controls on the **Parameters** tab; drag its button to move it
 (or use ← → beside its name), and **Bypass** or **✕** there to skip or remove
 it. Each slider is a bar: click or drag to set it, type an exact number in
-the box beside it, double-click to return to the default. The two buttons on
+the box beside it, double-click to return to the default. Many bars are
+curved so that the whole of their travel is useful: fine around the value
+where little happens (the middle, for a control that goes both ways) and
+extreme at the ends. Faders, MIDI knobs and modulation follow the same
+curve, so a source sweeps a control the way a hand on the bar would. The
+number beside the bar is always the real value. The two buttons on
 a slider's row are **Fader**, which puts it on the perform screen, and
 **Mod**, which has something move it by itself (both below).
 

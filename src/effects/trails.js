@@ -3,7 +3,7 @@ export default {
   name: 'Trails',
   uses: { prev: true },
   params: {
-    persistence: { min: 0, max: 0.995, default: 0.9, step: 0.001 },
+    persistence: { min: 0, max: 1, default: 0.9, step: 0.001, curve: 3, from: 'max' },
     blend: { options: { Lighten: 0, Smear: 1, Add: 2, Darken: 3 }, default: 0 },
   },
   frag: /* glsl */ `

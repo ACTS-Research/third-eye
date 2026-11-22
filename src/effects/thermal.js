@@ -5,7 +5,7 @@ export default {
     palette: { options: { Thermal: 0, 'Night vision': 1, Rainbow: 2, Fire: 3, Ice: 4 }, default: 0 },
     contrast: { min: 0.2, max: 4, default: 1.2, step: 0.01 },
     shift: { min: -1, max: 1, default: 0, step: 0.005 },
-    cycle: { min: -2, max: 2, default: 0, step: 0.01 },
+    cycle: { min: -4, max: 4, default: 0, step: 0.01, curve: 2.5, center: 0 },
     bands: { min: 0, max: 24, default: 0, step: 1 },
   },
   frag: /* glsl */ `

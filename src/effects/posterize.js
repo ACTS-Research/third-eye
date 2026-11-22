@@ -5,7 +5,7 @@ export default {
     levels: { min: 2, max: 32, default: 5, step: 1 },
     gamma: { min: 0.3, max: 3, default: 1, step: 0.01 },
     dither: { min: 0, max: 1, default: 0, step: 0.01 },
-    pixelate: { min: 1, max: 120, default: 1, step: 1 },
+    pixelate: { min: 1, max: 240, default: 1, step: 1, curve: 2 },
   },
   frag: /* glsl */ `
 vec4 effect(vec2 uv) {

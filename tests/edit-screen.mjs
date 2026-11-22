@@ -40,11 +40,11 @@ try {
   console.log('the bar');
   await clickBar(control, paramBar('decay'), 0.25);
   const quarter = await param('decay');
-  check('a click on a bar sets the value there', Math.abs(quarter - 0.625) < 0.02, String(quarter));
+  check('a click on a bar sets the value there', Math.abs(quarter - 0.578) < 0.02, String(quarter));
   await control.locator('#tab-params .param[data-key="decay"] .bar-value').fill('0.9');
   await control.keyboard.press('Enter');
   check('a value can be typed', await settle(async () => (await param('decay')) === 0.9, 'typed'), String(await param('decay')));
-  check('and the bar and its number follow', (await control.locator(paramBar('decay')).inputValue()) === '0.9' && (await control.locator('#tab-params .param[data-key="decay"] .bar-value').inputValue()) === '0.900');
+  check('and the bar and its number follow', Math.abs(Number(await control.locator(paramBar('decay')).inputValue()) - 0.536) < 0.005 && (await control.locator('#tab-params .param[data-key="decay"] .bar-value').inputValue()) === '0.900');
   await control.locator(paramBar('decay')).dblclick();
   check('double-click goes back to the default', await settle(async () => (await param('decay')) === 0.94, 'reset'), String(await param('decay')));
   const bars = await state(() => [...document.querySelectorAll('#tab-params input.bar')].map((b) => b.getBoundingClientRect().width));

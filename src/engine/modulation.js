@@ -3,7 +3,7 @@
 // mappings in the scene turn those numbers into parameter offsets.
 
 import { TOGGLE_ACTIONS, runAction } from '../shared/actions.js';
-import { paramRange } from '../effects/index.js';
+import { paramRange, paramUnit, paramValue } from '../effects/index.js';
 import { macroValue, resolveMacros } from '../shared/macros.js';
 import { SOURCES, describeSource } from '../shared/sources.js';
 import { clamp } from '../shared/util.js';
@@ -199,6 +199,17 @@ export class Modulation {
       const range = max - min;
       const s = this.smoothed.get(m.id);
       if (s === undefined) continue;
+      if (spec.curve) {
+        // A curved slider is moved along its travel, not through its values,
+        // so a source sweeps it the way a hand on the bar would.
+        if (m.mode === 'set') {
+          const unit = clamp(this.bipolar.get(m.source) ? s * 0.5 + 0.5 : s, 0, 1);
+          v[m.key] = paramValue(spec, m.amount >= 0 ? unit * m.amount : 1 + unit * m.amount);
+        } else {
+          v[m.key] = paramValue(spec, paramUnit(spec, v[m.key]) + s * m.amount);
+        }
+        continue;
+      }
       if (m.mode === 'set') {
         const unit = clamp(this.bipolar.get(m.source) ? s * 0.5 + 0.5 : s, 0, 1);
         v[m.key] = m.amount >= 0 ? min + unit * m.amount * range : max + unit * m.amount * range;

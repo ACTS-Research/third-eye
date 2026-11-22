@@ -146,8 +146,8 @@ try {
       const { store } = window.thirdEye;
       if (!store.state.chain.length) {
         document.getElementById('add-effect').click();
-        document.querySelector('.menu-list .menu-item[data-value="levels"]').click();
-        store.setParam(store.state.chain[0].uid, 'invert', 1);
+        document.querySelector('.menu-list .menu-item[data-value="tone"]').click();
+        store.setParam(store.state.chain[0].uid, 'contrast', -1);
       }
       store.patchItem('chain', store.state.chain[0].uid, { target, bypass });
     }, { target, bypass });

@@ -21,9 +21,17 @@ export function digitsFor(step) {
 // `value: false`, a box showing the number, which can be typed into.
 // onInput(value) fires while dragging or typing; onTouch() when the control
 // is first grabbed (MIDI map mode uses it to pick the parameter).
-export function bar({ min, max, step = 0.01, value = min, label = '', id, reset, unit = '', showValue = true, onInput, onTouch }) {
+// `scale` curves it: { toUnit(value) → 0..1, fromUnit(0..1) → value, center? }.
+// The bar then travels in positions while the number beside it, what is
+// typed there and what onInput receives stay in the parameter's own units.
+export function bar({ min, max, step = 0.01, value = min, label = '', id, reset, unit = '', showValue = true, scale = null, look = '', onInput, onTouch }) {
   const digits = digitsFor(step);
-  const input = el('input', { type: 'range', class: 'bar', min: String(min), max: String(max), step: String(step), 'aria-label': label || null });
+  const input = scale
+    ? el('input', { type: 'range', class: 'bar', min: '0', max: '1', step: '0.001', 'aria-label': label || null })
+    : el('input', { type: 'range', class: 'bar', min: String(min), max: String(max), step: String(step), 'aria-label': label || null });
+  const unitOf = (v) => (scale ? scale.toUnit(v) : (v - min) / (max - min));
+  const origin = scale?.center ?? (min < 0 && max > 0 ? 0 : null);
+  const snap = (v) => Number((Math.round((v - min) / step) * step + min).toFixed(6));
   if (id) input.id = id;
   const number = showValue
     ? el('input', { type: 'text', class: 'bar-value', inputMode: 'decimal', 'aria-label': label ? `${label}, value` : 'Value', autocomplete: 'off', spellcheck: false })
@@ -32,9 +40,14 @@ export function bar({ min, max, step = 0.01, value = min, label = '', id, reset,
 
   // The fill runs from the left, or from zero for a value that goes both ways.
   function paint() {
-    const t = ((current - min) / (max - min)) * 100;
-    if (min < 0 && max > 0) {
-      const zero = ((0 - min) / (max - min)) * 100;
+    const t = unitOf(current) * 100;
+    if (look === 'hue') {
+      // The colour circle laid flat, with a white mark where the value is.
+      input.style.backgroundImage = `linear-gradient(90deg, transparent calc(${t}% - 2px), #000 calc(${t}% - 2px), #fff calc(${t}% - 1px), #fff calc(${t}% + 1px), #000 calc(${t}% + 2px), transparent calc(${t}% + 2px)), linear-gradient(90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)`;
+      return;
+    }
+    if (origin !== null) {
+      const zero = unitOf(origin) * 100;
       const a = Math.min(zero, t);
       const b = Math.max(zero, t);
       input.style.backgroundImage = `linear-gradient(90deg, transparent ${a}%, var(--ink) ${a}%, var(--ink) ${b}%, transparent ${b}%)`;
@@ -43,7 +56,7 @@ export function bar({ min, max, step = 0.01, value = min, label = '', id, reset,
     }
   }
   function show() {
-    input.value = String(current);
+    input.value = String(scale ? unitOf(current) : current);
     if (number && document.activeElement !== number) number.value = `${Number(current).toFixed(digits)}${unit}`;
     paint();
   }
@@ -55,7 +68,7 @@ export function bar({ min, max, step = 0.01, value = min, label = '', id, reset,
 
   input.addEventListener('pointerdown', () => onTouch?.());
   input.addEventListener('focus', () => onTouch?.());
-  input.addEventListener('input', () => commit(Number(input.value)));
+  input.addEventListener('input', () => commit(scale ? snap(scale.fromUnit(Number(input.value))) : Number(input.value)));
   // Double-click goes back to the default, as on the perform faders.
   if (reset !== undefined) input.addEventListener('dblclick', () => commit(reset));
   if (number) {

@@ -3,12 +3,14 @@ export default {
   name: 'Video Feedback',
   uses: { prev: true },
   params: {
-    zoom: { min: 0.8, max: 1.25, default: 1.03, step: 0.001 },
-    rotate: { min: -0.2, max: 0.2, default: 0.01, step: 0.001 },
-    decay: { min: 0.5, max: 1.0, default: 0.94, step: 0.001 },
-    shiftX: { min: -0.05, max: 0.05, default: 0, step: 0.0005 },
-    shiftY: { min: -0.05, max: 0.05, default: 0, step: 0.0005 },
-    hue: { min: -0.1, max: 0.1, default: 0.005, step: 0.001 },
+    // Each of these is per frame, so a little goes a long way: the sliders
+    // are curved to be fine near "nothing happens" and wild at the ends.
+    zoom: { min: 0.5, max: 2, default: 1.03, step: 0.001, curve: 3, center: 1 },
+    rotate: { min: -1.571, max: 1.571, default: 0.01, step: 0.001, curve: 3, center: 0 },
+    decay: { min: 0, max: 1, default: 0.94, step: 0.001, curve: 3, from: 'max' },
+    shiftX: { min: -0.5, max: 0.5, default: 0, step: 0.0005, curve: 3, center: 0 },
+    shiftY: { min: -0.5, max: 0.5, default: 0, step: 0.0005, curve: 3, center: 0 },
+    hue: { min: -0.5, max: 0.5, default: 0.005, step: 0.001, curve: 3, center: 0 },
     key: { min: 0, max: 1, default: 0.35, step: 0.01 },
     blend: { options: { Lighten: 0, Add: 1, 'Luma key': 2, Screen: 3 }, default: 0 },
   },

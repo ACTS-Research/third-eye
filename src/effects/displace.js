@@ -3,9 +3,9 @@ export default {
   name: 'Pixel Displacement',
   params: {
     source: { options: { Noise: 0, 'Own brightness': 1, 'Own colour': 2 }, default: 0 },
-    amount: { min: 0, max: 0.3, default: 0.04, step: 0.001 },
-    scale: { min: 0.5, max: 40, default: 5, step: 0.1 },
-    speed: { min: 0, max: 4, default: 0.5, step: 0.01 },
+    amount: { min: 0, max: 1, default: 0.04, step: 0.001, curve: 2.5 },
+    scale: { min: 0.5, max: 80, default: 5, step: 0.1, curve: 2 },
+    speed: { min: 0, max: 8, default: 0.5, step: 0.01, curve: 2 },
     angle: { min: -1, max: 1, default: 0, step: 0.005 },
   },
   frag: /* glsl */ `

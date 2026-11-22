@@ -2,9 +2,9 @@ export default {
   id: 'edges',
   name: 'Edge Glow',
   params: {
-    gain: { min: 0, max: 8, default: 2.5, step: 0.01 },
+    gain: { min: 0, max: 24, default: 2.5, step: 0.01, curve: 2 },
     threshold: { min: 0, max: 1, default: 0.08, step: 0.005 },
-    width: { min: 0.5, max: 8, default: 1.5, step: 0.1 },
+    width: { min: 0.5, max: 24, default: 1.5, step: 0.1, curve: 2 },
     glow: { min: 0, max: 2, default: 0.8, step: 0.01 },
     hue: { min: 0, max: 1, default: 0.5, step: 0.005 },
     rainbow: { min: 0, max: 1, default: 0.3, step: 0.01 },

@@ -6,6 +6,9 @@
 //   uTexB         sampler2D       input B, fitted like A             (uses.inputB;
 //                                 the effect is skipped while B is off)
 //   uPrev         sampler2D       this effect's own previous output  (uses.prev)
+//   uTexMip       sampler2D       the incoming image again, with every
+//                                 smaller size down to one pixel; read it
+//                                 with textureLod for a wide blur  (uses.mips)
 //   uHistory      sampler2DArray  ring buffer of past input frames   (uses.history)
 //   uHistoryHead  float           layer index of the newest frame
 //   uHistoryCount float           number of layers in the ring buffer
@@ -27,6 +30,7 @@ out vec4 outColor;
 uniform sampler2D uTex;
 uniform sampler2D uTexB;
 uniform sampler2D uPrev;
+uniform sampler2D uTexMip;
 uniform sampler2DArray uHistory;
 uniform float uHistoryHead;
 uniform float uHistoryCount;

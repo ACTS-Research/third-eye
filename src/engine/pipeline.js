@@ -131,6 +131,14 @@ class History {
   }
 }
 
+// The blurred copy is never wider than this: it is only read through its
+// smaller sizes, and a narrow one is quick to make.
+const MIP_WIDTH = 640;
+function mipSize(w, h) {
+  const scale = Math.min(1, MIP_WIDTH / w);
+  return [Math.max(16, Math.round(w * scale)), Math.max(16, Math.round(h * scale))];
+}
+
 class EffectInstance {
   constructor(pipe, def) {
     this.pipe = pipe;
@@ -145,11 +153,20 @@ class EffectInstance {
       this.own = [new Target(gl, width, height), new Target(gl, width, height)];
     }
     this.history = def.uses?.history ? new History(pipe.gl, def.uses.history, pipe.width, pipe.height) : null;
+    // A copy of the incoming image with mip levels, for effects that blur.
+    this.mips = null;
+    if (def.uses?.mips) {
+      const { gl, width, height } = pipe;
+      this.mips = new Target(gl, ...mipSize(width, height));
+      gl.bindTexture(gl.TEXTURE_2D, this.mips.tex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    }
   }
 
   resize(w, h) {
     if (this.own) for (const t of this.own) t.resize(w, h);
     this.history?.resize(w, h);
+    this.mips?.resize(...mipSize(w, h));
   }
 
   // Renders into `scratch` (or this effect's own buffer) and returns the
@@ -157,7 +174,15 @@ class EffectInstance {
   render(ctx, inTex, scratch, item) {
     const gl = this.pipe.gl;
     if (this.history) this.history.push(inTex, this.pipe.copyProgram);
+    if (this.mips) {
+      this.mips.bind();
+      this.pipe.copyProgram.use().tex('uTex', 0, inTex);
+      drawFullscreen(gl);
+      gl.bindTexture(gl.TEXTURE_2D, this.mips.tex);
+      gl.generateMipmap(gl.TEXTURE_2D);
+    }
     const p = this.program.use();
+    if (this.mips) p.tex('uTexMip', 5, this.mips.tex);
     if (this.history) {
       p.tex('uHistory', 2, this.history.tex, gl.TEXTURE_2D_ARRAY);
       p.f('uHistoryHead', this.history.head).f('uHistoryCount', this.history.frames);
@@ -187,6 +212,7 @@ class EffectInstance {
   dispose() {
     if (this.own) for (const t of this.own) t.dispose();
     this.history?.dispose();
+    this.mips?.dispose();
   }
 }
 

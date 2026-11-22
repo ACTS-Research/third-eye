@@ -2,7 +2,7 @@
 // on the perform screen. A preset can pin its own; otherwise the first few
 // parameters of the chain are used so the faders are never empty.
 
-import { EFFECT_BY_ID, paramRange } from '../effects/index.js';
+import { EFFECT_BY_ID, paramRange, paramUnit, paramValue } from '../effects/index.js';
 
 export const MACRO_COUNT = 8;
 
@@ -23,6 +23,8 @@ function describe(state, slot, auto) {
     effectIndex: index,
     min,
     max,
+    // A curved slider keeps its curve as a fader (see effects/index.js).
+    spec: !isMix && spec.curve ? spec : null,
     step: spec.options || spec.type === 'bool' ? 1 : spec.step ?? (max - min) / 100,
     fallback: spec.default,
     value: isMix ? item.mix : item.params[slot.key],
@@ -60,11 +62,12 @@ export function resolveMacros(state) {
 
 // Snaps a 0..1 position to a legal value of the macro's parameter.
 export function macroValue(macro, unit) {
-  const raw = macro.min + Math.min(1, Math.max(0, unit)) * (macro.max - macro.min);
+  const raw = macro.spec ? paramValue(macro.spec, unit) : macro.min + Math.min(1, Math.max(0, unit)) * (macro.max - macro.min);
   const stepped = Math.round((raw - macro.min) / macro.step) * macro.step + macro.min;
   return Math.min(macro.max, Math.max(macro.min, Number(stepped.toFixed(6))));
 }
 
 export function macroUnit(macro, value) {
+  if (macro.spec) return paramUnit(macro.spec, value);
   return macro.max > macro.min ? (value - macro.min) / (macro.max - macro.min) : 0;
 }

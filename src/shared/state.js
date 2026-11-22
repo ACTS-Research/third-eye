@@ -120,7 +120,24 @@ export function defaultState() {
   };
 }
 
-function sanitizeEffect(item) {
+// Contrast / Brightness and Hue Shift became Tone on 22 November 2026. A
+// saved preset that has one keeps its look as nearly as Tone can give it.
+function renamed(item) {
+  const p = item?.params ?? {};
+  const num = (v, fallback) => (Number.isFinite(Number(v)) ? Number(v) : fallback);
+  if (item?.type === 'levels') {
+    const contrast = num(p.contrast, 1.2);
+    return { ...item, type: 'tone', params: { exposure: num(p.brightness, 0) / 2, contrast: num(p.invert, 0) > 0.5 ? -contrast : contrast, saturation: num(p.saturation, 1), hue: 0, tint: 0 } };
+  }
+  if (item?.type === 'hue') {
+    const turn = num(p.shift, 0.25);
+    return { ...item, type: 'tone', params: { exposure: 0, contrast: 1, saturation: num(p.saturation, 1), hue: turn - Math.round(turn), tint: 0 } };
+  }
+  return item;
+}
+
+function sanitizeEffect(raw) {
+  const item = renamed(raw);
   const def = item && EFFECT_BY_ID[item.type];
   if (!def) return null;
   const params = defaultParams(def);

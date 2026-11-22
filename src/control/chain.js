@@ -3,7 +3,7 @@
 // Parameters tab showing the controls of the one that is open. The controls
 // are generated from the effect's parameter declarations.
 
-import { EFFECTS, EFFECT_BY_ID } from '../effects/index.js';
+import { EFFECTS, EFFECT_BY_ID, paramUnit, paramValue } from '../effects/index.js';
 import { describeSource } from '../shared/sources.js';
 import { INPUT_LABELS, makeEffect, sceneOf } from '../shared/state.js';
 import { el } from '../shared/util.js';
@@ -169,6 +169,8 @@ export function mountChain(roots, ui) {
         max: spec.max,
         step: spec.step ?? (spec.max - spec.min) / 100,
         value,
+        scale: spec.curve ? { toUnit: (v) => paramUnit(spec, v), fromUnit: (u) => paramValue(spec, u), center: spec.center } : null,
+        look: spec.look ?? '',
         reset: spec.default,
         onTouch: () => touched(key, label),
         onInput: (v) => {

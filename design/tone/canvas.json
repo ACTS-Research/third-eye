@@ -1,0 +1,50 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-22T03:00:00Z"
+  },
+  "title": "Third Eye Cam: Tone's colour controls",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 560,
+      "h": 600,
+      "title": "T1 \u00b7 Two rainbow bars"
+    },
+    "Swatches.dc.html": {
+      "x": 640,
+      "y": 0,
+      "w": 560,
+      "h": 600,
+      "title": "T2 \u00b7 Swatches"
+    },
+    "Wheels.dc.html": {
+      "x": 1280,
+      "y": 0,
+      "w": 560,
+      "h": 600,
+      "title": "T3 \u00b7 Two colour wheels"
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Swatches.dc.html",
+    "Wheels.dc.html"
+  ],
+  "notes": {
+    "heading": {
+      "x": 0,
+      "y": -300,
+      "text": "Tone: how its two tint colours are chosen",
+      "kind": "title1",
+      "maxW": 1840
+    }
+  },
+  "designSystems": []
+}

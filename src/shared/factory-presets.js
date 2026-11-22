@@ -36,7 +36,7 @@ export function factoryPresets() {
       scene: scene(
         [
           ['kaleido', { segments: 8, spin: 0.04, zoom: 1.2 }],
-          ['hue', { shift: 0, cycle: 0.03, saturation: 1.3 }],
+          ['tone', { contrast: 1, saturation: 1.3 }],
         ],
         [
           ['phone.roll', 0, 'angle', { amount: 0.5 }],
@@ -61,7 +61,7 @@ export function factoryPresets() {
       scene: scene(
         [
           ['delay', { mode: 1, delay: 0, spread: 0.8 }],
-          ['levels', { contrast: 1.25, saturation: 1.2 }],
+          ['tone', { contrast: 1.25, saturation: 1.2 }],
         ],
         [['phone.tiltY', 0, 'spread', { amount: 0.5 }]],
       ),
@@ -97,7 +97,7 @@ export function factoryPresets() {
       name: 'Poster',
       scene: scene([
         ['posterize', { levels: 4, gamma: 0.9, dither: 0.3 }],
-        ['levels', { contrast: 1.4, saturation: 1.6 }],
+        ['tone', { contrast: 1.4, saturation: 1.6 }],
       ]),
     },
     {

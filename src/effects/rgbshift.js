@@ -2,7 +2,7 @@ export default {
   id: 'rgbshift',
   name: 'RGB Offset',
   params: {
-    amount: { min: 0, max: 0.1, default: 0.01, step: 0.0005 },
+    amount: { min: 0, max: 0.5, default: 0.01, step: 0.0005, curve: 2.5 },
     angle: { min: -1, max: 1, default: 0, step: 0.001 },
     radial: { min: 0, max: 1, default: 0, step: 0.01 },
   },

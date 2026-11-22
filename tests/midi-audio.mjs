@@ -98,9 +98,9 @@ try {
     return m && m.key === 'rotate' && m.mode === 'set';
   }), 'mapping'));
   const rotate = () => output.evaluate(() => [...window.thirdEye.engine.pipeline.cur.instances.values()][0].values.rotate);
-  check('knob at maximum drives the parameter to its maximum', await settle(async () => Math.abs((await rotate()) - 0.2) < 0.005, 'max'), `rotate ${(await rotate()).toFixed(3)}`);
+  check('knob at maximum drives the parameter to its maximum', await settle(async () => Math.abs((await rotate()) - 1.571) < 0.005, 'max'), `rotate ${(await rotate()).toFixed(3)}`);
   await midi([0xb0, 21, 0]);
-  check('knob at minimum drives it to its minimum', await settle(async () => Math.abs((await rotate()) + 0.2) < 0.005, 'min'), `rotate ${(await rotate()).toFixed(3)}`);
+  check('knob at minimum drives it to its minimum', await settle(async () => Math.abs((await rotate()) + 1.571) < 0.005, 'min'), `rotate ${(await rotate()).toFixed(3)}`);
   check('learn disarms after one control', await output.evaluate(() => window.thirdEye.engine.midi.learning === false));
 
   // A panic button: clicking it in map mode selects it, it does not fire.
@@ -170,12 +170,12 @@ try {
     });
   });
   const zoom = () => output.evaluate(() => [...window.thirdEye.engine.pipeline.cur.instances.values()][0].values.zoom);
-  check('a mapped knob at zero holds its parameter at minimum', await settle(async () => (await zoom()) === 0.25, 'held at min'), `zoom ${await zoom()}`);
+  check('a mapped knob at zero holds its parameter at minimum', await settle(async () => (await zoom()) === 0.1, 'held at min'), `zoom ${await zoom()}`);
   await output.reload();
   await waitFor(() => output.evaluate(() => window.thirdEye?.engine?.renderFps > 0 && window.thirdEye.engine.midi.state === 'ready'), { label: 'output back' });
   const base = await output.evaluate(() => window.thirdEye.store.state.chain[0].params.zoom);
   await new Promise((r) => setTimeout(r, 500));
-  check('after a reload an untouched knob leaves its parameter at the dialled value', (await zoom()) === base && base > 0.25, `zoom ${await zoom()}, dialled ${base}`);
+  check('after a reload an untouched knob leaves its parameter at the dialled value', (await zoom()) === base && base > 0.1, `zoom ${await zoom()}, dialled ${base}`);
 
   if (process.env.SHOTS) await control.screenshot({ path: `${process.env.SHOTS}/control4.png`, fullPage: true });
 } catch (err) {
