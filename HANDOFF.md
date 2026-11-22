@@ -1,68 +1,111 @@
 # Handoff
 
-## 2026-11-21 (end of the fourth session, 16 to 21 November)
+## 2026-11-22 (end of the fifth session, 21 to 22 November)
 
-**Where things stand.** Everything asked for in this session is built and
-live on GitHub Pages from `main`: a second input mixed in by the Mix B
-effect, the strip under the picture, a second iPhone, the first four steps
-of the signal loss plan (keep what is paired, a stand-by when a phone
-drops, the phone's band and Resume, start screens and the checks before
-the show), and recordings that name and save themselves. Almost none of it
-has been tried on the real iPhone and Mac: it has run in headless Chromium.
+**Where things stand.** A new logo, the first stage of the effects rework
+(curved sliders, Tone, Blur / Glow, Noise) and a reworked edit screen
+(bypass on the block's number, marks for what has changed, modulation set
+on the slider itself) are built and live on GitHub Pages from `main`. The
+owner tried the new effects on the Mac on 22 November ("they work well");
+nothing else from this session, and almost nothing from the one before,
+has been tried on the real iPhones and Mac.
 
-**Next step.** On the real Mac and iPhones, with every page reloaded (twice
-if the old layout still shows), go down "Built this session, not yet tried
-on real hardware" below. Then, to build: step 5 of the signal loss plan
-(https://claude.ai/artifact/PqZU5qNH73BYugN5Y2TZiH, source
-`design/signal-loss-plan.html`), or a round of logo options.
+**Next step.** Stage 2 of the effects plan below: the motion map, then the
+Motion and Gravity effects on top of it, and motion as modulation sources
+(which is also "an image as a control signal"). Before that, on the real
+Mac: the edit screen's new modulation editing, and the frame rate with
+Blur / Glow.
 
 **Decisions only you can make.**
 
+- On the Mac, switch on Setup → Vision → Segmentation with a camera or the
+  phone as input and say how many milliseconds a pass takes. That decides
+  how far the body-mask effects are worth pushing.
+- Say whether the bars on the Parameters tab are too narrow for drawing a
+  modulation's range (about 100 px in a 1440-wide window). If so: shorten
+  "Fader" to a mark, or widen that column.
+- Say what Glitch should become. You asked for a chosen, sudden move of one
+  or more sliders of the effects already in the preset; we parked it.
+- Say whether the Kaleido factory preset should get its slow colour
+  cycling back (an LFO on Tone's hue). Tone has no cycle control.
+- Look at the new icon in a real Chrome tab, and at the moving mark on the
+  iPhone's start screen in Safari. If the noise sits still there, say so.
+  Remove the old Home Screen icon and add it again to get the new one.
 - Try two phones again on the hotspot and say whether the first still gets
-  kicked off when the second starts. (On 16 November it did, with the two
-  tabs and PHONE B both seen. Keeping what is paired was built after that
-  and has not been tried on real phones.)
+  kicked off when the second starts.
 - Choose what the picture does when a phone drops: Setup → Input → If a
   source drops. It holds the last frame until you choose.
-- Say when you want a round of logo options. The mark on the Mac's splash
-  and the phone's start screen is the current icon, standing in.
 - Say go for step 5 of the signal loss plan (quality stepping down by
   itself, an alert when the Mac changes network, full alerts for the second
   phone), or change its order.
-- Say what the strip under the picture, the phone's band and the start
-  screens still need, once you have used them.
+- Say when to try depth (distance from the camera, by a second model) on
+  your Mac. You said yes to one trial, later.
 - Say whether a Mix B added by dragging the bar should be saved into the
   preset by itself. For now it lasts until the preset is loaded again.
 - Say whether Pair without internet is still wanted for the second phone.
-  You have not needed that route lately.
-- Say whether "an image as a control signal" is still wanted, and when.
-- Picture controls on the Mac (brightness, contrast, saturation and so on):
-  say whether they belong to each preset (the Contrast / Brightness effect
-  already does that) or should be one fixed set that holds across presets.
 - Recording: your Mac remembers WebM from before; choose MP4 once in Setup →
   Recordings. The first time a recording saves itself, allow Chrome to
-  download several files. Say if you want a folder of your own choosing
-  instead of Downloads; Chrome would ask for it again each time the page
-  is opened.
-- Board cover: it is your screenshot of 16 November, which shows the layout
-  from before this session. Send a new one when you want it replaced.
-- Say whether the phone's Quality menu should be restyled. It is the
-  iPhone's own picker, first in the phone's Camera settings panel.
+  download several files.
+- Board cover: it is your screenshot of 16 November, two sessions old. Send
+  a new one when you want it replaced.
+- Say whether the phone's Quality menu should be restyled.
 - Tick **hold** again on any trigger that had it: settings saved before 13
   November are no longer read.
 
-**Settled this session.** The sideways preview is fixed. Preview: Mac output
-is fine as it is. Running order: on hold, including named running orders.
-Name stays Third Eye Cam; 1280×720 stays. No server of your own. Old
-presets can be abandoned. MP4 is the default recording format. Mixing: an
-effect with its bar under the picture; the strip S3 with the mode button
-right of B, the bar always working, modes as a grid, pop-ups opening
-upward. Second phone: a tab for each phone, iPhone B on key 2. Signal loss:
-the plan's order; the band L1 and Resume; the Mac's splash with the mark
-small above a large code, one instruction and no name; the phone's start
-P1 with no name; the Mac's check as drawn.
+**Settled this session.** Logo: H3 (outline camera, horizontal eye, line
+2.7, the iris a ring in the same line) for the icon; H4 for the moving mark
+(noise ten times a second, quick blinks at uneven gaps over twenty seconds,
+the noise dimming and softening slightly at each blink, no wandering
+iris). Effects: merge into fewer, deeper effects; all four identity effects
+(Time, Motion, Scan, Gravity); the order below; the third-eye anchor, yes;
+a depth trial, yes, later. Tone's tint colours on two rainbow bars (T1).
+Bypass: the number is the switch (B1), no dot on the block, "bypassed"
+under the name. "Changed" means since the edit screen was opened.
+Modulation is set on the slider (N1): the arrow opens the menu with None
+and More settings fixed at the top, then "In use", then every source; the
+name on the button arms range mode, and the handle shows only then. The
+paired phone's place is held for thirty seconds across a closed link.
 
-**Built this session, not yet tried on real hardware.**
+**The effects plan** (approved 22 November; stage 1 is built).
+
+1. *Done.* Curved slider ranges; Blur / Glow; Noise; Tone.
+2. The motion map, built once and shared (a frame compared with the last,
+   in the shader, no model): the Motion effect (only what moves, or only
+   what is still), Gravity (the picture drifts toward real "down" as the
+   phone tilts, and is dragged along with movement), and motion as
+   modulation sources (overall, left / right / top / bottom), for A and B.
+3. Time (longer memory than 64 frames; input B, or movement, chooses how
+   far back each pixel looks) and Scan (brightness lifts the scan lines
+   into relief), with a "driven by" menu on the deep effects: itself,
+   input B, motion, the body.
+4. Two sources: "input A, delayed" as a source for B; body, motion and
+   body-part keys in Mix B; hair / skin / face / clothes in "Apply to"
+   (the segmentation model already gives them; only person / background is
+   used), with soften and delay for the mask.
+5. Anchors: a centre or position control follows a tracked point (face,
+   a hand, body centre, the fastest-moving point), the third eye (between
+   the brows) first; two hands as an aperture onto B.
+
+Still to merge under "fewer, deeper": Thermal and Posterize into a Colour
+Map with the owner's own colours; Trails into Feedback, with a "grow"
+control that blurs or sharpens inside the loop; Kaleidoscope and Edge Glow
+simplified (seven controls each). Not recommended: object detection.
+Cross-feedback between A and B: later, if at all.
+
+**Built in the fifth session, not yet tried on real hardware.**
+
+- The moving mark in Safari on the iPhone (SVG animation of a filter's
+  seed); the icon at 16 px in a real tab.
+- Blur / Glow at 60 fps, above all with an output window on a large
+  display; how the curved sliders feel under a hand, a fader and a MIDI
+  knob; a saved preset with Contrast / Brightness or Hue Shift becoming
+  Tone.
+- Drawing a modulation's range on a bar with a trackpad; the pinned top of
+  the source menu; the number as a bypass switch.
+- The paired phone keeping its place through a reload with another phone
+  waiting on the same code.
+
+**Built in the fourth session, not yet tried on real hardware.**
 
 - Input B and Mix B: two real pictures mixed, the iPhone as A or B, 60 fps
   with two live videos, each of the nine modes.
@@ -156,6 +199,49 @@ deleted under Setup → Recordings.
   palette) and asked for the LFOs tab and picture buttons that followed.
 - The iPhone's camera offers a web page no exposure or focus controls (the
   settings panel was empty apart from Quality and Camera).
+
+### Fifth session (21 to 22 November), in short
+
+- **Logo.** `scripts/make-icons.mjs` draws the icon; `src/shared/mark.js`
+  is its moving form, animated with SVG's own `<animate>` (nothing in CSS,
+  no timer), and still for anyone who asks for reduced motion. Sources of
+  the eleven boards in `design/logo/`.
+- **Curved sliders.** An effect parameter may carry `curve` (with `center`
+  or `from: 'max'`): see `paramValue` / `paramUnit` in
+  `src/effects/index.js`. Stored values, typed values and shaders stay in
+  the parameter's own units; only positions are curved, and everything
+  that turns a position into a value goes through those two functions (the
+  bar's `scale`, perform faders in `macros.js`, modulation and MIDI in
+  `modulation.js`). The two ends are exactly min and max.
+- **Tone** replaces `levels` and `hue`; `renamed()` in `state.js` turns a
+  saved one into Tone. A parameter with `look: 'hue'` gets a rainbow bar.
+- **Blur / Glow** reads `uTexMip`: `uses: { mips: true }` gives an effect a
+  copy of its input, at most 640 wide, with every mip level
+  (`EffectInstance.mips` in `pipeline.js`). Five reads for the round blur,
+  nine more along a line for the streak.
+- **Noise** uses an integer hash (`flakes`); the shared `hash21` shows a
+  weave on a grid of cells.
+- **The edit screen** (`chain.js`, `controls.js`): the block's number is
+  the bypass switch; `bar()` gained `setLive` (the hatched band; the
+  engine sends each moved slider's position as `mods` with `sources`),
+  `setWas` (the mark where a value was) and `setRange` (range mode: a drag
+  sets a modulation's amount, never the value). `menu()` gained pinned and
+  disabled choices and `mark` for an action menu. `ui.openedScene()` is
+  what Revert goes back to.
+- **Keep what is paired:** `PhoneLink.holdsAgainst` no longer needs the
+  paired phone's link to be open, only that it was heard from in the last
+  thirty seconds; the id is cleared on a new room code and on a deliberate
+  shutdown. Not done: carrying the id across a move of the picture between
+  windows (the new engine starts with none, so a phone waiting on the same
+  code could get in first at that moment).
+- **Tests.** Still twenty-five suites. `modulation` draws its all-effects
+  chain at the app's 50% resolution and then lightens the chain (software
+  graphics could no longer draw it at full size; the commit before stalls
+  at the same check). Mix B is left out of its "every effect alters the
+  picture" loop: with input B off it changes nothing, and the check only
+  passed by reading a frame left by the effect before. `midi-audio` sends
+  a press and its release in one step. `edit-screen` gained checks for the
+  switch, the marks and range mode.
 
 ### Fourth session (16 to 21 November), in short
 
@@ -412,8 +498,8 @@ Three static pages built by Vite, no framework.
 | `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js` (presets, each with a permanent id, and the running order: `loadOrder`, `orderView`, `applyStep`, `stepShow`), `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `direct.js` (pairing with no server), `qr.js`, `sources.js`, `mark.js` (the animated mark on the splash and the phone's start screen), `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; the engine forwards them to the phone) |
 | `src/effects/` | One file per effect (`mixb.js` mixes input B in); `index.js` is the registry, `common.glsl.js` the shared GLSL |
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
-| `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon, option D2 from the sheet at https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo) |
-| `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `running-order/`, `edit-screen/`, `mix/`, `phone2/`. `design/README.md` says which option of each was built |
+| `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon: the logo of 22 November, `design/logo/`) |
+| `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `logo/`, `tone/`, `edit-marks/`, `running-order/`, `edit-screen/`, `mix/`, `phone2/`. `design/README.md` says which option of each was built |
 | `tests/` | Twenty-five headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
@@ -524,6 +610,18 @@ Three static pages built by Vite, no framework.
   `host.js` or the phone's `link.js`**, not only the ones that seem related.
   After removing code with a scripted edit, search for callers of everything
   it removed.
+- **The sandbox's graphics are software** and got slower again on 22
+  November. A blur that is nothing to a real GPU can starve every page
+  here: time a new shader in a small output window before blaming a hang
+  on logic. To tell a sandbox failure from your own, set your changes
+  aside (`git stash -u`), build, run the one suite on the last commit,
+  and bring them back (`git stash pop`, build again). On 22 November
+  `midi-audio` crashed in its audio part and `phone` failed two room-code
+  checks on the previous commit too, then passed later the same day.
+- **A scratch test file** (`tests/_look.mjs` and the like) is the quick way
+  to look at an effect: open `/output` at 640×360, set a chain straight
+  into the store with full default params, screenshot the page. Delete it
+  before committing.
 - **This Chromium has no MIDI backend** (`requestMIDIAccess` never settles);
   the MIDI test stubs a device.
 - Deleting a remote branch and changing repository settings are not possible
@@ -809,5 +907,6 @@ This session: <say what you want built or fixed, or what you found when
 you tried the last session's work on the real iPhones and Mac. Waiting, from
 HANDOFF.md: step 5 of the signal loss plan (video quality stepping down by
 itself, an alert when the Mac changes network, full alerts for the second
-phone); a round of logo options; an image as a control signal.>
+phone); stage 2 of the effects plan (the motion map, Motion, Gravity,
+motion as modulation sources); Glitch as a chosen move of sliders.>
 ```

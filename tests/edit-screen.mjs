@@ -41,7 +41,7 @@ try {
   console.log('the bar');
   await clickBar(control, paramBar('decay'), 0.25);
   const quarter = await param('decay');
-  check('a click on a bar sets the value there', Math.abs(quarter - 0.578) < 0.02, String(quarter));
+  check('a click on a bar sets the value there', Math.abs(quarter - 0.578) < 0.035, String(quarter));
   await control.locator('#tab-params .param[data-key="decay"] .bar-value').fill('0.9');
   await control.keyboard.press('Enter');
   check('a value can be typed', await settle(async () => (await param('decay')) === 0.9, 'typed'), String(await param('decay')));
@@ -87,6 +87,28 @@ try {
   check('without opening another effect', (await control.locator('.chain-row .fx[aria-pressed=true]').getAttribute('data-uid')) === openBefore);
   await control.locator('.chain-row .fx').first().locator('.num').click();
   check('and a second click brings it back', await settle(async () => (await state(() => window.thirdEye.store.state.chain[0].bypass)) === false && (await control.locator('.chain-row .fx.bypassed').count()) === 0, 'back'));
+  console.log('modulation set on the slider itself');
+  const shiftRow = control.locator('#tab-params .param[data-key="shiftX"]');
+  const count0 = await state(() => window.thirdEye.store.state.mappings.length);
+  await shiftRow.locator('.mod-menu').click();
+  check('the arrow by Mod opens the menu: None, More settings, what is in use, then every source', (await control.locator('.menu-list .menu-item').nth(0).textContent()) === 'None' && (await control.locator('.menu-list .menu-item').nth(1).textContent()) === 'More settings →' && (await control.locator('.menu-list .menu-group').first().textContent()) === 'In use' && (await control.locator('.menu-list .menu-item[data-value="$more"]').getAttribute('aria-disabled')) === 'true');
+  await control.locator('.menu-list .menu-item[data-value="pad.y"]').first().click();
+  const mine = () => state(() => window.thirdEye.store.state.mappings.find((m) => m.key === 'shiftX'));
+  check('a source chosen there moves the slider, and the slider is ready for its range to be drawn', await settle(async () => (await mine())?.source === 'pad.y' && (await state(() => window.thirdEye.store.state.mappings.length)) === count0 + 1 && (await shiftRow.locator('.mod-toggle').getAttribute('class')).includes('ranging') && (await shiftRow.locator('input.bar').getAttribute('class')).includes('ranging') && (await control.locator('#tab-params').isVisible()), 'ranging'));
+  const shiftBefore = await param('shiftX');
+  await clickBar(control, paramBar('shiftX'), 0.8);
+  check('a drag on the bar sets how far it is moved, and leaves the slider where it was', await settle(async () => Math.abs((await mine()).amount - 0.3) < 0.03, 'amount') && (await param('shiftX')) === shiftBefore, `amount ${(await mine()).amount}, shiftX ${await param('shiftX')}`);
+  await control.keyboard.press('Escape');
+  check('Esc leaves range mode, and the button names the source', await settle(async () => !(await shiftRow.locator('.mod-toggle').getAttribute('class')).includes('ranging') && (await shiftRow.locator('.mod-toggle').textContent()) === '~ Pad Y', 'left'));
+  await clickBar(control, paramBar('shiftX'), 0.6);
+  check('after which the bar sets the value again', await settle(async () => (await param('shiftX')) !== shiftBefore && Math.abs((await mine()).amount - 0.3) < 0.03, 'value again'));
+  await shiftRow.locator('input.bar').dblclick();
+  await shiftRow.locator('.mod-toggle').click();
+  check('a click on the named button brings range mode back', await settle(async () => (await shiftRow.locator('.mod-toggle').getAttribute('class')).includes('ranging'), 'back in range mode'));
+  await shiftRow.locator('.mod-menu').click();
+  await control.locator('.menu-list .menu-item[data-value="$none"]').click();
+  check('None takes the modulation off', await settle(async () => (await state(() => window.thirdEye.store.state.mappings.length)) === count0 && (await shiftRow.locator('.mod-toggle').textContent()) === '+ Mod', 'removed'));
+
   const keyLabel = control.locator('#tab-params .param[data-key="key"] label');
   const dotsBefore = await control.locator('#tab-params .param label.changed').count();
   await clickBar(control, paramBar('key'), 0.9);

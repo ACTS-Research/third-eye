@@ -231,8 +231,10 @@ pairing link for a different room.
 while one is paired and answering, the newcomer is turned away ("This Mac
 already has an iPhone", with a pointer to the iPhone B code when that is
 on) and the paired phone never notices. The paired phone itself may redial
-or reload at any time. Another phone can only take the place once the
-paired one has been silent for thirty seconds. Likewise the room code is
+or reload at any time: its place is kept through the moment its link is
+closed. Another phone can only take the place once the paired one has been
+silent for thirty seconds (so when you swap phones on purpose, the new one
+may wait up to that long, or press **New room code**). Likewise the room code is
 never changed under a phone: if the code reads as in use somewhere else
 after a phone has paired on it (in the last twelve hours, in this browser),
 the Mac keeps trying it and says so, and **New room code** is yours to
@@ -551,7 +553,14 @@ That needs **Segmentation** switched on under Setup → Vision.
 left to right: the input, each effect, then **+ Add effect**. Click an effect
 to open its controls on the **Parameters** tab; drag its button to move it
 (or use ← → beside its name), and **Bypass** or **✕** there to skip or remove
-it. Each slider is a bar: click or drag to set it, type an exact number in
+it. The number on an effect's button is also its switch: click the number to
+bypass the effect without opening it, and again to bring it back; a bypassed
+effect is drawn dashed, its number struck through. While you edit, anything
+you have changed since opening the screen is marked: a dot by the slider's
+name and a mark on its bar where the value was, and **Revert** says how many
+sliders it would put back. A slider that something moves shows where it is
+at this moment as a hatched band on its bar, as the perform faders do.
+Each slider is a bar: click or drag to set it, type an exact number in
 the box beside it, double-click to return to the default. Many bars are
 curved so that the whole of their travel is useful: fine around the value
 where little happens (the middle, for a control that goes both ways) and
@@ -583,11 +592,19 @@ resolution if the GPU is struggling.
 **Setup → Sources** shows them all moving live; the perform screen shows the
 ones the live preset uses.
 
-**Modulation.** Press **Mod** on a slider and a source starts moving it; the
-**Modulation** tab opens on the new box. Each box is one source moving one
-slider (`Phone · Roll → 1 Video Feedback · rotate`), with a thin meter
-showing the source live. **Source** and **Slider** are menus, so a box can be
-re-aimed; **Amount** (-1..1 of the slider's range) and **Smoothing** are
+**Modulation.** It is set where the slider is. The arrow beside a slider's
+**Mod** button opens a menu of what can move it: **None** at the top, the
+sources already **In use** in this preset, then every source. Choose one and
+the slider is in range mode: draw on its bar how far it is to be moved (to
+the right pushes it up, to the left pulls it down; the slider's own value
+stays where it is). Click the button, press `Esc` or click elsewhere when
+done. Afterwards the button names the source, and a click on it brings
+range mode back. **More settings →** in the same menu opens the
+**Modulation** tab on that slider's box, for the rest. Each box there is one
+source moving one slider (`Phone · Roll → 1 Video Feedback · rotate`), with
+a thin meter showing the source live. **Source** and **Slider** are menus,
+so a box can be re-aimed; **Amount** (-1..1 of the slider's range) and
+**Smoothing** are
 always there, and **More** opens **Offset**, **Invert** and how it is
 applied: *added to the dialled value* or *replaces the value* (the source
 sweeps the whole range). The switch turns one off without removing it; ✕
@@ -1010,8 +1027,18 @@ B, the strip under the picture, the stand-by for a dropped source, the
 phone's band and Resume, the start screens and checks, recordings saving
 themselves) has been seen on real devices.
 
+On 22 November the owner tried the new effects (Tone, Blur / Glow, Noise and
+the wider slider ranges) on the Mac with the iPhone as input and reported
+that they work well.
+
 **Only in headless Chromium**, with a fake camera and microphone: everything
 else. Check these the first time you use them:
+
+- **From 22 November:** the moving mark on the iPhone's start screen in
+  Safari; the frame rate with Blur / Glow on a large output; drawing a
+  modulation's range on a slider's bar; the number on an effect's button
+  as its bypass switch; a paired phone keeping its place through a reload
+  while another phone waits on the same code.
 
 - **Input B and Mix B** (16 November): two real pictures mixed, the iPhone
   as A or B beside the Mac's camera, and whether the Mac holds 60 fps with

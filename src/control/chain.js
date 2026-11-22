@@ -21,7 +21,8 @@ export function mountChain(roots, ui) {
   const pane = roots.params;
   let selected = null; // uid of the effect that is open
   let controls = new Map(); // key -> { set(value) } for the open effect
-  let bars = new Map(); // key -> { control, label() } for its sliders
+  let bars = new Map(); // key -> { control, spec, modButton, label() } for its sliders
+  let ranging = null; // key of the slider whose range is being drawn
   let dragFrom = -1;
 
   // Structural edits replace the scene; effects that survive keep their uid
@@ -194,16 +195,59 @@ export function mountChain(roots, ui) {
           if (ui.togglePin?.(item.uid, key) === false) pin.title = 'All eight faders are in use. Take one off under Faders first.';
         },
       });
+      // What moves this slider. The name on the button arms range mode
+      // (draw on the bar how far the slider is moved); the arrow opens the
+      // menu: None, More settings, the sources already in use, then all.
+      const mine = () => store.state.mappings.find((m) => m.fx === item.uid && m.key === key);
+      const sourceMenu = menu({
+        action: true,
+        text: '▾',
+        cls: 'mod-menu',
+        label: `What moves ${label}`,
+        mark: () => mine()?.source ?? '$none',
+        options: () => {
+          const used = [...new Set(store.state.mappings.map((m) => m.source))];
+          const entry = (id, group) => ({ value: id, label: describeSource(id).label, group: group ?? describeSource(id).group });
+          return [
+            { value: '$none', label: 'None', pin: true },
+            { value: '$more', label: 'More settings →', pin: true, cls: 'link', disabled: !mine() },
+            ...used.map((id) => entry(id, 'In use')),
+            ...(ui.knownSources?.() ?? []).map((id) => entry(id)),
+          ];
+        },
+        onChange: (v) => {
+          touched(key, label);
+          const m = mine();
+          if (v === '$none') {
+            ranging = null;
+            if (m) store.setScene({ ...sceneOf(store.state), mappings: store.state.mappings.filter((x) => !(x.fx === item.uid && x.key === key)) });
+          } else if (v === '$more') {
+            ranging = null;
+            ui.openMod?.(item.uid, key);
+          } else {
+            // A source just chosen: straight on to drawing its range.
+            ranging = key;
+            if (m) store.patchItem('mappings', m.id, { source: v });
+            else ui.addMapping?.(v, { amount: 0.25 }, { fx: item.uid, key });
+            applyRange();
+          }
+        },
+      });
       const mod = modText(item.uid, key);
-      const modButton = el('button', { class: 'mod-toggle', 'aria-pressed': String(mod.on), text: mod.text, title: mod.on ? 'Moved by itself. Click to see what moves it.' : 'Have something move this by itself', onclick: () => ui.openMod?.(item.uid, key) });
+      const modButton = el('button', { class: 'mod-toggle', 'aria-pressed': String(mod.on), text: mod.text, title: mod.on ? 'Click, then draw on the bar how far it is moved. Click again when done.' : 'Have something move this by itself', onclick: () => {
+        touched(key, label);
+        if (!mine()) return sourceMenu.open();
+        ranging = ranging === key ? null : key;
+        applyRange();
+      } });
       controls.set(key, control);
-      bars.set(key, { control, label: () => pane.querySelector(`.param[data-key="${key}"] label`) });
+      bars.set(key, { control, spec, modButton, label: () => pane.querySelector(`.param[data-key="${key}"] label`) });
       controls.set(`${key}$mod`, { set: () => {
         const now = modText(item.uid, key);
         modButton.textContent = now.text;
         modButton.setAttribute('aria-pressed', String(now.on));
       } });
-      return rowFor(key, label, control.node, [pin, modButton]);
+      return rowFor(key, label, control.node, [pin, el('span', { class: 'mod-pair' }, [modButton, sourceMenu.node])]);
     };
 
     pane.append(slider('mix', def.mixLabel ?? 'wet / dry', { min: 0, max: 1, step: 0.01, default: 1 }, item.mix, (v) => store.patchItem('chain', item.uid, { mix: v })));
@@ -283,6 +327,44 @@ export function mountChain(roots, ui) {
   }
   ui.markChanges = markChanges;
 
+  // Range mode: the slider named by `ranging` shows how far its first
+  // modulation reaches, and a drag on its bar sets that.
+  function applyRange() {
+    const open = current();
+    for (const [key, { control, spec, modButton }] of bars) {
+      const m = open && key === ranging ? store.state.mappings.find((x) => x.fx === open.uid && x.key === key) : null;
+      modButton.classList.toggle('ranging', !!m);
+      if (!m) {
+        control.setRange(null);
+        continue;
+      }
+      const at = key === 'mix' ? open.mix : paramUnit(spec, open.params[key]);
+      const set = m.mode === 'set';
+      const both = !set && describeSource(m.source).bipolar;
+      const clampUnit = (u) => Math.min(1, Math.max(0, u));
+      const to = clampUnit(set ? (m.amount >= 0 ? m.amount : 1 + m.amount) : at + m.amount);
+      const from = clampUnit(set ? (m.amount >= 0 ? 0 : 1) : both ? at - m.amount : at);
+      control.setRange({ from, to }, (unit) => {
+        const amount = set ? (m.amount >= 0 ? unit : unit - 1) : unit - at;
+        store.patchItem('mappings', m.id, { amount: Math.round(Math.min(1, Math.max(-1, amount)) * 100) / 100 });
+      });
+    }
+    if (ranging && !bars.has(ranging)) ranging = null;
+  }
+  // Esc, or a click anywhere but the bar and its button, leaves range mode.
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !ranging) return;
+    ranging = null;
+    applyRange();
+  });
+  document.addEventListener('pointerdown', (e) => {
+    if (!ranging) return;
+    const row = pane.querySelector(`.param[data-key="${ranging}"]`);
+    if (row?.contains(e.target) && (e.target.closest('input.bar') || e.target.closest('.mod-toggle'))) return;
+    ranging = null;
+    applyRange();
+  }, true);
+
   // Where modulation has each moved slider of the open effect right now.
   bus?.on('sources', (m) => {
     const open = current();
@@ -296,6 +378,7 @@ export function mountChain(roots, ui) {
     buildRow();
     buildParams();
     markChanges();
+    applyRange();
   }
 
   // Brings the open effect's controls up to date without rebuilding them.
@@ -306,6 +389,7 @@ export function mountChain(roots, ui) {
     controls.get('mix')?.set(item.mix);
     for (const key of Object.keys(EFFECT_BY_ID[item.type].params)) controls.get(key)?.set(item.params[key]);
     markChanges();
+    applyRange();
   }
 
   store.subscribe((op) => {
@@ -316,11 +400,15 @@ export function mountChain(roots, ui) {
     } else if (op.op === 'item' && op.list === 'chain') {
       refresh(store.findEffect(op.id));
       if (op.patch && 'bypass' in op.patch) buildRow();
+    } else if (op.op === 'item' && op.list === 'mappings' && op.patch && !('source' in op.patch || 'fx' in op.patch || 'key' in op.patch)) {
+      // Its amount, or how it is applied: the range being drawn follows.
+      applyRange();
     } else if (op.op === 'item' && op.list === 'mappings' && op.patch && ('source' in op.patch || 'fx' in op.patch || 'key' in op.patch)) {
       // A mapping changed its source or target: the Mod buttons and the
       // counts on the chain row follow.
       for (const [key, control] of controls) if (key.endsWith('$mod')) control.set();
       buildRow();
+      applyRange();
     } else if (op.op === 'merge' && op.key === 'input') {
       buildRow();
     }

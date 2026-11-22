@@ -75,7 +75,16 @@ try {
   await midi([0x92, 36, 127]);
   check('note on becomes a gate on its channel', (await source('midi.note.3.36')) === 1);
   await midi([0x82, 36, 0]);
-  check('a release is held until a frame has seen the press', (await source('midi.note.3.36')) === 1);
+  await frames();
+  // A press and its release that arrive between two frames: sent in one
+  // step, so that no frame can fall between them (sent in two, a frame
+  // sometimes did, and the release then rightly took effect at once).
+  const held = await output.evaluate(() => {
+    window.__midiInput.onmidimessage({ data: new Uint8Array([0x92, 36, 127]) });
+    window.__midiInput.onmidimessage({ data: new Uint8Array([0x82, 36, 0]) });
+    return window.thirdEye.engine.mod.get('midi.note.3.36');
+  });
+  check('a release is held until a frame has seen the press', held === 1, String(held));
   await frames();
   check('note off then closes the gate', (await source('midi.note.3.36')) === 0);
   check('MIDI sources get meters on control', await settle(() => control.evaluate(() => !!document.querySelector('.meter[title="midi.cc.1.74"]')), 'midi meter'));

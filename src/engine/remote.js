@@ -77,6 +77,8 @@ export class PhoneLink {
     // it and must outlive every retry.
     this.destroy({ keepDirect: true });
     const net = this.getNet();
+    // A new room code is a fresh start: nobody holds a place under it yet.
+    if (this.key && this.key.split('|')[0] !== net.room) this.device = '';
     this.key = `${net.room}|${net.signal}`;
     // After a failed attempt keep saying "unreachable" while retrying, rather
     // than flipping back to "connecting" every few seconds.
@@ -156,6 +158,9 @@ export class PhoneLink {
     if (!keepDirect) {
       this.dropPending();
       this.direct = false;
+      // Shut down on purpose (the engine stopping, the second phone
+      // switched off): the place is no longer held for anyone.
+      this.device = '';
     }
     try {
       peer?.destroy();
@@ -320,7 +325,10 @@ export class PhoneLink {
   // here and has been heard from lately. A page that sends no id (an older
   // copy of the phone page) is never turned away.
   holdsAgainst(device) {
-    return !!device && !!this.device && device !== this.device && !!this.conn?.open && performance.now() - this.lastHeardAt < this.holdMs;
+    // (Not "while its link is open": a reload, a redial or a short drop
+    // closes the link for a moment, and a phone waiting on the same code
+    // must not get in through that gap.)
+    return !!device && !!this.device && device !== this.device && performance.now() - this.lastHeardAt < this.holdMs;
   }
 
   acceptCall(call) {

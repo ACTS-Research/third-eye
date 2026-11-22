@@ -34,6 +34,11 @@ try {
   const clean = (await outputStats(output)).hash;
   const dead = [];
   for (const type of effects) {
+    // Mix B passes the picture through untouched while input B is off, as
+    // it is here; it only ever "changed" the picture by being read before
+    // the frame left by the effect before it had been replaced. Its modes
+    // are checked with a real input B in tests/mix.mjs.
+    if (type === 'mixb') continue;
     await setChain([type]);
     const changed = await settle(async () => (await outputStats(output)).hash !== clean, type, 8000);
     if (!changed) dead.push(type);
@@ -116,10 +121,18 @@ try {
   await setChain(['feedback']);
   // Mod on a slider adds a source for that slider and shows it.
   await control.evaluate(() => window.thirdEye.ui.setView('edit'));
+  // Mod on a free slider opens its menu: None and More settings stay at the
+  // top, then every source. Choosing one adds it without leaving the tab.
   await control.locator('#tab-params .param[data-key="zoom"] .mod-toggle').click();
+  check('Mod on a free slider opens the menu of sources, None first', await settle(async () => (await control.locator('.menu-list .menu-item').first().textContent()) === 'None' && (await control.locator('.menu-list .menu-item.on').first().textContent()) === 'None' && (await control.locator('.menu-list .menu-item.pinned').count()) === 2, 'mod menu'));
+  await control.locator('.menu-list .menu-item[data-value="lfo.1"]').first().click();
   await sleep(200);
   let mapping = await state(() => window.thirdEye.store.state.mappings[0]);
-  check('Mod on a slider adds a source for that slider', mapping?.key === 'zoom' && mapping.source === 'lfo.1' && (await control.locator('#tab-mods').isVisible()), JSON.stringify(mapping));
+  check('choosing a source adds it for that slider, on the same tab', mapping?.key === 'zoom' && mapping.source === 'lfo.1' && (await control.locator('#tab-params').isVisible()), JSON.stringify(mapping));
+  // More settings, in the same menu, goes to that slider's box.
+  await control.locator('#tab-params .param[data-key="zoom"] .mod-menu').click();
+  await control.locator('.menu-list .menu-item[data-value="$more"]').click();
+  check('More settings opens the Modulation tab on its box', await settle(() => control.locator('#tab-mods').isVisible(), 'mods tab'));
   check('its box says what moves what', (await control.locator('.mod .mod-title').first().textContent()) === 'LFO 1 → 1 Video Feedback · zoom', await control.locator('.mod .mod-title').first().textContent());
   // The source is chosen from the app's own menu, grouped as the sources are.
   await control.locator('.mod .mod-route .menu').first().click();

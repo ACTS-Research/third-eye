@@ -39,6 +39,10 @@ export function bar({ min, max, step = 0.01, value = min, label = '', id, reset,
   let current = value;
   let live = null; // where modulation has it now, 0..1, or null
   let was; // the value it had when the edit screen was opened, if it differs
+  // While a range is being drawn on the bar: { from, to } along it (0..1),
+  // and who to tell where the pointer is. The bar then sets no value.
+  let range = null;
+  let onRange = null;
   // One layer of the bar's background, from a% to b% of its width.
   const span = (image, a, b) => {
     const size = Math.max(0.5, b - a);
@@ -54,9 +58,18 @@ export function bar({ min, max, step = 0.01, value = min, label = '', id, reset,
       const w = unitOf(was) * 100;
       marks.push(`linear-gradient(90deg, transparent calc(${w}% - 3px), var(--bg) calc(${w}% - 3px), var(--bg) calc(${w}% - 1px), var(--ink) calc(${w}% - 1px), var(--ink) calc(${w}% + 1px), var(--bg) calc(${w}% + 1px), var(--bg) calc(${w}% + 3px), transparent calc(${w}% + 3px))`);
     }
-    // A hatched band from where it is set to where modulation has it, as
-    // on the perform faders: ink stripes past the fill, dark ones cut into it.
-    if (live !== null && Math.abs(live * 100 - t) > 0.4) {
+    if (range) {
+      // The whole reach of the modulation, hatched, with a handle at its end.
+      const a = Math.min(range.from, range.to) * 100;
+      const b = Math.max(range.from, range.to) * 100;
+      const h = range.to * 100;
+      marks.push(`linear-gradient(90deg, transparent calc(${h}% - 4px), var(--bg) calc(${h}% - 4px), var(--bg) calc(${h}% - 2px), var(--ink) calc(${h}% - 2px), var(--ink) calc(${h}% + 2px), var(--bg) calc(${h}% + 2px), var(--bg) calc(${h}% + 4px), transparent calc(${h}% + 4px))`);
+      if (b - a > 0.4) {
+        // Ink stripes show on the empty part of the bar, dark ones (half a
+        // step along) on the filled part, so the reach reads on both.
+        marks.push(span('repeating-linear-gradient(135deg, var(--ink) 0 2px, transparent 2px 3px, var(--bg) 3px 5px, transparent 5px 6px)', a, b));
+      }
+    } else if (live !== null && Math.abs(live * 100 - t) > 0.4) {
       const up = live * 100 > t;
       const filled = origin === null ? !up : (t > unitOf(origin) * 100 ? !up : up);
       marks.push(span(`repeating-linear-gradient(135deg, var(${filled ? '--bg' : '--ink'}) 0 2px, transparent 2px 6px)`, Math.min(t, live * 100), Math.max(t, live * 100)));
@@ -87,11 +100,40 @@ export function bar({ min, max, step = 0.01, value = min, label = '', id, reset,
     onInput?.(current);
   }
 
+  // Drawing a range: the pointer says how far, and the value stays put.
+  const rangeAt = (e) => {
+    const r = input.getBoundingClientRect();
+    onRange?.(clamp((e.clientX - r.left) / r.width, 0, 1));
+  };
+  input.addEventListener('pointerdown', (e) => {
+    if (!range) return;
+    e.preventDefault();
+    input.setPointerCapture?.(e.pointerId);
+    input.focus();
+    rangeAt(e);
+  });
+  input.addEventListener('pointermove', (e) => {
+    if (range && e.buttons & 1) rangeAt(e);
+  });
+  input.addEventListener('mousedown', (e) => {
+    if (range) e.preventDefault();
+  });
+  input.addEventListener('keydown', (e) => {
+    if (!range || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    onRange?.(clamp(range.to + (e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? -0.01 : 0.01), 0, 1));
+  });
   input.addEventListener('pointerdown', () => onTouch?.());
   input.addEventListener('focus', () => onTouch?.());
-  input.addEventListener('input', () => commit(scale ? snap(scale.fromUnit(Number(input.value))) : Number(input.value)));
+  input.addEventListener('input', () => {
+    if (range) return show();
+    commit(scale ? snap(scale.fromUnit(Number(input.value))) : Number(input.value));
+  });
   // Double-click goes back to the default, as on the perform faders.
-  if (reset !== undefined) input.addEventListener('dblclick', () => commit(reset));
+  if (reset !== undefined) input.addEventListener('dblclick', () => {
+    if (!range) commit(reset);
+  });
   if (number) {
     number.addEventListener('focus', () => {
       number.value = Number(current).toFixed(digits);
@@ -126,6 +168,14 @@ export function bar({ min, max, step = 0.01, value = min, label = '', id, reset,
       const next = unit === null || unit === undefined ? null : clamp(unit, 0, 1);
       if (next === live) return;
       live = next;
+      paint();
+    },
+    // Range mode: `r` is { from, to } along the bar, or null to leave it;
+    // `tell(unit)` hears where the pointer is while a range is drawn.
+    setRange(r, tell) {
+      range = r;
+      onRange = r ? tell : null;
+      input.classList.toggle('ranging', !!r);
       paint();
     },
     // The value to mark as "where it was", or undefined for no mark.
@@ -165,7 +215,10 @@ document.addEventListener('scroll', (e) => {
 // Returns { node, set(value), get value }.
 // An option may carry `item` (its text in the list, when that differs from
 // the button's) and `midi` (an action, so MIDI map mode can pick it).
-export function menu({ options, value, onChange, onOpen, label = '', id, text = '', action = false, cls = '' }) {
+// In an action menu `mark()` may return the value to tick. An option may
+// also be `pin`ned (it stays at the top while the rest scrolls), `disabled`,
+// or carry a class of its own (`cls`).
+export function menu({ options, value, onChange, onOpen, label = '', id, text = '', action = false, cls = '', mark = null }) {
   const caption = el('span', { class: 'menu-text' });
   const button = el('button', { type: 'button', class: `menu${cls ? ` ${cls}` : ''}`, 'aria-haspopup': 'listbox', 'aria-expanded': 'false', 'aria-label': label || null }, [caption, el('span', { class: 'menu-mark', 'aria-hidden': 'true', text: action ? '' : '▾' })]);
   if (id) button.id = id;
@@ -207,14 +260,22 @@ export function menu({ options, value, onChange, onOpen, label = '', id, text = 
         group = o.group;
         list.append(el('div', { class: 'menu-group', text: group }));
       }
-      const chosen = !action && o.value === current;
-      const item = el('div', { class: `menu-item${chosen ? ' on' : ''}`, role: 'option', tabindex: '-1', 'aria-selected': String(chosen), 'data-value': String(o.value), text: o.item ?? o.label });
+      const chosen = action ? !!mark && o.value === mark() : o.value === current;
+      const item = el('div', { class: `menu-item${chosen ? ' on' : ''}${o.pin ? ' pinned' : ''}${o.disabled ? ' disabled' : ''}${o.cls ? ` ${o.cls}` : ''}`, role: 'option', tabindex: '-1', 'aria-selected': String(chosen), 'aria-disabled': o.disabled ? 'true' : null, 'data-value': String(o.value), text: o.item ?? o.label });
       if (o.midi) item.dataset.midi = o.midi;
-      item.addEventListener('click', () => pick(o.value));
+      item.addEventListener('click', () => {
+        if (!o.disabled) pick(o.value);
+      });
       list.append(item);
     }
     if (!items.length) list.append(el('div', { class: 'menu-group', text: 'Nothing to choose' }));
     document.body.append(list);
+    // Pinned choices stay in view, one under the other, as the rest scrolls.
+    let top = 0;
+    for (const item of list.querySelectorAll('.menu-item.pinned')) {
+      item.style.top = `${top}px`;
+      top += item.offsetHeight;
+    }
     onOpen?.(list);
     // Under the button if there is room, else above it; never off the page.
     const place = () => {
@@ -270,6 +331,10 @@ export function menu({ options, value, onChange, onOpen, label = '', id, text = 
   });
   show();
   return {
+    // Opens the list (for a second button that stands for the same menu).
+    open: () => {
+      if (!list) open();
+    },
     node: button,
     set(v) {
       current = v;

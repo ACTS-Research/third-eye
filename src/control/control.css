@@ -353,6 +353,17 @@ button.idle { opacity: 0.45; }
 .pin-toggle, .mod-toggle { padding: 4px 6px; font-size: 10px; letter-spacing: 0.06em; overflow: hidden; text-overflow: ellipsis; }
 .pin-toggle { width: 60px; }
 .mod-toggle { width: 78px; }
+/* The Mod button and, joined to it, the arrow that opens its menu. */
+.mod-pair { display: flex; }
+.mod-pair .mod-toggle { border-right: 0; }
+.param .menu.mod-menu { padding: 4px 6px; font-size: 10px; justify-self: auto; }
+.mod-toggle.ranging { background: var(--ink); color: var(--on-ink); outline: 2px solid var(--ink); outline-offset: 2px; }
+input.bar.ranging { cursor: col-resize; }
+.menu-item.pinned { position: sticky; z-index: 1; background: var(--bg); }
+.menu-item.pinned:hover, .menu-item.pinned:focus { background: var(--ink); }
+.menu-item.pinned + .menu-item:not(.pinned), .menu-item.pinned + .menu-group { border-top: 1px solid var(--line); }
+.menu-item.link { text-decoration: underline dashed; text-underline-offset: 3px; }
+.menu-item.disabled { opacity: 0.45; cursor: default; }
 
 .pin-list { display: flex; flex-direction: column; gap: 6px; }
 .pin { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto auto auto; column-gap: 6px; align-items: center; padding: 6px 8px; border: 1px solid var(--line); }
