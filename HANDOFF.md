@@ -19,6 +19,9 @@ Then stage 3 of the effects plan (Time and Scan).
 - Try a Motion source on a slider (Mod → Motion A → Overall) and say
   whether it is lively enough or too jumpy. Say whether Gravity pours
   toward the room's floor when you roll the phone.
+- Run the code test: open the site's address with `/qr-test/` in place of
+  `/control/`, point the iPhone's Camera app at each code, press It scanned
+  or It did not, then Copy results and paste them to the next session.
 - Try Glitch: Edit a preset → Glitch tab → Capture a glitch, move some
   sliders, Keep, then press G. Say whether the pointer on the bar is
   findable enough, and whether any factory preset should come with a
@@ -130,6 +133,25 @@ The output readout shows the frame rate only when it is low (50 or
 under) and for the first six seconds of a recording.
 Next: the starting screen (the owner's concern is the look of the mark and
 of the QR code).
+
+**Open: the starting screen.** Mock-ups at
+https://claude.ai/artifact/7MxqJ1CZhbWHzKod3deScy (sources in
+`design/start2/project/`). Where it stands: the owner wants the camera of
+the mark drawn solid in the interface colour with the pairing code centred
+in it (black on the colour), and an opening of under two seconds: the eye
+a line, opening quickly, one blink, breaking into noise, the noise settling
+into the code (`Frames`, `Play`). Not built. It waits on a scan test with
+the real iPhone: `/qr-test/` on the site (`qr-test/index.html`,
+`src/qr-test/main.js`, a fifth Vite page that is not part of the
+instrument) shows 36 codes, six palettes by three drawings (black on the
+colour square, the same rounded, the colour on black) at dimmer 100% and
+25%, each carrying a link back to that page so the phone names the code it
+read; the Mac page keeps a tally to copy. All 36 read with jsQR here,
+which says nothing about the iPhone's Camera app. Still to settle when it
+is built: the code must ignore the dimmer if 25% does not scan; a line
+saying how far pairing has got; one line for a second iPhone; the opening
+plays once a session and never on a reload with a phone paired; remove the
+test page when the question is answered.
 
 **Settled in the sixth session.** The logo is fine for now. The
 segmentation timing on the owner's Mac is not needed: the app will run on

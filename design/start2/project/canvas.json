@@ -8,12 +8,15 @@
     "Main.dc.html": { "x": 0, "y": 0, "w": 900, "h": 560, "title": "S1 · The camera holds the code" },
     "Side.dc.html": { "x": 980, "y": 0, "w": 900, "h": 560, "title": "S2 · Mark and steps on the left, the code on the right" },
     "Eye.dc.html": { "x": 1960, "y": 0, "w": 900, "h": 560, "title": "S3 · The eye sits in the code" },
-    "Splash.dc.html": { "x": 0, "y": 980, "w": 1880, "h": 360, "title": "Opening: the mark becomes the code (about a second)" }
+    "Splash.dc.html": { "x": 0, "y": 980, "w": 1880, "h": 360, "title": "Opening: the mark becomes the code (about a second)" },
+    "Frames.dc.html": { "x": 0, "y": 1820, "w": 1880, "h": 380, "title": "The opening in six frames: a solid camera, the eye, a blink, noise, the code" },
+    "Play.dc.html": { "x": 1960, "y": 1820, "w": 900, "h": 560, "title": "The opening, playing (press Play)", "is_interactive": true }
   },
-  "order": ["Main.dc.html", "Side.dc.html", "Eye.dc.html", "Splash.dc.html"],
+  "order": ["Main.dc.html", "Side.dc.html", "Eye.dc.html", "Splash.dc.html", "Frames.dc.html", "Play.dc.html"],
   "notes": {
     "h1": { "x": 0, "y": -300, "text": "The starting screen: the mark and the code", "kind": "title1", "maxW": 2860 },
-    "h2": { "x": 0, "y": 700, "text": "The opening", "kind": "title1", "maxW": 1880 }
+    "h2": { "x": 0, "y": 700, "text": "The opening", "kind": "title1", "maxW": 1880 },
+    "h3": { "x": 0, "y": 1520, "text": "Second round: the solid camera, and the opening as asked", "kind": "title1", "maxW": 2860 }
   },
   "designSystems": []
 }
