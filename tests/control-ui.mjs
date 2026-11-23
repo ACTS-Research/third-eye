@@ -216,6 +216,16 @@ try {
   const options = await control.locator('.menu-list .menu-item').allTextContents();
   await control.keyboard.press('Escape');
   check('triggers can target presets, inputs and faders', options.includes('Preset 5: Vortex') && options.includes('Input: Local camera') && options.includes('Fader 1 (continuous)'));
+  // A factory preset deleted by mistake can be brought back, as it was made.
+  await control.evaluate(() => {
+    const { presets } = window.thirdEye.ui;
+    presets.remove(presets.list.findIndex((p) => p.name === 'Thermal trails'));
+  });
+  check('a factory preset can be deleted', (await names()).length === 8 && !(await names()).includes('Thermal trails'), (await names()).join(', '));
+  await control.click('text=Bring back deleted factory presets');
+  check('and brought back at the end, the others untouched', await settle(async () => (await names()).length === 9 && (await names())[8] === 'Thermal trails' && (await names()).includes('Vortex'), 'restored'), (await names()).join(', '));
+  await control.click('text=Bring back deleted factory presets');
+  check('asked again, it adds nothing', (await names()).length === 9 && (await control.locator('#library-panel').textContent()).includes('already in your list'));
 
   check('output never shows any interface', await output.evaluate(() => document.body.innerText.trim() === '' || document.getElementById('hint').classList.contains('hidden') || document.body.innerText.includes('fullscreen')));
   if (process.env.SHOTS) {

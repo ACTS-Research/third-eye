@@ -563,7 +563,7 @@ to open its controls on the **Parameters** tab; drag its button to move it
 (or use ← → beside its name), and **Bypass** or **✕** there to skip or remove
 it. The number on an effect's button is also its switch: click the number to
 bypass the effect without opening it, and again to bring it back; a bypassed
-effect is drawn dashed, its number struck through. While you edit, anything
+effect is drawn dashed, with "bypassed" under its name. While you edit, anything
 you have changed since opening the screen is marked: a dot by the slider's
 name and a mark on its bar where the value was, and **Revert** says how many
 sliders it would put back. A slider that something moves shows where it is
@@ -647,13 +647,17 @@ stores a chain, its mappings, its LFO settings and its pinned faders, plus:
   **Setup → Preset library → Default fade**.
 - **An Edit screen** (the **Edit** button on the tile). Everything changed
   there is saved into the preset as you go; **Revert** restores it to how it
-  was when the screen was opened. **Duplicate** and **Delete** are there too.
+  was when the screen was opened. **Duplicate** and **Delete preset** are
+  beside the name too; Delete preset removes the whole preset and asks
+  first. (To take one effect out, use ✕ on the Parameters tab.)
 - **A position.** Drag a tile to reorder; `[` and `]` step through in that
   order.
 
 **Save as new preset** keeps whatever is live as a new preset. A set of
 factory presets is installed on first run. **Setup → Preset library** exports
-every preset to one JSON file and imports such files (added at the end;
+every preset to one JSON file, **Bring back deleted factory presets** adds
+any factory preset that is no longer in your list (as it was made; nothing
+of yours is changed), and **Import presets** imports such files (added at the end;
 unknown effects are dropped and out-of-range values clamped). Presets live in
 the browser's local storage; export them to keep a copy.
 

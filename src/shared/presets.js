@@ -66,6 +66,14 @@ export function savePresets(list) {
   writeJSON(KEY, list);
 }
 
+// Factory presets that are no longer in `list` (deleted, or renamed and
+// then deleted): matched by id, and by name for a list older than the ids.
+export function missingFactory(list = loadPresets()) {
+  const ids = new Set(list.map((p) => p.id));
+  const names = new Set(list.map((p) => String(p.name).toLowerCase()));
+  return clean(factory()).presets.filter((p) => !ids.has(p.id) && !names.has(p.name.toLowerCase()));
+}
+
 export function resetPresets() {
   savePresets(factory());
   saveOrder([]);

@@ -1,6 +1,6 @@
 // Preset file handling and the default fade, on the setup screen.
 
-import { exportPresets, parsePresetFile, resetPresets } from '../shared/presets.js';
+import { exportPresets, missingFactory, parsePresetFile, resetPresets, savePresets } from '../shared/presets.js';
 import { el } from '../shared/util.js';
 import { bar } from './controls.js';
 
@@ -58,6 +58,18 @@ export function mountLibraryPanel(root, ui) {
       el('div', { class: 'row wrap' }, [
         el('button', { text: 'Export presets', onclick: download }),
         el('button', { text: 'Import presets', onclick: () => picker.click() }),
+        el('button', {
+          text: 'Bring back deleted factory presets',
+          title: 'Adds any factory preset that is no longer in your list, as it was made. Nothing of yours is changed.',
+          onclick: () => {
+            const missing = missingFactory(presets.list);
+            if (missing.length) {
+              savePresets([...presets.list, ...missing]);
+              presets.reload();
+            }
+            note.textContent = missing.length ? `Added at the end: ${missing.map((p) => p.name).join(', ')}.` : 'Every factory preset is already in your list.';
+          },
+        }),
         el('button', {
           text: 'Restore factory set',
           onclick: () => {

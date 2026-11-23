@@ -37,13 +37,13 @@ export function mountEdit(root, ui) {
   });
   const saved = el('span', { class: 'dim small saved' });
   const saveNew = el('button', { class: 'primary', text: 'Save as new preset', onclick: () => ui.editPreset(presets.addFromLive()) });
-  const duplicate = el('button', { text: 'Duplicate', onclick: () => {
+  const duplicate = el('button', { text: 'Duplicate', title: 'A copy of this preset, placed after it', onclick: () => {
     const i = presets.current;
     const index = presets.addFromLive(`${presets.list[i].name} copy`, i);
     presets.update(index, { fade: presets.list[i].fade });
     ui.editPreset(index);
   } });
-  const revert = el('button', { text: 'Revert', title: 'Back to how this preset was when you opened it', onclick: () => {
+  const revert = el('button', { class: 'revert', text: 'Revert', title: 'Back to how this preset was when you opened it', onclick: () => {
     if (!opened || opened.index !== presets.current) return;
     presets.update(opened.index, structuredClone(opened.preset));
     store.dispatch({ op: 'scene', scene: opened.preset.scene, fade: 0, presetIndex: opened.index });
@@ -64,22 +64,25 @@ export function mountEdit(root, ui) {
     changeCount = n;
     labelRevert();
   };
-  const remove = el('button', { text: 'Delete', onclick: () => {
+  const remove = el('button', { text: 'Delete preset', title: 'Deletes this whole preset. To take one effect out, use ✕ on the Parameters tab.', onclick: () => {
     const p = presets.list[presets.current];
-    if (!p || !confirm(`Delete preset "${p.name}"?`)) return;
+    if (!p || !confirm(`Delete the whole preset "${p.name}"?\n\nThis removes the preset, not one effect, and cannot be undone.`)) return;
     presets.remove(presets.current);
     ui.setView('perform');
   } });
-  const presetFields = el('div', { class: 'row grow' }, [name, el('label', { for: 'preset-fade', text: 'Fade in' }), fade, el('span', { text: 's' })]);
+  const fadeFields = el('div', { class: 'row grow' }, [el('label', { for: 'preset-fade', text: 'Fade in' }), fade, el('span', { text: 's' })]);
   const presetActions = el('div', { class: 'row' }, [duplicate, revert, remove]);
 
   const head = el('div', { class: 'edit-head' }, [
     el('button', { text: '← Perform', onclick: () => ui.setView('perform') }),
     num,
-    presetFields,
+    name,
+    // The preset's own buttons sit by its name, away from the effect's
+    // controls on the right (a preset was deleted for an effect once).
+    presetActions,
+    fadeFields,
     saveNew,
     saved,
-    presetActions,
   ]);
 
   // Left: the picture, the chain as a row under it, and the faders as the
@@ -202,7 +205,8 @@ export function mountEdit(root, ui) {
     const i = presets.current;
     const p = presets.list[i];
     num.textContent = p ? String(i + 1) : '';
-    presetFields.hidden = !p;
+    name.hidden = !p;
+    fadeFields.hidden = !p;
     presetActions.hidden = !p;
     saveNew.hidden = !!p;
     if (p) {

@@ -17,10 +17,12 @@ stage 3 of the effects plan.
 
 **Decisions only you can make.**
 
-- Try stage 2 on the real devices and say: whether a still room reads as
-  still at Motion's default sensitivity; whether Gravity pours toward the
-  room's floor when you roll the phone (if not, which way); whether the
-  Motion sources are lively enough or too jumpy.
+- Press Setup → Preset library → Bring back deleted factory presets to get
+  Thermal trails back (the factory version; changes you had made to it are
+  gone).
+- Try a Motion source on a slider (Mod → Motion A → Overall) and say
+  whether it is lively enough or too jumpy. Say whether Gravity pours
+  toward the room's floor when you roll the phone.
 - Say what Glitch should become (next after stage 2). You asked for a
   chosen, sudden move of one or more sliders of the effects already in the
   preset.
@@ -49,6 +51,15 @@ stage 3 of the effects plan.
 - Say whether the phone's Quality menu should be restyled.
 - Tick **hold** again on any trigger that had it: settings saved before 13
   November are no longer read.
+
+**Seen on the real devices, 23 November.** Motion works well; Gravity
+works well ("quite beautiful images"). The owner deleted the Thermal trails
+preset meaning to delete an effect: the preset's buttons sat above the
+effect's panel. Now: Duplicate, Revert and Delete preset sit straight after
+the preset's name, Delete says "the whole preset" when it asks, and Setup →
+Preset library → Bring back deleted factory presets returns a lost factory
+preset as it was made (`missingFactory` in `presets.js`). A bypassed block
+no longer strikes its number out, and a block's name sits mid-block.
 
 **Settled in the sixth session.** The logo is fine for now. The
 segmentation timing on the owner's Mac is not needed: the app will run on

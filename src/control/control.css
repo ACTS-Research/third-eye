@@ -322,7 +322,11 @@ input.bar-value:hover, input.bar-value:focus { border-color: var(--line); }
 .fx[aria-pressed="true"] .num:hover { background: var(--bg); color: var(--ink); }
 .fx-text { padding: 8px 12px; justify-content: center; }
 .fx.bypassed { border-style: dashed; }
-.fx.bypassed .num { text-decoration: line-through; border-right-style: dashed; }
+.fx.bypassed .num { border-right-style: dashed; }
+/* The name sits mid-block; "bypassed" takes its line only when it is there,
+   and the block keeps one height either way. */
+.fx { min-height: 54px; }
+.fx:not(.bypassed) .meta { display: none; }
 .fx.bypassed .fx-text { opacity: 0.6; }
 /* Changed since the edit screen was opened. */
 .param label.changed::after { content: ''; display: inline-block; width: 7px; height: 7px; margin-left: 7px; border-radius: 50%; background: var(--ink); vertical-align: middle; }
@@ -459,6 +463,8 @@ main { position: relative; }
 .keep-4 { min-height: 5.9em; }
 .keep-6 { min-height: 10em; }
 .edit-head .saved { flex: 0 0 150px; }
+/* "Revert 12 changes" must not push the name along. */
+.edit-head .revert { min-width: 168px; }
 .big b { white-space: nowrap; }
 
 /* Palette: one dot in the bar, the choices in a pop-over. */
@@ -500,3 +506,4 @@ main { position: relative; }
 .check-row { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 8px 0; border-top: 1px solid var(--line); text-transform: none; letter-spacing: 0; }
 .check-row.check .check-mark { background: var(--ink); color: var(--on-ink); padding: 0 4px; justify-self: start; }
 .check-fix { padding: 3px 8px; white-space: nowrap; }
+.edit-head label { white-space: nowrap; }
