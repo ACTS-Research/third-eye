@@ -45,5 +45,17 @@ export function installKeys(store, extra = {}) {
     if (!hit) return;
     e.preventDefault();
     runAction(store, hit.action, hit.arg);
+    if (hit.action === 'glitch') glitchDown = true;
   });
+  // A glitch set to hold lasts while G is down.
+  let glitchDown = false;
+  const glitchUp = () => {
+    if (!glitchDown) return;
+    glitchDown = false;
+    runAction(store, 'glitchEnd');
+  };
+  window.addEventListener('keyup', (e) => {
+    if (e.key.toLowerCase() === 'g') glitchUp();
+  });
+  window.addEventListener('blur', glitchUp);
 }

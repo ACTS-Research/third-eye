@@ -76,7 +76,15 @@ export function defaultScene() {
     lfos: defaultLfos(),
     // Parameters pinned to the perform screen's faders: [{ fx, key } | null].
     macros: [],
+    glitch: defaultGlitch(),
   };
+}
+
+// What Glitch does in this preset: the sliders it throws and where to
+// (`jumps`: [{ fx, key, to }]), and the shape of the throw. With no jumps
+// Glitch tears the picture, as it always did.
+export function defaultGlitch() {
+  return { attack: 0, release: 0.33, scatter: 0, hold: false, jumps: [] };
 }
 
 export function defaultState() {
@@ -207,7 +215,19 @@ export function sanitizeScene(scene) {
   });
   while (macros.length && !macros.at(-1)) macros.pop();
 
-  return { chain, mappings, lfos, macros };
+  const g = scene?.glitch ?? {};
+  const glitch = { attack: num(g.attack, 0, 0, 5), release: num(g.release, 0.33, 0, 10), scatter: num(g.scatter, 0, 0, 1), hold: !!g.hold, jumps: [] };
+  for (const j of Array.isArray(g.jumps) ? g.jumps : []) {
+    const target = j && chain.find((it) => it.uid === j.fx);
+    if (!target || glitch.jumps.some((x) => x.fx === j.fx && x.key === j.key)) continue;
+    const spec = j.key === 'mix' ? { min: 0, max: 1 } : EFFECT_BY_ID[target.type].params[j.key];
+    if (!spec) continue;
+    const { min, max } = j.key === 'mix' ? spec : paramRange(spec);
+    const to = Number(j.to);
+    if (Number.isFinite(to)) glitch.jumps.push({ fx: j.fx, key: j.key, to: clamp(to, min, max) });
+  }
+
+  return { chain, mappings, lfos, macros, glitch };
 }
 
 function num(value, fallback, min, max) {
@@ -216,7 +236,7 @@ function num(value, fallback, min, max) {
 }
 
 export function sceneOf(state) {
-  return structuredClone({ chain: state.chain, mappings: state.mappings, lfos: state.lfos, macros: state.macros ?? [] });
+  return structuredClone({ chain: state.chain, mappings: state.mappings, lfos: state.lfos, macros: state.macros ?? [], glitch: state.glitch ?? defaultGlitch() });
 }
 
 export function sanitizeActions(list, fallback) {

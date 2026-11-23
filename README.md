@@ -101,7 +101,7 @@ npm run preview
 | Screen | For |
 | --- | --- |
 | **Perform** | The show: panic buttons, the monitor, the inputs and the mix bar under it, eight faders for the live preset, and the strip of presets and the running order |
-| **Edit** | One preset. At the left the picture, with the effects chain as a row of buttons under it and the faders as the perform screen will show them. At the right four tabs: **Parameters** (the open effect's controls), **Faders**, **Modulation** and **LFOs** |
+| **Edit** | One preset. At the left the picture, with the effects chain as a row of buttons under it and the faders as the perform screen will show them. At the right five tabs: **Parameters** (the open effect's controls), **Faders**, **Modulation**, **LFOs** and **Glitch** |
 | **Setup** | Everything done once beforehand: output window, inputs, pairing, MIDI, audio, vision, triggers, preset files |
 
 1. On the Mac open `/control` in Chrome. That is enough to play: the picture
@@ -434,7 +434,7 @@ They work in both `/control` and `/output` (not while typing in a text field).
 | `B` | Blackout (panic). Press again to return |
 | `Space` | Freeze frame: holds the current input frame; effects keep running on it |
 | `X` | Bypass all effects |
-| `G` | Glitch burst |
+| `G` | Glitch: throws the sliders the live preset has chosen and lets them come back; with none chosen, tears the picture for a moment |
 | `]` or `→` | Next step of the running order, with crossfade; next preset when there is no running order |
 | `[` or `←` | Previous step, or previous preset |
 | `1` | Input: iPhone |
@@ -628,6 +628,34 @@ is a row of buttons: **Free**, then one cycle every 4, 2 or 1 bars (a
 numbered bar) or every 2, 1, ½ or ¼ beats (a half, quarter, eighth or
 sixteenth note); each says what it is when the pointer rests on it. The rate
 only counts while the LFO runs free; locked to the tempo it is dimmed.
+
+**Glitch.** `G`, the Glitch button and any trigger bound to Glitch do one
+thing, and each preset says what: a sudden move of sliders you choose, to
+places you choose, and back. It is set on the **Glitch** tab of the Edit
+screen.
+
+- **Capture a glitch.** Press it, then move any sliders, in any effect of
+  the preset, until the picture is the glitch you want; menus and switches
+  count too. Press **Keep**. Every control you moved becomes a jump (where
+  it is → where you left it) and all of them go back to where they were.
+  **Cancel** puts them back and keeps nothing. Nothing is saved into the
+  preset while you are capturing. **Capture again** starts from the glitch
+  as it stands.
+- **attack** is how long the sliders take to get there (0 to start with:
+  at once), **release** how long they take to come back (a third of a
+  second to start with). With **hold** on they stay thrown for as long as
+  the key, button or trigger is down, and come back when it is let go.
+- **scatter** lets each press land a little differently around the places
+  you chose: at 0 it is the same every time.
+- The tab lists the jumps, each with a ✕. On the **Parameters** tab a slider
+  that has a jump carries a small pointer on the top edge of its bar where
+  it lands, and the landing value under its number: drag the pointer to
+  move the landing place, double-click it to remove the jump. A slider with
+  no jump shows nothing.
+- A slider that modulation is moving can jump too: it leaves from wherever
+  it is at that moment.
+- A preset with no jumps keeps the old Glitch: the picture tears into
+  shifted bands for under half a second.
 
 **Triggers.** Any source rising through its halfway point can fire an action:
 blackout, freeze, bypass, next / previous preset, next input, glitch burst.
@@ -1012,6 +1040,7 @@ npm test
 | `tests/reconnect.mjs` | Getting the phone back without closing its page: a Mac that stops answering, a Mac reload, scanning that stops when the link returns, the ordinary pairing code read inside the page, a changed room code, Reconnect by hand |
 | `tests/output-preview.mjs` | The phone's preview showing the Mac's finished picture: the setting, the picture following Blackout, Rotate not applied twice, the camera taking over while a code is read, a Mac reload, switching back; torch and white-balance lock dimmed on a camera without them |
 | `tests/edit-screen.mjs` | The edit screen's own controls: the bar slider (click, typed value, double-click reset), the app's menus by mouse and keyboard without the page's shortcuts firing, a menu whose button scrolls into view, the chain row (add, drag, remove, bypass), modulation boxes and their extra settings, LFOs, autosave, a narrow window |
+| `tests/glitch.mjs` | Glitch: the tab, tearing when a preset has no jumps, capturing (Keep, Cancel, nothing saved meanwhile, a capture left open), the pointer on a slider's bar (shown, dragged, removed), firing it with attack and release, hold by key and by button, scatter |
 | `tests/mix.mjs` | Input B and Mix B: the strip under the picture (uncropped small views, source icons that slide out, looking at a source without choosing it, tooltips and the mode grid opening upward), the bar adding Mix B on its first drag, the nine modes on both screens, A and B trading places, B off passing A through, the iPhone as B, B carrying on when the picture moves to `/control` |
 | `tests/two-phones.mjs` | A second iPhone: its tab and room code, pairing beside the first without disturbing it, the Phone B readout, iPhone B as input A or B with both live, its sensors as their own sources, its triggers and preset buttons, both phones following the picture to `/control`, one dropping alone, Stop using iPhone B |
 | `tests/keep-paired.mjs` | Keeping what is paired: a second phone on the same code is turned away and told why while the paired one carries on; the paired phone redials and reloads freely; a phone with no pairing server holds a silent link and carries on when the Mac answers; a taken room code is kept under a paired phone |
@@ -1055,6 +1084,9 @@ too.
 **Only in headless Chromium**, with a fake camera and microphone: everything
 else. Check these the first time you use them:
 
+- **Glitch as a jump** (23 November): all of it on the real Mac, and a
+  phone trigger or a MIDI pad holding it. In the tests G and the mouse fire
+  it.
 - **The motion map, Motion, Gravity and the Motion sources** (22
   November): all of it with a real camera. The tests use the moving test
   pattern, which has no grain. To find out: whether camera grain or the

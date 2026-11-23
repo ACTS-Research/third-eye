@@ -164,6 +164,8 @@ export class Modulation {
       const was = this.gates.get(b.id);
       this.gates.set(b.id, on);
       if (was === undefined || on === was) continue;
+      // A glitch set to hold lasts while its trigger is down.
+      if (!on && b.action === 'glitch') runAction(this.store, 'glitchEnd');
       const toggleKey = TOGGLE_ACTIONS[b.action];
       if (b.hold && toggleKey) {
         // Held: on while pressed, off on release.

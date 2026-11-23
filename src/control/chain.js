@@ -318,6 +318,7 @@ export function mountChain(roots, ui) {
       control.setWas(changed ? prev : undefined);
       label()?.classList.toggle('changed', changed);
     }
+    markJumps();
     let count = 0;
     for (const item of store.state.chain) {
       const prev = then(item.uid);
@@ -328,6 +329,18 @@ export function mountChain(roots, ui) {
     ui.onChangeCount?.(count);
   }
   ui.markChanges = markChanges;
+
+  // Where Glitch throws a slider of the open effect: the pointer on its bar.
+  // Not while a glitch is being captured (the sliders are at their landing
+  // places then, and marked as changed).
+  function markJumps() {
+    const open = current();
+    for (const [key, { control }] of bars) {
+      const jump = !ui.glitchCapture && open && store.state.glitch.jumps.find((j) => j.fx === open.uid && j.key === key);
+      control.setJump?.(jump ? jump.to : undefined, (to) => ui.setJump?.(open.uid, key, to));
+    }
+  }
+  ui.markJumps = markJumps;
 
   // Range mode: the slider named by `ranging` shows how far its first
   // modulation reaches, and a drag on its bar sets that.
@@ -411,8 +424,8 @@ export function mountChain(roots, ui) {
       for (const [key, control] of controls) if (key.endsWith('$mod')) control.set();
       buildRow();
       applyRange();
-    } else if (op.op === 'merge' && op.key === 'input') {
-      buildRow();
+    } else if (op.op === 'merge' && op.key === 'glitch') {
+      markJumps();
     }
   });
 

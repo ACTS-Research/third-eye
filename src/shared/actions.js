@@ -87,6 +87,12 @@ export function runAction(store, name, arg) {
     case 'glitch':
       store.emit('glitch');
       break;
+    // The button, key or pad that fired Glitch has come up: a glitch set to
+    // hold lets go. (Not an action anyone binds: whatever sends 'glitch'
+    // sends this after it.)
+    case 'glitchEnd':
+      store.emit('glitch-end');
+      break;
     case 'record':
       store.emit('record');
       break;

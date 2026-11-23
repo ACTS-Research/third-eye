@@ -2,16 +2,14 @@
 
 ## 2026-11-23 (end of the sixth session, 22 to 23 November)
 
-**Where things stand.** Stage 2 of the effects plan is built and live on
-GitHub Pages from `main`: the motion map, the Motion and Gravity effects,
-and movement in the picture as modulation sources (Motion A, Motion B). The
-owner tried Motion and Gravity on the real iPhone and Mac on 23 November:
-both work well. The edit screen was tidied after a preset was deleted by
-mistake (see "Seen on the real devices" below); the owner has seen the
-first round of that ("placement is better"), not the last.
+**Where things stand.** Stage 2 of the effects plan (the motion map, Motion,
+Gravity, Motion A / B as modulation sources) and the new Glitch are built
+and live on GitHub Pages from `main`. The owner has seen Motion and Gravity
+working on the real iPhone and Mac. Glitch, the Motion sources on a slider
+and the last round of edit screen changes have not been seen there.
 
-**Next step.** Glitch: agree what it becomes, then build it. Then stage 3
-of the effects plan (Time and Scan).
+**Next step.** On the real Mac: capture a glitch in a preset and fire it.
+Then stage 3 of the effects plan (Time and Scan).
 
 **Decisions only you can make.**
 
@@ -21,8 +19,10 @@ of the effects plan (Time and Scan).
 - Try a Motion source on a slider (Mod → Motion A → Overall) and say
   whether it is lively enough or too jumpy. Say whether Gravity pours
   toward the room's floor when you roll the phone.
-- Say what Glitch should become (it is next). You asked for a chosen,
-  sudden move of one or more sliders of the effects already in the preset.
+- Try Glitch: Edit a preset → Glitch tab → Capture a glitch, move some
+  sliders, Keep, then press G. Say whether the pointer on the bar is
+  findable enough, and whether any factory preset should come with a
+  glitch of its own (none does).
 - Look at the edit screen as it now is (no "← Perform", no "In:" block,
   the short Revert, Fade in in a narrow window) and say if anything is off.
 - Say whether the bars on the Parameters tab are too narrow for drawing a
@@ -62,6 +62,42 @@ that) and the "In: iPhone" block at the start of the chain row; Revert
 reads `Revert 3`; Fade in drops to a second line whole in a narrow window;
 the Parameters column is at least 440 px so a slider's number is never
 cut.
+
+**Glitch (built 23 November).** Mock-ups:
+https://claude.ai/artifact/NFZ8AUPkcXGMBQKWwnkCkR, sources in
+`design/glitch/project/`. G3 (capture) with the K4 mark, chosen because it
+shows nothing until a preset uses it.
+
+- **What it is.** `state.glitch` = `{ attack, release, scatter, hold, jumps:
+  [{ fx, key, to }] }`, part of the scene, so a preset stores it
+  (`defaultGlitch`, `sanitizeScene`, `sceneOf` in `state.js`). It is
+  changed with `store.merge('glitch', …)`, not `setScene`, so dragging a
+  bar on the tab does not rebuild the panels.
+- **The engine** (`engine/glitch.js`, `GlitchJump`): one envelope for all
+  jumps, applied in `Engine.resolve` after modulation, along each slider's
+  bar travel (so curved sliders move as a hand would); a menu or switch is
+  simply the other choice while the envelope is above zero. `trigger()`
+  returns false when the preset has no jumps and the engine then tears the
+  picture as before (`glitchStart`).
+- **Hold needs the button coming up.** Whatever sends the `glitch` event
+  sends `glitch-end` after it (action `glitchEnd`): the G key on keyup and
+  on window blur (`keys.js`), a trigger falling (`modulation.js`), and a
+  button through `pressGlitch()` in `glitch-panel.js` (pointer down / up;
+  a keyboard click is down and up at once). A new way to fire Glitch must
+  do the same, or a glitch set to hold never lets go.
+- **Capture** (`glitch-panel.js`): `ui.glitchCapture` holds the chain as it
+  was. While it is set the edit screen does not autosave, `ui.openedScene`
+  answers with that chain (so the existing "changed" marks show what will
+  become a jump), and Revert does nothing. Keep diffs the chain against
+  it, restores it, then merges the jumps. Leaving the edit screen cancels;
+  loading another preset drops it.
+- **The mark** is `bar().setJump(to, tell)` in `controls.js`: a pointer and
+  a small figure added to the bar's field only when there is a jump,
+  placed with the CSS variable `--jump`. `markJumps` in `chain.js` sets
+  them.
+- **Not done:** typing a landing value; a mark on the chain row's blocks;
+  jumps for factory presets; the perform screen saying whether the live
+  preset has its own glitch.
 
 **Settled in the sixth session.** The logo is fine for now. The
 segmentation timing on the owner's Mac is not needed: the app will run on
@@ -124,7 +160,8 @@ control that blurs or sharpens inside the loop; Kaleidoscope and Edge Glow
 simplified (seven controls each). Not recommended: object detection.
 Cross-feedback between A and B: later, if at all.
 
-**Built in the sixth session, not yet tried on real hardware.** The
+**Built in the sixth session, not yet tried on real hardware.** Glitch,
+all of it. The
 Motion sources on a slider; which way Gravity pours when the phone is
 rolled; the last round of edit screen changes; Bring back deleted factory
 presets.
@@ -268,7 +305,7 @@ deleted under Setup → Recordings.
   menu but only get a meter under Setup → Sources once one is in use. A
   side nobody maps reads zero.
 - **Tests.** `modulation` counts sixteen effects and has a `motion`
-  section. Still twenty-five suites.
+  section. `glitch` is new: twenty-six suites.
 
 ### Fifth session (21 to 22 November), in short
 
@@ -570,7 +607,7 @@ Three static pages built by Vite, no framework.
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon: the logo of 22 November, `design/logo/`) |
 | `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `logo/`, `tone/`, `edit-marks/`, `running-order/`, `edit-screen/`, `mix/`, `phone2/`. `design/README.md` says which option of each was built |
-| `tests/` | Twenty-five headless suites and `lib.mjs` |
+| `tests/` | Twenty-six headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 
@@ -649,7 +686,7 @@ Three static pages built by Vite, no framework.
   first suite, or every suite fails at once on a missing `playwright`.
 - **To run every suite,** loop over them in one background command, each
   under `timeout` with `SKIP_BUILD=1` after one build, writing a log each
-  and a line per result; twenty-five take about forty minutes. A suite
+  and a line per result; twenty-six take about forty minutes. A suite
   that fails in the full run and passes alone is not thereby innocent:
   read which check failed.
 - **Write commit messages to a file** and use `git commit -F`: one with
@@ -975,10 +1012,11 @@ How I work:
 Start by telling me, in a few lines, where things stand and what is waiting
 on me (from the top of HANDOFF.md). Then:
 
-This session: rework Glitch (see the decisions at the top of HANDOFF.md),
-then stage 3 of the effects plan. Tell me your approach first and wait for
+This session: stage 3 of the effects plan in HANDOFF.md (Time and Scan,
+with the "driven by" menu). Tell me your approach first and wait for
 my go.
 <Add what you found when you tried stage 2 on the real iPhone and Mac:
-Motion in a still room and with a hand waved, Gravity when the phone is
-rolled (which way it pours), a Motion source on a slider.>
+Glitch (capture, the pointer on the bar, hold from a phone trigger), a
+Motion source on a slider, which way Gravity pours when the phone is
+rolled.>
 ```

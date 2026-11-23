@@ -345,7 +345,8 @@ button.idle { opacity: 0.45; }
 
 /* Four tabs in a narrow column: small type, and room in proportion to the
    names (Modulation is the longest and has a count after it). */
-.tabs { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.45fr) minmax(0, 0.7fr); gap: 6px; flex-shrink: 0; }
+.tabs { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr) minmax(0, 1.45fr) minmax(0, 0.6fr) minmax(0, 0.9fr); gap: 6px; flex-shrink: 0; }
+.tabs button { white-space: nowrap; overflow: hidden; }
 .tabs button { padding: 8px 2px; font-size: 11px; letter-spacing: 0; }
 .tab-pane { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
 .fx-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
@@ -512,3 +513,19 @@ main { position: relative; }
 .check-row.check .check-mark { background: var(--ink); color: var(--on-ink); padding: 0 4px; justify-self: start; }
 .check-fix { padding: 3px 8px; white-space: nowrap; }
 .edit-head label { white-space: nowrap; }
+
+/* Glitch (K4): a pointer on the bar's top edge where the slider lands, and
+   the landing value under its number. Only on a slider that has a jump. */
+.bar-field { position: relative; --bar-w: min(180px, 100% - 70px); }
+.jump-notch { position: absolute; top: -9px; left: calc(var(--jump) * var(--bar-w)); width: 16px; height: 13px; margin-left: -8px; cursor: ew-resize; touch-action: none; }
+.jump-notch::before { content: ''; position: absolute; left: 2px; bottom: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 9px solid var(--ink); }
+.jump-to { position: absolute; left: calc(var(--bar-w) + 8px); width: 62px; top: calc(100% - 4px); text-align: right; font-size: 10px; line-height: 1; white-space: nowrap; pointer-events: none; padding-right: 4px; box-sizing: border-box; }
+/* Capturing a glitch: the band above the tabs' panes. */
+.capture-band { border: 1px solid var(--ink); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink) 14%, transparent) 0 6px, transparent 6px 12px); }
+.capture-band b { font: 800 20px/1 var(--display); letter-spacing: 0.08em; text-transform: uppercase; }
+.glitch-jumps { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); padding-top: 10px; }
+.glitch-jump { display: flex; align-items: center; gap: 8px; }
+.glitch-jump .what { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: none; letter-spacing: 0; text-align: left; }
+#glitch-panel { display: flex; flex-direction: column; gap: 10px; }
+#glitch-panel[hidden] { display: none; }
+#glitch-panel .param { grid-template-columns: 92px minmax(0, 1fr) auto; }

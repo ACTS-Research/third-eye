@@ -2,6 +2,7 @@
 // current preset, and the strip of presets and the running order (strip.js).
 // Everything here is MIDI-mappable.
 
+import { pressGlitch } from './glitch-panel.js';
 import { EFFECT_BY_ID } from '../effects/index.js';
 import { THUMB_H, THUMB_W } from '../engine/pipeline.js';
 import { MIX_MODES, mixItem, runAction } from '../shared/actions.js';
@@ -31,7 +32,11 @@ export function mountPerform(root, ui) {
   const blackout = big('blackout', 'blackout', 'B', 'Blackout');
   const freeze = big('', 'freeze', 'Space', 'Freeze');
   const bypass = big('', 'bypassAll', 'X', 'Bypass');
-  const glitch = big('', 'glitch', 'G', 'Glitch');
+  // Glitch fires as the button goes down and is told when it comes up, so a
+  // glitch set to hold lasts as long as the press. (A press from the
+  // keyboard is a click with no pointer: down and up at once.)
+  const glitch = el('button', { class: 'big', 'data-midi': 'glitch' }, [el('span', { text: 'G' }), el('b', { text: 'Glitch' })]);
+  pressGlitch(store, glitch);
   // Tap tempo: the button blinks on the beat; the field takes a typed BPM.
   const bpm = el('input', {
     type: 'number',

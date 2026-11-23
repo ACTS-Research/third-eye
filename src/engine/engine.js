@@ -21,6 +21,7 @@ import { Recorder } from './recorder.js';
 import { ReturnFeed } from './return-feed.js';
 import { Modulation } from './modulation.js';
 import { PhoneSensors } from './phone-sensors.js';
+import { GlitchJump } from './glitch.js';
 import { MotionSources } from './motion.js';
 import { Pipeline } from './pipeline.js';
 import { PhoneLink } from './remote.js';
@@ -80,7 +81,12 @@ export class Engine {
     this.sensors = new PhoneSensors(this.mod);
     // The second iPhone's motion and touch pad: sources of their own.
     this.sensorsB = new PhoneSensors(this.mod, 'B');
-    this.resolve = this.mod.resolve;
+    // Glitch as a jump of chosen sliders, applied on top of modulation.
+    this.glitchJump = new GlitchJump();
+    this.resolve = (item, inst) => {
+      this.mod.resolveInto(item, inst);
+      this.glitchJump.apply(item, inst);
+    };
     this.midi = new MidiInput(this.mod, (source) => this.bus.send('midi-learned', { source }));
     this.audio = new AudioInput(this.mod);
     this.vision = new Vision(this.mod);
@@ -203,7 +209,10 @@ export class Engine {
     });
     store.onEvent((name, data) => {
       if (!this.running) return;
-      if (name === 'glitch') this.glitchStart = performance.now();
+      if (name === 'glitch') {
+        // The preset's own jump, or with none set the tearing of the picture.
+        if (!this.glitchJump.trigger(this.store.state.glitch)) this.glitchStart = performance.now();
+      } else if (name === 'glitch-end') this.glitchJump.release();
       else if (name === 'tap') this.tempo.tap(data?.at ?? Date.now());
       else if (name === 'record') this.recorder.toggle(this.store.state.globals.recFormat);
       else if (name === 'latency-test') this.probe.start();
@@ -604,6 +613,7 @@ export class Engine {
     const wantMotion = this.wantMotion();
     this.motion.frame(dt, wantMotion);
     this.mod.frame(dt, this.tempo.frame(now));
+    this.glitchJump.frame(dt, this.store.state.glitch);
     const watched = now - this.controlSeenAt < CONTROL_TIMEOUT_MS;
     if (watched && now - this.lastSourcesAt >= SOURCES_INTERVAL_MS) {
       this.lastSourcesAt = now;

@@ -150,10 +150,48 @@ export function bar({ min, max, step = 0.01, value = min, label = '', id, reset,
     });
   }
   show();
+  const field = el('span', { class: 'bar-field' }, [input, number]);
+  // Where Glitch throws this slider: a pointer on the bar's top edge and
+  // the landing value under the number. Made only for a slider that has one.
+  let notch = null;
+  let landing = null;
+  let jumpTell = null;
+  function makeJump() {
+    notch = el('span', { class: 'jump-notch', title: 'Glitch throws this slider here. Drag to move it; double-click to remove it.' });
+    landing = el('span', { class: 'jump-to' });
+    const at = (e) => {
+      const r = input.getBoundingClientRect();
+      const u = clamp((e.clientX - r.left) / r.width, 0, 1);
+      jumpTell?.(clamp(snap(scale ? scale.fromUnit(u) : min + u * (max - min)), min, max));
+    };
+    notch.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      notch.setPointerCapture?.(e.pointerId);
+    });
+    notch.addEventListener('pointermove', (e) => {
+      if (e.buttons & 1) at(e);
+    });
+    notch.addEventListener('dblclick', () => jumpTell?.(null));
+    field.append(notch, landing);
+  }
   return {
-    node: el('span', { class: 'bar-field' }, [input, number]),
+    node: field,
     input,
     number,
+    // `to`: where Glitch throws the slider, or undefined for no jump.
+    // `tell(value | null)` hears the pointer dragged, or removed (null).
+    setJump(to, tell) {
+      jumpTell = tell ?? null;
+      if (to === undefined || to === null) {
+        notch?.remove();
+        landing?.remove();
+        notch = landing = null;
+        return;
+      }
+      if (!notch) makeJump();
+      field.style.setProperty('--jump', String(clamp(unitOf(to), 0, 1)));
+      landing.textContent = `→ ${Number(to).toFixed(digits)}${unit}`;
+    },
     set(v) {
       // Not while it is being dragged or typed into from here.
       if (input.matches(':active') || document.activeElement === number) return;
