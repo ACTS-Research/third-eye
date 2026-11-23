@@ -528,4 +528,4 @@ main { position: relative; }
 .glitch-jump .what { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: none; letter-spacing: 0; text-align: left; }
 #glitch-panel { display: flex; flex-direction: column; gap: 10px; }
 #glitch-panel[hidden] { display: none; }
-#glitch-panel .param { grid-template-columns: 92px minmax(0, 1fr) auto; }
+#glitch-panel .param { grid-template-columns: 92px minmax(0, 1fr); }

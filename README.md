@@ -636,12 +636,13 @@ screen.
 
 - **Capture a glitch.** Press it, then move any sliders, in any effect of
   the preset, until the picture is the glitch you want; menus and switches
-  count too. Press **Keep**. Every control you moved becomes a jump (where
+  count too. Press **Save glitch**. Every control you moved becomes a jump (where
   it is → where you left it) and all of them go back to where they were.
   **Cancel** puts them back and keeps nothing. Nothing is saved into the
-  preset while you are capturing. **Capture again** starts from the glitch
+  preset while you are capturing. **Recapture** starts from the glitch
   as it stands.
-- **attack** is how long the sliders take to get there (0 to start with:
+- Point at **attack**, **release** or **scatter** for a line on what it
+  does. **attack** is how long the sliders take to get there (0 to start with:
   at once), **release** how long they take to come back (a third of a
   second to start with). With **hold** on they stay thrown for as long as
   the key, button or trigger is down, and come back when it is let go.

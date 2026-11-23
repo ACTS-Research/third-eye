@@ -109,26 +109,25 @@ export function mountGlitch(pane, band, ui) {
     ui.setEditTab('params');
   }
 
-  const keep = el('button', { class: 'primary', id: 'glitch-keep', onclick: () => finish(true) });
+  const keep = el('button', { class: 'primary', id: 'glitch-keep', text: 'Save glitch', onclick: () => finish(true) });
   const cancel = el('button', { text: 'Cancel', id: 'glitch-cancel', onclick: () => finish(false) });
   band.className = 'capture-band';
   band.append(
-    el('b', { text: 'Capturing the glitch' }),
-    el('div', { class: 'small', text: 'Move any sliders, in any effect, to where the glitch should land. The picture shows it as you go.' }),
-    el('div', { class: 'row' }, [keep, cancel, el('span', { class: 'dim small', text: 'Either way the sliders go back.' })]),
+    el('b', { text: 'Glitch settings' }),
+    el('div', { class: 'small', text: 'Move the sliders to create the glitch effect.' }),
+    el('div', { class: 'row' }, [keep, cancel]),
   );
   function showBand() {
     band.hidden = !ui.glitchCapture;
-    if (!ui.glitchCapture) return;
-    const n = moved().length;
-    keep.textContent = n === 1 ? 'Keep 1 jump' : `Keep ${n} jumps`;
+    // (How many sliders it would keep, for whoever asks: the tests do.)
+    keep.dataset.jumps = ui.glitchCapture ? String(moved().length) : '';
   }
 
   // -------------------------------------------------------------- the tab ---
   const capture = el('button', { class: 'primary', id: 'glitch-capture', onclick: start });
   const tryIt = el('button', { id: 'glitch-try', text: 'Try it · G', title: 'Fires Glitch, as the G key and the Glitch button do' });
   pressGlitch(store, tryIt);
-  const row = (key, label, field, after) => el('div', { class: 'param', 'data-key': key }, [el('label', { text: label }), field, after ?? el('span')]);
+  const row = (key, label, field, tip) => el('div', { class: 'param', 'data-key': key, title: tip }, [el('label', { text: label }), field]);
   const attack = bar({ label: 'Attack', min: 0, max: 5, step: 0.01, value: 0, reset: 0, unit: ' s', scale: { toUnit: (v) => Math.sqrt(v / 5), fromUnit: (u) => u * u * 5 }, onInput: (v) => set({ attack: v }) });
   const release = bar({ label: 'Release', min: 0, max: 10, step: 0.01, value: 0.33, reset: 0.33, unit: ' s', scale: { toUnit: (v) => Math.sqrt(v / 10), fromUnit: (u) => u * u * 10 }, onInput: (v) => set({ release: v }) });
   const scatter = bar({ label: 'Scatter', min: 0, max: 1, step: 0.01, value: 0, reset: 0, onInput: (v) => set({ scatter: v }) });
@@ -137,10 +136,10 @@ export function mountGlitch(pane, band, ui) {
   const note = el('div', { class: 'dim small' });
   pane.append(
     el('div', { class: 'row' }, [capture, tryIt]),
-    row('attack', 'attack', attack.node),
-    row('release', 'release', release.node),
-    row('scatter', 'scatter', scatter.node),
-    row('hold', 'hold', hold.node, el('span', { class: 'dim small', text: 'On: thrown for as long as the button is down' })),
+    row('attack', 'attack', attack.node, 'How long the sliders take to get there. 0 is at once.'),
+    row('release', 'release', release.node, 'How long the sliders take to come back.'),
+    row('scatter', 'scatter', scatter.node, 'How differently each press lands. 0 is the same every time.'),
+    row('hold', 'hold', hold.node, 'On: the glitch lasts for as long as the key or button is down.'),
     list,
     note,
   );
@@ -151,7 +150,7 @@ export function mountGlitch(pane, band, ui) {
     release.set(g.release);
     scatter.set(g.scatter);
     hold.set(g.hold);
-    capture.textContent = g.jumps.length ? 'Capture again' : 'Capture a glitch';
+    capture.textContent = g.jumps.length ? 'Recapture' : 'Capture a glitch';
     capture.disabled = !!ui.glitchCapture || !store.state.chain.length;
     const chain = ui.glitchCapture?.chain ?? store.state.chain;
     list.replaceChildren(
@@ -169,7 +168,6 @@ export function mountGlitch(pane, band, ui) {
     note.textContent = g.jumps.length
       ? 'Glitch throws these sliders to where they land, and they come back. Scatter lets each press land a little differently.'
       : 'No jumps yet: Glitch tears the picture, as it always has. Capture a glitch to have it throw sliders of this preset instead.';
-    ui.onGlitchCount?.(g.jumps.length);
   }
 
   // One jump moved or removed from its slider's bar (the pointer on the bar).

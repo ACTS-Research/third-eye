@@ -95,6 +95,10 @@ shows nothing until a preset uses it.
   a small figure added to the bar's field only when there is a jump,
   placed with the CSS variable `--jump`. `markJumps` in `chain.js` sets
   them.
+- **Wording, after the owner tried it (23 November):** the band reads
+  "Glitch settings", its button "Save glitch"; the tab is plain "Glitch"
+  with no count; "Recapture"; attack, release, scatter and hold explain
+  themselves in tooltips.
 - **Not done:** typing a landing value; a mark on the chain row's blocks;
   jumps for factory presets; the perform screen saying whether the live
   preset has its own glitch.

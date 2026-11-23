@@ -198,10 +198,6 @@ export function mountEdit(root, ui) {
     tabButtons.faders.textContent = `Faders · ${pins().length}`;
     tabButtons.mods.textContent = `Modulation · ${store.state.mappings.length}`;
   }
-  // The Glitch tab only carries a count once the preset has jumps.
-  ui.onGlitchCount = (n) => {
-    tabButtons.glitch.textContent = n ? `Glitch · ${n}` : 'Glitch';
-  };
   sideCol.append(tabBar, captureBand, panes.params, panes.faders, panes.mods, panes.lfos, panes.glitch);
   ui.setEditTab('params');
   ui.glitchRoots = { pane: panes.glitch, band: captureBand };
