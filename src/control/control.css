@@ -501,7 +501,10 @@ main { position: relative; }
 
 /* The splash where the picture will be, and the check before the show. */
 .splash { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 14px; background: #000; text-align: center; overflow: hidden; }
-.splash-qr { width: min(260px, 46cqh, 60%); height: auto; aspect-ratio: 1; image-rendering: pixelated; flex-shrink: 1; min-height: 0; }
+.splash-code { width: min(340px, 56cqh, 64%); height: auto; aspect-ratio: 64 / 58; flex-shrink: 1; min-height: 0; display: block; }
+.splash-text { display: flex; flex-direction: column; align-items: center; gap: 10px; transition: opacity 0.4s; }
+.splash-text.waiting { opacity: 0; pointer-events: none; }
+.splash-state { min-height: 1.4em; }
 .monitor { container-type: size; }
 .splash-do { font-size: 15px; font-weight: 700; text-transform: none; letter-spacing: 0; }
 .splash-room { text-transform: uppercase; letter-spacing: 0.14em; }

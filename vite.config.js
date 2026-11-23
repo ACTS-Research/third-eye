@@ -51,8 +51,6 @@ export default defineConfig({
         control: resolve(root, 'control/index.html'),
         output: resolve(root, 'output/index.html'),
         phone: resolve(root, 'phone/index.html'),
-        // Not part of the instrument: codes in every palette, to try on a phone.
-        'qr-test': resolve(root, 'qr-test/index.html'),
       },
     },
   },

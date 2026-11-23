@@ -2,6 +2,7 @@
 // current preset, and the strip of presets and the running order (strip.js).
 // Everything here is MIDI-mappable.
 
+import { codeMark } from './code-mark.js';
 import { pressGlitch } from './glitch-panel.js';
 import { EFFECT_BY_ID } from '../effects/index.js';
 import { THUMB_H, THUMB_W } from '../engine/pipeline.js';
@@ -10,8 +11,6 @@ import { macroUnit, macroValue, resolveMacros } from '../shared/macros.js';
 import { describeSource } from '../shared/sources.js';
 import { INPUT_KINDS, INPUT_LABELS, makeEffect, sceneOf } from '../shared/state.js';
 import { el } from '../shared/util.js';
-import { mark } from '../shared/mark.js';
-import { drawQr } from '../shared/qr.js';
 import { attachPreview } from './preview.js';
 import { mountStrip } from './strip.js';
 
@@ -65,11 +64,14 @@ export function mountPerform(root, ui) {
   const noteText = el('span', { class: 'dim' });
   const note = el('div', { class: 'monitor-note' }, [noteTitle, noteText]);
   // The splash: where the picture will be, while the input is the iPhone
-  // and no phone has yet paired. The mark, the pairing code, what to do with
-  // it, and the ways on without a phone. Only ever on this page: the output
+  // and no phone has yet paired. The camera of the mark with the pairing
+  // code in it (code-mark.js), what to do with it, how far pairing has got,
+  // and the ways on without a phone. Only ever on this page: the output
   // and recordings never show it. (With the operator's "Monitor off" it is
   // one of the two things allowed over the monitor; the owner asked for it.)
-  const splashQr = el('canvas', { class: 'splash-qr', width: 320, height: 320 });
+  const splashCode = codeMark();
+  splashCode.node.classList.add('splash-code');
+  const splashState = el('div', { class: 'splash-state dim small' });
   const splashRoom = el('div', { class: 'splash-room' });
   const other = (text, kind) =>
     el('button', {
@@ -79,13 +81,24 @@ export function mountPerform(root, ui) {
         if (kind === 'file' && !ui.hasVideoFile?.()) ui.pickVideoFile?.();
       },
     });
-  const splash = el('div', { class: 'splash', id: 'splash', hidden: true }, [
-    mark(64),
-    splashQr,
+  // (Everything under the code waits for the opening to finish.)
+  const splashText = el('div', { class: 'splash-text' }, [
     el('div', { class: 'splash-do', text: 'Point the iPhone\'s camera at this code and open the link.' }),
     splashRoom,
+    splashState,
     el('div', { class: 'splash-other' }, [other('Use the Mac camera', 'camera'), other('Test pattern', 'pattern'), other('Video file…', 'file')]),
+    el('div', { class: 'dim small', text: 'A second iPhone? Click Phone, above.' }),
   ]);
+  const splash = el('div', { class: 'splash', id: 'splash', hidden: true }, [splashCode.node, splashText]);
+  // The opening plays once, when a session starts in this tab. A lost link,
+  // a new room code or a reload simply shows the code.
+  const OPENED_KEY = 'thirdeye.opened';
+  let opened = false;
+  try {
+    opened = sessionStorage.getItem(OPENED_KEY) === '1';
+  } catch {
+    opened = true;
+  }
   let splashUrl = '';
   function syncSplash() {
     const st = ui.status;
@@ -95,10 +108,23 @@ export function mountPerform(root, ui) {
     const url = ui.phoneLink?.() ?? '';
     if (url && url !== splashUrl) {
       splashUrl = url;
-      splashQr.width = 320;
-      drawQr(splashQr, url);
+      splashCode.setText(url);
+    }
+    if (url && !opened) {
+      opened = true;
+      try {
+        sessionStorage.setItem(OPENED_KEY, '1');
+      } catch {
+        /* no storage: it plays again after a reload */
+      }
+      splashText.classList.add('waiting');
+      splashCode.play().then(() => splashText.classList.remove('waiting'));
     }
     splashRoom.textContent = `Room code ${store.state.net.room}`;
+    // How far pairing has got. (The Mac hears nothing from a phone between
+    // its scan and its START, so there is no "scanned" to report.)
+    const signal = st.phone.signal;
+    splashState.textContent = signal === 'open' ? 'Ready. The picture appears here when the phone taps START.' : signal === 'connecting' ? 'Reaching the pairing server…' : signal === 'error' ? 'This room code is in use elsewhere. Click Phone, above.' : 'The pairing server cannot be reached. Click Phone, above, for Pair without internet.';
   }
   const monitor = el('div', { class: 'monitor' }, [canvas, note, splash]);
   ui.monitors.perform = monitor;

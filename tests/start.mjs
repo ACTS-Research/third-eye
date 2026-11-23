@@ -5,6 +5,7 @@
 // START.
 //   node tests/start.mjs
 
+import jsQR from 'jsqr';
 import { benignError, check, failureCount, launch, startPeerServer, startSite, stopPeerServer, waitFor, watch } from './lib.mjs';
 
 const site = await startSite();
@@ -31,25 +32,46 @@ try {
     const r = s.getBoundingClientRect();
     return !s.hidden && Math.abs(r.left - m.left) < 2 && Math.abs(r.width - m.width) < 2 && Math.abs(r.height - m.height) < 2;
   }), 'splash'));
+  // The opening: the mark, a blink, noise, then the code. Once a session.
+  check('the opening plays on a first visit', await settle(() => control.evaluate(() => ['opening', 'code'].includes(document.querySelector('#splash .code-mark').dataset.state)), 'opening'));
+  check('and ends on the code, with the words under it', await settle(() => control.evaluate(() => document.querySelector('#splash .code-mark').dataset.state === 'code' && !document.querySelector('#splash .splash-text').classList.contains('waiting')), 'code', 12000));
   const splash = await control.evaluate(() => {
     const s = document.getElementById('splash');
-    const order = [...s.children].map((n) => n.className.split(' ')[0]);
-    const qr = s.querySelector('.splash-qr');
-    const px = qr.getContext('2d').getImageData(0, 0, qr.width, qr.height).data;
-    let dark = 0;
-    for (let i = 0; i < px.length; i += 4) if (px[i] < 80) dark++;
-    return { order, text: s.textContent, mark: s.querySelector('.mark').getBoundingClientRect().width, qr: qr.getBoundingClientRect().width, dark: dark / (px.length / 4) };
+    const code = s.querySelector('.code-mark').getBoundingClientRect();
+    return { order: [...s.children].map((n) => n.classList[0]), text: s.textContent, width: code.width, top: code.top, textTop: s.querySelector('.splash-text').getBoundingClientRect().top };
   });
-  check('the mark is small and above a large code', splash.order[0] === 'mark-box' && splash.order[1] === 'splash-qr' && splash.mark < 80 && splash.qr > splash.mark * 2.5 && splash.dark > 0.2, JSON.stringify(splash));
-  check('with the one instruction and the room code, and no title', splash.text.includes('Point the iPhone\'s camera at this code and open the link.') && splash.text.includes(await mac(() => window.thirdEye.store.state.net.room)) && !/third eye cam/i.test(splash.text) && !splash.text.includes('START'), splash.text);
-  check('the mark moves', await settle(() => control.evaluate(() => {
-    const m = document.querySelector('#splash .mark');
-    return !!m.querySelector('animate[attributeName="d"]') && !!m.querySelector('feTurbulence animate') && !m.animationsPaused() && m.getCurrentTime() > 0;
-  }), 'mark'));
+  check('the camera holding the code is the one large thing, above the words', splash.order[0] === 'code-mark' && splash.width > 200 && splash.textTop > splash.top, JSON.stringify({ ...splash, text: '' }));
+  check('with the one instruction and the room code, and no title', splash.text.includes('Point the iPhone\'s camera at this code and open the link.') && splash.text.includes(await mac(() => window.thirdEye.store.state.net.room)) && !/third eye cam/i.test(splash.text), splash.text);
+  check('it says how far pairing has got, and where a second iPhone goes', /Ready\.|pairing server|room code is in use/.test(splash.text) && splash.text.includes('A second iPhone?'), splash.text);
+  // The code in the camera is the pairing link, readable as drawn in each
+  // palette and with the interface dimmed right down.
+  const readCode = async () => {
+    const img = await control.evaluate(async () => {
+      const svg = document.querySelector('#splash .code-mark');
+      const ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
+      const xml = new XMLSerializer().serializeToString(svg).replaceAll('var(--ink)', ink).replace('<svg ', '<svg width="512" height="464" ');
+      const im = new Image();
+      await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(xml)}`; });
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 464;
+      const x = c.getContext('2d');
+      x.fillRect(0, 0, 512, 464);
+      x.drawImage(im, 0, 0, 512, 464);
+      return Array.from(x.getImageData(0, 0, 512, 464).data);
+    });
+    return jsQR(new Uint8ClampedArray(img), 512, 464)?.data ?? null;
+  };
+  const link = await mac(() => window.thirdEye.ui.phoneLink());
+  check('the code in the camera carries the pairing link', (await readCode()) === link, `${await readCode()} / ${link}`);
+  await control.evaluate(() => { document.documentElement.dataset.palette = 'lime'; document.documentElement.style.setProperty('--ink', '#3a4512'); });
+  check('and still reads in another colour, dimmed', (await readCode()) !== null);
+  await control.evaluate(() => { delete document.documentElement.dataset.palette; document.documentElement.style.removeProperty('--ink'); });
   await control.locator('#splash >> text=Test pattern').click();
   check('Test pattern takes its place', (await mac(() => window.thirdEye.store.state.input.kind)) === 'pattern' && (await settle(() => control.locator('#splash').isHidden(), 'gone')));
   await control.keyboard.press('1');
   check('back on the iPhone input it returns', await settle(() => control.locator('#splash').isVisible(), 'back'));
+  check('and shows the code at once: the opening plays only when a session starts', await control.evaluate(() => document.querySelector('#splash .code-mark').dataset.state === 'code' && !document.querySelector('#splash .splash-text').classList.contains('waiting')));
 
   console.log('before the show, on the Mac');
   const flag = () => control.locator('#check-flag').textContent();

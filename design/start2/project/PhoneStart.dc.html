@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>F1 · The camera becomes the START button</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#000}
+.s{color:#c06a60;font-size:11px;line-height:1.5;text-align:center}
+</style>
+</helmet>
+<div style="width: 390px; height: 760px; box-sizing: border-box; padding: 60px 24px 20px; display: flex; flex-direction: column; align-items: center; gap: 18px; background: #000; color: #ff6b5e; font: 500 13px/1.3 'JetBrains Mono', ui-monospace, Menlo, monospace">
+<svg viewBox="0 5 64 58" width="320" height="290" role="img" aria-label="START" style="flex-shrink: 0">
+<defs><clipPath id="f1-cam"><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z"/></clipPath></defs>
+<path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z" fill="{{bodyFill}}" stroke="#ff6b5e" stroke-width="2.7" stroke-linejoin="round"/>
+<path d="{{cellsD}}" fill="#000" clip-path="url(#f1-cam)" shape-rendering="crispEdges"/>
+<sc-if value="{{shut}}" hint-placeholder-val="{{ true }}"><path d="M11.5 38Q32 39.5 52.5 38" fill="none" stroke="{{eyeInk}}" stroke-width="2.7" stroke-linecap="round"/></sc-if>
+<sc-if value="{{open}}" hint-placeholder-val="{{ false }}"><g opacity="{{eyeOpacity}}"><path d="M11.5 38Q32 18 52.5 38Q32 58 11.5 38Z" fill="none" stroke="{{eyeInk}}" stroke-width="2.7" stroke-linejoin="round"/><circle cx="32" cy="38" r="4.05" fill="none" stroke="{{eyeInk}}" stroke-width="2.7"/></g></sc-if>
+<text x="32" y="43.5" text-anchor="middle" fill="#000" opacity="{{endOpacity}}" style="font: 800 17px 'Big Shoulders Display', sans-serif; letter-spacing: 1.5px">START</text>
+</svg>
+<div style="opacity: {{endOpacity}}; transition: opacity 0.4s; display: flex; flex-direction: column; align-items: center; gap: 14px">
+<div style="font-size: 15px; font-weight: 700; text-align: center">Tap the camera to begin.</div>
+<div style="letter-spacing: 0.2em; text-transform: uppercase">Room SB2ZR</div>
+<div class="s" style="color: #ff6b5e">Controller only (no camera)  ○</div>
+</div>
+<div class="s" style="margin-top: auto">The noise clears to the solid camera with START written in it: the mark is the button, as large as a thumb could want. One thing on the screen.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":760}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { t: 0 };
+this.start = Date.now();
+}
+componentDidMount() {
+this.timer = setInterval(() => {
+let t = Date.now() - this.start;
+if (t > 8000) { this.start = Date.now(); t = 0; }
+this.setState({ t });
+}, 40);
+}
+componentWillUnmount() {
+clearInterval(this.timer);
+}
+renderVals() {
+const t = this.state.t;
+const OPEN = 300, BLINK = 900, REOPEN = 1020, INTO = 1500, NOISE = 1750, SETTLE = 2650, END = 2900;
+const m = 36 / 25, x0 = 14, y0 = 19;
+const hash = (a, b, c) => { let h = (a * 374761393 + b * 668265263 + c * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; h ^= h >>> 16; return ((h >>> 0) % 10000) / 10000; };
+const frame = Math.floor(t / 70);
+const amount = t < INTO ? 0 : t < NOISE ? (t - INTO) / (NOISE - INTO) : 1;
+const settled = t < SETTLE ? 0 : t < END ? (t - SETTLE) / (END - SETTLE) : 1;
+let d = '';
+if (amount > 0 && settled < 1) {
+for (let j = -8; j <= 29; j++) for (let i = -8; i <= 33; i++) {
+const own = hash(i, j, 1);
+const on = settled > own ? false : own < amount && hash(i, j, 100 + frame) > 0.5;
+if (on) d += 'M' + (x0 + i * m).toFixed(2) + ' ' + (y0 + j * m).toFixed(2) + 'h' + m.toFixed(2) + 'v' + m.toFixed(2) + 'h-' + m.toFixed(2) + 'z';
+}
+}
+const reversed = t >= BLINK;
+return {
+bodyFill: reversed ? '#ff6b5e' : 'none',
+cellsD: d,
+shut: t < OPEN || (t >= BLINK && t < REOPEN),
+open: (t >= OPEN && t < BLINK) || (t >= REOPEN && t < NOISE),
+eyeInk: reversed ? '#000' : '#ff6b5e',
+eyeOpacity: t >= INTO ? Math.max(0, 1 - amount) : 1,
+endOpacity: settled,
+};
+}
+}
+</script>
+</body>
+</html>

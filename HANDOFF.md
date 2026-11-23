@@ -19,8 +19,10 @@ Then stage 3 of the effects plan (Time and Scan).
 - Try a Motion source on a slider (Mod → Motion A → Overall) and say
   whether it is lively enough or too jumpy. Say whether Gravity pours
   toward the room's floor when you roll the phone.
-- Look at the opening on the starting screen canvas (`Play`) and say go,
-  or what to change.
+- Choose F1, F2 or F3 for the phone's start screen (the starting screen
+  canvas, bottom row).
+- Open the app in a new tab to see the opening, and scan the code in the
+  camera with the iPhone. Say whether the opening's timing is right.
 - Try Glitch: Edit a preset → Glitch tab → Capture a glitch, move some
   sliders, Keep, then press G. Say whether the pointer on the bar is
   findable enough, and whether any factory preset should come with a
@@ -133,33 +135,31 @@ under) and for the first six seconds of a recording.
 Next: the starting screen (the owner's concern is the look of the mark and
 of the QR code).
 
-**Open: the starting screen.** Mock-ups at
+**The starting screen (built 23 November).** Mock-ups at
 https://claude.ai/artifact/7MxqJ1CZhbWHzKod3deScy (sources in
-`design/start2/project/`). Where it stands: the owner wants the camera of
-the mark drawn solid in the interface colour with the pairing code centred
-in it (black on the colour), and an opening of under two seconds: the eye
-a line, opening quickly, one blink, breaking into noise, the noise settling
-into the code (`Frames`, `Play`). Not built. It waits on a scan test with
-the real iPhone: `/qr-test/` on the site (`qr-test/index.html`,
-`src/qr-test/main.js`, a fifth Vite page that is not part of the
-instrument) shows 36 codes, six palettes by three drawings (black on the
-colour square, the same rounded, the colour on black) at dimmer 100% and
-25%, each carrying a link back to that page so the phone names the code it
-read; the Mac page keeps a tally to copy. **The owner ran it on 23
-November: every code tried scanned** with the iPhone's Camera app (all
-six palettes, black on the colour square and rounded and the colour on
-black at 100%; square at 25% in all six; a few of the others at 25%),
-so the code can follow the dimmer. The opening was then changed at the
-owner's word: it starts as the mark is today (outline, red on black),
-reverses to the solid camera on the blink, noise fills the whole camera,
-then the code. Third pass: the noise is hard-edged, in the code's own
-squares; a quarter-second dissolve from the eye into it and from it into
-the code; the noise holds 0.9 s (2.9 s in all). It plays once, when the
-session starts: a lost link or a new room code just shows the code. Still to settle when it
-is built: the code must ignore the dimmer if 25% does not scan; a line
-saying how far pairing has got; one line for a second iPhone; the opening
-plays once a session and never on a reload with a phone paired; remove the
-test page when the question is answered.
+`design/start2/project/`; `Frames` and `Play` are what was built).
+`src/control/code-mark.js` draws the camera of the mark solid in `--ink`
+with the pairing code in it as one SVG path (dark squares on the colour),
+and plays the opening: outline and shut eye, open, a blink on which the
+camera turns solid, noise in the code's own squares over the whole camera,
+the noise settling into the code (times in `T`, 2.9 s). `perform.js` plays
+it once per tab session (`thirdeye.opened` in sessionStorage); a lost
+link, a new room code or a reload shows the code at once, and reduced
+motion skips it. Under the code: the instruction, the room code, a line on
+the pairing server's state (the Mac hears nothing between a phone's scan
+and its START, so there is no "scanned" to show), the three ways on, and a
+pointer for a second iPhone. The owner scanned test codes in all six
+palettes with the iPhone's Camera app, at dimmer 100% and (square) 25%:
+all read, so the code follows the palette and the dimmer. The test page
+(`/qr-test/`) was removed once it had answered that. The pop-over behind
+the phone readout still draws the plain black-on-white code (`qr.js`).
+Open: the opening on the phone's own start screen, which has no code to
+end on. Three playing prototypes on the same canvas (F1 the camera becomes
+the START button, F2 the noise settles into the room code, F3 the opening
+is what START does and clears to the phone's camera); the owner has not
+chosen. Also not done: the real code
+has not been scanned from the new screen itself, only the test codes drawn
+the same way.
 
 **Settled in the sixth session.** The logo is fine for now. The
 segmentation timing on the owner's Mac is not needed: the app will run on
