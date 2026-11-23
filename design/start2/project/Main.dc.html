@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S1 · The camera holds the code</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#000}
+.k{border:1px solid #5b2622;padding:7px 12px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.s{color:#c06a60;font-size:11px;line-height:1.5}
+</style>
+</helmet>
+<div style="width: 900px; height: 560px; box-sizing: border-box; padding: 26px; display: flex; flex-direction: column; align-items: center; gap: 14px; background: #000; color: #ff6b5e; font: 500 13px/1.3 'JetBrains Mono', ui-monospace, Menlo, monospace">
+<div style="position: relative; width: 330px; height: 330px">
+<svg viewBox="0 0 330 330" width="330" height="330" aria-hidden="true" style="position: absolute; left: 0; top: 0"><path d="M214 30 V14 H262 V30" fill="none" stroke="#ff6b5e" stroke-width="7" stroke-linejoin="round"/><rect x="6" y="30" width="318" height="294" rx="34" fill="none" stroke="#ff6b5e" stroke-width="7"/><rect x="34" y="50" width="34" height="9" rx="4.5" fill="#ff6b5e"/></svg>
+<div style="position: absolute; left: 51px; top: 76px; width: 228px; height: 228px; background: #ff6b5e; padding: 14px; box-sizing: border-box; display: grid; grid-template-columns: repeat(25, minmax(0, 1fr))">
+<sc-for list="{{cells}}" as="c" hint-placeholder-count="0"><div style="background: {{c.bg}}"></div></sc-for>
+</div>
+</div>
+<div style="font-size: 20px; font-weight: 700">Point the iPhone's camera at the code.</div>
+<div style="letter-spacing: 0.2em; text-transform: uppercase">Room code SB2ZR</div>
+<div style="display: flex; gap: 10px; margin-top: 4px"><span class="k">Use the Mac camera</span><span class="k">Test pattern</span><span class="k">Video file…</span></div>
+<div class="s" style="margin-top: auto; text-align: center; max-width: 720px">The mark itself, large, with the code where its eye is. The code is black on the interface's own colour: no white block, and still dark-on-light, the way every phone expects. One object instead of two.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":900,"height":560}}'>
+class Component extends DCLogic {
+renderVals() {
+const n = 25;
+const finder = (x, y) => { const f = (ox, oy) => { const dx = x - ox, dy = y - oy; if (dx < 0 || dy < 0 || dx > 6 || dy > 6) return null; const m = Math.max(Math.abs(dx - 3), Math.abs(dy - 3)); return m !== 2; }; return f(0, 0) ?? f(n - 7, 0) ?? f(0, n - 7); };
+const quiet = (x, y) => (x < 8 && y < 8) || (x > n - 9 && y < 8) || (x < 8 && y > n - 9);
+let seed = 7;
+const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+const cells = [];
+for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const f = finder(x, y); const on = f !== null ? f : quiet(x, y) ? false : rnd() > 0.52; cells.push({ bg: on ? '#000' : 'transparent' }); }
+return { cells };
+}
+}
+</script>
+</body>
+</html>

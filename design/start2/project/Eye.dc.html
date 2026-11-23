@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S3 · The eye sits in the code</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#000}
+.k{border:1px solid #5b2622;padding:7px 12px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.s{color:#c06a60;font-size:11px;line-height:1.5}
+</style>
+</helmet>
+<div style="width: 900px; height: 560px; box-sizing: border-box; padding: 26px; display: flex; flex-direction: column; align-items: center; gap: 14px; background: #000; color: #ff6b5e; font: 500 13px/1.3 'JetBrains Mono', ui-monospace, Menlo, monospace">
+<div style="position: relative; width: 320px; height: 320px; background: #ff6b5e; border-radius: 30px; padding: 26px; box-sizing: border-box">
+<div style="width: 100%; height: 100%; display: grid; grid-template-columns: repeat(25, minmax(0, 1fr))">
+<sc-for list="{{cells}}" as="c" hint-placeholder-count="0"><div style="background: {{c.bg}}; border-radius: {{c.r}}"></div></sc-for>
+</div>
+<div style="position: absolute; left: 50%; top: 50%; width: 96px; height: 70px; margin: -35px 0 0 -48px; background: #ff6b5e; border-radius: 12px; display: flex; align-items: center; justify-content: center">
+<svg viewBox="0 0 84 56" width="84" height="56" role="img" aria-label="Third Eye Cam"><path d="M5 28 Q42 -4 79 28 Q42 60 5 28 Z" fill="none" stroke="#000" stroke-width="6" stroke-linejoin="round"/><circle cx="42" cy="28" r="9" fill="none" stroke="#000" stroke-width="6"/></svg>
+</div>
+</div>
+<div style="font-size: 20px; font-weight: 700">Point the iPhone's camera at the code.</div>
+<div style="letter-spacing: 0.2em; text-transform: uppercase">Room code SB2ZR</div>
+<div style="display: flex; gap: 10px; margin-top: 4px"><span class="k">Use the Mac camera</span><span class="k">Test pattern</span><span class="k">Video file…</span></div>
+<div class="s" style="margin-top: auto; text-align: center; max-width: 720px">The code is the object: a rounded tile in the interface's colour, its modules softened, and the eye in the middle where a code can spare the room. No camera outline; the eye alone carries the name. The eye costs the code some of its safety margin, so the code must be made denser to carry it.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":900,"height":560}}'>
+class Component extends DCLogic {
+renderVals() {
+const n = 25;
+const finder = (x, y) => { const f = (ox, oy) => { const dx = x - ox, dy = y - oy; if (dx < 0 || dy < 0 || dx > 6 || dy > 6) return null; const m = Math.max(Math.abs(dx - 3), Math.abs(dy - 3)); return m !== 2; }; return f(0, 0) ?? f(n - 7, 0) ?? f(0, n - 7); };
+const quiet = (x, y) => (x < 8 && y < 8) || (x > n - 9 && y < 8) || (x < 8 && y > n - 9);
+let seed = 7;
+const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+const cells = [];
+for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const f = finder(x, y); const on = f !== null ? f : quiet(x, y) ? false : rnd() > 0.52; cells.push({ bg: on ? '#000' : 'transparent', r: f !== null ? '0' : '32%' }); }
+return { cells };
+}
+}
+</script>
+</body>
+</html>
