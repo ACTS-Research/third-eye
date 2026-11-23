@@ -7,11 +7,16 @@
   "boards": {
     "Main.dc.html": { "x": 0, "y": 0, "w": 1040, "h": 500, "title": "G1 · A G button on each slider; the Glitch tab holds the timing" },
     "Tab.dc.html": { "x": 0, "y": 620, "w": 520, "h": 560, "title": "G2 · The Glitch tab is a second set of bars: where each slider lands" },
-    "Capture.dc.html": { "x": 600, "y": 620, "w": 1040, "h": 560, "title": "G3 · Capture: move the sliders to the glitch, then Keep" }
+    "Capture.dc.html": { "x": 600, "y": 620, "w": 1040, "h": 560, "title": "G3 · Capture: move the sliders to the glitch, then Keep" },
+    "MarkPost.dc.html": { "x": 0, "y": 1640, "w": 520, "h": 320, "title": "K1 · A post, and a dotted line for the leap" },
+    "MarkGhost.dc.html": { "x": 600, "y": 1640, "w": 520, "h": 320, "title": "K2 · A ghost: the outline of the bar as it will be" },
+    "MarkArrow.dc.html": { "x": 1200, "y": 1640, "w": 520, "h": 320, "title": "K3 · An arrow under the bar" },
+    "MarkNotch.dc.html": { "x": 1800, "y": 1640, "w": 520, "h": 320, "title": "K4 · A notch on the edge, and the number" }
   },
-  "order": ["Main.dc.html", "Tab.dc.html", "Capture.dc.html"],
+  "order": ["Main.dc.html", "Tab.dc.html", "Capture.dc.html", "MarkPost.dc.html", "MarkGhost.dc.html", "MarkArrow.dc.html", "MarkNotch.dc.html"],
   "notes": {
-    "heading": { "x": 0, "y": -300, "text": "Glitch: choosing which sliders jump, and where to", "kind": "title1", "maxW": 1640 }
+    "heading": { "x": 0, "y": -300, "text": "Glitch: choosing which sliders jump, and where to", "kind": "title1", "maxW": 1640 },
+    "heading2": { "x": 0, "y": 1340, "text": "G3 chosen: the mark for a jump, on the Parameters tab", "kind": "title1", "maxW": 2320 }
   },
   "designSystems": []
 }
