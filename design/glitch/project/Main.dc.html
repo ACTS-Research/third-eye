@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>G1 · A G button on each slider; the Glitch tab holds the timing</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+.p{width:520px;box-sizing:border-box;padding:24px;display:flex;flex-direction:column;gap:14px}
+.tabs{display:flex;gap:6px}
+.tab{border:1px solid #5b2622;padding:8px 10px;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.tab.on{background:#ff6b5e;color:#140302;border-color:#ff6b5e}
+.h{font:800 24px 'Big Shoulders Display',sans-serif;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #5b2622;padding-bottom:10px}
+.r{display:flex;align-items:center;gap:8px}
+.l{width:84px;flex-shrink:0}
+.b{flex:1;height:22px;border:1px solid #ff6b5e;position:relative}
+.v{width:52px;text-align:right;font:800 20px/1 'Big Shoulders Display',sans-serif}
+.k{border:1px solid #5b2622;padding:5px 7px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.k.on{background:#ff6b5e;color:#140302;border-color:#ff6b5e}
+.f{position:absolute;top:0;bottom:0;background:#ff6b5e}
+.j{position:absolute;top:7px;bottom:7px;background-image:repeating-linear-gradient(90deg,#ff6b5e 0 3px,transparent 3px 7px)}
+.t{position:absolute;top:-6px;bottom:-6px;width:4px;margin-left:-2px;background:#ff6b5e;border:2px solid #060303}
+.s{color:#c06a60;font-size:11px;line-height:1.5}
+</style>
+</helmet>
+<div style="width: 1040px; height: 500px; display: flex; background: #060303; color: #ff6b5e; font: 500 13px/1.3 'JetBrains Mono', ui-monospace, Menlo, monospace">
+<div class="p" style="border-right: 1px solid #5b2622">
+<div class="tabs"><span class="tab on">Parameters</span><span class="tab">Faders · 0</span><span class="tab">Modulation · 2</span><span class="tab">LFOs</span><span class="tab">Glitch · 2</span></div>
+<div class="h">1 Kaleidoscope / Mirror</div>
+<div class="r"><span class="l">segments</span><div class="b"><div class="f" style="left: 0; width: 22%"></div><div class="j" style="left: 22%; width: 58%"></div><div class="t" style="left: 80%"></div></div><span class="v">6</span><span class="k">Fader</span><span class="k on">G</span><span class="k">+ Mod ▾</span></div>
+<div class="s" style="margin: -8px 0 0 92px">Glitch jumps it to 14. Drag on the bar to move the mark.</div>
+<div class="r"><span class="l">angle</span><div class="b"><div class="f" style="left: 49.5%; width: 1%"></div></div><span class="v">0.000</span><span class="k">Fader</span><span class="k">G</span><span class="k on">~ Roll ▾</span></div>
+<div class="r"><span class="l">spin</span><div class="b"><div class="f" style="left: 50%; width: 4%"></div><div class="j" style="left: 8%; width: 42%"></div><div class="t" style="left: 8%"></div></div><span class="v">0.040</span><span class="k">Fader</span><span class="k on">G</span><span class="k">+ Mod ▾</span></div>
+<div class="r"><span class="l">zoom</span><div class="b"><div class="f" style="left: 50%; width: 9%"></div></div><span class="v">1.20</span><span class="k">Fader</span><span class="k">G</span><span class="k on">~ Pad Y ▾</span></div>
+<div class="r"><span class="l">centerX</span><div class="b"><div class="f" style="left: 0; width: 50%"></div></div><span class="v">0.500</span><span class="k">Fader</span><span class="k">G</span><span class="k">+ Mod ▾</span></div>
+<div class="s" style="margin-top: auto">G on a row arms its bar: the next drag sets where Glitch throws that slider, not its value. Click G again to finish; double-click the mark to remove it. The dotted line is the leap.</div>
+</div>
+<div class="p">
+<div class="tabs"><span class="tab">Parameters</span><span class="tab">Faders · 0</span><span class="tab">Modulation · 2</span><span class="tab">LFOs</span><span class="tab on">Glitch · 2</span></div>
+<div class="h">Glitch in this preset</div>
+<svg viewBox="0 0 470 70" role="img" aria-label="The shape of a glitch: straight up, then back over a third of a second" style="width: 100%; height: 70px"><path d="M0 62 H60 V8 H150 L300 62 H470" fill="none" stroke="#ff6b5e" stroke-width="2"/><path d="M60 62 V8 M150 8 V62" stroke="#5b2622" stroke-width="1" stroke-dasharray="3 4"/></svg>
+<div class="r"><span class="l">attack</span><div class="b"><div class="f" style="left: 0; width: 1%"></div></div><span class="v">0.00</span><span class="s" style="width: 14px">s</span></div>
+<div class="r"><span class="l">release</span><div class="b"><div class="f" style="left: 0; width: 30%"></div></div><span class="v">0.33</span><span class="s" style="width: 14px">s</span></div>
+<div class="r"><span class="l">scatter</span><div class="b"><div class="f" style="left: 0; width: 1%"></div></div><span class="v">0.00</span><span class="s" style="width: 14px"></span></div>
+<div class="r"><span class="l">hold</span><span class="k">Off</span><span class="s">On: stays thrown while the button is down</span></div>
+<div style="border-top: 1px solid #5b2622; padding-top: 12px; display: flex; flex-direction: column; gap: 8px">
+<div class="r"><span style="flex: 1">1 Kaleidoscope / Mirror · segments</span><span>6 → 14</span><span class="k">✕</span></div>
+<div class="r"><span style="flex: 1">1 Kaleidoscope / Mirror · spin</span><span>0.040 → -0.90</span><span class="k">✕</span></div>
+</div>
+<div class="r" style="margin-top: auto"><span class="k on" style="padding: 9px 16px">Try it · G</span><span class="s">With no jumps set, Glitch tears the picture as it does today.</span></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1040,"height":500}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

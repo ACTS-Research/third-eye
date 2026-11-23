@@ -1,0 +1,17 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-23T04:00:00Z" },
+  "title": "Third Eye Cam: Glitch",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1040, "h": 500, "title": "G1 · A G button on each slider; the Glitch tab holds the timing" },
+    "Tab.dc.html": { "x": 0, "y": 620, "w": 520, "h": 560, "title": "G2 · The Glitch tab is a second set of bars: where each slider lands" },
+    "Capture.dc.html": { "x": 600, "y": 620, "w": 1040, "h": 560, "title": "G3 · Capture: move the sliders to the glitch, then Keep" }
+  },
+  "order": ["Main.dc.html", "Tab.dc.html", "Capture.dc.html"],
+  "notes": {
+    "heading": { "x": 0, "y": -300, "text": "Glitch: choosing which sliders jump, and where to", "kind": "title1", "maxW": 1640 }
+  },
+  "designSystems": []
+}
