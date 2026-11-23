@@ -1,19 +1,17 @@
 # Handoff
 
-## 2026-11-22 (sixth session)
+## 2026-11-23 (end of the sixth session, 22 to 23 November)
 
 **Where things stand.** Stage 2 of the effects plan is built and live on
 GitHub Pages from `main`: the motion map, the Motion and Gravity effects,
-and movement in the picture as modulation sources (Motion A, Motion B). It
-has only been seen on the moving test pattern in the sandbox, never with a
-real camera. From the session before, the owner reports that the new
-effects, drawing a modulation's range on a slider and the number as a
-bypass switch all work well on the real iPhone and Mac.
+and movement in the picture as modulation sources (Motion A, Motion B). The
+owner tried Motion and Gravity on the real iPhone and Mac on 23 November:
+both work well. The edit screen was tidied after a preset was deleted by
+mistake (see "Seen on the real devices" below); the owner has seen the
+first round of that ("placement is better"), not the last.
 
-**Next step.** On the real Mac with the iPhone: try Motion, Gravity and a
-Motion source on a slider, and say what the defaults should be (see "Stage
-2, what to try" below). Then Glitch (the owner's choice, 22 November), then
-stage 3 of the effects plan.
+**Next step.** Glitch: agree what it becomes, then build it. Then stage 3
+of the effects plan (Time and Scan).
 
 **Decisions only you can make.**
 
@@ -23,9 +21,10 @@ stage 3 of the effects plan.
 - Try a Motion source on a slider (Mod → Motion A → Overall) and say
   whether it is lively enough or too jumpy. Say whether Gravity pours
   toward the room's floor when you roll the phone.
-- Say what Glitch should become (next after stage 2). You asked for a
-  chosen, sudden move of one or more sliders of the effects already in the
-  preset.
+- Say what Glitch should become (it is next). You asked for a chosen,
+  sudden move of one or more sliders of the effects already in the preset.
+- Look at the edit screen as it now is (no "← Perform", no "In:" block,
+  the short Revert, Fade in in a narrow window) and say if anything is off.
 - Say whether the bars on the Parameters tab are too narrow for drawing a
   modulation's range (about 100 px in a 1440-wide window). If so: shorten
   "Fader" to a mark, or widen that column.
@@ -46,8 +45,6 @@ stage 3 of the effects plan.
 - Recording: your Mac remembers WebM from before; choose MP4 once in Setup →
   Recordings. The first time a recording saves itself, allow Chrome to
   download several files.
-- Board cover: it is your screenshot of 16 November, two sessions old. Send
-  a new one when you want it replaced.
 - Say whether the phone's Quality menu should be restyled.
 - Tick **hold** again on any trigger that had it: settings saved before 13
   November are no longer read.
@@ -73,7 +70,8 @@ tolerate a slow mask (soften, delay) instead of being tuned to one figure.
 Glitch comes after stage 2. No mock-ups for Motion and Gravity (their
 controls are the generated sliders).
 
-**Stage 2, what to try** (none of it seen with a real camera).
+**Stage 2, what to try** (Motion and Gravity have been seen working; the
+notes stay for tuning).
 
 - Motion: add it alone, wave a hand. A still room should be black; if it
   sparkles, sensitivity is too high for the camera's grain (the floor is
@@ -126,8 +124,10 @@ control that blurs or sharpens inside the loop; Kaleidoscope and Edge Glow
 simplified (seven controls each). Not recommended: object detection.
 Cross-feedback between A and B: later, if at all.
 
-**Built in the sixth session, not yet tried on real hardware.** All of
-stage 2: see "Stage 2, what to try" above.
+**Built in the sixth session, not yet tried on real hardware.** The
+Motion sources on a slider; which way Gravity pours when the phone is
+rolled; the last round of edit screen changes; Bring back deleted factory
+presets.
 
 **Built in the fifth session, not yet tried on real hardware.**
 
