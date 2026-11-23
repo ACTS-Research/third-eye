@@ -558,15 +558,15 @@ counts as movement, and so does the whole picture when the camera moves.
 That needs **Segmentation** switched on under Setup → Vision.
 
 **Editing the chain.** Under the picture on the Edit screen the chain reads
-left to right: the input, each effect, then **+ Add effect**. Click an effect
+left to right: each effect, then **+ Add effect**. Click an effect
 to open its controls on the **Parameters** tab; drag its button to move it
 (or use ← → beside its name), and **Bypass** or **✕** there to skip or remove
 it. The number on an effect's button is also its switch: click the number to
 bypass the effect without opening it, and again to bring it back; a bypassed
 effect is drawn dashed, with "bypassed" under its name. While you edit, anything
 you have changed since opening the screen is marked: a dot by the slider's
-name and a mark on its bar where the value was, and **Revert** says how many
-sliders it would put back. A slider that something moves shows where it is
+name and a mark on its bar where the value was, and **Revert** shows how many
+sliders it would put back (`Revert 3`). A slider that something moves shows where it is
 at this moment as a hatched band on its bar, as the perform faders do.
 Each slider is a bar: click or drag to set it, type an exact number in
 the box beside it, double-click to return to the default. Many bars are

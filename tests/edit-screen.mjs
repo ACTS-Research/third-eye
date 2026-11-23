@@ -33,7 +33,7 @@ try {
     const t = document.querySelector('.tabs').getBoundingClientRect();
     return r.top >= m.bottom - 1 && t.left > m.right && m.width > 500;
   }));
-  check('the chain row reads input, then each effect in order', (await control.locator('.chain-row .chain-end').textContent()).startsWith('In: ') && (await control.locator('.chain-row .fx .name').allTextContents()).join(',') === 'Video Feedback,RGB Offset');
+  check('the chain row reads each effect in order, starting at the left', (await control.locator('.chain-row > *').first().evaluate((n) => n.classList.contains('fx'))) && (await control.locator('.chain-row .fx .name').allTextContents()).join(',') === 'Video Feedback,RGB Offset');
   check('the first effect is open, and its button says nothing while it is on', (await control.locator('#tab-params .fx-head .name').textContent()) === 'Video Feedback' && (await control.locator('.chain-row .fx').first().locator('.meta').textContent()).trim() === '');
   check('a slider that something moves shows where it is now, as a hatched band on its bar', await settle(() => control.locator(paramBar('hue')).evaluate((b) => b.style.background.includes('repeating-linear-gradient')), 'band', 15000));
   check('no system menus and nothing left of the old control library', (await control.locator('#view-edit select').count()) === 0 && (await control.locator('[class*="tp-"]').count()) === 0);
@@ -113,7 +113,7 @@ try {
   const dotsBefore = await control.locator('#tab-params .param label.changed').count();
   await clickBar(control, paramBar('key'), 0.9);
   check('a changed slider gets a dot by its name and a mark where it was', await settle(async () => (await keyLabel.getAttribute('class') ?? '').includes('changed') && (await control.locator(paramBar('key')).evaluate((b) => b.style.background.includes('calc('))), 'changed'));
-  check('Revert says how many sliders it would put back', /^Revert \d+ changes?$/.test(await control.locator('button', { hasText: /^Revert/ }).textContent()), await control.locator('button', { hasText: /^Revert/ }).textContent());
+  check('Revert says how many sliders it would put back', /^Revert \d+$/.test(await control.locator('button', { hasText: /^Revert/ }).textContent()), await control.locator('button', { hasText: /^Revert/ }).textContent());
   await control.locator(paramBar('key')).dblclick();
   check('put back by hand, the dot goes', await settle(async () => (await control.locator('#tab-params .param label.changed').count()) === dotsBefore, 'unchanged'));
 

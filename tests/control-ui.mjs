@@ -139,7 +139,7 @@ try {
   }, 'reverted'));
   await control.fill('.edit-head input[type=text]', 'Vortex');
   await control.fill('#preset-fade', '0.6');
-  await control.click('text=← Perform');
+  await control.click('#views button[data-view=perform]');
   check('the strip shows the new name', (await names())[1] === 'Vortex');
 
   await control.locator('.tile .load').nth(0).click();

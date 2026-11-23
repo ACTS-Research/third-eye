@@ -5,7 +5,7 @@
 
 import { EFFECTS, EFFECT_BY_ID, paramUnit, paramValue } from '../effects/index.js';
 import { describeSource } from '../shared/sources.js';
-import { INPUT_LABELS, makeEffect, sceneOf } from '../shared/state.js';
+import { makeEffect, sceneOf } from '../shared/state.js';
 import { el } from '../shared/util.js';
 import { bar, choice, menu, toggle } from './controls.js';
 
@@ -60,7 +60,7 @@ export function mountChain(roots, ui) {
   function buildRow() {
     const chain = store.state.chain;
     const open = current();
-    row.replaceChildren(el('span', { class: 'chain-end', text: `In: ${INPUT_LABELS[store.state.input.kind] ?? store.state.input.kind}` }));
+    row.replaceChildren();
     chain.forEach((item, i) => {
       const def = EFFECT_BY_ID[item.type];
       // The number is the effect's switch: a click on it bypasses the effect
@@ -95,7 +95,8 @@ export function mountChain(roots, ui) {
         if (from < 0 || from === i) return;
         mutate((list) => list.splice(i, 0, list.splice(from, 1)[0]));
       });
-      row.append(el('span', { class: 'chain-arrow', 'aria-hidden': 'true', text: '→' }), button);
+      if (i) row.append(el('span', { class: 'chain-arrow', 'aria-hidden': 'true', text: '→' }));
+      row.append(button);
     });
     const add = menu({
       action: true,
@@ -111,7 +112,8 @@ export function mountChain(roots, ui) {
         ui.setEditTab('params');
       },
     });
-    row.append(el('span', { class: 'chain-arrow', 'aria-hidden': 'true', text: '→' }), add.node);
+    if (chain.length) row.append(el('span', { class: 'chain-arrow', 'aria-hidden': 'true', text: '→' }));
+    row.append(add.node);
   }
 
   // --------------------------------------------------- the open effect ---

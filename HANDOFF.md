@@ -59,7 +59,12 @@ effect's panel. Now: Duplicate, Revert and Delete preset sit straight after
 the preset's name, Delete says "the whole preset" when it asks, and Setup →
 Preset library → Bring back deleted factory presets returns a lost factory
 preset as it was made (`missingFactory` in `presets.js`). A bypassed block
-no longer strikes its number out, and a block's name sits mid-block.
+no longer strikes its number out, and a block's name sits mid-block. The
+edit screen lost its "← Perform" button (Perform at the top right does
+that) and the "In: iPhone" block at the start of the chain row; Revert
+reads `Revert 3`; Fade in drops to a second line whole in a narrow window;
+the Parameters column is at least 440 px so a slider's number is never
+cut.
 
 **Settled in the sixth session.** The logo is fine for now. The
 segmentation timing on the owner's Mac is not needed: the app will run on

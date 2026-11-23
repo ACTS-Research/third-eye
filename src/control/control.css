@@ -243,7 +243,7 @@ main { flex: 1; min-height: 0; }
 .edit-head .num { font: 800 40px/0.9 var(--display); min-width: 28px; }
 .edit-head input[type='text'] { font: 700 26px/1 var(--display); letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 10px; width: min(360px, 100%); border-color: var(--ink); }
 .edit-head input[type='number'] { width: 76px; }
-.edit-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(400px, 34%); }
+.edit-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(440px, 34%); }
 .col { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 12px; }
 .edit-body .col + .col { border-left: 1px solid var(--line); }
 /* As large as the column allows, but never so tall that the chain under it
@@ -290,7 +290,7 @@ input.bar::-webkit-slider-runnable-track { background: transparent; height: 100%
 input.bar::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 3px; height: 20px; background: var(--ink); border: 0; border-radius: 0; }
 input.bar::-moz-range-track { background: transparent; }
 input.bar::-moz-range-thumb { width: 3px; height: 20px; background: var(--ink); border: 0; border-radius: 0; }
-.bar-field { display: grid; grid-template-columns: minmax(64px, 180px) 62px; column-gap: 8px; align-items: center; justify-content: start; min-width: 0; }
+.bar-field { display: grid; grid-template-columns: minmax(48px, 180px) 62px; column-gap: 8px; align-items: center; justify-content: start; min-width: 0; }
 input.bar-value { width: 62px; border: 1px solid transparent; background: none; padding: 2px 4px; text-align: right; font: 700 18px/1 var(--display); letter-spacing: 0.02em; color: var(--ink); }
 input.bar-value:hover, input.bar-value:focus { border-color: var(--line); }
 
@@ -463,8 +463,13 @@ main { position: relative; }
 .keep-4 { min-height: 5.9em; }
 .keep-6 { min-height: 10em; }
 .edit-head .saved { flex: 0 0 150px; }
-/* "Revert 12 changes" must not push the name along. */
-.edit-head .revert { min-width: 168px; }
+/* "Revert 12" must not push what follows along. */
+.edit-head .revert { min-width: 104px; }
+/* The name gives way in a narrow window; the fade box never does. */
+.edit-head input[type='text'] { flex: 0 1 360px; min-width: 150px; }
+.edit-head input[type='number'] { flex: none; }
+/* Too narrow for it: "Fade in" goes to a second line whole. */
+.edit-head .row.grow { flex: 1 0 auto; flex-wrap: nowrap; }
 .big b { white-space: nowrap; }
 
 /* Palette: one dot in the bar, the choices in a pop-over. */

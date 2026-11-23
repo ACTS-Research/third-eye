@@ -57,7 +57,8 @@ export function mountEdit(root, ui) {
   function labelRevert() {
     const p = presets.list[presets.current];
     const dirty = !!opened && opened.index === presets.current && !!p && (changeCount > 0 || JSON.stringify(sceneOf(store.state)) !== JSON.stringify(opened.preset.scene) || p.name !== opened.preset.name);
-    revert.textContent = changeCount ? `Revert ${changeCount} change${changeCount === 1 ? '' : 's'}` : 'Revert';
+    revert.textContent = changeCount ? `Revert ${changeCount}` : 'Revert';
+    revert.title = changeCount ? `Puts ${changeCount} slider${changeCount === 1 ? '' : 's'} back to how this preset was when you opened it` : 'Back to how this preset was when you opened it';
     revert.classList.toggle('idle', !dirty);
   }
   ui.onChangeCount = (n) => {
@@ -74,7 +75,6 @@ export function mountEdit(root, ui) {
   const presetActions = el('div', { class: 'row' }, [duplicate, revert, remove]);
 
   const head = el('div', { class: 'edit-head' }, [
-    el('button', { text: '← Perform', onclick: () => ui.setView('perform') }),
     num,
     name,
     // The preset's own buttons sit by its name, away from the effect's
