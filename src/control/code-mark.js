@@ -10,30 +10,11 @@
 // system for less motion gets the code at once.
 
 import qrcode from 'qrcode-generator';
+import { CAMERA, CODE, EYE_OPEN, EYE_SHUT, noisePath, square, svgEl } from '../shared/camera-shape.js';
 
-// The camera of the mark (shared/mark.js): body from x 3 to 61, y 14 to 60.
-const CAMERA = 'M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z';
-const EYE_SHUT = 'M11.5 38Q32 39.5 52.5 38';
-const EYE_OPEN = 'M11.5 38Q32 18 52.5 38Q32 58 11.5 38Z';
-// Where the code sits in the camera.
-const CODE = { x: 14, y: 19, size: 36 };
 // The moments of the opening, in milliseconds.
 const T = { open: 300, blink: 900, reopen: 1020, into: 1500, noise: 1750, settle: 2650, code: 2900 };
 const NOISE_FRAME_MS = 70;
-
-const NS = 'http://www.w3.org/2000/svg';
-const svgEl = (tag, attrs) => {
-  const node = document.createElementNS(NS, tag);
-  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
-  return node;
-};
-// A number from 0 to 1 that is always the same for the same three inputs.
-const hash = (a, b, c) => {
-  let h = (Math.imul(a, 374761393) + Math.imul(b, 668265263) + Math.imul(c, 1274126177)) | 0;
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  h ^= h >>> 16;
-  return ((h >>> 0) % 100000) / 100000;
-};
 
 export function codeMark() {
   const svg = svgEl('svg', { viewBox: '0 5 64 58', role: 'img', 'aria-label': 'Pairing code' });
@@ -54,11 +35,6 @@ export function codeMark() {
   let n = 25;
   let raf = 0;
   const dark = (i, j) => i >= 0 && j >= 0 && i < n && j < n && !!qr && qr.isDark(j, i);
-  const square = (i, j, m, grow) => {
-    const s = m * grow;
-    return `M${(CODE.x + i * m - (s - m) / 2).toFixed(3)} ${(CODE.y + j * m - (s - m) / 2).toFixed(3)}h${s.toFixed(3)}v${s.toFixed(3)}h-${s.toFixed(3)}z`;
-  };
-
   // The code as it stands once the opening is over.
   function showCode() {
     cancelAnimationFrame(raf);
@@ -68,7 +44,7 @@ export function codeMark() {
     const m = CODE.size / n;
     let d = '';
     // (A hair of overlap, so the squares leave no seams between them.)
-    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) if (dark(i, j)) d += square(i, j, m, 1.03);
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) if (dark(i, j)) d += square(i, j, m);
     cells.setAttribute('d', d);
     svg.dataset.state = 'code';
   }
@@ -85,24 +61,10 @@ export function codeMark() {
     eye.setAttribute('opacity', String(1 - amount));
     lid.setAttribute('d', shut ? EYE_SHUT : EYE_OPEN);
     iris.style.display = shut ? 'none' : '';
-    let d = '';
-    if (amount > 0) {
-      // Noise in the code's own squares, over the whole camera. It comes in
-      // square by square, and goes out as each square stops on what it is
-      // in the code (nothing, outside the code).
-      const tick = Math.floor(t / NOISE_FRAME_MS);
-      const i0 = Math.floor((3 - CODE.x) / m);
-      const i1 = Math.ceil((61 - CODE.x) / m);
-      const j0 = Math.floor((8 - CODE.y) / m);
-      const j1 = Math.ceil((60 - CODE.y) / m);
-      for (let j = j0; j <= j1; j++) {
-        for (let i = i0; i <= i1; i++) {
-          const own = hash(i, j, 1);
-          const on = settled > own ? dark(i, j) : own < amount && hash(i, j, 100 + tick) > 0.5;
-          if (on) d += square(i, j, m, 1.03);
-        }
-      }
-    }
+    // Noise in the code's own squares, over the whole camera. It comes in
+    // square by square, and goes out as each square stops on what it is in
+    // the code (nothing, outside the code).
+    const d = amount > 0 ? noisePath(m, { amount, settled, tick: Math.floor(t / NOISE_FRAME_MS), final: dark }) : '';
     cells.setAttribute('d', d);
   }
 

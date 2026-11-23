@@ -94,6 +94,10 @@ try {
   await phone.goto(await control.locator('#phone-link').getAttribute('href'));
   check('its start screen has the mark and no title', (await phone.locator('#join-mark .mark').isVisible()) && (await phone.locator('#join h1').count()) === 0 && !/third eye cam/i.test(await phone.locator('#join').textContent()));
   await phone.click('#start');
+  // The opening: what START does. It lies over the next screen, clears to
+  // the camera's picture and goes by itself.
+  check('START plays the opening over the screen', await settle(() => phone.evaluate(() => { const o = document.getElementById('opening'); return !!o && o.getBoundingClientRect().height >= window.innerHeight - 1 && !!o.querySelector('video').srcObject; }), 'opening'));
+  check('and it goes by itself, within a few seconds', await settle(async () => (await phone.locator('#opening').count()) === 0, 'opening gone', 15000));
   check('after START comes the check', await settle(() => phone.locator('#check').isVisible(), 'check'));
   const lines = () => phone.evaluate(() => [...document.querySelectorAll('#check-list .check-row')].map((r) => `${r.querySelector('.check-mark').textContent}|${r.textContent}`));
   check('the camera and the link to the Mac pass', await settle(async () => (await lines()).some((r) => r.startsWith('OK|') && r.includes('Camera')) && (await lines()).some((r) => r.startsWith('OK|') && r.includes('Linked to the Mac')), 'passes', 25000), (await lines()).join(' / '));

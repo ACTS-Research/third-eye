@@ -11,6 +11,7 @@ import { CameraControls } from './camera-controls.js';
 import { SENSOR_HZ } from '../shared/protocol.js';
 import { HostLink } from './link.js';
 import { mark } from '../shared/mark.js';
+import { playOpening } from './opening.js';
 import { enableOffline } from '../shared/offline.js';
 import { measure, onOrient, orient, setTurn } from './orient.js';
 import { Sensors } from './sensors.js';
@@ -28,7 +29,7 @@ applyDim(new URLSearchParams(location.search).get('dim'), { save: false });
 // `preview`: what the preview shows, the camera or the Mac's finished picture.
 // `liveAt`: when the page was last live (kept fresh while it is), and
 // `controllerOnly` as it was then: what Resume carries on from.
-const prefs = { quality: DEFAULT_QUALITY, facing: 'environment', room: '', turn: 0, preview: 'camera', device: '', liveAt: 0, controllerOnly: false, check: true, youDay: '', ...readJSON(PREFS_KEY, {}) };
+const prefs = { quality: DEFAULT_QUALITY, facing: 'environment', room: '', turn: 0, preview: 'camera', device: '', liveAt: 0, controllerOnly: false, check: true, opening: true, youDay: '', ...readJSON(PREFS_KEY, {}) };
 // This phone's own id: how the Mac tells it from another phone on the same
 // room code, so that a phone that is paired cannot be pushed out.
 if (!prefs.device) {
@@ -180,6 +181,16 @@ async function start() {
   app.link.start();
   requestWakeLock();
   renderState(app.link.state);
+  // The opening lies over whatever comes next (the check, or the live
+  // screen) and clears to the camera's own picture. Not when carrying on
+  // (Resume) or pairing by code, where the next thing must be seen at once.
+  if (!offer && !resumed && prefs.opening !== false) {
+    const picture = $('self');
+    playOpening({
+      stream: app.controllerOnly ? null : app.stream,
+      ready: () => (app.controllerOnly || picture.readyState >= 2) && app.link?.state?.data === 'open',
+    });
+  }
   if (offer) showPairCode(offer);
   else if (prefs.check !== false && !resumed) runCheck();
 }

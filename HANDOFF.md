@@ -19,8 +19,9 @@ Then stage 3 of the effects plan (Time and Scan).
 - Try a Motion source on a slider (Mod → Motion A → Overall) and say
   whether it is lively enough or too jumpy. Say whether Gravity pours
   toward the room's floor when you roll the phone.
-- Choose F1, F2 or F3 for the phone's start screen (the starting screen
-  canvas, bottom row).
+- On the iPhone, tap START and watch the opening: say whether the camera's
+  picture shows inside the camera shape as the noise clears, and whether it
+  is too long.
 - Open the app in a new tab to see the opening, and scan the code in the
   camera with the iPhone. Say whether the opening's timing is right.
 - Try Glitch: Edit a preset → Glitch tab → Capture a glitch, move some
@@ -153,13 +154,21 @@ palettes with the iPhone's Camera app, at dimmer 100% and (square) 25%:
 all read, so the code follows the palette and the dimmer. The test page
 (`/qr-test/`) was removed once it had answered that. The pop-over behind
 the phone readout still draws the plain black-on-white code (`qr.js`).
-Open: the opening on the phone's own start screen, which has no code to
-end on. Three playing prototypes on the same canvas (F1 the camera becomes
-the START button, F2 the noise settles into the room code, F3 the opening
-is what START does and clears to the phone's camera); the owner has not
-chosen. Also not done: the real code
-has not been scanned from the new screen itself, only the test codes drawn
-the same way.
+The phone's start screen (F3 of three prototypes on the same canvas):
+its start screen stays calm, and the opening is what START does
+(`src/phone/opening.js`, called at the end of `start()` in
+`phone/main.js`): the mark blinks and turns solid, noise fills the camera
+while the phone's camera and the link come up (at least 0.9 s of noise, at
+most 3 s: `T.least`, `T.most`), and the noise clears to the camera's own
+picture, masked to the camera's shape, before the overlay fades. It lies
+over the check before the show or the live screen, which start underneath
+as before. Not after Resume, not when pairing by code, not with reduced
+motion, and `prefs.opening: false` switches it off (the tests seed that,
+as they seed the check off). The shapes and the noise both openings share
+are in `src/shared/camera-shape.js`. Not seen on a real iPhone: the masked
+video in Safari, and how long the noise really lasts on a real link. Also
+not done: the real code on the Mac's new screen has not been scanned by
+the iPhone, only test codes drawn the same way.
 
 **Settled in the sixth session.** The logo is fine for now. The
 segmentation timing on the owner's Mac is not needed: the app will run on

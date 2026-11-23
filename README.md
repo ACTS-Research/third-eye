@@ -218,7 +218,11 @@ before the show**), and Resume skips it.
 2. Point the iPhone's camera app at the QR code and open the link in Safari,
    or open `/phone` by hand and type the room code.
 3. Tap **START**. iOS asks for the camera, then for motion and orientation
-   access. Allow both.
+   access. Allow both. The mark then blinks, turns solid and fills with
+   noise while the camera and the link come up, and the noise clears to
+   what the camera sees, in the camera's shape, before the live screen
+   takes over (between about one and four seconds; not after **RESUME**,
+   and not for anyone who has asked their phone for less motion).
 4. The phone shows `LIVE — streaming to Mac`; `/control` shows
    `Phone: streaming`.
 
@@ -1074,7 +1078,7 @@ npm test
 | `tests/keep-paired.mjs` | Keeping what is paired: a second phone on the same code is turned away and told why while the paired one carries on; the paired phone redials and reloads freely; a phone with no pairing server holds a silent link and carries on when the Mac answers; a taken room code is kept under a paired phone |
 | `tests/drop.mjs` | If a source drops: hold, fade to black, fade to a stand-by source and back when the phone returns, a newly chosen source getting its full wait, input B easing out of the mix and returning, the settings and the alert |
 | `tests/link-down.mjs` | The phone when the Mac is not receiving: the band at the foot of the preview in both layouts (what is wrong, retrying with the time, a button only when needed and large enough), the grey preview and pulsing edge, the pad and the controls left alone, the phone returning by itself; the Resume screen and when it is not offered |
-| `tests/start.mjs` | A browser that has never opened the app: the Mac opening on the iPhone input with the splash where the picture will be (the opening playing once, the camera holding a code that reads as the pairing link, in another colour and dimmed too), the Before the show check and its flag, the phone's start screen and its check after START. (Every other suite starts from a saved session on the test pattern with the phone's check off: `launch()` in `lib.mjs`) |
+| `tests/start.mjs` | A browser that has never opened the app: the Mac opening on the iPhone input with the splash where the picture will be (the opening playing once, the camera holding a code that reads as the pairing link, in another colour and dimmed too), the Before the show check and its flag, the phone's start screen and its check after START. the opening that START plays. (Every other suite starts from a saved session on the test pattern with the phone's check and opening off: `launch()` in `lib.mjs`) |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, the motion map (built only when read, its modulation sources, the Motion and Gravity effects), triggers, presets, crossfade |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |
