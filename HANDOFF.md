@@ -19,9 +19,8 @@ Then stage 3 of the effects plan (Time and Scan).
 - Try a Motion source on a slider (Mod → Motion A → Overall) and say
   whether it is lively enough or too jumpy. Say whether Gravity pours
   toward the room's floor when you roll the phone.
-- Run the code test: open the site's address with `/qr-test/` in place of
-  `/control/`, point the iPhone's Camera app at each code, press It scanned
-  or It did not, then Copy results and paste them to the next session.
+- Look at the opening on the starting screen canvas (`Play`) and say go,
+  or what to change.
 - Try Glitch: Edit a preset → Glitch tab → Capture a glitch, move some
   sliders, Keep, then press G. Say whether the pointer on the bar is
   findable enough, and whether any factory preset should come with a
@@ -146,8 +145,14 @@ the real iPhone: `/qr-test/` on the site (`qr-test/index.html`,
 instrument) shows 36 codes, six palettes by three drawings (black on the
 colour square, the same rounded, the colour on black) at dimmer 100% and
 25%, each carrying a link back to that page so the phone names the code it
-read; the Mac page keeps a tally to copy. All 36 read with jsQR here,
-which says nothing about the iPhone's Camera app. Still to settle when it
+read; the Mac page keeps a tally to copy. **The owner ran it on 23
+November: every code tried scanned** with the iPhone's Camera app (all
+six palettes, black on the colour square and rounded and the colour on
+black at 100%; square at 25% in all six; a few of the others at 25%),
+so the code can follow the dimmer. The opening was then changed at the
+owner's word: it starts as the mark is today (outline, red on black),
+reverses to the solid camera on the blink, noise fills the whole camera,
+then the code. Still to settle when it
 is built: the code must ignore the dimmer if 25% does not scan; a line
 saying how far pairing has got; one line for a second iPhone; the opening
 plays once a session and never on a reload with a phone paired; remove the
