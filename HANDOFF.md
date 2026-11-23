@@ -305,7 +305,13 @@ deleted under Setup → Recordings.
   menu but only get a meter under Setup → Sources once one is in use. A
   side nobody maps reads zero.
 - **Tests.** `modulation` counts sixteen effects and has a `motion`
-  section. `glitch` is new: twenty-six suites.
+  section. `glitch` is new: twenty-six suites. On 23 November the sandbox
+  was slow again: in the full run before Glitch was pushed, `mix`,
+  `keep-paired` and `phone` each failed once or twice and then passed
+  alone, and passed on the commit before; `modulation` (the phone's sensor
+  channel never opening after the sixteen-effect chain) and `midi-audio`
+  (audio analysis not starting, then a crashed page) failed every time,
+  on the commit before Glitch as well. Both passed the day before.
 
 ### Fifth session (21 to 22 November), in short
 
