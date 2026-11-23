@@ -19,6 +19,8 @@ Then stage 3 of the effects plan (Time and Scan).
 - Try a Motion source on a slider (Mod → Motion A → Overall) and say
   whether it is lively enough or too jumpy. Say whether Gravity pours
   toward the room's floor when you roll the phone.
+- Choose on the top bar canvas: order A or B, and one each of M, R and P;
+  say yes or no to one phone readout.
 - Try Glitch: Edit a preset → Glitch tab → Capture a glitch, move some
   sliders, Keep, then press G. Say whether the pointer on the bar is
   findable enough, and whether any factory preset should come with a
@@ -99,9 +101,28 @@ shows nothing until a preset uses it.
   "Glitch settings", its button "Save glitch"; the tab is plain "Glitch"
   with no count; "Recapture"; attack, release, scatter and hold explain
   themselves in tooltips.
+- **Also 23 November:** a slider moved by less than 1% of its bar's
+  travel while capturing is not kept (`TINY` in `glitch-panel.js`; travel,
+  not value, so on a curved slider a small figure can still be a real
+  move); the list of jumps shows names only, the figures in a tooltip.
 - **Not done:** typing a landing value; a mark on the chain row's blocks;
   jumps for factory presets; the perform screen saying whether the live
   preset has its own glitch.
+
+**Small things, 23 November.** Number boxes have no stepper arrows (the
+browser draws them white; the arrow keys still step). Hold on a trigger's
+row is the app's own switch. Setup's panels: the fold state was already
+remembered (`thirdeye.folded`); a browser with none saved now starts with
+only Before the show and Phone open, and an alert's "Go to …" unfolds the
+panel it points at. The tests seed the old open set (`SEED` in
+`tests/lib.mjs`).
+
+**Open: the top bar.** Mock-ups at
+https://claude.ai/artifact/AAaBFVwkb1QsSUDMoS2mLB (sources in
+`design/top-bar/project/`): the order of the buttons, MIDI map as an icon,
+record as a ring and the word, the palette as a half disc, and one phone
+readout for both phones. Nothing of it is built. After it: the starting
+screen (the owner's concern is the look of the mark and of the QR code).
 
 **Settled in the sixth session.** The logo is fine for now. The
 segmentation timing on the owner's Mac is not needed: the app will run on

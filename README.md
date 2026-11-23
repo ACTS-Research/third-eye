@@ -102,7 +102,7 @@ npm run preview
 | --- | --- |
 | **Perform** | The show: panic buttons, the monitor, the inputs and the mix bar under it, eight faders for the live preset, and the strip of presets and the running order |
 | **Edit** | One preset. At the left the picture, with the effects chain as a row of buttons under it and the faders as the perform screen will show them. At the right five tabs: **Parameters** (the open effect's controls), **Faders**, **Modulation**, **LFOs** and **Glitch** |
-| **Setup** | Everything done once beforehand: output window, inputs, pairing, MIDI, audio, vision, triggers, preset files |
+| **Setup** | Everything done once beforehand: output window, inputs, pairing, MIDI, audio, vision, triggers, preset files. Each panel folds on a click of its title and stays as you left it; a browser that has never opened the app starts with only **Before the show** and **Phone** open |
 
 1. On the Mac open `/control` in Chrome. That is enough to play: the picture
    runs on the page and the monitor on the Perform screen shows it live. The
@@ -636,7 +636,8 @@ screen.
 
 - **Capture a glitch.** Press it, then move any sliders, in any effect of
   the preset, until the picture is the glitch you want; menus and switches
-  count too. Press **Save glitch**. Every control you moved becomes a jump (where
+  count too. Press **Save glitch**. Every control you moved becomes a jump
+  (a slider nudged by less than a hundredth of its bar is left out) (where
   it is → where you left it) and all of them go back to where they were.
   **Cancel** puts them back and keeps nothing. Nothing is saved into the
   preset while you are capturing. **Recapture** starts from the glitch
@@ -648,7 +649,8 @@ screen.
   the key, button or trigger is down, and come back when it is let go.
 - **scatter** lets each press land a little differently around the places
   you chose: at 0 it is the same every time.
-- The tab lists the jumps, each with a ✕. On the **Parameters** tab a slider
+- The tab lists the jumps by name, each with a ✕ (point at one for its
+  figures). On the **Parameters** tab a slider
   that has a jump carries a small pointer on the top edge of its bar where
   it lands, and the landing value under its number: drag the pointer to
   move the landing place, double-click it to remove the jump. A slider with

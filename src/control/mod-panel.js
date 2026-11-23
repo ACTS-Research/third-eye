@@ -245,8 +245,12 @@ export function mountModPanel(roots, ui) {
         value: b.action,
         onChange: (v) => update({ action: v }),
       });
-      const hold = el('input', { type: 'checkbox', checked: b.hold, onchange: () => update({ hold: hold.checked }) });
-      const holdLabel = el('label', { title: 'On only while the trigger is held' }, [hold, 'hold']);
+      // (A switch of the app's own, in its place whether or not it applies,
+      // so the rows line up.)
+      const hold = toggle({ on: b.hold, text: 'Hold', label: 'Hold: on only while the trigger is held', onChange: (on) => update({ hold: on }) });
+      const holdLabel = hold.node;
+      holdLabel.classList.add('hold');
+      holdLabel.title = 'On only while the trigger is held';
       holdLabel.style.visibility = TOGGLE_ACTIONS[b.action] ? 'visible' : 'hidden';
       actionList.append(
         el('div', { class: 'binding' }, [

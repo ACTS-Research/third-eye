@@ -6,7 +6,7 @@
 // until the picture is the glitch, press Keep. Every slider that differs
 // from where it was becomes a jump, and all of them go back.
 
-import { EFFECT_BY_ID } from '../effects/index.js';
+import { EFFECT_BY_ID, paramUnit } from '../effects/index.js';
 import { runAction } from '../shared/actions.js';
 import { el } from '../shared/util.js';
 import { bar, digitsFor, toggle } from './controls.js';
@@ -36,6 +36,16 @@ export function pressGlitch(store, button) {
 }
 
 const valueOf = (item, key) => (key === 'mix' ? item.mix : item.params[key]);
+
+// A slider nudged by less than this share of its bar's travel is not a
+// jump: a brush of the hand while capturing should not be kept.
+const TINY = 0.01;
+function reallyMoved(item, key, before, now) {
+  if (before === now) return false;
+  const spec = key === 'mix' ? { min: 0, max: 1 } : EFFECT_BY_ID[item.type]?.params[key];
+  if (!spec || spec.options || spec.type === 'bool') return true;
+  return Math.abs(paramUnit(spec, now) - paramUnit(spec, before)) >= TINY;
+}
 
 // How a jump reads in the list: the effect and slider, and from → to.
 function describe(chain, jump) {
@@ -70,8 +80,8 @@ export function mountGlitch(pane, band, ui) {
     for (const before of ui.glitchCapture?.chain ?? []) {
       const now = store.findEffect(before.uid);
       if (!now) continue;
-      if (now.mix !== before.mix) out.push({ fx: now.uid, key: 'mix', to: now.mix });
-      for (const key of Object.keys(now.params)) if (before.params[key] !== undefined && now.params[key] !== before.params[key]) out.push({ fx: now.uid, key, to: now.params[key] });
+      if (reallyMoved(now, 'mix', before.mix, now.mix)) out.push({ fx: now.uid, key: 'mix', to: now.mix });
+      for (const key of Object.keys(now.params)) if (before.params[key] !== undefined && reallyMoved(now, key, before.params[key], now.params[key])) out.push({ fx: now.uid, key, to: now.params[key] });
     }
     return out;
   };
@@ -158,8 +168,8 @@ export function mountGlitch(pane, band, ui) {
         const d = describe(chain, jump);
         if (!d) return null;
         return el('div', { class: 'glitch-jump' }, [
-          el('button', { class: 'pin-name what', text: d.name, title: 'Show this slider', onclick: () => ui.showParam?.(jump.fx, jump.key) }),
-          el('span', { text: d.change }),
+          // (The figures are on the slider itself; here they are the tooltip.)
+          el('button', { class: 'pin-name what', text: d.name, title: `${d.change}. Click to show this slider.`, onclick: () => ui.showParam?.(jump.fx, jump.key) }),
           el('button', { class: 'icon', text: '✕', 'aria-label': `Remove the jump of ${d.name}`, disabled: !!ui.glitchCapture, onclick: () => set({ jumps: glitch().jumps.filter((j) => !(j.fx === jump.fx && j.key === jump.key)) }) }),
         ]);
       }).filter(Boolean),

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>One phone readout, the second phone a tab away</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+body{margin:0;background:#060303}
+.col{flex:1;padding:22px;display:flex;flex-direction:column;gap:14px;border-right:1px solid #5b2622}
+.h{font:800 22px/1 'Big Shoulders Display',sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.r{display:flex;align-items:center;gap:12px}
+.pill{font-size:12px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;width:230px;flex-shrink:0}
+.tab{border:1px solid #5b2622;padding:8px 14px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.tab.on{background:#ff6b5e;color:#140302;border-color:#ff6b5e}
+.s{color:#c06a60;font-size:11px;line-height:1.45}
+</style>
+</helmet>
+<div style="width: 1280px; height: 330px; display: flex; background: #060303; color: #ff6b5e; font: 500 13px/1.3 'JetBrains Mono', ui-monospace, Menlo, monospace">
+<div class="col">
+<div class="h">In the top bar: one readout</div>
+<div class="r"><span class="pill">Phone: streaming</span><span class="s">One phone, as nine shows in ten.</span></div>
+<div class="r"><span class="pill">Phones: A live · B live</span><span class="s">Two phones in use: the same readout names both.</span></div>
+<div class="r"><span class="pill" style="border-bottom: 1px dashed #ff6b5e; width: auto; padding-bottom: 2px">Phones: A live · B not paired</span><span class="s">One of them needs a look.</span></div>
+<div class="s" style="margin-top: auto">A click on the readout opens the pairing pop-over, as now. There is never a second readout, so the bar keeps its length.</div>
+</div>
+<div class="col" style="border-right: 0">
+<div class="h">In the pop-over: a tab each</div>
+<div class="r"><span class="tab on">iPhone</span><span class="tab">+ Second iPhone</span></div>
+<div class="s">Click one: the readout. Click two: the second tab, which shows the second phone's code at once. That is the two clicks you asked for, and it is how it works today.</div>
+<div class="s">What changes: looking at that tab no longer leaves the second phone switched on for good. If no second phone has paired when the pop-over closes, it is switched off again, and the readout goes back to "Phone". Once a second phone has paired it stays on until you press Stop using iPhone B.</div>
+<div class="s">The starting screen shows the first phone's code only, with one line under it: "A second iPhone? Open Phone above."</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":330}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

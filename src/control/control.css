@@ -529,3 +529,9 @@ main { position: relative; }
 #glitch-panel { display: flex; flex-direction: column; gap: 10px; }
 #glitch-panel[hidden] { display: none; }
 #glitch-panel .param { grid-template-columns: 92px minmax(0, 1fr); }
+
+/* Number boxes: no stepper arrows (the browser draws them in its own
+   white, which no palette can colour). The arrow keys still step. */
+input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
+input[type='number']::-webkit-inner-spin-button, input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.binding .switch.hold { padding: 4px 8px; font-size: 10px; }

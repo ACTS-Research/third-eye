@@ -24,6 +24,9 @@ const SEED = () => {
   try {
     if (!localStorage.getItem('thirdeye.session.v1')) localStorage.setItem('thirdeye.session.v1', JSON.stringify({ input: { kind: 'pattern' } }));
     if (!localStorage.getItem('thirdeye.phone.v1')) localStorage.setItem('thirdeye.phone.v1', JSON.stringify({ check: false }));
+    // Setup's panels open, as the suites were written for (a browser that
+    // has never opened the app starts with most of them folded).
+    if (!localStorage.getItem('thirdeye.folded')) localStorage.setItem('thirdeye.folded', JSON.stringify(['shortcuts', 'sources-panel']));
   } catch {
     /* no storage on this page */
   }

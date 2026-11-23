@@ -47,6 +47,9 @@ try {
   await clickBar(control, paramBar('decay'), 0.2);
   await clickBar(control, paramBar('shiftX'), 0.95);
   check('each slider moved counts as a jump, and is marked as changed', await settle(async () => (await control.locator('#glitch-keep').getAttribute('data-jumps')) === '2' && (await control.locator('#tab-params .param label.changed').count()) === 2, 'count'), await control.locator('#glitch-keep').getAttribute('data-jumps'));
+  // A brush of a slider (under a hundredth of its bar) is not a jump.
+  await control.evaluate(() => window.thirdEye.store.setParam(window.thirdEye.store.state.chain[0].uid, 'key', 0.355));
+  check('a slider barely nudged is left out', await settle(async () => (await control.locator('#glitch-keep').getAttribute('data-jumps')) === '2', 'tiny'), await control.locator('#glitch-keep').getAttribute('data-jumps'));
   const landed = { decay: await param('decay'), shiftX: await param('shiftX') };
   await sleep(700);
   check('nothing is saved into the preset while capturing', (await saved()).chain[0].params.decay === decay);
@@ -54,7 +57,7 @@ try {
   check('Save glitch puts the sliders back', await settle(async () => (await param('decay')) === decay && (await param('shiftX')) === 0, 'back'), `${await param('decay')} ${await param('shiftX')}`);
   let g = await glitch();
   check('and keeps where they were as the jumps', g.jumps.length === 2 && g.jumps.find((j) => j.key === 'decay').to === landed.decay && g.jumps.find((j) => j.key === 'shiftX').to === landed.shiftX, JSON.stringify(g.jumps));
-  check('the tab lists them', (await control.locator('button[data-tab=glitch]').textContent()) === 'Glitch' && (await control.locator('#glitch-capture').textContent()) === 'Recapture' && (await control.locator('.glitch-jump').count()) === 2 && (await control.locator('.glitch-jump').first().textContent()).includes('1 Video Feedback · decay'), await control.locator('.glitch-jumps').textContent());
+  check('the tab lists them', (await control.locator('button[data-tab=glitch]').textContent()) === 'Glitch' && (await control.locator('#glitch-capture').textContent()) === 'Recapture' && (await control.locator('.glitch-jump').count()) === 2 && (await control.locator('.glitch-jump').first().textContent()).includes('1 Video Feedback · decay') && !(await control.locator('.glitch-jumps').textContent()).includes('→'), await control.locator('.glitch-jumps').textContent());
   check('the jumps are saved in the preset, the sliders as they were', await settle(async () => (await saved()).glitch.jumps.length === 2 && (await saved()).chain[0].params.decay === decay, 'saved'));
 
   console.log('the pointer on the bar');

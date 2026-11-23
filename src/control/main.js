@@ -89,6 +89,7 @@ const ui = {
     const panel = document.getElementById(id);
     if (!panel) return;
     this.setView(panel.closest('[id^="view-"]')?.id.replace('view-', '') ?? 'setup');
+    panel.classList.remove('collapsed');
     panel.scrollIntoView({ block: 'center' });
     panel.classList.remove('flash');
     void panel.offsetWidth; // restart the animation
@@ -251,7 +252,10 @@ document.addEventListener('click', (e) => {
 
 // Click a panel title to fold it; the choice is remembered.
 const FOLD_KEY = 'thirdeye.folded';
-const folded = new Set(readJSON(FOLD_KEY, ['shortcuts', 'sources-panel']));
+// A browser that has never chosen starts with only what a first visit
+// needs open: the check before the show and the phone's code.
+const OPEN_AT_FIRST = ['check-panel', 'phone-panel'];
+const folded = new Set(readJSON(FOLD_KEY, null) ?? [...document.querySelectorAll('#view-setup .panel[id]')].map((p) => p.id).filter((id) => !OPEN_AT_FIRST.includes(id)));
 for (const id of folded) document.getElementById(id)?.classList.add('collapsed');
 document.addEventListener('click', (e) => {
   const title = e.target.closest?.('.panel > h2');

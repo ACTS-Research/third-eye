@@ -1,0 +1,20 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-23T17:30:00Z" },
+  "title": "Third Eye Cam: top bar",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1280, "h": 150, "title": "A · Views, then tools, record in the corner (recommended)" },
+    "Words.dc.html": { "x": 0, "y": 270, "w": 1280, "h": 150, "title": "B · Record beside the readouts, everything else as words" },
+    "Icons.dc.html": { "x": 0, "y": 840, "w": 1280, "h": 420, "title": "The pieces: MIDI map, record, palette" },
+    "Phone.dc.html": { "x": 0, "y": 1680, "w": 1280, "h": 330, "title": "One phone readout, the second phone a tab away" }
+  },
+  "order": ["Main.dc.html", "Words.dc.html", "Icons.dc.html", "Phone.dc.html"],
+  "notes": {
+    "h1": { "x": 0, "y": -300, "text": "The top bar: order", "kind": "title1", "maxW": 1280 },
+    "h2": { "x": 0, "y": 560, "text": "The pieces", "kind": "title1", "maxW": 1280 },
+    "h3": { "x": 0, "y": 1400, "text": "The phones", "kind": "title1", "maxW": 1280 }
+  },
+  "designSystems": []
+}
