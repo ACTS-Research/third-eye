@@ -170,6 +170,14 @@ video in Safari, and how long the noise really lasts on a real link. Also
 not done: the real code on the Mac's new screen has not been scanned by
 the iPhone, only test codes drawn the same way.
 
+**A narrow window (23 November).** Under 1000 px wide the perform screen
+is one column. It used to put the four panic buttons first, each the full
+width, which pushed the picture (and the starting screen's code) below the
+fold; the owner met this in a 984 px window. Now the picture comes first,
+then the panic buttons as one row (the last block of `control.css`). The
+owner was using Safari on the Mac for that screenshot: the control page is
+only built and tested for Chrome.
+
 **Settled in the sixth session.** The logo is fine for now. The
 segmentation timing on the owner's Mac is not needed: the app will run on
 several machines, so the body-mask effects of stage 4 are to be built to

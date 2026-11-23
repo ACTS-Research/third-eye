@@ -548,3 +548,14 @@ input[type='number']::-webkit-inner-spin-button, input[type='number']::-webkit-o
 #rec::before { content: ''; display: inline-block; width: 9px; height: 9px; box-sizing: border-box; border: 2px solid currentColor; border-radius: 50%; margin-right: 8px; vertical-align: -1px; }
 #rec.on { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
 #rec.on::before { background: currentColor; }
+
+/* A narrow window (one column): the picture comes first, then the panic
+   buttons as a row. They used to stack full width above it and push the
+   picture, and the starting screen's code, off the first screen. */
+@media (max-width: 1000px) {
+  #view-perform .center { order: -1; }
+  .panic { flex-direction: row; flex-wrap: wrap; overflow: visible; }
+  .panic .big, .panic .big.blackout { flex: 1 1 150px; min-height: 68px; }
+  .panic .big.blackout b { font-size: 30px; }
+  .panic .tempo { flex: 1 1 100%; }
+}
