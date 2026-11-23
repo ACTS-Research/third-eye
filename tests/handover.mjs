@@ -109,7 +109,7 @@ try {
   check('state kept', (await output.evaluate(() => window.thirdEye.store.state.chain.map((c) => c.type).join())) === chain, chain);
   s = await phoneLive(control, 'phone back on the output');
   check('the phone reconnected to the output by itself', s.host.role === 'output', `${((Date.now() - t0) / 1000).toFixed(1)} s after opening (headless)`);
-  check('top bar shows the output', /^Output \d+ fps/i.test(await pill(control)), await pill(control));
+  check('top bar shows the output', /^Output on/i.test(await pill(control)), await pill(control));
   check('the monitor is the readback again', await control.evaluate(() => !document.getElementById('stage') && document.getElementById('preview').offsetParent != null));
   check('the readback arrives', await waitFor(() => control.evaluate(() => {
     const c = document.getElementById('preview');

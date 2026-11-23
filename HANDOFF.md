@@ -19,8 +19,6 @@ Then stage 3 of the effects plan (Time and Scan).
 - Try a Motion source on a slider (Mod → Motion A → Overall) and say
   whether it is lively enough or too jumpy. Say whether Gravity pours
   toward the room's floor when you roll the phone.
-- Choose on the top bar canvas: order A or B, and one each of M, R and P;
-  say yes or no to one phone readout.
 - Try Glitch: Edit a preset → Glitch tab → Capture a glitch, move some
   sliders, Keep, then press G. Say whether the pointer on the bar is
   findable enough, and whether any factory preset should come with a
@@ -117,12 +115,21 @@ only Before the show and Phone open, and an alert's "Go to …" unfolds the
 panel it points at. The tests seed the old open set (`SEED` in
 `tests/lib.mjs`).
 
-**Open: the top bar.** Mock-ups at
+**The top bar (built 23 November).** Mock-ups at
 https://claude.ai/artifact/AAaBFVwkb1QsSUDMoS2mLB (sources in
-`design/top-bar/project/`): the order of the buttons, MIDI map as an icon,
-record as a ring and the word, the palette as a half disc, and one phone
-readout for both phones. Nothing of it is built. After it: the starting
-screen (the owner's concern is the look of the mark and of the QR code).
+`design/top-bar/project/`); the owner chose A, M1, R1, P1 and one phone
+readout. Order: readouts, Perform / Edit / Setup, MIDI map (a five-pin
+socket), the palette (a half disc), REC in the corner (`control/index.html`).
+REC's ring is `#rec::before`; recording, its text is the time alone.
+`status.js` has one phone readout: `Phones: A live · B not paired` while
+`net.second` is on, opening the pop-over at the phone in the worse state.
+`phone-panel.js` switches `net.second` off again when the pop-over closes
+and no second phone has ever paired (`thirdeye.secondKept` in
+localStorage, set on first pairing, cleared by Stop using iPhone B).
+The output readout shows the frame rate only when it is low (50 or
+under) and for the first six seconds of a recording.
+Next: the starting screen (the owner's concern is the look of the mark and
+of the QR code).
 
 **Settled in the sixth session.** The logo is fine for now. The
 segmentation timing on the owner's Mac is not needed: the app will run on

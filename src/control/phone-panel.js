@@ -33,7 +33,7 @@ export function mountPhonePanel(root, ui) {
     b: el('button', { id: 'pair-tab-b', role: 'tab', onclick: () => showPhone('b') }),
   };
   const popCodeLabel = el('div', { class: 'caps dim', text: 'Room code' });
-  const stopB = el('button', { id: 'pair-stop-b', text: 'Stop using iPhone B', title: 'Lets go of its room code. A paired second phone is dropped.', onclick: () => { store.merge('net', { second: false }); showPhone('a'); } });
+  const stopB = el('button', { id: 'pair-stop-b', text: 'Stop using iPhone B', title: 'Lets go of its room code. A paired second phone is dropped.', onclick: () => { setKept(false); store.merge('net', { second: false }); showPhone('a'); } });
   const pairOffline = el('button', { class: 'pair-offline', text: 'Pair without internet', title: PAIR_TIP, onclick: () => { hidePop(); ui.pairOffline?.(); } });
   function showPhone(next) {
     which = next;
@@ -67,7 +67,32 @@ export function mountPhonePanel(root, ui) {
   // already paired, to look at the connection, it stays.
   let forPairing = false;
   let closeTimer = 0;
+  // Looking at the second phone's tab switches it on, so its code can be
+  // scanned at once. If none has ever paired by the time the pop-over
+  // closes, it is switched off again: a glance must not leave a show with
+  // a second room code and a longer top bar. Once one has paired it stays
+  // until Stop using iPhone B.
+  const KEPT_KEY = 'thirdeye.secondKept';
+  const kept = () => {
+    try {
+      return localStorage.getItem(KEPT_KEY) === '1';
+    } catch {
+      return false;
+    }
+  };
+  const setKept = (on) => {
+    try {
+      if (on) localStorage.setItem(KEPT_KEY, '1');
+      else localStorage.removeItem(KEPT_KEY);
+    } catch {
+      /* no storage: the second phone then switches off when not paired */
+    }
+  };
+  ui.onStatus?.((status) => {
+    if (status?.phoneB?.phone === 'connected' && !kept()) setKept(true);
+  });
   const hidePop = () => {
+    if (!pop.hidden && store.state.net.second && !kept() && ui.status?.phoneB?.phone !== 'connected') store.merge('net', { second: false });
     pop.hidden = true;
     forPairing = false;
     clearTimeout(closeTimer);
@@ -87,7 +112,7 @@ export function mountPhonePanel(root, ui) {
     pop.hidden = false;
   };
   document.addEventListener('pointerdown', (e) => {
-    if (!pop.hidden && !pop.contains(e.target) && !e.target.closest?.('#phone-pill, #phone-b-pill')) hidePop();
+    if (!pop.hidden && !pop.contains(e.target) && !e.target.closest?.('#phone-pill')) hidePop();
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') hidePop();

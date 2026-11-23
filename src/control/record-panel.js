@@ -104,7 +104,9 @@ export function mountRecordPanel(root, ui) {
     const rec = status?.recording;
     button.disabled = !status;
     button.classList.toggle('on', !!rec?.active);
-    button.textContent = rec?.active ? `REC ${clock(rec.seconds)}` : 'REC';
+    // (The ring before the word is drawn by the stylesheet; recording, it
+    // fills and the word gives way to the time.)
+    button.textContent = rec?.active ? clock(rec.seconds) : 'REC';
     button.title = rec?.active ? `Recording ${rec.name}, ${size(rec.bytes)} so far. Click or press R to stop.` : 'Record the output (R)';
     ui.setAlert?.('rec', rec?.error || null, 'bad', ui.alertTo?.panel('record-panel', 'Go to Recording'));
     if (rec && rec.finished !== finished) {

@@ -153,7 +153,10 @@ ui.setView('perform');
 
 // Palette: one dot in the top bar; clicking it opens the choices.
 const paletteHost = document.getElementById('palette');
-const paletteDot = el('button', { title: 'Colour palette', 'aria-label': 'Colour palette', 'aria-haspopup': 'menu' });
+const paletteDot = el('button', { class: 'tool', title: 'Colour and dimmer', 'aria-label': 'Colour palette', 'aria-haspopup': 'menu' });
+// A half-filled disc: appearance, and a hint of the dimmer. (Not a dot,
+// which beside the record ring would read as a second light.)
+paletteDot.innerHTML = '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="8.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 1.8 A8.2 8.2 0 0 1 10 18.2 Z" fill="currentColor"/></svg>';
 const paletteMenu = el('div', { id: 'palette-menu', role: 'menu', hidden: true });
 paletteHost.append(paletteDot);
 document.body.append(paletteMenu);

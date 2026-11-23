@@ -28,7 +28,7 @@ try {
   watch(output, 'output', errors);
   await output.waitForLoadState();
   check('clicking it opens the output as a separate window', output.url().endsWith('/output/'));
-  check('the top bar then shows the output', await settle(async () => /^Output \d+ fps/i.test(await control.locator('#out-pill').textContent()), 'output pill', 15000), await control.locator('#out-pill').textContent());
+  check('the top bar then shows the output', await settle(async () => /^Output on/i.test(await control.locator('#out-pill').textContent()), 'output pill', 15000), await control.locator('#out-pill').textContent());
   check('nothing covers the monitor', await control.locator('.monitor-note').isHidden());
   const state = (fn) => output.evaluate(fn);
   check('monitor shows the output', await settle(() => control.evaluate(() => {
@@ -88,7 +88,7 @@ try {
   await control.click('#palette-menu button[aria-label="Palette: Darkroom red"]');
 
   console.log('dimmer');
-  const dot = () => control.evaluate(() => getComputedStyle(document.querySelector('#palette > button')).backgroundColor);
+  const dot = () => control.evaluate(() => getComputedStyle(document.querySelector('#palette > button')).color);
   const full = await dot();
   await control.click('#palette > button');
   const strip = control.locator('#dimmer');

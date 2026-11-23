@@ -535,3 +535,13 @@ main { position: relative; }
 input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
 input[type='number']::-webkit-inner-spin-button, input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .binding .switch.hold { padding: 4px 8px; font-size: 10px; }
+
+/* The top bar (23 November): the views, two tools as icons, record alone
+   in the corner. */
+#top .tool { display: flex; align-items: center; justify-content: center; padding: 5px 9px; flex-shrink: 0; }
+#top .tool svg { display: block; }
+#palette > button.tool { width: auto; height: auto; padding: 5px 9px; border-radius: 0; border: 1px solid var(--line); background: none; color: var(--ink); display: flex; }
+#rec, #rec.on { flex: 0 0 92px; width: 92px; }
+#rec::before { content: ''; display: inline-block; width: 9px; height: 9px; box-sizing: border-box; border: 2px solid currentColor; border-radius: 50%; margin-right: 8px; vertical-align: -1px; }
+#rec.on { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+#rec.on::before { background: currentColor; }

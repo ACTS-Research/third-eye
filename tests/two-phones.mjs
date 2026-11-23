@@ -25,7 +25,7 @@ try {
   const engine = (fn) => host.evaluate(fn);
 
   console.log('one phone, as before');
-  check('no second phone is asked for', (await net()).second === false && (await status()).phoneB === null && (await control.locator('#phone-b-pill').isHidden()));
+  check('no second phone is asked for', (await net()).second === false && (await status()).phoneB === null && (await control.locator('#phone-pill').textContent()).startsWith('Phone:') && (await control.locator('#phone-b-pill').count()) === 0);
   check('and no second room code is registered', await engine(() => window.thirdEye.engine.linkB.stopped && !window.thirdEye.engine.linkB.peer));
   check('the second phone has no sources listed yet', await engine(() => !window.thirdEye.engine.mod.values.has('phoneB.motion')));
 
@@ -33,10 +33,17 @@ try {
   await control.locator('#phone-pill').click();
   check('the pairing pop-over has a tab for each phone', (await control.locator('#pair-tab-a').textContent()) === 'iPhone · paired' && (await control.locator('#pair-tab-b').textContent()).startsWith('iPhone B'));
   const room = (await net()).room;
+  // A look at the second tab switches the second phone on; closing the
+  // pop-over with none paired switches it off again.
+  await control.locator('#pair-tab-b').click();
+  check('a look at the second tab switches the second phone on', (await net()).second === true);
+  await control.keyboard.press('Escape');
+  check('and closing the pop-over with none paired switches it off again', await settle(async () => (await net()).second === false && (await control.locator('#phone-pill').textContent()).startsWith('Phone:'), 'off again'), await control.locator('#phone-pill').textContent());
+  await control.locator('#phone-pill').click();
   await control.locator('#pair-tab-b').click();
   check('opening the second tab switches the second phone on', (await net()).second === true);
   check('it shows the second phone its own room code', (await control.locator('#pairing-pop .pop-code').textContent()) === `${room}-B` && (await mac(() => window.thirdEye.ui.phoneLinkB())).includes(`room=${room}B`));
-  check('the top bar gains a Phone B readout', await settle(async () => (await control.locator('#phone-b-pill').isVisible()) && (await control.locator('#phone-b-pill').textContent()) === 'Phone B: not paired', 'pill'), await control.locator('#phone-b-pill').textContent());
+  check('the one readout now names both phones', await settle(async () => (await control.locator('#phone-pill').textContent()) === 'Phones: A live · B not paired', 'pill'), await control.locator('#phone-pill').textContent());
   check('the first phone is not disturbed', await paired('phone'));
   const sessionA = await phone.evaluate(() => document.getElementById('state').textContent);
 
@@ -49,7 +56,7 @@ try {
   check('the second phone pairs', await settle(() => paired('phoneB'), 'phone B paired', 30000), JSON.stringify((await status()).phoneB));
   check('and streams', await settle(async () => (await status()).phoneB.media === 'connected', 'B media', 20000));
   check('the first phone stayed paired throughout', (await paired('phone')) && sessionA.startsWith('LIVE') && (await phone.evaluate(() => document.getElementById('state').textContent)).startsWith('LIVE'), await phone.evaluate(() => document.getElementById('state').textContent));
-  check('its tab and its readout say so', await settle(async () => (await control.locator('#pair-tab-b').textContent()) === 'iPhone B · paired' && (await control.locator('#phone-b-pill').textContent()) === 'Phone B: streaming', 'tab'), await control.locator('#phone-b-pill').textContent());
+  check('its tab and its readout say so', await settle(async () => (await control.locator('#pair-tab-b').textContent()) === 'iPhone B · paired' && (await control.locator('#phone-pill').textContent()) === 'Phones: A live · B live', 'tab'), await control.locator('#phone-pill').textContent());
   check('its own screen says it is phone B', await settle(async () => (await phoneB.locator('#room-label').textContent()) === `PHONE B · ${room}B`, 'label'), await phoneB.locator('#room-label').textContent());
   check('and the first phone\'s does not', (await phone.locator('#room-label').textContent()) === room);
   await control.keyboard.press('Escape');
@@ -100,11 +107,13 @@ try {
   check('the first phone going leaves the second paired', await settle(async () => !(await paired('phone')), 'A gone', 20000) && (await paired('phoneB')) && (await status()).inputB.state === 'live');
 
   console.log('switching it off');
-  await control.locator('#phone-b-pill').click();
-  check('its readout opens the pop-over at its tab', (await control.locator('#pair-tab-b').getAttribute('aria-selected')) === 'true' && (await control.locator('#pair-stop-b').isVisible()));
+  await control.locator('#phone-pill').click();
+  check('the readout opens the pop-over at the phone that needs a look', (await control.locator('#pair-tab-a').getAttribute('aria-selected')) === 'true');
+  await control.locator('#pair-tab-b').click();
+  check('and the other phone is its tab', (await control.locator('#pair-tab-b').getAttribute('aria-selected')) === 'true' && (await control.locator('#pair-stop-b').isVisible()));
   check('Pair without internet is not offered for it yet', await control.locator('#pairing-pop .pair-offline').isHidden());
   await control.locator('#pair-stop-b').click();
-  check('Stop using iPhone B lets go of it', (await net()).second === false && (await settle(async () => (await status()).phoneB === null && (await control.locator('#phone-b-pill').isHidden()), 'B off')));
+  check('Stop using iPhone B lets go of it', (await net()).second === false && (await settle(async () => (await status()).phoneB === null && (await control.locator('#phone-pill').textContent()).startsWith('Phone:'), 'B off')));
   check('and of its room code', await settle(() => engine(() => window.thirdEye.engine.linkB.stopped && !window.thirdEye.engine.linkB.peer), 'released'));
   check('the second phone sees the Mac go', await settle(async () => !(await phoneB.evaluate(() => document.getElementById('state').textContent)).startsWith('LIVE'), 'B notices', 30000), await phoneB.evaluate(() => document.getElementById('state').textContent));
 

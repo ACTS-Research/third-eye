@@ -26,12 +26,11 @@ export function mountStatus(root, ui) {
     });
     return pill;
   };
-  const phonePill = button('phone-pill', 'Show the QR code and connection details', (pill) => ui.togglePairing?.(pill));
-  // The second iPhone's readout: there only while a second phone is wanted
-  // (net.second), so a one-phone show's bar is as it always was.
-  const phoneBPill = button('phone-b-pill', 'Show the second iPhone\'s QR code and connection details', (pill) => ui.togglePairing?.(pill, 'b'));
-  phoneBPill.hidden = true;
-  pills.append(outPill, phonePill, phoneBPill);
+  // One readout for the phones. With a second phone in use (net.second) it
+  // names both, and a click opens the pop-over at the one that needs a look.
+  let attend = 'a';
+  const phonePill = button('phone-pill', 'Show the QR code and connection details', (pill) => ui.togglePairing?.(pill, attend));
+  pills.append(outPill, phonePill);
 
   const rows = {};
   const list = el('dl', { class: 'stats' });
@@ -125,7 +124,6 @@ export function mountStatus(root, ui) {
       else setPill(outPill, '', h?.state === 'remote' ? 'Output …' : 'Starting…');
       outPill.title = '';
       setPill(phonePill, '', 'Phone —');
-      phoneBPill.hidden = true;
       for (const key of Object.keys(rows)) if (key !== 'offline') rows[key].textContent = '—';
       for (const key of ['input', 'gl', 'phone', 'build', 'room']) ui.setAlert(key, null);
       return;
@@ -134,12 +132,17 @@ export function mountStatus(root, ui) {
     const fps = status.renderFps;
     const inOutput = status.host?.role === 'output';
     const slow = fps > 50 ? '' : fps > 24 ? 'warn' : 'bad';
+    // The frame rate is only in the bar when it needs a look: when it is
+    // low, and for the first seconds of a recording (which costs some).
+    // The exact figure is always under Setup → Status.
+    const rec = status.recording;
+    const rate = slow || (rec?.active && rec.seconds < 6) ? ` · ${fps.toFixed(0)} fps` : '';
     if (inOutput) {
-      setPill(outPill, slow || 'good', `Output ${fps.toFixed(0)} fps`);
-      outPill.title = 'The output window draws the picture';
+      setPill(outPill, slow || 'good', `Output on${rate}`);
+      outPill.title = `The output window draws the picture, at ${fps.toFixed(0)} frames a second`;
     } else {
-      setPill(outPill, slow, `Output off · ${fps.toFixed(0)} fps`);
-      outPill.title = 'No output window: the picture runs on this page. Click to open the output window.';
+      setPill(outPill, slow, `Output off${rate}`);
+      outPill.title = `No output window: the picture runs on this page, at ${fps.toFixed(0)} frames a second. Click to open the output window.`;
     }
     rows.render.textContent = `${fps.toFixed(1)} fps · worst ${status.worstFrameMs.toFixed(0)} ms`;
     rows.size.textContent = `${status.width}×${status.height}${inOutput ? (status.fullscreen ? ' fullscreen' : ' windowed') : ' on this page'}`;
@@ -184,9 +187,17 @@ export function mountStatus(root, ui) {
       return [text, level];
     };
     const [phoneText, phoneLevel] = describePhone(p);
-    phoneBPill.hidden = !status.phoneB;
-    if (status.phoneB) setPill(phoneBPill, describePhone(status.phoneB)[1], `Phone B: ${describePhone(status.phoneB)[0]}`);
-    setPill(phonePill, phoneLevel, `Phone: ${phoneText}`);
+    if (status.phoneB) {
+      // Two phones: both named in the one readout, as shown by the worse.
+      const [bText, bLevel] = describePhone(status.phoneB);
+      const rank = { bad: 2, warn: 1, good: 0 };
+      const short = (t) => (t === 'streaming' ? 'live' : t);
+      attend = rank[bLevel] > rank[phoneLevel] ? 'b' : 'a';
+      setPill(phonePill, attend === 'b' ? bLevel : phoneLevel, `Phones: A ${short(phoneText)} · B ${short(bText)}`);
+    } else {
+      attend = 'a';
+      setPill(phonePill, phoneLevel, `Phone: ${phoneText}`);
+    }
     rows.phone.textContent = phoneText;
     rows.link.textContent = p.media === 'connected' ? [p.route, p.rttMs !== undefined ? `${p.rttMs.toFixed(0)} ms rtt` : ''].filter(Boolean).join(' · ') : '—';
     rows.stream.textContent =

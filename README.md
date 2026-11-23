@@ -136,7 +136,17 @@ straight away (the same picker as **Setup → Input → Load video file…**).
 Everything that pops up from the strip opens upward, over the picture, for
 that moment only; none of it is ever on the output or in a recording.
 
-The coloured dot at the top right opens the interface palettes (red, amber,
+The top bar reads left to right: what is happening (the output, the
+phone, a `CHECK` flag when something needs a look), then where you are
+(**Perform**, **Edit**, **Setup**), then two tools as icons (the five-pin
+socket is **MIDI map**, the half-filled disc is colour and the dimmer), and
+**REC** alone in the corner. While recording, REC's ring fills, the button
+blinks and it shows the time. The output readout says only `Output off` or
+`Output on` while all is well; the frame rate joins it when it is low
+(`Output on · 38 fps`) and for the first seconds of a recording. The exact
+figure is always under **Setup → Status**.
+
+The half-filled disc at the top right opens the interface palettes (red, amber,
 bone, lime, ice, magenta). All are a single ink on black so the laptop does
 not light the stage. The **Dim** strip under them turns the whole page down,
 from full to a quarter of the light: drag it, use the arrow keys, or
@@ -242,13 +252,17 @@ press. And a phone that cannot reach the pairing server holds on to the
 link it has, even a silent one, rather than drop it and be left with no way
 to dial again.
 
-**A second iPhone.** The pop-over has a tab for each phone. Open the
-**iPhone B** tab and scan its code with the second phone (or type its room
-code, the first phone's with a B after it: `PSAQ2-B`). Opening that tab is
-what switches the second phone on; **Stop using iPhone B** in it switches it
-off again, and a show with one phone never registers the second code. Each
-phone has its own connection, so one dropping or reconnecting does not
-disturb the other, and the top bar gains a `Phone B` readout. The second
+**A second iPhone.** The pop-over has a tab for each phone: two clicks from
+anywhere (the phone readout, then the **iPhone B** tab). Scan the code on
+that tab with the second phone (or type its room code, the first phone's
+with a B after it: `PSAQ2-B`). Opening the tab switches the second phone on
+so its code can be scanned at once; if none has paired when the pop-over
+closes, it is switched off again, so a look at the tab leaves nothing
+behind. Once a second phone has paired it stays on until **Stop using
+iPhone B**. Each phone has its own connection, so one dropping or
+reconnecting does not disturb the other. There is one phone readout in the
+top bar: with two phones in use it names both (`Phones: A live · B live`),
+and a click opens the pop-over at whichever needs a look. The second
 phone's picture is the source **iPhone B** (key `2`): choose it for input A
 or B like any other, so the two phones can be mixed with **Mix B**. Its
 screen is the same as the first phone's, marked `PHONE B`; its preset
@@ -744,7 +758,7 @@ All three are off until enabled, and all permission prompts appear on
 `/control`, never on the projector. They run wherever the picture runs, and
 move with it when the output window opens or closes.
 
-**MIDI.** Click **MIDI map** at the top right (or press `M`). Every control
+**MIDI.** Click the five-pin socket at the top right (**MIDI map**; or press `M`). Every control
 that can be mapped is outlined:
 
 - the panic buttons, the source icons of inputs A and B and the nine mix
@@ -903,9 +917,9 @@ it in large pieces, so if the browser dies mid-recording most of it can be
 lost; **WebM** reaches the file every second, so a crash loses at most the
 last second. WebM plays in Chrome and VLC, not in QuickTime.
 
-Recording costs GPU and CPU. Check that the first readout in the top bar
-(`Output 60 fps`, or `Output off · 60 fps`) still reads 60 fps while it runs;
-if not, lower **Setup → Output** resolution.
+Recording costs GPU and CPU. The first readout in the top bar shows the
+frame rate as a recording starts, and whenever it is low: if it shows one
+while you record, lower **Setup → Output** resolution.
 
 ## Latency
 
