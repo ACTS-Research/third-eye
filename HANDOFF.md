@@ -152,7 +152,10 @@ black at 100%; square at 25% in all six; a few of the others at 25%),
 so the code can follow the dimmer. The opening was then changed at the
 owner's word: it starts as the mark is today (outline, red on black),
 reverses to the solid camera on the blink, noise fills the whole camera,
-then the code. Still to settle when it
+then the code. Third pass: the noise is hard-edged, in the code's own
+squares; a quarter-second dissolve from the eye into it and from it into
+the code; the noise holds 0.9 s (2.9 s in all). It plays once, when the
+session starts: a lost link or a new room code just shows the code. Still to settle when it
 is built: the code must ignore the dimmer if 25% does not scan; a line
 saying how far pairing has got; one line for a second iPhone; the opening
 plays once a session and never on a reload with a phone paired; remove the

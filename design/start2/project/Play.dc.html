@@ -11,25 +11,18 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
 body{margin:0;background:#000}
-.box{position:relative;width:352px;height:319px}
-.box svg{position:absolute;left:0;top:0}
-.grid{position:absolute;left:77px;top:77px;width:198px;height:198px;display:grid;grid-template-columns:repeat(25,minmax(0,1fr))}
 .k{border:1px solid #5b2622;padding:7px 12px;font:500 11px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;background:none;color:#ff6b5e;cursor:pointer}
 .s{color:#c06a60;font-size:11px;line-height:1.5}
 </style>
 </helmet>
 <div style="width: 900px; height: 560px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; background: #000; color: #ff6b5e; font: 500 13px/1.3 'JetBrains Mono', ui-monospace, Menlo, monospace">
-<div class="box">
-<svg viewBox="0 5 64 58" width="352" height="319" role="img" aria-label="Third Eye Cam, opening">
-<defs><filter id="play-noise" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="1" seed="{{seed}}" result="t"/><feColorMatrix in="t" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  18 0 0 0 -8.6" result="a"/><feComposite in="SourceGraphic" in2="a" operator="in"/></filter></defs>
-<sc-if value="{{outline}}" hint-placeholder-val="{{ true }}"><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z" fill="none" stroke="#ff6b5e" stroke-width="2.7" stroke-linejoin="round"/></sc-if>
-<sc-if value="{{solid}}" hint-placeholder-val="{{ false }}"><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z" fill="#ff6b5e" stroke="#ff6b5e" stroke-width="2.7" stroke-linejoin="round"/></sc-if>
-<sc-if value="{{noisy}}" hint-placeholder-val="{{ false }}"><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z" fill="#ff6b5e" filter="url(#play-noise)"/><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z" fill="none" stroke="#ff6b5e" stroke-width="2.7" stroke-linejoin="round"/></sc-if>
+<svg viewBox="0 5 64 58" width="352" height="319" role="img" aria-label="Third Eye Cam, opening" style="flex-shrink: 0">
+<defs><clipPath id="play-cam"><path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z"/></clipPath></defs>
+<path d="M12 14H42V10A2 2 0 0 1 44 8H52A2 2 0 0 1 54 10V14.2A9 9 0 0 1 61 23V51A9 9 0 0 1 52 60H12A9 9 0 0 1 3 51V23A9 9 0 0 1 12 14Z" fill="{{bodyFill}}" stroke="#ff6b5e" stroke-width="2.7" stroke-linejoin="round"/>
+<path d="{{cellsD}}" fill="#000" clip-path="url(#play-cam)" shape-rendering="crispEdges"/>
 <sc-if value="{{shut}}" hint-placeholder-val="{{ true }}"><path d="M11.5 38Q32 39.5 52.5 38" fill="none" stroke="{{eyeInk}}" stroke-width="2.7" stroke-linecap="round"/></sc-if>
-<sc-if value="{{open}}" hint-placeholder-val="{{ false }}"><path d="M11.5 38Q32 18 52.5 38Q32 58 11.5 38Z" fill="none" stroke="{{eyeInk}}" stroke-width="2.7" stroke-linejoin="round"/><circle cx="32" cy="38" r="4.05" fill="none" stroke="{{eyeInk}}" stroke-width="2.7"/></sc-if>
+<sc-if value="{{open}}" hint-placeholder-val="{{ false }}"><g opacity="{{eyeOpacity}}"><path d="M11.5 38Q32 18 52.5 38Q32 58 11.5 38Z" fill="none" stroke="{{eyeInk}}" stroke-width="2.7" stroke-linejoin="round"/><circle cx="32" cy="38" r="4.05" fill="none" stroke="{{eyeInk}}" stroke-width="2.7"/></g></sc-if>
 </svg>
-<sc-if value="{{code}}" hint-placeholder-val="{{ false }}"><div class="grid"><sc-for list="{{cells}}" as="c" hint-placeholder-count="0"><div style="background: {{c.bg}}"></div></sc-for></div></sc-if>
-</div>
 <div style="font-size: 20px; font-weight: 700; opacity: {{textOpacity}}; transition: opacity 0.4s">Point the iPhone's camera at the code.</div>
 <div style="letter-spacing: 0.2em; text-transform: uppercase; opacity: {{textOpacity}}; transition: opacity 0.4s">Room code SB2ZR</div>
 <div style="display: flex; gap: 10px; margin-top: 2px; opacity: {{textOpacity}}; transition: opacity 0.4s"><span class="k">Use the Mac camera</span><span class="k">Test pattern</span><span class="k">Video file…</span></div>
@@ -40,66 +33,61 @@ body{margin:0;background:#000}
 class Component extends DCLogic {
 constructor(props) {
 super(props);
-this.state = { phase: 'shut', tick: 1 };
+this.state = { t: 0 };
+this.start = Date.now();
 }
 componentDidMount() {
-this.run();
-this.loop = setInterval(() => this.run(), 7000);
+this.timer = setInterval(() => {
+let t = Date.now() - this.start;
+if (t > 8000) { this.start = Date.now(); t = 0; }
+this.setState({ t });
+}, 40);
 }
 componentWillUnmount() {
-clearInterval(this.loop);
-clearInterval(this.noiseTimer);
-(this.timers || []).forEach(clearTimeout);
-}
-run() {
-(this.timers || []).forEach(clearTimeout);
-clearInterval(this.noiseTimer);
-this.setState({ phase: 'shut' });
-const at = (ms, phase) => setTimeout(() => this.setState({ phase }), ms);
-this.timers = [
-at(300, 'open'),
-at(900, 'blink'),
-at(1020, 'openSolid'),
-setTimeout(() => {
-this.setState({ phase: 'noise' });
-this.noiseTimer = setInterval(() => this.setState({ tick: this.state.tick + 1 }), 70);
-}, 1500),
-setTimeout(() => {
-clearInterval(this.noiseTimer);
-this.setState({ phase: 'code' });
-}, 2100),
-];
+clearInterval(this.timer);
 }
 renderVals() {
-const n = 25;
-const { phase, tick } = this.state;
-const finder = (x, y) => { const f = (ox, oy) => { const dx = x - ox, dy = y - oy; if (dx < 0 || dy < 0 || dx > 6 || dy > 6) return null; const m = Math.max(Math.abs(dx - 3), Math.abs(dy - 3)); return m !== 2; }; return f(0, 0) ?? f(n - 7, 0) ?? f(0, n - 7); };
+const t = this.state.t;
+// The moments, in milliseconds.
+const OPEN = 300, BLINK = 900, REOPEN = 1020, INTO = 1500, NOISE = 1750, SETTLE = 2650, CODE = 2900;
+const n = 25, m = 36 / 25, x0 = 14, y0 = 19;
+const finder = (x, y) => { const f = (ox, oy) => { const dx = x - ox, dy = y - oy; if (dx < 0 || dy < 0 || dx > 6 || dy > 6) return null; const k = Math.max(Math.abs(dx - 3), Math.abs(dy - 3)); return k !== 2; }; return f(0, 0) ?? f(n - 7, 0) ?? f(0, n - 7); };
 const quiet = (x, y) => (x < 8 && y < 8) || (x > n - 9 && y < 8) || (x < 8 && y > n - 9);
-let seed = 7;
-const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-const cells = [];
-for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const f = finder(x, y); const on = f !== null ? f : quiet(x, y) ? false : rnd() > 0.52; cells.push({ bg: on ? '#000' : 'transparent' }); }
-const captions = {
-shut: '0.0 s · the mark as it is, red on black, the eye shut',
-open: '0.3 s · the eye opens',
-blink: '0.9 s · a blink, and the camera turns solid',
-openSolid: '1.0 s · open again: black on the colour',
-noise: '1.5 s · noise fills the whole camera',
-code: '2.1 s · the noise clears to the code. (Repeats here every seven seconds; once in the app.)',
-};
+const hash = (a, b, c) => { let h = (a * 374761393 + b * 668265263 + c * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; h ^= h >>> 16; return ((h >>> 0) % 10000) / 10000; };
+const codeOn = (i, j) => { if (i < 0 || j < 0 || i >= n || j >= n) return false; const f = finder(i, j); return f !== null ? f : quiet(i, j) ? false : hash(i, j, 7) > 0.52; };
+const frame = Math.floor(t / 70);
+// How much of the camera is noise (0..1), and how far it has settled.
+const amount = t < INTO ? 0 : t < NOISE ? (t - INTO) / (NOISE - INTO) : 1;
+const settled = t < SETTLE ? 0 : t < CODE ? (t - SETTLE) / (CODE - SETTLE) : 1;
+let d = '';
+if (amount > 0) {
+for (let j = -8; j <= 29; j++) for (let i = -8; i <= 33; i++) {
+const own = hash(i, j, 1);
+let on;
+if (settled > own) on = codeOn(i, j);
+else on = own < amount && hash(i, j, 100 + frame) > 0.5;
+if (on) d += 'M' + (x0 + i * m).toFixed(2) + ' ' + (y0 + j * m).toFixed(2) + 'h' + m.toFixed(2) + 'v' + m.toFixed(2) + 'h-' + m.toFixed(2) + 'z';
+}
+}
+const reversed = t >= BLINK;
+const caption = t < OPEN ? '0.0 s · the mark as it is, red on black, the eye shut'
+: t < BLINK ? '0.3 s · the eye opens'
+: t < REOPEN ? '0.9 s · a blink, and the camera turns solid'
+: t < INTO ? '1.0 s · open again: black on the colour'
+: t < NOISE ? '1.5 s · the eye gives way to noise (a quarter of a second)'
+: t < SETTLE ? '1.75 s · hard-edged noise fills the whole camera (0.9 s)'
+: t < CODE ? '2.65 s · the noise settles into the code (a quarter of a second)'
+: '2.9 s · the code. (Repeats here every eight seconds; in the app, once when the session starts.)';
 return {
-outline: phase === 'shut' || phase === 'open',
-solid: phase === 'blink' || phase === 'openSolid' || phase === 'code',
-noisy: phase === 'noise',
-shut: phase === 'shut' || phase === 'blink',
-open: phase === 'open' || phase === 'openSolid',
-eyeInk: phase === 'shut' || phase === 'open' ? '#ff6b5e' : '#000',
-code: phase === 'code',
-seed: tick,
-cells,
-textOpacity: phase === 'code' ? 1 : 0,
-caption: captions[phase],
-replay: () => this.run(),
+bodyFill: reversed ? '#ff6b5e' : 'none',
+cellsD: d,
+shut: t < OPEN || (t >= BLINK && t < REOPEN),
+open: (t >= OPEN && t < BLINK) || (t >= REOPEN && t < NOISE),
+eyeInk: reversed ? '#000' : '#ff6b5e',
+eyeOpacity: t >= INTO ? Math.max(0, 1 - amount) : 1,
+textOpacity: t >= CODE ? 1 : 0,
+caption,
+replay: () => { this.start = Date.now(); this.setState({ t: 0 }); },
 };
 }
 }
