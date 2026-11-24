@@ -237,6 +237,65 @@ itself; two new factory presets.
   the commit before earlier in the session, then failed twice there: the
   sandbox's links got slower as the session went on.
 
+**Glitch is called Blink (24 November, the owner's choice: it matches the
+app).** Everything on the screens, the phone's trigger labels, the key help
+and the docs say Blink. The code keeps `glitch` everywhere (`state.glitch`,
+the `glitch` / `glitchEnd` actions, `data-midi="glitch"`, `glitch-panel.js`,
+`engine/glitch.js`, `tests/glitch.mjs`), so saved presets, trigger
+bindings and MIDI mappings carry over untouched; do not rename those
+without a migration. The key is still G. Older notes below say Glitch.
+
+**Shows (built 24 November, seventh session).** Mock-ups
+https://claude.ai/artifact/UqABtQiTWntLoBmj77HSkH (`design/shows/`); the
+owner chose S1b (the Show menu below the tiles), no step count after the
+name, a tempo per show, and a backup to a folder of their choosing (not
+Downloads, which cannot overwrite).
+
+- **Data** (`presets.js`): `{ live, shows: [{ id, name, bpm, steps }] }` in
+  `thirdeye.shows.v1`. A browser with none gets one show, `show1` "My
+  show", holding what was in `thirdeye.order.v1` (left in place, no longer
+  written). `bpm` null means the show leaves the tempo alone. There is
+  always at least one show: deleting the last one empties it.
+- **The model** (`preset-model.js`): `shows`, `live`, `makeLive` (its
+  tempo, the order from the top), `newShow`, `renameShow` (a name already
+  taken gets a number), `duplicateShow`, `deleteShow`, `addShow`,
+  `mergePresets`. A `tempo` merge while a show is live writes its `bpm`.
+  Deleting a preset takes its steps out of every show.
+- **The strip** (`strip.js`): `#strip-order` is the show's name (disabled
+  while it has no steps), `#strip-all`; under the tiles `.strip-foot` with
+  the action `menu()` `#show-menu` (opens upward by itself, there being no
+  room below), `#save-show` and the hidden `#show-file` input. Rename and
+  New use `prompt()`, Delete `confirm()`.
+- **Files.** A show file (`exportShow` / `parseShowFile`, format
+  `third-eye-cam-show`) holds the show and only the presets it uses, WITH
+  their ids, so opening it where they already are finds them; a preset
+  whose id is here but whose content differs is asked about once
+  (`confirm`). The library file (`exportPresets`) is version 2: every show
+  by place in the file, plus `order` (the live show) for old browsers;
+  importing it adds its shows beside yours, not live, and a version 1 file
+  with a running order gives a show called "Imported show".
+- **Backup** (`show-backup.js`, `ui.backup`): File System Access. The
+  folder handle is kept in IndexedDB (`thirdeye` / `handles` /
+  `show-backup`); each show is `<name>.thirdeye-show.json` there,
+  rewritten `quietMs` (30 s) after the live show last changed (its text as
+  `exportShow` gives it; unchanged text is not written). States: `none`,
+  `on`, `ask` (Chrome wants a click again: `allow()`), `error`,
+  `unsupported`. Shown in Setup → Preset library → Show backup, in Before
+  the show (a CHECK line until a folder is chosen, so the CHECK count in
+  the top bar is one higher until then), and as an alert while a change
+  waits for the OK. Runs in `/control` only: a show edited with
+  `/control` closed is not possible anyway. A renamed show leaves its old
+  file in the folder.
+- **Tests:** `running-order.mjs` covers all of it, the folder with a
+  stand-in handle (`window.showDirectoryPicker` replaced in the page).
+- **Not done:** MIDI mappings per show (the owner: maybe later); a show's
+  own triggers.
+- **Tests before the push (24 November):** in the full run, besides the
+  suites that fail on the commit before too (`keep-paired`, `midi-audio`,
+  `modulation`, `offline`, `phone`, `edit-screen`'s drag, `standalone`'s
+  "the output opened them instead"), `offline-pair-online` and `vision`
+  failed once and passed alone; `offline-pair` passed alone.
+
 **A network that keeps devices apart (built 24 November).** The owner's
 worry: on venue or campus Wi-Fi the code scans, START works, and then
 nothing happens on either screen. A page cannot test for this alone (it
@@ -803,7 +862,7 @@ Three static pages built by Vite, no framework.
   first. `choice()` is a row of picture buttons (LFO shape, tempo sync).
   One trap: `.panel button.grow` is styled tall for big wrapped buttons, so a
   `menu()` given `grow` needs the `.panel button.menu.grow` override.
-- **A step of the running order points at a preset by id, never by place.**
+- **A step of a show points at a preset by id, never by place.**
   Presets are still addressed by index everywhere else (`presetIndex`,
   `preset:3`), so anything that creates a preset must give it an id
   (`snapshotPreset` does; `loadPresets` mints and saves ids for old data).
@@ -811,6 +870,11 @@ Three static pages built by Vite, no framework.
   not in `/control`, because the engine steps it with `/control` closed. A
   `scene` op with `cue` moves the order; one with `offList` (a preset loaded
   by hand, via `applyPreset`) leaves it where it was and marks it off.
+  Shows live in `thirdeye.shows.v1` (`loadShows` / `saveShows` in
+  `presets.js`); `loadOrder()` is the live show's steps, so everything that
+  walks "the order" (actions, the engine, the phone's six buttons) follows
+  the live show without knowing shows exist. Making a show live resets
+  `order` to `{ cue: -1, off: false }`.
 - **Whichever window hosts the engine owns everything live**: video, the
   phone connection, MIDI, audio, vision, recording. The output window hosts
   it when open, `/control` otherwise. Only one engine may run per browser:

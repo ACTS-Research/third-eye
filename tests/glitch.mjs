@@ -29,13 +29,13 @@ try {
   await waitFor(() => control.locator('#tab-params .fx-head').isVisible(), { label: 'edit screen' });
 
   console.log('a preset with no jumps');
-  check('the Glitch tab is there, with no count', (await control.locator('button[data-tab=glitch]').textContent()) === 'Glitch');
+  check('the Blink tab is there, with no count', (await control.locator('button[data-tab=glitch]').textContent()) === 'Blink');
   check('no slider shows anything of Glitch', (await control.locator('.jump-notch, .jump-to').count()) === 0);
   const t0 = await tearAt();
   await control.keyboard.press('g');
   check('Glitch tears the picture, as before', await settle(async () => (await tearAt()) > t0, 'tear'));
   await control.click('button[data-tab=glitch]');
-  check('the tab says so and offers to capture', (await control.locator('#glitch-capture').textContent()) === 'Capture a glitch' && (await control.locator('#glitch-panel').textContent()).includes('tears the picture'));
+  check('the tab says so and offers to capture', (await control.locator('#glitch-capture').textContent()) === 'Capture a blink' && (await control.locator('#glitch-panel').textContent()).includes('tears the picture'));
   check('attack, release and scatter each say what they do', (await control.locator('#glitch-panel .param[data-key=attack]').getAttribute('title')).length > 10 && (await control.locator('#glitch-panel .param[data-key=release]').getAttribute('title')).length > 10 && (await control.locator('#glitch-panel .param[data-key=scatter]').getAttribute('title')).length > 10);
   check('the hold switch stands clear of everything else on its row', await control.evaluate(() => { const r = document.querySelector('#glitch-panel .param[data-key=hold]'); const b = r.querySelector('.switch').getBoundingClientRect(); return [...r.children].every((c) => c.classList.contains('switch') || c.getBoundingClientRect().right <= b.left + 1 || c.getBoundingClientRect().left >= b.right - 1); }));
   check('attack is instant and release a third of a second to start with', (await glitch()).attack === 0 && (await glitch()).release === 0.33 && (await glitch()).hold === false);
@@ -43,7 +43,7 @@ try {
   console.log('capturing');
   const decay = await param('decay');
   await control.click('#glitch-capture');
-  check('Capture opens the Parameters tab under a band that says what to do', (await control.locator('#glitch-band').isVisible()) && (await control.locator('#tab-params').isVisible()) && (await control.locator('#glitch-band').textContent()).includes('Glitch settings') && (await control.locator('#glitch-keep').textContent()) === 'Save glitch');
+  check('Capture opens the Parameters tab under a band that says what to do', (await control.locator('#glitch-band').isVisible()) && (await control.locator('#tab-params').isVisible()) && (await control.locator('#glitch-band').textContent()).includes('Blink settings') && (await control.locator('#glitch-keep').textContent()) === 'Save blink');
   await clickBar(control, paramBar('decay'), 0.2);
   await clickBar(control, paramBar('shiftX'), 0.95);
   check('each slider moved counts as a jump, and is marked as changed', await settle(async () => (await control.locator('#glitch-keep').getAttribute('data-jumps')) === '2' && (await control.locator('#tab-params .param label.changed').count()) === 2, 'count'), await control.locator('#glitch-keep').getAttribute('data-jumps'));
@@ -57,7 +57,7 @@ try {
   check('Save glitch puts the sliders back', await settle(async () => (await param('decay')) === decay && (await param('shiftX')) === 0, 'back'), `${await param('decay')} ${await param('shiftX')}`);
   let g = await glitch();
   check('and keeps where they were as the jumps', g.jumps.length === 2 && g.jumps.find((j) => j.key === 'decay').to === landed.decay && g.jumps.find((j) => j.key === 'shiftX').to === landed.shiftX, JSON.stringify(g.jumps));
-  check('the tab lists them', (await control.locator('button[data-tab=glitch]').textContent()) === 'Glitch' && (await control.locator('#glitch-capture').textContent()) === 'Recapture' && (await control.locator('.glitch-jump').count()) === 2 && (await control.locator('.glitch-jump').first().textContent()).includes('1 Video Feedback · decay') && !(await control.locator('.glitch-jumps').textContent()).includes('→'), await control.locator('.glitch-jumps').textContent());
+  check('the tab lists them', (await control.locator('button[data-tab=glitch]').textContent()) === 'Blink' && (await control.locator('#glitch-capture').textContent()) === 'Recapture' && (await control.locator('.glitch-jump').count()) === 2 && (await control.locator('.glitch-jump').first().textContent()).includes('1 Video Feedback · decay') && !(await control.locator('.glitch-jumps').textContent()).includes('→'), await control.locator('.glitch-jumps').textContent());
   check('the jumps are saved in the preset, the sliders as they were', await settle(async () => (await saved()).glitch.jumps.length === 2 && (await saved()).chain[0].params.decay === decay, 'saved'));
 
   console.log('the pointer on the bar');

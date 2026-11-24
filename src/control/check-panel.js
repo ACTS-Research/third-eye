@@ -77,6 +77,11 @@ export function mountCheckPanel(root, ui) {
     if (!globals.recAutoSave) rows.push(line('CHECK', 'Recordings will not save by themselves.', 'Saving to Downloads is switched off.', { label: 'Go to Recordings', run: () => ui.goToPanel('record-panel') }));
     else rows.push(line('OK', 'Recordings save to Downloads as they stop', '(if Chrome asks to allow several downloads, allow it)'));
 
+    const b = ui.backup;
+    if (b && b.state === 'on') rows.push(line('OK', `Shows are backed up to the folder ${b.folder}`));
+    else if (b && b.state === 'ask') rows.push(line('CHECK', 'Show backups are waiting.', `Chrome needs your OK to write to ${b.folder}.`, { label: 'Allow', run: () => b.allow() }));
+    else if (b && b.state !== 'unsupported') rows.push(line('CHECK', 'Shows are not backed up.', 'Choose a folder once; the live show is kept there.', { label: 'Go to Preset library', run: () => ui.goToPanel('library-panel') }));
+
     rows.push(line('YOU', 'Turn off Auto-Join for other Wi-Fi networks, so the Mac does not leave the hotspot mid-show.'));
     rows.push(line('YOU', 'Plug in the power. Close other tabs that use the camera or play video.'));
     list.replaceChildren(...rows);

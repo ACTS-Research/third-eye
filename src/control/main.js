@@ -31,6 +31,7 @@ import { mountOutputPanel } from './output-panel.js';
 import { mountPerform } from './perform.js';
 import { mountPhonePanel } from './phone-panel.js';
 import { createPresetModel } from './preset-model.js';
+import { createShowBackup } from './show-backup.js';
 import { mountRecordPanel } from './record-panel.js';
 import { mountShortcuts } from './shortcuts.js';
 import { mountStatus } from './status.js';
@@ -108,6 +109,8 @@ const ui = {
   },
 };
 ui.presets = createPresetModel(ui);
+// The live show, kept in a folder the operator chose (show-backup.js).
+ui.backup = createShowBackup(ui.presets);
 
 // Tell the engine someone is watching, so it sends the monitor and the meters.
 bus.send('control-alive');

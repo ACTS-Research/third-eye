@@ -1,7 +1,9 @@
-// The running order: steps that point at presets. Building it from the
+// Shows: each a name, a tempo and steps that point at presets (the live
+// show's steps were "the running order" before shows). Building one from the
 // strip, stepping it with Next / Prev, going off the list and back, notes and
-// fades, reordering, removing, what the phone's six buttons show, the export
-// file, and the order carrying on with /control closed.
+// fades, reordering, removing, what the phone's six buttons show, the files,
+// the order carrying on with /control closed; then several shows, the Show
+// menu, show files, tempo, and the backup to a folder.
 //   node tests/running-order.mjs
 
 import { readFile } from 'node:fs/promises';
@@ -28,28 +30,30 @@ try {
   const buttons = () => phone.evaluate(() => [...document.querySelectorAll('#presets .preset')].map((b) => ({ n: b.querySelector('b')?.textContent ?? '', name: b.querySelector('.pname')?.textContent ?? '', on: b.classList.contains('on'), next: b.classList.contains('next'), off: b.disabled })));
   const tap = (i) => phone.locator('#presets .preset').nth(i).dispatchEvent('click');
 
-  console.log('with no running order the strip is the preset strip');
+  console.log('with no steps the strip is the preset strip');
   const P = await control.locator('.tile:not(.new) .name').allTextContents();
-  check('the heading reads Presets and there is no switch', (await control.locator('.strip-head .caps').first().isVisible()) && (await control.locator('#strip-order').isHidden()) && (await control.locator('#strip-all').isHidden()));
+  check('the head names the show, which cannot be shown yet, and All presets is on', (await control.locator('#strip-order').textContent()) === 'My show' && (await control.locator('#strip-order').isDisabled()) && (await control.locator('#strip-all').getAttribute('aria-pressed')) === 'true');
+  check('under the tiles, the Show menu names it', (await control.locator('#show-menu').textContent()).includes('Show: My show'));
   check('every preset tile has a + and an Edit', (await control.locator('.tile .add').count()) === P.length && (await control.locator('.tile .edit').count()) === P.length);
   check('every preset has an id of its own', await mac(() => new Set(window.thirdEye.ui.presets.list.map((p) => p.id)).size === window.thirdEye.ui.presets.list.length));
   check('the phone shows the first six presets', await settle(async () => (await buttons()).map((b) => b.name).join() === P.slice(0, 6).join(), 'phone presets'), (await buttons()).map((b) => b.name).join());
 
   console.log('building it');
   for (const i of [1, 2, 1, 0]) await control.locator('.tile .add').nth(i).click();
-  check('four steps are stored, pointing at presets by id', await mac(() => {
-    const { steps } = JSON.parse(localStorage.getItem('thirdeye.order.v1'));
+  check('four steps are stored in the live show, pointing at presets by id', await mac(() => {
+    const data = JSON.parse(localStorage.getItem('thirdeye.shows.v1'));
+    const { steps } = data.shows.find((x) => x.id === data.live);
     const ids = window.thirdEye.ui.presets.list.map((p) => p.id);
     return steps.length === 4 && steps.map((s) => ids.indexOf(s.preset)).join() === '1,2,1,0';
   }));
-  check('the switch appears and counts them', (await control.locator('#strip-order').textContent()) === 'Running order · 4' && (await control.locator('#strip-all').getAttribute('aria-pressed')) === 'true');
+  check('the show can now be shown', !(await control.locator('#strip-order').isDisabled()) && (await control.locator('#strip-all').getAttribute('aria-pressed')) === 'true');
   check('adding leaves you on All presets', (await control.locator('.tile .add').count()) === P.length);
   check('the phone now shows the steps, the first one dashed', await settle(async () => {
     const b = await buttons();
     return b.map((x) => x.name).join() === [P[1], P[2], P[1], P[0], '', ''].join() && b[0].next && !b.some((x) => x.on) && b[4].off && b[5].off;
   }, 'phone steps'), JSON.stringify(await buttons()));
   await control.click('#strip-order');
-  check('Running order shows the steps in order', (await stepNames()).join() === [P[1], P[2], P[1], P[0]].join(), (await stepNames()).join());
+  check('the show\'s steps, in order', (await stepNames()).join() === [P[1], P[2], P[1], P[0]].join(), (await stepNames()).join());
   check('before the first step it says so', (await statusText()) === `Not started. Next loads step 1, ${P[1]}.`, await statusText());
 
   console.log('stepping');
@@ -135,14 +139,17 @@ try {
   await control.click('#views button[data-view=setup]');
   const [download] = await Promise.all([control.waitForEvent('download'), control.click('#library-panel >> text=Export presets')]);
   const file = JSON.parse(await readFile(await download.path(), 'utf8'));
-  check('the export carries the order by place in the file', file.order?.length === 1 && file.presets[file.order[0].preset].name === P[2] && !('id' in file.presets[0]), JSON.stringify(file.order));
+  check('the library export carries the show by place in the file', file.shows?.length === 1 && file.shows[0].name === 'My show' && file.shows[0].steps.length === 1 && file.presets[file.shows[0].steps[0].preset].name === P[2] && file.order?.length === 1 && !('id' in file.presets[0]), JSON.stringify(file.shows));
+  // A file from before shows: its running order becomes a show of its own.
   const incoming = { format: file.format, version: 1, presets: [{ ...file.presets[0], name: 'One' }, { ...file.presets[1], name: 'Two' }], order: [{ preset: 0, note: 'Open', fade: 1 }, { preset: 1, note: '', fade: null }, { preset: 0, note: '', fade: null }, { preset: 7, note: 'no such preset' }] };
   const before = await mac(() => window.thirdEye.ui.presets.list.length);
-  control.once('dialog', (d) => d.accept());
   await control.setInputFiles('#library-panel input[type=file]', { name: 'show.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(incoming)) });
+  check('an import adds its presets and its order as a show, not live', await settle(async () => (await mac(() => window.thirdEye.ui.presets.shows.map((x) => x.name).join())) === 'My show,Imported show' && (await mac(() => window.thirdEye.ui.presets.live.name)) === 'My show' && (await mac(() => window.thirdEye.ui.presets.list.length)) === before + 2, 'imported'), await mac(() => window.thirdEye.ui.presets.shows.map((x) => x.name).join()));
   await control.click('#views button[data-view=perform]');
-  check('an import adds its presets and, when asked, takes its order', await settle(async () => (await stepNames()).join() === 'One,Two,One' && (await mac(() => window.thirdEye.ui.presets.list.length)) === before + 2, 'imported'), (await stepNames()).join());
-  check('its note came too and the order starts over', (await control.locator('.tile.step').nth(0).locator('.note').textContent()) === 'Open' && (await order()).cue === -1);
+  await control.locator('#show-menu').click();
+  await control.locator('.menu-list .menu-item', { hasText: 'Imported show' }).click();
+  check('chosen from the Show menu it goes live, from its start', await settle(async () => (await stepNames()).join() === 'One,Two,One' && (await order()).cue === -1, 'imported live'), (await stepNames()).join());
+  check('its note came too', (await control.locator('.tile.step').nth(0).locator('.note').textContent()) === 'Open');
   check('a file without presets ids still gets them here', await mac(() => window.thirdEye.ui.presets.list.every((p) => typeof p.id === 'string' && p.id.length >= 3)));
 
   console.log('a show longer than the phone has buttons');
@@ -187,12 +194,117 @@ try {
   await control.goto(`${site.url}/control/`);
   await waitFor(() => control.evaluate(() => !!window.thirdEye?.ui?.presets), { label: 'control again' });
   await mac(() => window.thirdEye.ui.presets.setSteps([]));
-  check('no switch, and the heading is back', await settle(async () => (await control.locator('#strip-order').isHidden()) && (await control.locator('.strip-head .caps').first().isVisible()), 'plain strip'));
+  check('the show cannot be shown, and All presets is on', await settle(async () => (await control.locator('#strip-order').isDisabled()) && (await control.locator('#strip-all').getAttribute('aria-pressed')) === 'true', 'plain strip'));
   const all = await control.locator('.tile:not(.new) .name').allTextContents();
   check('the phone shows presets again', await settle(async () => (await buttons()).map((b) => b.name).join() === all.slice(0, 6).join(), 'phone presets again'), (await buttons()).map((b) => b.name).join());
   await control.locator('.tile .load').nth(all.length - 1).click();
   await control.keyboard.press(']');
   check('Next walks the presets and wraps, as before', await settle(async () => (await order()).preset === 0, 'wrapped'), JSON.stringify(await order()));
+
+  console.log('several shows');
+  const showNames = () => mac(() => window.thirdEye.ui.presets.shows.map((x) => x.name).join());
+  const liveName = () => mac(() => window.thirdEye.ui.presets.live.name);
+  const pickShowItem = async (text) => {
+    await control.locator('#show-menu').click();
+    await control.locator('.menu-list .menu-item', { hasText: text }).first().click();
+  };
+  const bpm = () => mac(() => window.thirdEye.store.state.tempo.bpm);
+  await mac(() => window.thirdEye.store.merge('tempo', { bpm: 96 }));
+  control.once('dialog', (d) => d.accept('Dream machine'));
+  await pickShowItem('+ New show');
+  check('+ New show makes one, named, live and empty', await settle(async () => (await liveName()) === 'Dream machine' && (await control.locator('#strip-order').textContent()) === 'Dream machine' && (await control.locator('#show-menu').textContent()).includes('Dream machine'), 'new show'), await showNames());
+  check('it starts with the tempo as it was', await mac(() => window.thirdEye.ui.presets.live.bpm === 96));
+  for (const i of [3, 4]) await control.locator('.tile .add').nth(i).click();
+  await control.click('#strip-order');
+  check('its steps are its own', (await stepNames()).join() === [all[3], all[4]].join(), (await stepNames()).join());
+  await mac(() => window.thirdEye.store.merge('tempo', { bpm: 140 }));
+  check('a tempo set while it is live is its tempo', await settle(() => mac(() => window.thirdEye.ui.presets.live.bpm === 140), 'show bpm'));
+  await pickShowItem('Imported show');
+  await mac(() => window.thirdEye.store.merge('tempo', { bpm: 100 }));
+  await pickShowItem('Dream machine');
+  check('making it live again brings back its tempo, and starts it from the top', await settle(async () => (await bpm()) === 140 && (await order()).cue === -1 && (await stepNames()).join() === [all[3], all[4]].join(), 'tempo back'), String(await bpm()));
+  await control.keyboard.press(']');
+  check('Next walks this show', await settle(async () => (await order()).cue === 0 && (await order()).preset === 3, 'walks'), JSON.stringify(await order()));
+  check('the phone shows its steps', await settle(async () => (await buttons()).slice(0, 2).map((b) => b.name).join() === [all[3], all[4]].join(), 'phone show'), JSON.stringify(await buttons()));
+  await pickShowItem('Duplicate');
+  check('Duplicate makes a copy, live, with the same steps', await settle(async () => (await liveName()) === 'Dream machine copy' && (await stepNames()).join() === [all[3], all[4]].join(), 'copy'), await showNames());
+  control.once('dialog', (d) => d.accept('Dream machine'));
+  await pickShowItem('Rename');
+  check('a name another show has gets a number', await settle(async () => (await liveName()) === 'Dream machine 2', 'numbered'), await showNames());
+  control.once('dialog', (d) => d.accept('Tunnel piece'));
+  await pickShowItem('Rename');
+  check('Rename', await settle(async () => (await liveName()) === 'Tunnel piece', 'renamed'), await showNames());
+  control.once('dialog', (d) => d.accept());
+  await pickShowItem('Delete');
+  check('Delete asks, takes the show away and makes the next one live', await settle(async () => !(await showNames()).includes('Tunnel piece') && (await showNames()).split(',').includes(await liveName()), 'deleted'), `${await showNames()} live ${await liveName()}`);
+  check('the presets are all still there', (await mac(() => window.thirdEye.ui.presets.list.length)) === all.length);
+  await mac((name) => {
+    const { presets } = window.thirdEye.ui;
+    presets.makeLive(presets.shows.find((x) => x.name === name).id);
+  }, 'Dream machine');
+  await mac(() => {
+    const { presets } = window.thirdEye.ui;
+    presets.remove(presets.list.findIndex((p) => p.id === presets.live.steps[1].preset));
+  });
+  check('a preset deleted leaves every show it was in', await mac(() => {
+    const { presets } = window.thirdEye.ui;
+    const ids = new Set(presets.list.map((p) => p.id));
+    return presets.shows.every((x) => x.steps.every((s) => ids.has(s.preset))) && presets.live.steps.length === 1;
+  }));
+
+  console.log('show files');
+  const [showDownload] = await Promise.all([control.waitForEvent('download'), control.click('#save-show')]);
+  check('Save show to a file names it after the show', showDownload.suggestedFilename() === 'Dream machine.thirdeye-show.json', showDownload.suggestedFilename());
+  const showFile = JSON.parse(await readFile(await showDownload.path(), 'utf8'));
+  check('it holds the show, its tempo and only the presets it uses, with their ids', showFile.format === 'third-eye-cam-show' && showFile.name === 'Dream machine' && showFile.bpm === 140 && showFile.presets.length === 1 && typeof showFile.presets[0].id === 'string' && showFile.steps[0].preset === 0, JSON.stringify({ ...showFile, presets: showFile.presets.map((p) => p.name) }));
+  const changedFile = { ...showFile, name: 'From elsewhere', presets: [{ ...showFile.presets[0], name: 'Changed there' }, { id: 'zzznew1', name: 'Brand new', fade: null, scene: showFile.presets[0].scene }], steps: [...showFile.steps, { preset: 1, note: 'new one', fade: null }] };
+  const count0 = await mac(() => window.thirdEye.ui.presets.list.length);
+  control.once('dialog', (d) => d.dismiss());
+  await control.setInputFiles('#show-file', { name: 'x.thirdeye-show.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(changedFile)) });
+  check('opening one adds the show, live, with the presets new here', await settle(async () => (await liveName()) === 'From elsewhere' && (await mac(() => window.thirdEye.ui.presets.list.length)) === count0 + 1 && (await stepNames()).length === 2, 'opened'), `${await liveName()} ${await stepNames()}`);
+  check('a preset that differs is kept as ours when we say so', await mac(() => !window.thirdEye.ui.presets.list.some((p) => p.name === 'Changed there')));
+  await control.setInputFiles('#library-panel input[type=file]', { name: 'x.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(changedFile)) });
+  check('a show file given to Import presets says where it goes instead', await settle(async () => (await control.locator('#library-note').textContent()).includes('Show menu'), 'wrong door'), await control.locator('#library-note').textContent());
+
+  console.log('the backup folder');
+  // A stand-in for the folder Chrome would let the operator choose.
+  await mac(() => {
+    window.__files = {};
+    const dir = {
+      name: 'Show backups',
+      queryPermission: async () => window.__perm ?? 'granted',
+      requestPermission: async () => {
+        window.__perm = 'granted';
+        return 'granted';
+      },
+      getFileHandle: async (name) => ({
+        createWritable: async () => {
+          let text = '';
+          return { write: async (t) => (text += t), close: async () => (window.__files[name] = text) };
+        },
+      }),
+    };
+    window.showDirectoryPicker = async () => dir;
+    window.thirdEye.ui.backup.quietMs = 1500;
+  });
+  await control.click('#views button[data-view=setup]');
+  check('before a folder is chosen it says shows are not backed up', (await control.locator('#backup-state').textContent()).includes('not backed up'));
+  await control.click('#backup-choose');
+  check('choosing a folder writes the live show there at once', await settle(() => mac(() => !!window.__files['From elsewhere.thirdeye-show.json']), 'first write'), await mac(() => Object.keys(window.__files).join()));
+  check('and the panel says where and when', await settle(async () => (await control.locator('#backup-state').textContent()).includes('Backing up to Show backups. Last saved'), 'panel'), await control.locator('#backup-state').textContent());
+  await mac(() => {
+    const { presets } = window.thirdEye.ui;
+    presets.updateStep(0, { note: 'changed for the backup' });
+  });
+  check('a change is written after a quiet spell, over the same file', await settle(() => mac(() => (window.__files['From elsewhere.thirdeye-show.json'] ?? '').includes('changed for the backup')), 'rewritten'));
+  await mac(() => {
+    window.__perm = 'prompt';
+    window.thirdEye.ui.backup.state = 'ask';
+    window.thirdEye.ui.presets.updateStep(0, { note: 'waiting for a click' });
+  });
+  check('when Chrome wants an OK again the panel asks for it', await settle(async () => (await control.locator('#backup-allow').isVisible()) && (await control.locator('#backup-state').textContent()).includes('needs your OK'), 'ask'), await control.locator('#backup-state').textContent());
+  await control.click('#backup-allow');
+  check('and one click lets the waiting change through', await settle(() => mac(() => (window.__files['From elsewhere.thirdeye-show.json'] ?? '').includes('waiting for a click')), 'allowed'));
   await context.close();
 
   console.log('with no output window (/control makes the picture)');

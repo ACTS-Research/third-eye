@@ -110,7 +110,7 @@ try {
     const { store } = window.thirdEye;
     store.dispatch({ op: 'set', key: 'actions', value: store.state.actions.map((b) => (b.source === 'trig.3' ? { ...b, action: 'blackout' } : b)) });
   });
-  check('a trigger bound to something else comes back as a button', await settle(() => phone.evaluate(() => [...document.querySelectorAll('.trig')].filter((b) => !b.hidden).map((b) => b.textContent).join() === 'Glitch burst,Freeze frame,Blackout'), 'trigger 3'), (await phone.locator('.trig').allTextContents()).join(' | '));
+  check('a trigger bound to something else comes back as a button', await settle(() => phone.evaluate(() => [...document.querySelectorAll('.trig')].filter((b) => !b.hidden).map((b) => b.textContent).join() === 'Blink,Freeze frame,Blackout'), 'trigger 3'), (await phone.locator('.trig').allTextContents()).join(' | '));
   await mac(() => {
     const { store } = window.thirdEye;
     store.dispatch({ op: 'set', key: 'actions', value: store.state.actions.map((b) => (b.source === 'trig.3' ? { ...b, action: 'presetPrev' } : b)) });

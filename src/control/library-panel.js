@@ -1,4 +1,5 @@
-// Preset file handling and the default fade, on the setup screen.
+// Preset file handling, the default fade, and where the live show is backed
+// up, on the setup screen.
 
 import { exportPresets, missingFactory, parsePresetFile, resetPresets, savePresets } from '../shared/presets.js';
 import { el } from '../shared/util.js';
@@ -18,20 +19,11 @@ export function mountLibraryPanel(root, ui) {
       picker.value = '';
       if (!file) return;
       try {
-        const { presets: incoming, order } = parsePresetFile(await file.text());
+        const { presets: incoming, shows } = parsePresetFile(await file.text());
         presets.append(incoming);
-        let text = `Imported ${incoming.length} preset${incoming.length === 1 ? '' : 's'}. They are at the end of the strip.`;
-        // The file's running order comes too, but never over one you have
-        // without asking.
-        if (order.length) {
-          if (!presets.steps.length || confirm(`This file has a running order of ${order.length} steps. Replace yours with it?`)) {
-            presets.setSteps(order);
-            text += ` Its running order (${order.length} steps) is now yours.`;
-          } else {
-            text += ' Your running order was kept.';
-          }
-        }
-        note.textContent = text;
+        // Its shows are added beside yours; none replaces one, none goes live.
+        const added = shows.map((x) => presets.addShow(x, false).name);
+        note.textContent = `Imported ${incoming.length} preset${incoming.length === 1 ? '' : 's'}, at the end of the strip.${added.length ? ` Shows added: ${added.join(', ')} (in the Show menu).` : ''}`;
       } catch (err) {
         note.textContent = `Could not import: ${err.message}`;
       }
@@ -39,11 +31,38 @@ export function mountLibraryPanel(root, ui) {
   });
 
   function download() {
-    const blob = new Blob([exportPresets(presets.list, presets.steps)], { type: 'application/json' });
+    const blob = new Blob([exportPresets(presets.list, presets.showData)], { type: 'application/json' });
     const a = el('a', { href: URL.createObjectURL(blob), download: 'third-eye-presets.json' });
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
+
+  // ------------------------------------------------- the show backup ---
+  const { backup } = ui;
+  const backupText = el('div', { class: 'small keep-2', id: 'backup-state' });
+  const chooseFolder = el('button', { id: 'backup-choose', onclick: () => backup.choose() });
+  const allowFolder = el('button', { id: 'backup-allow', class: 'primary', text: 'Allow', title: 'Chrome asks once a session before the page may write to the folder', onclick: () => backup.allow() });
+  const forgetFolder = el('button', { id: 'backup-forget', text: 'Stop backing up', onclick: () => backup.forget() });
+  const time = (t) => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  function syncBackup() {
+    const b = backup;
+    chooseFolder.textContent = b.folder ? 'Choose another folder…' : 'Choose a backup folder…';
+    chooseFolder.hidden = b.state === 'unsupported';
+    allowFolder.hidden = b.state !== 'ask';
+    forgetFolder.hidden = !b.folder;
+    backupText.textContent =
+      b.state === 'unsupported'
+        ? 'This browser cannot keep files in a folder: save shows from the Show menu instead (Chrome can).'
+        : b.state === 'none'
+          ? 'Shows are not backed up yet. Choose a folder once; the live show is then kept there, one file per show, rewritten when it changes.'
+          : b.state === 'ask'
+            ? `Chrome needs your OK before writing to ${b.folder} again this session.${b.pending ? ' A change is waiting.' : ''}`
+            : b.state === 'error'
+              ? `Could not write to ${b.folder}: ${b.error}. Choose the folder again.`
+              : `Backing up to ${b.folder}.${b.savedAt ? ` Last saved ${time(b.savedAt)}: ${b.savedName}.` : ''}${b.pending ? ' A change will be saved shortly.' : ''}`;
+    ui.setAlert?.('backup', b.state === 'ask' && b.pending ? `Show backups are waiting: Chrome needs your OK to write to ${b.folder}.` : b.state === 'error' ? `Show backup failed: ${b.error}` : null, 'warn', ui.alertTo?.panel('library-panel', 'Go to Preset library'));
+  }
+  backup.onChange(syncBackup);
 
   const sync = () => {
     fade.set(store.state.globals.fadeTime);
@@ -73,7 +92,7 @@ export function mountLibraryPanel(root, ui) {
         el('button', {
           text: 'Restore factory set',
           onclick: () => {
-            if (!confirm('Replace every preset with the factory set? The running order is cleared too.')) return;
+            if (!confirm('Replace every preset with the factory set? Every show is cleared too.')) return;
             resetPresets();
             presets.reload();
             store.dispatch({ op: 'presetIndex', index: -1 });
@@ -84,9 +103,13 @@ export function mountLibraryPanel(root, ui) {
         picker,
       ]),
       el('div', { class: 'row' }, [el('span', { class: 'caps', text: 'Default fade' }), fade.node]),
+      el('h2', { text: 'Show backup' }),
+      el('div', { class: 'row wrap' }, [chooseFolder, allowFolder, forgetFolder]),
+      backupText,
       el('div', { class: 'dim small', text: 'Used by presets that have no fade time of their own. Name, fade and order are set per preset: use Edit on a preset, and drag tiles on the perform screen.' }),
       note,
     ]),
   );
   sync();
+  syncBackup();
 }

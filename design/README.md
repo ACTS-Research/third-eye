@@ -22,7 +22,7 @@ of the site; nothing here is deployed or tested.
 
 | `conn-warning/project/` | The warning when a network keeps the phone and the Mac apart (24 November, seventh session): `Main` A1 a solid strip, one line, only a square blinks; `Card` A2 a solid card hung from the phone readout with the steps numbered; `InPlace` A3 said on the starting screen beside the dimmed code; `Readout` four wordings for the phone readout (R1 use hotspot, R2 try hotspot, R3 blocked, R4 not connected). Built: A3 with A1 on the other screens, R1 | https://claude.ai/artifact/VZcGVCjo9WrBA3X3avZ1w7 |
 
-| `shows/project/` | Named shows, one preset library and several running orders (24 November): `Main` S1 a show menu at the head of the strip, opening upward; `Tabs` S2 a tab for each show and one for all presets; `Library` S3 shows made and kept in Setup, the strip naming the live one. Not yet chosen | https://claude.ai/artifact/UqABtQiTWntLoBmj77HSkH |
+| `shows/project/` | Named shows, one preset library and several running orders (24 November): `Main` S1 a show menu at the head of the strip, opening upward; `Tabs` S2 a tab for each show and one for all presets; `Library` S3 shows made and kept in Setup, the strip naming the live one; `Below` S1b, S1 with the Show menu in a row under the tiles. S1b was built, without the step count after the name | https://claude.ai/artifact/UqABtQiTWntLoBmj77HSkH |
 
 The `.dc.html` files are artboards for a claude.ai design canvas, with
 `canvas.json` saying where each sits. They do not render by themselves in a

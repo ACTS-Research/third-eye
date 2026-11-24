@@ -100,8 +100,8 @@ npm run preview
 
 | Screen | For |
 | --- | --- |
-| **Perform** | The show: panic buttons, the monitor, the inputs and the mix bar under it, eight faders for the live preset, and the strip of presets and the running order |
-| **Edit** | One preset. At the left the picture, with the effects chain as a row of buttons under it and the faders as the perform screen will show them. At the right five tabs: **Parameters** (the open effect's controls), **Faders**, **Modulation**, **LFOs** and **Glitch** |
+| **Perform** | The show: panic buttons, the monitor, the inputs and the mix bar under it, eight faders for the live preset, and the strip of presets and the live show, with the Show menu under it |
+| **Edit** | One preset. At the left the picture, with the effects chain as a row of buttons under it and the faders as the perform screen will show them. At the right five tabs: **Parameters** (the open effect's controls), **Faders**, **Modulation**, **LFOs** and **Blink** |
 | **Setup** | Everything done once beforehand: output window, inputs, pairing, MIDI, audio, vision, triggers, preset files. Each panel folds on a click of its title and stays as you left it; a browser that has never opened the app starts with only **Before the show** and **Phone** open |
 
 1. On the Mac open `/control` in Chrome. That is enough to play: the picture
@@ -308,7 +308,7 @@ to use the whole sensor.
 | --- | --- |
 | The preview | The picture the Mac shows. It is also the XY pad: a finger on the picture moves the dot, giving two modulation sources plus "pad touched" |
 | Triggers | Labelled with whatever action they are bound to. **Freeze** is a switch, as on the control page: tap to freeze, tap again to release, and the button stays lit meanwhile. A trigger bound to previous or next preset is left out: the preset buttons do that job |
-| The six buttons | With a running order on the Mac, its steps: the live one lit, the one Next would load dashed. A show of more than six steps moves through the buttons as it goes: they show the step before the live one, the live one (second button) and the four after it, each with its own step number, so the next step is always the third button. Without a running order, the first six presets, the live one lit; later presets are loaded from the Mac. Tap to load one |
+| The six buttons | With steps in the live show on the Mac, its steps: the live one lit, the one Next would load dashed. A show of more than six steps moves through the buttons as it goes: they show the step before the live one, the live one (second button) and the four after it, each with its own step number, so the next step is always the third button. With none, the first six presets, the live one lit; later presets are loaded from the Mac. Tap to load one |
 | The three icons | Flip between the front and rear camera; torch; lock the white balance. Torch and the lock are dimmed when the camera in use does not offer them (the front camera has no torch), so the row never changes shape |
 | Zoom | The bare bar down the right, when the camera offers zoom |
 | Rotate (the circling arrow, top right) | Turns the picture a quarter turn, on the Mac and in the preview, each time it is pressed |
@@ -464,8 +464,8 @@ They work in both `/control` and `/output` (not while typing in a text field).
 | `B` | Blackout (panic). Press again to return |
 | `Space` | Freeze frame: holds the current input frame; effects keep running on it |
 | `X` | Bypass all effects |
-| `G` | Glitch: throws the sliders the live preset has chosen and lets them come back; with none chosen, tears the picture for a moment |
-| `]` or `→` | Next step of the running order, with crossfade; next preset when there is no running order |
+| `G` | Blink: throws the sliders the live preset has chosen and lets them come back; with none chosen, tears the picture for a moment |
+| `]` or `→` | Next step of the live show, with crossfade; next preset when the show has no steps |
 | `[` or `←` | Previous step, or previous preset |
 | `1` | Input: iPhone |
 | `2` | Input: iPhone B (the second iPhone) |
@@ -673,18 +673,18 @@ numbered bar) or every 2, 1, ½ or ¼ beats (a half, quarter, eighth or
 sixteenth note); each says what it is when the pointer rests on it. The rate
 only counts while the LFO runs free; locked to the tempo it is dimmed.
 
-**Glitch.** `G`, the Glitch button and any trigger bound to Glitch do one
+**Blink.** `G`, the Blink button and any trigger bound to Blink do one
 thing, and each preset says what: a sudden move of sliders you choose, to
-places you choose, and back. It is set on the **Glitch** tab of the Edit
-screen.
+places you choose, and back. It is set on the **Blink** tab of the Edit
+screen. (Called Glitch until 24 November 2026: presets, triggers and MIDI mappings made before then carry over.)
 
-- **Capture a glitch.** Press it, then move any sliders, in any effect of
-  the preset, until the picture is the glitch you want; menus and switches
-  count too. Press **Save glitch**. Every control you moved becomes a jump
+- **Capture a blink.** Press it, then move any sliders, in any effect of
+  the preset, until the picture is the blink you want; menus and switches
+  count too. Press **Save blink**. Every control you moved becomes a jump
   (a slider nudged by less than a hundredth of its bar is left out) (where
   it is → where you left it) and all of them go back to where they were.
   **Cancel** puts them back and keeps nothing. Nothing is saved into the
-  preset while you are capturing. **Recapture** starts from the glitch
+  preset while you are capturing. **Recapture** starts from the blink
   as it stands.
 - Point at **attack**, **release** or **scatter** for a line on what it
   does. **attack** is how long the sliders take to get there (0 to start with:
@@ -701,14 +701,14 @@ screen.
   no jump shows nothing.
 - A slider that modulation is moving can jump too: it leaves from wherever
   it is at that moment.
-- A preset with no jumps keeps the old Glitch: the picture tears into
+- A preset with no jumps keeps the old Blink: the picture tears into
   shifted bands for under half a second.
 
 **Triggers.** Any source rising through its halfway point can fire an action:
-blackout, freeze, bypass, next / previous preset, next input, glitch burst.
+blackout, freeze, bypass, next / previous preset, next input, blink.
 With **hold** ticked, blackout / freeze / bypass stay on only while the
 trigger is held. (Hold settings saved before 13 November 2026 are no longer
-read: every trigger is a switch until you tick hold for it again.) Defaults: phone buttons 1–4 are glitch, freeze (a switch,
+read: every trigger is a switch until you tick hold for it again.) Defaults: phone buttons 1–4 are blink, freeze (a switch,
 as on the control page: tap on, tap off, and the phone's button stays lit),
 previous preset, next preset. Triggers are global; they do not change with
 presets, so "next preset" keeps working whatever preset you land on.
@@ -735,31 +735,52 @@ any factory preset that is no longer in your list (as it was made; nothing
 of yours is changed; it is also how a browser that already had the app gets
 factory presets added later, such as **Time wake** and **Relief** of
 24 November 2026), and **Import presets** imports such files (added at the end;
-unknown effects are dropped and out-of-range values clamped). Presets live in
-the browser's local storage; export them to keep a copy.
+unknown effects are dropped and out-of-range values clamped; the file's shows
+are added beside yours). Presets live in the browser's local storage; export
+them, or back up your shows (below), to keep a copy.
 
-**The running order** is a list of steps for a show. Each step points at a
-preset, so one preset can come round as often as the show needs, and editing
-the preset changes every step that uses it. It is optional: with no steps the
-strip is the plain preset strip and none of this applies.
+**Shows.** A show is a name, a tempo and a list of steps. Each step points
+at a preset, so one preset can come round as often as the show needs, and
+can be in several shows; editing the preset changes every step that uses it.
+One show is live: its steps are what Next and Prev walk. (Before 24 November
+2026 there was one list of steps, "the running order"; it became the first
+show, "My show".) A show with no steps leaves the strip the plain preset
+strip, and Next and Prev walk the presets.
 
+- **Choose a show.** Under the tiles, **Show: name** opens the Show menu
+  (upward): your shows, the live one marked; **+ New show** (empty, with the
+  tempo as it is), **Rename…**, **Duplicate**, **Delete…** (it asks; the
+  presets are kept; your only show is emptied instead), **Save show to a
+  file…** and **Open a show file…**. Choosing a show makes it live from its
+  first step and sets its tempo.
 - **Build it.** On a preset tile, **+** adds that preset to the end of the
-  running order. From the first step on, the strip has a switch: **Running
-  order** and **All presets**.
-- **Arrange it.** In Running order, drag a step to move it and **×** to take it
-  out (the preset is kept). **Note** opens the step's note (a line of text
-  shown on the tile) and a fade time of its own; left blank, the step uses
-  its preset's.
+  live show. The head of the strip has the show's name (its steps) and
+  **All presets**.
+- **Arrange it.** On the show's steps, drag a step to move it and **×** to
+  take it out (the preset is kept). **Note** opens the step's note (a line of
+  text shown on the tile) and a fade time of its own; left blank, the step
+  uses its preset's.
 - **Play it.** **Next** and **Prev** (`]` and `[`, a MIDI pad, a phone trigger)
   walk the steps and stop at either end. The live step is lit and the one
   Next will load has a dashed outline; the line at the right of the strip
   says the same in words, with the next step's note.
 - **Leave it and come back.** Load any preset by hand (from All presets, a
-  MIDI pad, or the Edit screen) and the running order keeps its place: the
-  step you left is marked **Return**, and Next or Prev goes back to it.
-- **Keep it.** There is one running order. It lives in the browser's local
-  storage beside the presets, and **Export presets** writes it into the same
-  file. Importing a file that has one asks before replacing yours.
+  MIDI pad, or the Edit screen) and the show keeps its place: the step you
+  left is marked **Return**, and Next or Prev goes back to it.
+- **Its tempo.** A show remembers the tempo: tap or type one while it is
+  live and it is that show's.
+- **Show files.** **Save show to a file…** downloads one file holding the
+  show and only the presets it uses, named after the show. **Open a show
+  file…** adds the show, live, and any of its presets you do not have. A
+  preset you have that the file has changed is asked about once: keep yours
+  or take the file's.
+- **Backup.** **Setup → Preset library → Choose a backup folder…**: choose a
+  folder once (Chrome). The live show is then kept there as one file per
+  show, named after it, rewritten about half a minute after it last changed
+  (its steps, its tempo, or a preset it uses). In a new session Chrome may
+  want your OK before the page writes there again: **Allow** in that panel,
+  or in Before the show. Before the show says whether shows are backed up.
+  **Export presets** still writes every preset and every show to one file.
 
 **Tempo.** Tap `T` (or the **Tap** button, or a MIDI pad mapped to it) in
 time, at least twice; the last eight taps are averaged, and the button blinks
@@ -796,7 +817,7 @@ that can be mapped is outlined:
 - the panic buttons, the source icons of inputs A and B and the nine mix
   modes (all shown while map mode is on, or open), previous / next preset
 - every preset tile (a pad per preset; the pad stays with the slot) and every
-  step of the running order (a pad per step number)
+  step of the live show (a pad per step number)
 - the eight perform faders (the knob moves the parameter itself, so the
   on-screen fader follows the hardware, whatever preset is live)
 - any effect parameter: on the Edit screen, touch its slider
@@ -1089,11 +1110,11 @@ npm test
 | `tests/phone.mjs` | Real WebRTC against a local PeerServer: pairing, live video, palette and dimmer following live, the room-code strip clearing once the phone pairs, hold on stall, every reconnect path, a second output window, a taken room code, Restart output, local camera |
 | `tests/record-latency.mjs` | Recording to WebM and MP4, saving and deleting; the latency measurement, including a stray late flash; switching codec |
 | `tests/phone-screen.mjs` | The phone's live screen in both layouts: the horizontal preview that is also the XY pad, triggers, six presets numbered across then down, the camera icons, the bare zoom bar, Freeze as a switch (including two quick taps and a session saved with the old hold setting), Rotate, upright frames staying upright on the Mac, messages that leave the preview alone, Reconnect, the remembered room, scanning the Mac's code inside the page |
-| `tests/running-order.mjs` | The running order: building it with +, Next and Prev, the same preset twice, going off the list and returning, notes and fades, dragging and removing steps, deleting a preset that steps use, the phone's six buttons following it, the export file, stepping with `/control` closed and with no output window |
+| `tests/running-order.mjs` | Shows: building one with +, Next and Prev, the same preset twice, going off the list and returning, notes and fades, dragging and removing steps, deleting a preset that steps use, the phone's six buttons following it, the export file, stepping with `/control` closed and with no output window; several shows from the Show menu (new, rename, duplicate, delete), each with its tempo, show files in and out, and the backup to a folder (a stand-in folder) |
 | `tests/reconnect.mjs` | Getting the phone back without closing its page: a Mac that stops answering, a Mac reload, scanning that stops when the link returns, the ordinary pairing code read inside the page, a changed room code, Reconnect by hand |
 | `tests/output-preview.mjs` | The phone's preview showing the Mac's finished picture: the setting, the picture following Blackout, Rotate not applied twice, the camera taking over while a code is read, a Mac reload, switching back; torch and white-balance lock dimmed on a camera without them |
 | `tests/edit-screen.mjs` | The edit screen's own controls: the bar slider (click, typed value, double-click reset), the app's menus by mouse and keyboard without the page's shortcuts firing, a menu whose button scrolls into view, the chain row (add, drag, remove, bypass), modulation boxes and their extra settings, LFOs, autosave, a narrow window |
-| `tests/glitch.mjs` | Glitch: the tab, tearing when a preset has no jumps, capturing (Keep, Cancel, nothing saved meanwhile, a capture left open), the pointer on a slider's bar (shown, dragged, removed), firing it with attack and release, hold by key and by button, scatter |
+| `tests/glitch.mjs` | Blink (called Glitch until 24 November 2026; still `glitch` in the code): the tab, tearing when a preset has no jumps, capturing (Keep, Cancel, nothing saved meanwhile, a capture left open), the pointer on a slider's bar (shown, dragged, removed), firing it with attack and release, hold by key and by button, scatter |
 | `tests/blocked.mjs` | A network that keeps devices apart: a phone whose links cannot open while the pairing server works; the Mac's alert, readout and starting-screen line, the phone's band, both naming the hotspot as the way out; pairing by itself once the links can open |
 | `tests/mix.mjs` | Input B and Mix B: the strip under the picture (uncropped small views, source icons that slide out, looking at a source without choosing it, tooltips and the mode grid opening upward), the bar adding Mix B on its first drag, the nine modes on both screens, A and B trading places, B off passing A through, the iPhone as B, B carrying on when the picture moves to `/control` |
 | `tests/two-phones.mjs` | A second iPhone: its tab and room code, pairing beside the first without disturbing it, the Phone B readout, iPhone B as input A or B with both live, its sensors as their own sources, its triggers and preset buttons, both phones following the picture to `/control`, one dropping alone, Stop using iPhone B |

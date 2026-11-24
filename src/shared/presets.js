@@ -1,18 +1,24 @@
 // Presets: named scenes in localStorage, shared by /control and /output so a
 // trigger on the phone can step through them even with /control closed.
 //
-// The running order sits beside them: a list of steps, each pointing at a
-// preset, so one preset can be used several times in a show. With no steps
-// the app behaves as if the running order did not exist.
+// Shows sit beside them (24 November 2026): each a name, a tempo and a list
+// of steps, each step pointing at a preset, so one preset can be used several
+// times in a show and in several shows. One show is live; its steps are what
+// Next and Prev walk ("the running order" before shows existed). With no
+// steps in the live show the app behaves as if there were none.
 
 import { factoryPresets } from './factory-presets.js';
 import { sanitizeScene, sceneOf } from './state.js';
 import { readJSON, uid, writeJSON } from './util.js';
 
 export const PRESETS_KEY = 'thirdeye.presets.v1';
-export const ORDER_KEY = 'thirdeye.order.v1';
+export const SHOWS_KEY = 'thirdeye.shows.v1';
+// The single running order kept before shows; read once, into the first show.
+const ORDER_KEY = 'thirdeye.order.v1';
 const KEY = PRESETS_KEY;
 const FILE_TAG = 'third-eye-cam-presets';
+const SHOW_TAG = 'third-eye-cam-show';
+export const MAX_SHOW_NAME = 40;
 
 export const MAX_FADE = 30;
 export const MAX_NOTE = 80;
@@ -76,7 +82,7 @@ export function missingFactory(list = loadPresets()) {
 
 export function resetPresets() {
   savePresets(factory());
-  saveOrder([]);
+  saveShows(firstShows([]));
 }
 
 // Loads a preset into the live state, crossfading over the preset's own
@@ -98,21 +104,73 @@ export function snapshotPreset(store, name, fade = null) {
   return { id: uid() + uid().slice(0, 2), name, fade, scene: sceneOf(store.state) };
 }
 
-// --------------------------------------------------------- running order ---
+// ------------------------------------------------------------------ shows ---
 
 // A step: { preset (a preset's id), note, fade (seconds; null = the
 // preset's own) }. Steps whose preset no longer exists are left out.
-export function loadOrder(presets = loadPresets()) {
-  const stored = readJSON(ORDER_KEY, null);
-  const steps = Array.isArray(stored?.steps) ? stored.steps : [];
-  const known = new Set(presets.map((p) => p.id));
-  return steps
+function cleanSteps(steps, known) {
+  return (Array.isArray(steps) ? steps : [])
     .filter((s) => s && typeof s === 'object' && known.has(s.preset))
     .map((s) => ({ preset: s.preset, note: String(s.note ?? '').slice(0, MAX_NOTE), fade: cleanFade(s.fade) }));
 }
 
+const cleanBpm = (value) => {
+  const bpm = Number(value);
+  return value !== null && value !== undefined && value !== '' && Number.isFinite(bpm) ? Math.min(300, Math.max(30, bpm)) : null;
+};
+
+export const cleanShowName = (name, fallback = 'Untitled show') => String(name ?? '').trim().slice(0, MAX_SHOW_NAME) || fallback;
+
+// The shows a browser starts with: one, holding the running order it had.
+// The id is fixed so every window agrees on it before anything is saved.
+function firstShows(steps) {
+  return { live: 'show1', shows: [{ id: 'show1', name: 'My show', bpm: null, steps }] };
+}
+
+// { live (a show's id), shows: [{ id, name, bpm (null: leave the tempo
+// alone), steps }] }. There is always at least one show.
+export function loadShows(presets = loadPresets()) {
+  let data = readJSON(SHOWS_KEY, null);
+  if (!data || !Array.isArray(data.shows) || !data.shows.some((x) => x && typeof x === 'object')) {
+    const old = readJSON(ORDER_KEY, null);
+    data = firstShows(Array.isArray(old?.steps) ? old.steps : []);
+  }
+  const known = new Set(presets.map((p) => p.id));
+  const seen = new Set();
+  let minted = false;
+  const shows = data.shows
+    .filter((x) => x && typeof x === 'object')
+    .map((x) => {
+      let id = typeof x.id === 'string' && /^[a-z0-9]{3,16}$/.test(x.id) && !seen.has(x.id) ? x.id : '';
+      if (!id) {
+        do id = uid();
+        while (id.length < 3 || seen.has(id));
+        minted = true;
+      }
+      seen.add(id);
+      return { id, name: cleanShowName(x.name), bpm: cleanBpm(x.bpm), steps: cleanSteps(x.steps, known) };
+    });
+  const live = shows.some((x) => x.id === data.live) ? data.live : shows[0].id;
+  const out = { live, shows };
+  if (minted) saveShows(out);
+  return out;
+}
+
+export function saveShows(data) {
+  writeJSON(SHOWS_KEY, { live: data.live, shows: data.shows });
+}
+
+export const liveShow = (data) => data.shows.find((x) => x.id === data.live) ?? data.shows[0];
+
+// The live show's steps: what Next and Prev walk.
+export function loadOrder(presets = loadPresets()) {
+  return liveShow(loadShows(presets)).steps;
+}
+
 export function saveOrder(steps) {
-  writeJSON(ORDER_KEY, { steps });
+  const data = loadShows();
+  liveShow(data).steps = steps;
+  saveShows(data);
 }
 
 // Where the running order stands, for anything that draws it: the steps with
@@ -153,29 +211,66 @@ export function stepShow(store, direction) {
 
 // ------------------------------------------------------------------ files ---
 
-// The file holds the presets and, when there is one, the running order. Its
-// steps point at presets by their place in the file, so the file means the
-// same thing in any browser.
-export function exportPresets(list, steps = []) {
-  const order = steps
-    .map((s) => ({ preset: list.findIndex((p) => p.id === s.preset), note: s.note, fade: s.fade }))
-    .filter((s) => s.preset >= 0);
+// Steps for a file: each points at a preset by its place in the file's list,
+// so the file means the same thing in any browser.
+const stepsOut = (steps, list) =>
+  steps.map((s) => ({ preset: list.findIndex((p) => p.id === s.preset), note: s.note, fade: s.fade })).filter((s) => s.preset >= 0);
+
+// Steps read from a file, pointing at `presets` (cleaned from `usable`,
+// which `list`, the file's own list, holds).
+const stepsIn = (steps, list, usable, presets) =>
+  (Array.isArray(steps) ? steps : [])
+    .filter((s) => s && typeof s === 'object' && list[s.preset] && usable.includes(list[s.preset]))
+    .map((s) => ({ preset: presets[usable.indexOf(list[s.preset])].id, note: String(s.note ?? '').slice(0, MAX_NOTE), fade: cleanFade(s.fade) }));
+
+// The library file: every preset and every show. (`order`, the live show's
+// steps, is kept for a browser from before shows.)
+export function exportPresets(list, shows = null) {
   const presets = list.map(({ name, fade, scene }) => ({ name, fade, scene }));
-  return JSON.stringify({ format: FILE_TAG, version: 1, presets, ...(order.length ? { order } : {}) }, null, 2);
+  const live = shows ? liveShow(shows) : null;
+  const order = live ? stepsOut(live.steps, list) : [];
+  const showsOut = shows ? shows.shows.map((x) => ({ name: x.name, bpm: x.bpm, steps: stepsOut(x.steps, list) })) : [];
+  return JSON.stringify({ format: FILE_TAG, version: 2, presets, ...(order.length ? { order } : {}), ...(showsOut.length ? { shows: showsOut } : {}) }, null, 2);
 }
 
-// Accepts an export file or a bare array of presets. Throws on anything else.
+// Accepts a library file or a bare array of presets. Throws on anything else.
 // The presets come back with new ids (they are added to what is here), and
-// the file's running order, if it has one, pointing at those.
+// the file's shows pointing at those. A file from before shows, with a
+// running order, gives one show of it.
 export function parsePresetFile(text) {
   const data = JSON.parse(text);
+  if (data?.format === SHOW_TAG) throw new Error('This is a show file: open it from the Show menu under the presets.');
   const list = Array.isArray(data) ? data : data?.presets;
   if (!Array.isArray(list)) throw new Error('This file does not contain presets.');
   const usable = list.filter((p) => p && typeof p === 'object' && p.scene);
   const { presets } = clean(usable, true);
   if (!presets.length) throw new Error('No usable presets in this file.');
-  const order = (Array.isArray(data?.order) ? data.order : [])
-    .filter((s) => s && typeof s === 'object' && list[s.preset] && usable.includes(list[s.preset]))
-    .map((s) => ({ preset: presets[usable.indexOf(list[s.preset])].id, note: String(s.note ?? '').slice(0, MAX_NOTE), fade: cleanFade(s.fade) }));
-  return { presets, order };
+  let shows = (Array.isArray(data?.shows) ? data.shows : [])
+    .filter((x) => x && typeof x === 'object')
+    .map((x) => ({ name: cleanShowName(x.name), bpm: cleanBpm(x.bpm), steps: stepsIn(x.steps, list, usable, presets) }));
+  if (!shows.length && Array.isArray(data?.order) && data.order.length) {
+    shows = [{ name: 'Imported show', bpm: null, steps: stepsIn(data.order, list, usable, presets) }];
+  }
+  return { presets, shows: shows.filter((x) => x.steps.length) };
 }
+
+// A show file: one show and the presets it uses, with their ids, so that
+// opening it where those presets already are finds them.
+export function exportShow(show, list) {
+  const used = [...new Set(show.steps.map((s) => s.preset))].map((id) => list.find((p) => p.id === id)).filter(Boolean);
+  return JSON.stringify({ format: SHOW_TAG, version: 1, name: show.name, bpm: show.bpm, steps: stepsOut(show.steps, used), presets: used.map(({ id, name, fade, scene }) => ({ id, name, fade, scene })) }, null, 2);
+}
+
+// { name, bpm, steps (pointing at the presets' ids), presets (keeping the
+// ids the file gives, where it gives one) }. Throws on anything else.
+export function parseShowFile(text) {
+  const data = JSON.parse(text);
+  if (data?.format !== SHOW_TAG) throw new Error(data?.format === FILE_TAG ? 'This is a preset library file: import it under Setup → Preset library.' : 'This is not a show file.');
+  const list = Array.isArray(data.presets) ? data.presets : [];
+  const usable = list.filter((p) => p && typeof p === 'object' && p.scene);
+  const { presets } = clean(usable);
+  return { name: cleanShowName(data.name), bpm: cleanBpm(data.bpm), steps: stepsIn(data.steps, list, usable, presets), presets };
+}
+
+// The name a show's file is saved under.
+export const showFileName = (name) => `${cleanShowName(name).replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim() || 'Show'}.thirdeye-show.json`;

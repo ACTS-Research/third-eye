@@ -114,7 +114,7 @@ try {
   check('pad release clears the gate, keeps the position', (await settle(async () => (await source('pad.touch')) === 0, 'pad up')) && Math.abs((await source('pad.x')) - 0.8) < 0.03);
 
   const labels = await phone.locator('.trig').allTextContents();
-  check('trigger buttons are labelled with their actions', labels[0] === 'Glitch burst' && labels[3] === 'Next preset', labels.join(' | '));
+  check('trigger buttons are labelled with their actions', labels[0] === 'Blink' && labels[3] === 'Next preset', labels.join(' | '));
   check('the two preset-stepping triggers give way to the preset row', await settle(() => phone.evaluate(() => [...document.querySelectorAll('.trig')].map((b) => b.hidden).join() === 'false,false,true,true' && document.querySelectorAll('.preset:not(:disabled)').length === 6), 'preset bank'));
 
   console.log('mappings');

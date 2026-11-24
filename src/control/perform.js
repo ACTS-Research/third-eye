@@ -34,7 +34,7 @@ export function mountPerform(root, ui) {
   // Glitch fires as the button goes down and is told when it comes up, so a
   // glitch set to hold lasts as long as the press. (A press from the
   // keyboard is a click with no pointer: down and up at once.)
-  const glitch = el('button', { class: 'big', 'data-midi': 'glitch' }, [el('span', { text: 'G' }), el('b', { text: 'Glitch' })]);
+  const glitch = el('button', { class: 'big', 'data-midi': 'glitch' }, [el('span', { text: 'G' }), el('b', { text: 'Blink' })]);
   pressGlitch(store, glitch);
   // Tap tempo: the button blinks on the beat; the field takes a typed BPM.
   const bpm = el('input', {

@@ -143,7 +143,7 @@ try {
 
   console.log('LFOs');
   await control.locator('.tabs button[data-tab=lfos]').click();
-  check('the LFOs have a tab of their own, the fourth of five', (await control.locator('.tabs button').allTextContents()).join('|') === 'Parameters|Faders · 0|Modulation · 3|LFOs|Glitch' && (await control.locator('#lfo-panel .lfo').count()) === 4 && (await control.locator('#lfo-panel .lfo').first().isVisible()));
+  check('the LFOs have a tab of their own, the fourth of five', (await control.locator('.tabs button').allTextContents()).join('|') === 'Parameters|Faders · 0|Modulation · 3|LFOs|Blink' && (await control.locator('#lfo-panel .lfo').count()) === 4 && (await control.locator('#lfo-panel .lfo').first().isVisible()));
   const lfo = control.locator('#lfo-panel .lfo').first();
   check('shape is a row of six small pictures, the current one marked', (await lfo.locator('.choice.shape button').count()) === 6 && (await lfo.locator('.choice.shape button svg path').count()) === 6 && (await lfo.locator('.choice.shape button[aria-checked=true]').getAttribute('title')) === 'Sine');
   await lfo.locator('.choice.shape button[data-value="square"]').click();

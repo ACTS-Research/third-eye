@@ -157,7 +157,7 @@ export function bar({ min, max, step = 0.01, value = min, label = '', id, reset,
   let landing = null;
   let jumpTell = null;
   function makeJump() {
-    notch = el('span', { class: 'jump-notch', title: 'Glitch throws this slider here. Drag to move it; double-click to remove it.' });
+    notch = el('span', { class: 'jump-notch', title: 'Blink throws this slider here. Drag to move it; double-click to remove it.' });
     landing = el('span', { class: 'jump-to' });
     const at = (e) => {
       const r = input.getBoundingClientRect();

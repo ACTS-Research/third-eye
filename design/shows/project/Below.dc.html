@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S1b Show menu below the presets</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#060303}
+button{font-family:'JetBrains Mono',monospace;cursor:pointer}
+.mi:hover{background:#1c0c0b}
+</style>
+</helmet>
+<div style="width: 1440px; height: 560px; position: relative; overflow: hidden; background: #060303; color: #ff6b5e; font-family: 'JetBrains Mono', monospace; font-size: 13px; box-sizing: border-box">
+  <div style="position: absolute; left: 0; top: 0; right: 0; height: 200px; background: #000; display: flex; align-items: center; justify-content: center; color: #5b2622; font-size: 12px; letter-spacing: 0.1em">THE PICTURE</div>
+  <div style="position: absolute; left: 0; right: 0; top: 200px; bottom: 0; border-top: 1px solid #5b2622; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box">
+    <div style="display: flex; align-items: center; gap: 8px">
+      <button onClick="{{toOrder}}" style="{{orderStyle}}">{{showName}}</button>
+      <button onClick="{{toAll}}" style="{{allStyle}}">ALL PRESETS</button>
+      <button style="background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 5px 10px">[ PREV</button>
+      <button style="background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 5px 10px">NEXT ]</button>
+      <span style="margin-left: auto; color: #cd564c; font-size: 12px">{{status}}</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 8px">
+      <sc-for list="{{tiles}}" as="t" hint-placeholder-count="6">
+        <div style="{{t.style}}">
+          <span style="font: 800 40px/0.9 'Big Shoulders Display', sans-serif">{{t.num}}</span>
+          <span style="display: flex; flex-direction: column; gap: 2px">
+            <sc-if value="{{t.tag}}" hint-placeholder-val="{{false}}"><span style="font-size: 10px; font-weight: 700">{{t.tag}}</span></sc-if>
+            <span style="text-transform: uppercase; letter-spacing: 0.06em">{{t.name}}</span>
+          </span>
+          <sc-if value="{{t.mark}}" hint-placeholder-val="{{false}}"><span style="position: absolute; top: 8px; right: 8px; font-size: 10px; border: 1px solid currentColor; padding: 0 4px">IN SHOW</span></sc-if>
+        </div>
+      </sc-for>
+    </div>
+    <div style="margin-top: auto; display: flex; align-items: center; gap: 12px; border-top: 1px solid #5b2622; padding-top: 10px">
+      <button onClick="{{toggle}}" style="background: transparent; color: #ff6b5e; border: 1px solid #ff6b5e; padding: 5px 10px; letter-spacing: 0.08em; text-transform: uppercase">Show: {{showName}} ▴</button>
+      <button style="background: transparent; color: #cd564c; border: 0; padding: 5px 4px; font-size: 12px">Save show to a file…</button>
+      <span style="margin-left: auto; font-size: 12px; color: #cd564c">S1b · the show is chosen at the foot of the strip, out of the way; the head of the strip names the show and walks its steps</span>
+    </div>
+  </div>
+  <sc-if value="{{open}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; left: 12px; bottom: 56px; width: 330px; background: #060303; border: 1px solid #ff6b5e; padding: 6px; display: flex; flex-direction: column; z-index: 3">
+      <div style="font-size: 11px; color: #cd564c; padding: 4px 8px; letter-spacing: 0.08em">SHOWS</div>
+      <sc-for list="{{shows}}" as="s" hint-placeholder-count="3">
+        <button class="mi" onClick="{{s.pick}}" style="display: flex; justify-content: space-between; text-align: left; background: transparent; color: #ff6b5e; border: 0; padding: 7px 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em"><span>{{s.check}} {{s.name}}</span><span style="color: #cd564c">{{s.n}} steps</span></button>
+      </sc-for>
+      <div style="height: 1px; background: #5b2622; margin: 6px 0"></div>
+      <button class="mi" style="text-align: left; background: transparent; color: #ff6b5e; border: 0; padding: 7px 8px; font-size: 13px">+ New show</button>
+      <button class="mi" style="text-align: left; background: transparent; color: #ff6b5e; border: 0; padding: 7px 8px; font-size: 13px">Rename · Duplicate · Delete</button>
+      <div style="height: 1px; background: #5b2622; margin: 6px 0"></div>
+      <button class="mi" style="text-align: left; background: transparent; color: #ff6b5e; border: 0; padding: 7px 8px; font-size: 13px">Save show to a file…</button>
+      <button class="mi" style="text-align: left; background: transparent; color: #ff6b5e; border: 0; padding: 7px 8px; font-size: 13px">Open a show file…</button>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":560}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { open: false, show: 0, view: 'order' }; }
+  renderVals() {
+    const PRESETS = ['Clean', 'Tunnel', 'Kaleido', 'Thermal trails', 'Slit-scan', 'Neon edges', 'Liquid', 'Poster', 'Horizon lock'];
+    const SHOWS = [
+      { name: 'Dream machine', steps: ['Clean', 'Time wake', 'Relief', 'Tunnel', 'Relief', 'Clean'] },
+      { name: 'Tunnel piece', steps: ['Tunnel', 'Kaleido', 'Liquid', 'Tunnel'] },
+      { name: 'Studio test', steps: ['Clean', 'Neon edges', 'Poster'] },
+    ];
+    const show = SHOWS[this.state.show];
+    const base = 'position: relative; min-height: 92px; border: 1px solid #ff6b5e; display: flex; flex-direction: column; justify-content: space-between; padding: 8px 10px; box-sizing: border-box;';
+    const on = base + ' background: #ff6b5e; color: #140302;';
+    const next = base + ' border: 2px dashed #ff6b5e; padding: 7px 9px;';
+    const tiles = this.state.view === 'order'
+      ? show.steps.map((name, i) => ({ num: String(i + 1), name, tag: i === 2 ? 'Next' : '', mark: false, style: i === 1 ? on : i === 2 ? next : base }))
+      : PRESETS.map((name, i) => ({ num: String(i + 1), name, tag: '', mark: show.steps.includes(name), style: base }));
+    const btn = (onIt) => (onIt ? 'background: #ff6b5e; color: #140302; border: 1px solid #ff6b5e; padding: 5px 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase' : 'background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 5px 10px; letter-spacing: 0.06em; text-transform: uppercase');
+    return {
+      open: this.state.open,
+      showName: show.name,
+      count: show.steps.length,
+      tiles,
+      status: this.state.view === 'order' ? `Next: 3 ${show.steps[2] ?? ''}` : 'All presets: + adds one to this show',
+      orderStyle: btn(this.state.view === 'order'),
+      allStyle: btn(this.state.view === 'all'),
+      toggle: () => this.setState({ open: !this.state.open }),
+      toOrder: () => this.setState({ view: 'order' }),
+      toAll: () => this.setState({ view: 'all' }),
+      shows: SHOWS.map((s, i) => ({ name: s.name, n: s.steps.length, check: i === this.state.show ? '●' : '○', pick: () => this.setState({ show: i, open: false }) })),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -9,7 +9,7 @@ import { AudioInput } from './audio.js';
 import { LocalCamera } from './camera.js';
 import { MidiInput } from './midi.js';
 import { TOGGLE_ACTIONS, describeAction } from '../shared/actions.js';
-import { ORDER_KEY, PRESETS_KEY, applyPreset, applyStep, loadPresets, orderView } from '../shared/presets.js';
+import { PRESETS_KEY, SHOWS_KEY, applyPreset, applyStep, loadPresets, orderView } from '../shared/presets.js';
 import { paramUnit } from '../effects/index.js';
 import { macroUnit, resolveMacros } from '../shared/macros.js';
 import { randomRoom, roomB } from '../shared/net.js';
@@ -171,7 +171,7 @@ export class Engine {
     window.addEventListener('storage', (e) => {
       if (e.key === LOOK_KEYS.palette || e.key === LOOK_KEYS.dim) this.sendLook();
       // Presets edited in /control (another window): the phone's row follows.
-      else if (e.key === PRESETS_KEY || e.key === ORDER_KEY) this.sendPresets();
+      else if (e.key === PRESETS_KEY || e.key === SHOWS_KEY) this.sendPresets();
     });
     // The finished picture, small, for a phone that asks to see it.
     this.returnFeed = new ReturnFeed(canvas);

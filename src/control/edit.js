@@ -182,7 +182,7 @@ export function mountEdit(root, ui) {
   const captureBand = el('div', { id: 'glitch-band', hidden: true });
   const tabButtons = {};
   const tabBar = el('div', { class: 'tabs', role: 'group', 'aria-label': 'What to edit' });
-  for (const [id, text] of [['params', 'Parameters'], ['faders', 'Faders'], ['mods', 'Modulation'], ['lfos', 'LFOs'], ['glitch', 'Glitch']]) {
+  for (const [id, text] of [['params', 'Parameters'], ['faders', 'Faders'], ['mods', 'Modulation'], ['lfos', 'LFOs'], ['glitch', 'Blink']]) {
     tabButtons[id] = el('button', { 'data-tab': id, text, onclick: () => ui.setEditTab(id) });
     tabBar.append(tabButtons[id]);
   }

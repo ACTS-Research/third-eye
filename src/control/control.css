@@ -204,6 +204,15 @@ main { flex: 1; min-height: 0; }
 .strip { grid-column: 1 / -1; border-top: 1px solid var(--line); padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; }
 .strip-head { display: flex; align-items: center; gap: 8px; }
 .strip-head button { position: relative; }
+/* Under the tiles: the Show menu (it opens upward, there being no room
+   below) and saving the show to a file. */
+.strip-foot { display: flex; align-items: center; gap: 12px; padding-top: 8px; border-top: 1px solid var(--line); min-width: 0; }
+.strip-foot .show-menu { text-transform: uppercase; letter-spacing: 0.08em; border-color: var(--ink); max-width: 40%; }
+.strip-foot .show-menu .menu-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.strip-foot button.link { border: 0; background: none; padding: 4px; color: var(--soft); font-size: 12px; text-transform: none; letter-spacing: 0; }
+.strip-foot button.link:hover { color: var(--ink); text-decoration: underline; }
+#show-note { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: none; letter-spacing: 0; }
+#strip-order { max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 8px; max-height: 204px; overflow: auto; padding: 2px; }
 .tile { position: relative; min-height: 92px; border: 1px solid var(--ink); display: flex; border-radius: 2px; }
 .tile .load { flex: 1; border: 0; background: none; color: inherit; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; padding: 8px 10px; white-space: normal; }

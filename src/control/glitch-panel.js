@@ -119,12 +119,12 @@ export function mountGlitch(pane, band, ui) {
     ui.setEditTab('params');
   }
 
-  const keep = el('button', { class: 'primary', id: 'glitch-keep', text: 'Save glitch', onclick: () => finish(true) });
+  const keep = el('button', { class: 'primary', id: 'glitch-keep', text: 'Save blink', onclick: () => finish(true) });
   const cancel = el('button', { text: 'Cancel', id: 'glitch-cancel', onclick: () => finish(false) });
   band.className = 'capture-band';
   band.append(
-    el('b', { text: 'Glitch settings' }),
-    el('div', { class: 'small', text: 'Move the sliders to create the glitch effect.' }),
+    el('b', { text: 'Blink settings' }),
+    el('div', { class: 'small', text: 'Move the sliders to make the blink.' }),
     el('div', { class: 'row' }, [keep, cancel]),
   );
   function showBand() {
@@ -135,7 +135,7 @@ export function mountGlitch(pane, band, ui) {
 
   // -------------------------------------------------------------- the tab ---
   const capture = el('button', { class: 'primary', id: 'glitch-capture', onclick: start });
-  const tryIt = el('button', { id: 'glitch-try', text: 'Try it · G', title: 'Fires Glitch, as the G key and the Glitch button do' });
+  const tryIt = el('button', { id: 'glitch-try', text: 'Try it · G', title: 'Fires Blink, as the G key and the Blink button do' });
   pressGlitch(store, tryIt);
   const row = (key, label, field, tip) => el('div', { class: 'param', 'data-key': key, title: tip }, [el('label', { text: label }), field]);
   const attack = bar({ label: 'Attack', min: 0, max: 5, step: 0.01, value: 0, reset: 0, unit: ' s', scale: { toUnit: (v) => Math.sqrt(v / 5), fromUnit: (u) => u * u * 5 }, onInput: (v) => set({ attack: v }) });
@@ -149,7 +149,7 @@ export function mountGlitch(pane, band, ui) {
     row('attack', 'attack', attack.node, 'How long the sliders take to get there. 0 is at once.'),
     row('release', 'release', release.node, 'How long the sliders take to come back.'),
     row('scatter', 'scatter', scatter.node, 'How differently each press lands. 0 is the same every time.'),
-    row('hold', 'hold', hold.node, 'On: the glitch lasts for as long as the key or button is down.'),
+    row('hold', 'hold', hold.node, 'On: the blink lasts for as long as the key or button is down.'),
     list,
     note,
   );
@@ -160,7 +160,7 @@ export function mountGlitch(pane, band, ui) {
     release.set(g.release);
     scatter.set(g.scatter);
     hold.set(g.hold);
-    capture.textContent = g.jumps.length ? 'Recapture' : 'Capture a glitch';
+    capture.textContent = g.jumps.length ? 'Recapture' : 'Capture a blink';
     capture.disabled = !!ui.glitchCapture || !store.state.chain.length;
     const chain = ui.glitchCapture?.chain ?? store.state.chain;
     list.replaceChildren(
@@ -176,8 +176,8 @@ export function mountGlitch(pane, band, ui) {
     );
     list.hidden = !g.jumps.length;
     note.textContent = g.jumps.length
-      ? 'Glitch throws these sliders to where they land, and they come back. Scatter lets each press land a little differently.'
-      : 'No jumps yet: Glitch tears the picture, as it always has. Capture a glitch to have it throw sliders of this preset instead.';
+      ? 'Blink throws these sliders to where they land, and they come back. Scatter lets each press land a little differently.'
+      : 'No jumps yet: Blink tears the picture, as it always has. Capture a blink to have it throw sliders of this preset instead.';
   }
 
   // One jump moved or removed from its slider's bar (the pointer on the bar).

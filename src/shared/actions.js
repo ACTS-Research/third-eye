@@ -16,7 +16,7 @@ export const ACTIONS = {
   freeze: 'Freeze frame',
   bypassAll: 'Bypass all effects',
   inputNext: 'Next input',
-  glitch: 'Glitch burst',
+  glitch: 'Blink',
   tap: 'Tap tempo',
   record: 'Record on / off',
   // With a running order these walk its steps; without one, the presets.
