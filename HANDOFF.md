@@ -1,37 +1,46 @@
 # Handoff
 
-## 2026-11-23 (end of the sixth session, 22 to 23 November)
+## 2026-11-24 (end of the sixth session, 22 to 24 November)
 
-**Where things stand.** Stage 2 of the effects plan (the motion map, Motion,
-Gravity, Motion A / B as modulation sources) and the new Glitch are built
-and live on GitHub Pages from `main`. The owner has seen Motion and Gravity
-working on the real iPhone and Mac. Glitch, the Motion sources on a slider
-and the last round of edit screen changes have not been seen there.
+**Where things stand.** Everything is live on GitHub Pages from `main`:
+stage 2 of the effects plan (the motion map, Motion, Gravity, Motion A / B
+as modulation sources), Glitch as a jump of chosen sliders, a reordered
+top bar, a new starting screen on the Mac and an opening on the phone, and
+both screens saying so when a network keeps the phone and the Mac apart.
+The owner has used Motion, Gravity, Glitch and the top bar on the real Mac
+and scanned test codes in every palette with the iPhone; the two openings,
+the real code on the new starting screen and the blocked-network message
+have not been seen on real devices.
 
-**Next step.** On the real Mac: capture a glitch in a preset and fire it.
-Then stage 3 of the effects plan (Time and Scan).
+**Next step.** On the real iPhone and Mac: open the app in a new tab, scan
+the code in the camera, tap START. Then stage 3 of the effects plan (Time
+and Scan).
 
 **Decisions only you can make.**
 
+- Use Chrome for the Mac's control page. Your last screenshot was Safari,
+  which the page is not built or tested for.
+- If the top bar still reads "Phones: A … · B …": click it, open the
+  iPhone B tab, press Stop using iPhone B.
+- Open `/control` in a new tab with no phone paired and scan the code in
+  the camera with the iPhone. Say whether it scans and whether the
+  opening's timing is right.
+- On the iPhone, tap START and watch the opening: say whether the camera's
+  picture shows inside the camera shape as the noise clears, and whether it
+  is too long.
+- Next time you are on campus or venue Wi-Fi, try pairing there once and
+  say whether both screens tell you to use the hotspot.
 - Press Setup → Preset library → Bring back deleted factory presets to get
   Thermal trails back (the factory version; changes you had made to it are
   gone).
 - Try a Motion source on a slider (Mod → Motion A → Overall) and say
   whether it is lively enough or too jumpy. Say whether Gravity pours
   toward the room's floor when you roll the phone.
-- Next time you are on campus or venue Wi-Fi, try pairing there once and
-  say whether both screens tell you to use the hotspot.
-- On the iPhone, tap START and watch the opening: say whether the camera's
-  picture shows inside the camera shape as the noise clears, and whether it
-  is too long.
-- Open the app in a new tab to see the opening, and scan the code in the
-  camera with the iPhone. Say whether the opening's timing is right.
-- Try Glitch: Edit a preset → Glitch tab → Capture a glitch, move some
-  sliders, Keep, then press G. Say whether the pointer on the bar is
-  findable enough, and whether any factory preset should come with a
-  glitch of its own (none does).
-- Look at the edit screen as it now is (no "← Perform", no "In:" block,
-  the short Revert, Fade in in a narrow window) and say if anything is off.
+- Glitch: say whether 1% of a slider's travel is the right cut-off for a
+  move too small to keep, and whether any factory preset should come with
+  a glitch of its own (none does).
+- Say whether you want a network line in Before the show (a partial
+  self-test of the Wi-Fi; see "A network that keeps devices apart").
 - Say whether the bars on the Parameters tab are too narrow for drawing a
   modulation's range (about 100 px in a 1440-wide window). If so: shorten
   "Fader" to a mark, or widen that column.
@@ -171,6 +180,10 @@ are in `src/shared/camera-shape.js`. Not seen on a real iPhone: the masked
 video in Safari, and how long the noise really lasts on a real link. Also
 not done: the real code on the Mac's new screen has not been scanned by
 the iPhone, only test codes drawn the same way.
+
+**Tests, 24 November.** All twenty-seven suites passed in one full run
+before the last push, `modulation` and `midi-audio` among them (both had
+failed in the sandbox the day before, on the commit before as well).
 
 **A network that keeps devices apart (built 24 November).** The owner's
 worry: on venue or campus Wi-Fi the code scans, START works, and then
@@ -1122,8 +1135,8 @@ on me (from the top of HANDOFF.md). Then:
 This session: stage 3 of the effects plan in HANDOFF.md (Time and Scan,
 with the "driven by" menu). Tell me your approach first and wait for
 my go.
-<Add what you found when you tried stage 2 on the real iPhone and Mac:
-Glitch (capture, the pointer on the bar, hold from a phone trigger), a
-Motion source on a slider, which way Gravity pours when the phone is
-rolled.>
+<Add what you found on the real iPhone and Mac: whether the code in the
+camera on the starting screen scans; the two openings (Mac and phone);
+pairing on campus or venue Wi-Fi; a Motion source on a slider; which way
+Gravity pours when the phone is rolled.>
 ```
