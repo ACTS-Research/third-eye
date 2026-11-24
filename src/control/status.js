@@ -98,7 +98,8 @@ export function mountStatus(root, ui) {
     const body = action
       ? el('button', { class: 'go', title: action.label, onclick: () => action.run() }, [el('span', { class: 'text', text }), el('span', { class: 'act', text: `${action.label} →` })])
       : el('span', { class: 'text', text });
-    node.replaceChildren(body, close);
+    // A bad one starts with a blinking square; the strip itself stays solid.
+    node.replaceChildren(...(level === 'bad' ? [el('span', { class: 'sq', 'aria-hidden': 'true' })] : []), body, close);
   };
 
   // Where alerts send the operator.
@@ -179,7 +180,7 @@ export function mountStatus(root, ui) {
         text = 'not responding';
       } else if (link.blocked) {
         level = 'bad';
-        text = 'cannot get through';
+        text = 'use hotspot';
       } else if (link.signal === 'error') {
         level = 'bad';
         text = 'room code in use elsewhere';
@@ -228,12 +229,15 @@ export function mountStatus(root, ui) {
       { label: 'Pair without internet', run: () => ui.pairOffline?.() },
     );
     // A phone is trying and cannot get through: the one failure nobody could
-    // see before. Say what it is and the way out.
+    // see before. Say what it is and the way out. While the starting screen
+    // is in view it says this itself, beside the code (mock-up A3), so the
+    // strip is only for the other screens (A1).
+    const onStart = ui.view === 'perform' && document.getElementById('splash')?.hidden === false;
     ui.setAlert(
       'blocked',
-      p.blocked || status.phoneB?.blocked ? 'An iPhone is trying to join and cannot get through: this network is keeping it and the Mac apart. On the iPhone, turn on Personal Hotspot; join it from this Mac\'s Wi-Fi menu. The phone then connects by itself.' : null,
+      (p.blocked || status.phoneB?.blocked) && !onStart ? 'The phone can\'t reach this Mac. Use the iPhone\'s Personal Hotspot.' : null,
       'bad',
-      ui.alertTo.pairing,
+      { label: 'How', run: () => ui.togglePairing?.(phonePill) },
     );
     ui.setAlert('relay', p.route === 'relayed' ? 'Phone video is being relayed, not direct — expect extra latency' : null);
   }

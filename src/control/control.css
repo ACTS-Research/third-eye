@@ -95,7 +95,10 @@ kbd { font: inherit; opacity: 0.8; }
 #map-hint { padding: 8px 14px; border-bottom: 1px solid var(--ink); font-weight: 700; }
 #alerts { display: flex; flex-direction: column; }
 .alert { display: flex; align-items: stretch; background: var(--ink); color: var(--on-ink); font: 700 15px/1.15 var(--display); letter-spacing: 0.05em; text-transform: uppercase; border-bottom: 1px solid var(--bg); }
-.alert.bad { animation: blink 0.8s steps(2) infinite; }
+/* Solid, never see-through: in a bad one only the square at its start
+   blinks. */
+.alert .sq { flex-shrink: 0; width: 40px; display: flex; align-items: center; justify-content: center; }
+.alert .sq::before { content: ''; width: 12px; height: 12px; background: var(--on-ink); animation: blink 0.8s steps(2) infinite; }
 .alert > .text, .alert > .go { flex: 1; min-width: 0; padding: 4px 12px; }
 .alert button { font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; background: transparent; border: 0; border-radius: 0; white-space: normal; }
 .alert .go { display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer; }
@@ -511,6 +514,16 @@ main { position: relative; }
 .splash-do { font-size: 15px; font-weight: 700; text-transform: none; letter-spacing: 0; }
 .splash-room { text-transform: uppercase; letter-spacing: 0.14em; }
 .splash-other { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+/* Blocked: the dimmed code and the way out side by side (wrapping in a
+   small monitor). */
+.splash.blocked { flex-direction: row; flex-wrap: wrap; align-content: center; gap: 20px 48px; text-align: left; }
+.splash.blocked .splash-code { width: min(220px, 40cqh, 30%); opacity: 0.4; }
+.splash-blocked { display: flex; flex-direction: column; gap: 12px; max-width: 520px; font-size: 14px; line-height: 1.5; text-transform: none; letter-spacing: 0; }
+.splash-blocked[hidden] { display: none; }
+.splash-blocked-title { display: flex; align-items: center; gap: 12px; font: 800 34px/1 var(--display); letter-spacing: 0.05em; text-transform: uppercase; }
+.splash-blocked-title .sq { flex-shrink: 0; width: 14px; height: 14px; background: var(--ink); animation: blink 0.8s steps(2) infinite; }
+.splash-step { display: flex; gap: 12px; align-items: baseline; }
+.splash-step b { font: 800 20px/1 var(--display); }
 .check-flag { background: var(--ink); color: var(--on-ink); border-color: var(--ink); font-weight: 700; padding: 2px 8px; white-space: nowrap; }
 /* A fixed height: its lines come and go, and the page must not jump. */
 .checks { height: 340px; overflow-y: auto; scrollbar-gutter: stable; }

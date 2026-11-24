@@ -212,6 +212,7 @@ export function mountPhonePanel(root, ui) {
     if (!p) return 'Starting…';
     if (p.signal === 'error') return p.error;
     if (p.phone === 'connected') return p.media === 'connected' ? 'Phone paired and streaming.' : 'Phone paired.';
+    if (p.blocked) return `The ${name} can't reach this Mac: this Wi-Fi keeps devices apart. 1. iPhone: Settings → Personal Hotspot → on. 2. This Mac: choose the iPhone in the Wi-Fi menu. The phone then connects by itself.`;
     if (p.signal === 'open') return `Ready. Scan the code with the ${name}'s camera.`;
     if (p.signal === 'disconnected') return `Cannot reach the pairing server${p.error ? ` (${p.error})` : ''}; retrying. Public and guest Wi-Fi often block it: try the iPhone's Personal Hotspot, or Pair without internet. A phone that is already paired keeps working.`;
     return 'Connecting to the pairing server…';

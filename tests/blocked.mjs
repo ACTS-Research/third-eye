@@ -40,9 +40,21 @@ try {
   await phone.click('#start');
   check('the Mac notices a phone trying and failing', await settle(async () => (await status()).phone.blocked === true, 'blocked', 40000), JSON.stringify((await status()).phone));
   check('it is not taken for paired', (await status()).phone.phone === 'none');
-  check('an alert says what it is and the way out', (await alertText()).includes('cannot get through') && (await alertText()).includes('Personal Hotspot'), await alertText());
-  check('the phone readout says so too', (await control.locator('#phone-pill').textContent()).includes('cannot get through'), await control.locator('#phone-pill').textContent());
-  check('and the starting screen', await settle(async () => (await control.locator('#splash .splash-state').textContent()).includes('cannot get through'), 'splash line'), await control.locator('#splash .splash-state').textContent());
+  const blockedText = () => control.evaluate(() => { const b = document.getElementById('splash-blocked'); return b && !b.hidden && b.getBoundingClientRect().width > 0 ? b.textContent : ''; });
+  check('the starting screen says it beside the dimmed code, and the way out', await settle(async () => (await blockedText()).includes('can\'t reach this Mac') && (await blockedText()).includes('Personal Hotspot'), 'splash block'), await blockedText());
+  check('so no strip covers the page meanwhile', (await alertText()) === '', await alertText());
+  check('the phone readout says: use hotspot', (await control.locator('#phone-pill').textContent()).includes('use hotspot'), await control.locator('#phone-pill').textContent());
+  await control.evaluate(() => window.thirdEye.ui.setView('edit'));
+  check('on another screen a strip says it, short', await settle(async () => (await alertText()).includes('can\'t reach this Mac') && (await alertText()).includes('Personal Hotspot'), 'strip'), await alertText());
+  check('the strip is solid: only its square blinks', await control.evaluate(() => {
+    const a = document.querySelector('#alerts [data-key="blocked"]');
+    return getComputedStyle(a).animationName === 'none' && getComputedStyle(a).opacity === '1' && !!a.querySelector('.sq');
+  }));
+  await control.locator('#alerts [data-key="blocked"] .go').click();
+  check('How opens the pairing pop-over at the hotspot steps', await settle(async () => ((await control.locator('#pairing-pop').textContent().catch(() => '')) ?? '').includes('Settings → Personal Hotspot'), 'pop-over'), await control.locator('#pairing-pop').textContent().catch(() => 'no pop-over'));
+  await control.keyboard.press('Escape');
+  await control.evaluate(() => window.thirdEye.ui.setView('perform'));
+  check('back on the starting screen the strip goes again', await settle(async () => (await alertText()) === '', 'strip gone'), await alertText());
   check('the phone says it cannot reach the Mac, and to use its hotspot', await settle(async () => (await phone.locator('#down-title').textContent()) === 'Can\'t reach the Mac' && (await phone.locator('#down-line').textContent()).includes('Personal Hotspot'), 'phone band', 40000), `${await phone.locator('#down-title').textContent()} / ${await phone.locator('#down-line').textContent()}`);
   check('it does not say the Mac was not found', !(await phone.locator('#down-title').textContent()).includes('not found'));
 
@@ -51,7 +63,7 @@ try {
     window.__blockLinks = false;
   });
   check('the phone pairs by itself', await settle(async () => (await status()).phone.phone === 'connected', 'paired', 60000), JSON.stringify((await status()).phone));
-  check('and the Mac stops saying it is blocked', await settle(async () => (await status()).phone.blocked === false && (await alertText()) === '', 'cleared', 10000), await alertText());
+  check('and the Mac stops saying it is blocked', await settle(async () => (await status()).phone.blocked === false && (await alertText()) === '' && (await blockedText()) === '', 'cleared', 10000), await alertText());
   check('the phone\'s band goes', await settle(() => phone.locator('#down').isHidden(), 'band gone', 20000));
 } catch (err) {
   check('test ran to completion', false, err.message.split('\n')[0]);

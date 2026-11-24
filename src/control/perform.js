@@ -90,7 +90,18 @@ export function mountPerform(root, ui) {
     el('div', { class: 'dim small', text: 'Venue or campus Wi-Fi? Put this Mac on the iPhone\'s Personal Hotspot first.' }),
     el('div', { class: 'dim small', text: 'A second iPhone? Click Phone, above.' }),
   ]);
-  const splash = el('div', { class: 'splash', id: 'splash', hidden: true }, [splashCode.node, splashText]);
+  // A network that keeps the phone and the Mac apart: said here, beside the
+  // dimmed code, in place of everything under it (mock-up A3,
+  // design/conn-warning/). The code still works once the network does.
+  const step = (n, text) => el('div', { class: 'splash-step' }, [el('b', { text: n }), el('span', { text })]);
+  const splashBlocked = el('div', { class: 'splash-blocked', id: 'splash-blocked', hidden: true }, [
+    el('div', { class: 'splash-blocked-title' }, [el('span', { class: 'sq', 'aria-hidden': 'true' }), el('span', { text: 'The phone can\'t reach this Mac' })]),
+    el('div', { text: 'This Wi-Fi keeps devices apart. Use the iPhone\'s own network:' }),
+    step('1', 'iPhone: Settings → Personal Hotspot → on.'),
+    step('2', 'This Mac: choose the iPhone in the Wi-Fi menu.'),
+    el('div', { class: 'dim small', text: 'The phone then connects by itself; this code still works.' }),
+  ]);
+  const splash = el('div', { class: 'splash', id: 'splash', hidden: true }, [splashCode.node, splashText, splashBlocked]);
   // The opening plays once, when a session starts in this tab. A lost link,
   // a new room code or a reload simply shows the code.
   const OPENED_KEY = 'thirdeye.opened';
@@ -121,11 +132,15 @@ export function mountPerform(root, ui) {
       splashText.classList.add('waiting');
       splashCode.play().then(() => splashText.classList.remove('waiting'));
     }
+    const blocked = !!st.phone.blocked;
+    splash.classList.toggle('blocked', blocked);
+    splashBlocked.hidden = !blocked;
+    splashText.hidden = blocked;
     splashRoom.textContent = `Room code ${store.state.net.room}`;
     // How far pairing has got. (The Mac hears nothing from a phone between
     // its scan and its START, so there is no "scanned" to report.)
     const signal = st.phone.signal;
-    splashState.textContent = st.phone.blocked ? 'A phone is trying to join and cannot get through: this network keeps devices apart. Put this Mac on the iPhone\'s Personal Hotspot.' : signal === 'open' ? 'Ready. The picture appears here when the phone taps START.' : signal === 'connecting' ? 'Reaching the pairing server…' : signal === 'error' ? 'This room code is in use elsewhere. Click Phone, above.' : 'The pairing server cannot be reached. Click Phone, above, for Pair without internet.';
+    splashState.textContent = signal === 'open' ? 'Ready. The picture appears here when the phone taps START.' : signal === 'connecting' ? 'Reaching the pairing server…' : signal === 'error' ? 'This room code is in use elsewhere. Click Phone, above.' : 'The pairing server cannot be reached. Click Phone, above, for Pair without internet.';
   }
   const monitor = el('div', { class: 'monitor' }, [canvas, note, splash]);
   ui.monitors.perform = monitor;

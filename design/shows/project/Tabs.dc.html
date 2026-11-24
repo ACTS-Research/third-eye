@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>S2 A tab for each show</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#060303}
+button{font-family:'JetBrains Mono',monospace;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 1440px; height: 360px; position: relative; overflow: hidden; background: #060303; color: #ff6b5e; font-family: 'JetBrains Mono', monospace; font-size: 13px; box-sizing: border-box">
+  <div style="position: absolute; left: 0; top: 0; right: 0; height: 70px; background: #000; display: flex; align-items: center; justify-content: center; color: #5b2622; font-size: 12px; letter-spacing: 0.1em">THE PICTURE</div>
+  <div style="position: absolute; left: 0; right: 0; top: 70px; bottom: 0; border-top: 1px solid #5b2622; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box">
+    <div style="display: flex; align-items: flex-end; gap: 0; border-bottom: 1px solid #ff6b5e">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+        <button onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}</button>
+      </sc-for>
+      <button aria-label="New show" style="background: transparent; color: #ff6b5e; border: 1px solid #5b2622; border-bottom: 0; padding: 6px 12px; margin-right: 18px">+</button>
+      <span style="flex: 1"></span>
+      <button style="background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 5px 10px; margin: 0 0 6px 8px">[ PREV</button>
+      <button style="background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 5px 10px; margin: 0 0 6px 8px">NEXT ]</button>
+      <span style="color: #cd564c; font-size: 12px; margin: 0 0 10px 12px">{{status}}</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 8px; margin-top: 4px">
+      <sc-for list="{{tiles}}" as="t" hint-placeholder-count="6">
+        <div style="{{t.style}}">
+          <span style="font: 800 40px/0.9 'Big Shoulders Display', sans-serif">{{t.num}}</span>
+          <span style="text-transform: uppercase; letter-spacing: 0.06em">{{t.name}}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font-size: 12px; color: #cd564c; margin-top: auto">S2 · every show one click away; the last tab is the whole library. Right-click a tab (or double-click its name): rename, duplicate, delete, save to a file. Open a show file: Setup → Preset library.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":360}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tab: 0 }; }
+  renderVals() {
+    const PRESETS = ['Clean', 'Tunnel', 'Kaleido', 'Thermal trails', 'Slit-scan', 'Neon edges', 'Liquid', 'Poster', 'Horizon lock'];
+    const SHOWS = [
+      { name: 'Dream machine', steps: ['Clean', 'Time wake', 'Relief', 'Tunnel', 'Relief', 'Clean'] },
+      { name: 'Tunnel piece', steps: ['Tunnel', 'Kaleido', 'Liquid', 'Tunnel'] },
+      { name: 'Studio test', steps: ['Clean', 'Neon edges', 'Poster'] },
+    ];
+    const all = this.state.tab === SHOWS.length;
+    const tabStyle = (on) => on
+      ? 'background: #ff6b5e; color: #140302; border: 1px solid #ff6b5e; border-bottom: 0; padding: 6px 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase'
+      : 'background: transparent; color: #ff6b5e; border: 1px solid #5b2622; border-bottom: 0; padding: 6px 12px; letter-spacing: 0.06em; text-transform: uppercase';
+    const tabs = SHOWS.map((s, i) => ({ label: `${s.name} · ${s.steps.length}`, style: tabStyle(this.state.tab === i), pick: () => this.setState({ tab: i }) }));
+    tabs.push({ label: 'All presets', style: tabStyle(all) + '; margin-left: 18px', pick: () => this.setState({ tab: SHOWS.length }) });
+    const base = 'min-height: 92px; border: 1px solid #ff6b5e; display: flex; flex-direction: column; justify-content: space-between; padding: 8px 10px; box-sizing: border-box;';
+    const names = all ? PRESETS : SHOWS[this.state.tab].steps;
+    return {
+      tabs,
+      tiles: names.map((name, i) => ({ num: String(i + 1), name, style: !all && i === 0 ? base + ' background: #ff6b5e; color: #140302;' : base })),
+      status: all ? '+ on a preset adds it to a show' : `Next: 2 ${names[1]}`,
+    };
+  }
+}
+</script>
+</body>
+</html>
