@@ -387,7 +387,7 @@ export function mountModPanel(roots, ui) {
     el('div', { class: 'panel', id: 'actions-panel' }, [
       el('h2', { text: 'Triggers and MIDI controls' }),
       actionList,
-      el('div', { class: 'row' }, [el('button', { text: 'Add trigger', onclick: () => setActions([...store.state.actions, makeActionBinding('phone.shake', 'glitch')]) })]),
+      el('div', { class: 'row' }, [el('button', { text: 'Add trigger', onclick: () => setActions([...store.state.actions, makeActionBinding('phone.shake', 'blink')]) })]),
       el('div', { class: 'dim small', text: 'Phone buttons, gestures, beats and MIDI controls all live here. The quickest way to add a MIDI control is MIDI map, top right.' }),
     ]),
     el('div', { class: 'panel', id: 'sources-panel' }, [el('h2', { text: 'Sources' }), meters]),

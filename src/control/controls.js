@@ -151,7 +151,7 @@ export function bar({ min, max, step = 0.01, value = min, label = '', id, reset,
   }
   show();
   const field = el('span', { class: 'bar-field' }, [input, number]);
-  // Where Glitch throws this slider: a pointer on the bar's top edge and
+  // Where Blink throws this slider: a pointer on the bar's top edge and
   // the landing value under the number. Made only for a slider that has one.
   let notch = null;
   let landing = null;
@@ -178,7 +178,7 @@ export function bar({ min, max, step = 0.01, value = min, label = '', id, reset,
     node: field,
     input,
     number,
-    // `to`: where Glitch throws the slider, or undefined for no jump.
+    // `to`: where Blink throws the slider, or undefined for no jump.
     // `tell(value | null)` hears the pointer dragged, or removed (null).
     setJump(to, tell) {
       jumpTell = tell ?? null;

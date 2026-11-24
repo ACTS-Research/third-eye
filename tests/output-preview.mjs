@@ -90,9 +90,9 @@ try {
   await phone.locator('#panel-close').dispatchEvent('click');
 
   console.log('it is the finished picture');
-  await control.keyboard.press('b');
+  await control.keyboard.press('Backspace');
   check('Blackout on the Mac blacks the phone\'s preview', await settle(async () => (await preview()).mean >= 0 && (await preview()).mean < 6, 'black', 20000), JSON.stringify(await preview()));
-  await control.keyboard.press('b');
+  await control.keyboard.press('Backspace');
   check('and it comes back', await settle(async () => (await preview()).mean > 15, 'back', 20000), JSON.stringify(await preview()));
   await phone.locator('#rotate').dispatchEvent('click');
   check('Rotate turns the picture on the Mac; the preview is not turned a second time', await settle(async () => (await preview()).turn === '0deg' || (await preview()).turn === '-0deg', 'no css turn') && (await phone.evaluate(() => document.getElementById('stage').dataset.turn)) === '90', JSON.stringify(await preview()));

@@ -11,7 +11,7 @@
 //   { op: 'presetIndex', index }              which preset is current (after a reorder)
 //   { op: 'replace', state }                  full sync (sent in reply to hello)
 //
-// Transient events (glitch burst etc.) travel beside ops and are not stored.
+// Transient events (blink burst etc.) travel beside ops and are not stored.
 
 import { sanitizeActions, sanitizeScene, sanitizeState } from './state.js';
 import { debounce, readJSON, writeJSON } from './util.js';

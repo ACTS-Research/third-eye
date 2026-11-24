@@ -40,12 +40,12 @@ uniform float uT;
 void main() { outColor = vec4(mix(texture(uA, vUv).rgb, texture(uB, vUv).rgb, uT), 1.0); }
 `;
 
-// Last pass: preset crossfade, glitch burst, master level (blackout).
+// Last pass: preset crossfade, blink burst, master level (blackout).
 export const FINAL_FRAG = HEAD + /* glsl */ `
 uniform sampler2D uA;       // current scene
 uniform sampler2D uB;       // scene being faded out
 uniform float uFade;        // 0 = all B, 1 = all A
-uniform float uGlitch;      // 0..1 burst envelope
+uniform float uBlink;      // 0..1 burst envelope
 uniform float uMaster;      // 0 = black
 uniform float uFlash;       // 1 = solid white (latency test)
 uniform float uTime;
@@ -66,15 +66,15 @@ vec3 scene(vec2 uv) {
 void main() {
   vec2 uv = vUv;
   vec3 col;
-  if (uGlitch > 0.001) {
+  if (uBlink > 0.001) {
     float t = floor(uTime * 24.0);
     float band = floor(uv.y * mix(6.0, 40.0, hash(vec2(t, 1.0))));
     float n = hash(vec2(band, t));
-    float shift = (n - 0.5) * step(0.55, n) * 0.5 * uGlitch;
+    float shift = (n - 0.5) * step(0.55, n) * 0.5 * uBlink;
     uv.x = fract(uv.x + shift);
-    float split = 0.02 * uGlitch * (0.5 + hash(vec2(t, 7.0)));
+    float split = 0.02 * uBlink * (0.5 + hash(vec2(t, 7.0)));
     col = vec3(scene(uv + vec2(split, 0.0)).r, scene(uv).g, scene(uv - vec2(split, 0.0)).b);
-    col = mix(col, 1.0 - col, step(0.92, hash(vec2(band, t + 3.0))) * uGlitch);
+    col = mix(col, 1.0 - col, step(0.92, hash(vec2(band, t + 3.0))) * uBlink);
   } else {
     col = scene(uv);
   }

@@ -5,10 +5,10 @@ import { INPUT_KINDS, INPUT_LABELS } from './state.js';
 import { isTypingTarget } from './util.js';
 
 export const KEYMAP = [
-  { keys: ['b'], label: 'B', action: 'blackout', help: 'Blackout (panic)' },
+  { keys: ['Backspace', 'Delete'], label: 'Delete', action: 'blackout', help: 'Blackout (panic)' },
   { keys: [' '], label: 'Space', action: 'freeze', help: 'Freeze frame' },
   { keys: ['x'], label: 'X', action: 'bypassAll', help: 'Bypass all effects' },
-  { keys: ['g'], label: 'G', action: 'glitch', help: 'Blink' },
+  { keys: ['b'], label: 'B', action: 'blink', help: 'Blink' },
   { keys: [']', 'ArrowRight'], label: '] or →', action: 'presetNext', help: 'Next step of the show, or next preset when it has none' },
   { keys: ['[', 'ArrowLeft'], label: '[ or ←', action: 'presetPrev', help: 'Previous step, or previous preset' },
   { keys: ['r'], label: 'R', action: 'record', help: 'Record the output on / off' },
@@ -45,17 +45,17 @@ export function installKeys(store, extra = {}) {
     if (!hit) return;
     e.preventDefault();
     runAction(store, hit.action, hit.arg);
-    if (hit.action === 'glitch') glitchDown = true;
+    if (hit.action === 'blink') blinkDown = true;
   });
-  // A glitch set to hold lasts while G is down.
-  let glitchDown = false;
-  const glitchUp = () => {
-    if (!glitchDown) return;
-    glitchDown = false;
-    runAction(store, 'glitchEnd');
+  // A blink set to hold lasts while B is down.
+  let blinkDown = false;
+  const blinkUp = () => {
+    if (!blinkDown) return;
+    blinkDown = false;
+    runAction(store, 'blinkEnd');
   };
   window.addEventListener('keyup', (e) => {
-    if (e.key.toLowerCase() === 'g') glitchUp();
+    if (e.key.toLowerCase() === 'b') blinkUp();
   });
-  window.addEventListener('blur', glitchUp);
+  window.addEventListener('blur', blinkUp);
 }

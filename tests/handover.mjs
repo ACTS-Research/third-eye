@@ -54,9 +54,9 @@ try {
   const a = await outputStats(control);
   const moving = await waitFor(async () => (await outputStats(control)).hash !== a.hash, { label: 'picture animating' }).then(() => true, () => false);
   check('the picture is not black and is animating', a.mean > 10 && moving, `mean ${a.mean.toFixed(1)}`);
-  await control.keyboard.press('b');
+  await control.keyboard.press('Backspace');
   const black = await waitFor(async () => (await outputStats(control)).mean === 0, { label: 'blackout', timeout: 4000 }).then(() => true, () => false);
-  await control.keyboard.press('b');
+  await control.keyboard.press('Backspace');
   check('blackout key works with no output window', black);
   await control.evaluate(() => window.thirdEye.ui.setView('edit'));
   check('the canvas follows to the Edit screen', await control.evaluate(() => document.querySelector('.edit-monitor #stage')?.offsetParent != null));

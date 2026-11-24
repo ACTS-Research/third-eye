@@ -3,7 +3,7 @@
 // Everything here is MIDI-mappable.
 
 import { codeMark } from './code-mark.js';
-import { pressGlitch } from './glitch-panel.js';
+import { pressBlink } from './blink-panel.js';
 import { EFFECT_BY_ID } from '../effects/index.js';
 import { THUMB_H, THUMB_W } from '../engine/pipeline.js';
 import { MIX_MODES, mixItem, runAction } from '../shared/actions.js';
@@ -28,14 +28,14 @@ export function mountPerform(root, ui) {
   // ------------------------------------------------------- panic stack ---
   const big = (cls, action, key, label) =>
     el('button', { class: `big ${cls}`, 'data-midi': action, onclick: () => runAction(store, action) }, [el('span', { text: key }), el('b', { text: label })]);
-  const blackout = big('blackout', 'blackout', 'B', 'Blackout');
+  const blackout = big('blackout', 'blackout', '⌫', 'Blackout');
   const freeze = big('', 'freeze', 'Space', 'Freeze');
   const bypass = big('', 'bypassAll', 'X', 'Bypass');
-  // Glitch fires as the button goes down and is told when it comes up, so a
-  // glitch set to hold lasts as long as the press. (A press from the
+  // Blink fires as the button goes down and is told when it comes up, so a
+  // blink set to hold lasts as long as the press. (A press from the
   // keyboard is a click with no pointer: down and up at once.)
-  const glitch = el('button', { class: 'big', 'data-midi': 'glitch' }, [el('span', { text: 'G' }), el('b', { text: 'Blink' })]);
-  pressGlitch(store, glitch);
+  const blink = el('button', { class: 'big', 'data-midi': 'blink' }, [el('span', { text: 'B' }), el('b', { text: 'Blink' })]);
+  pressBlink(store, blink);
   // Tap tempo: the button blinks on the beat; the field takes a typed BPM.
   const bpm = el('input', {
     type: 'number',
@@ -53,7 +53,7 @@ export function mountPerform(root, ui) {
   const tempo = el('div', { class: 'tempo' }, [tap, bpm, el('label', { for: 'bpm', text: 'BPM' })]);
   bus.on('sources', (m) => tap.classList.toggle('beat', (m.values['tempo.beat'] ?? 0) > 0.4));
 
-  const panic = el('aside', { class: 'panic', 'aria-label': 'Panic controls' }, [blackout, freeze, bypass, glitch, tempo]);
+  const panic = el('aside', { class: 'panic', 'aria-label': 'Panic controls' }, [blackout, freeze, bypass, blink, tempo]);
 
   // ----------------------------------------------------------- monitor ---
   // With an output window open this canvas shows the small picture it sends
@@ -563,9 +563,9 @@ export function mountPerform(root, ui) {
     }
   });
   store.onEvent((name) => {
-    if (name !== 'glitch') return;
-    glitch.classList.add('on');
-    setTimeout(() => glitch.classList.remove('on'), 300);
+    if (name !== 'blink') return;
+    blink.classList.add('on');
+    setTimeout(() => blink.classList.remove('on'), 300);
   });
   ui.onStatus(syncMonitor);
   ui.onStatus(syncSplash);

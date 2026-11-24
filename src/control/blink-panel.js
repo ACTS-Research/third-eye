@@ -1,9 +1,9 @@
-// The Glitch tab of the edit screen, and capturing a glitch.
+// The Blink tab of the edit screen, and capturing a blink.
 //
-// Glitch in a preset is a jump: chosen sliders are thrown to a landing place
-// and come back (state.glitch; the engine's side is engine/glitch.js). You
+// Blink in a preset is a jump: chosen sliders are thrown to a landing place
+// and come back (state.blink; the engine's side is engine/blink.js). You
 // choose them by capture: press Capture, move any sliders in any effect
-// until the picture is the glitch, press Keep. Every slider that differs
+// until the picture is the blink, press Keep. Every slider that differs
 // from where it was becomes a jump, and all of them go back.
 
 import { EFFECT_BY_ID, paramUnit } from '../effects/index.js';
@@ -11,27 +11,27 @@ import { runAction } from '../shared/actions.js';
 import { el } from '../shared/util.js';
 import { bar, digitsFor, toggle } from './controls.js';
 
-// Glitch fires as a button goes down and is told when it comes up, so a
-// glitch set to hold lasts as long as the press. (A press from the keyboard
+// Blink fires as a button goes down and is told when it comes up, so a
+// blink set to hold lasts as long as the press. (A press from the keyboard
 // is a click with no pointer: down and up at once.)
-export function pressGlitch(store, button) {
+export function pressBlink(store, button) {
   let down = false;
   button.addEventListener('pointerdown', (e) => {
     if (e.button || document.body.classList.contains('midi-map')) return;
     down = true;
-    runAction(store, 'glitch');
+    runAction(store, 'blink');
   });
   const up = () => {
     if (!down) return;
     down = false;
-    runAction(store, 'glitchEnd');
+    runAction(store, 'blinkEnd');
   };
   window.addEventListener('pointerup', up);
   window.addEventListener('pointercancel', up);
   button.addEventListener('click', (e) => {
     if (e.detail !== 0 || document.body.classList.contains('midi-map')) return;
-    runAction(store, 'glitch');
-    runAction(store, 'glitchEnd');
+    runAction(store, 'blink');
+    runAction(store, 'blinkEnd');
   });
 }
 
@@ -65,19 +65,19 @@ function describe(chain, jump) {
 
 // `pane`: the tab's pane. `band`: where the capture band goes (above every
 // tab's pane, so it is in view whichever tab is open).
-export function mountGlitch(pane, band, ui) {
+export function mountBlink(pane, band, ui) {
   const { store } = ui;
-  const glitch = () => store.state.glitch;
-  const set = (patch) => store.merge('glitch', patch);
+  const blink = () => store.state.blink;
+  const set = (patch) => store.merge('blink', patch);
 
   // ------------------------------------------------------------ capture ---
-  // While it runs, ui.glitchCapture holds the chain as it was. The edit
+  // While it runs, ui.blinkCapture holds the chain as it was. The edit
   // screen does not save into the preset meanwhile, and marks sliders
   // against that chain instead of the one it opened with.
-  ui.glitchCapture = null;
+  ui.blinkCapture = null;
   const moved = () => {
     const out = [];
-    for (const before of ui.glitchCapture?.chain ?? []) {
+    for (const before of ui.blinkCapture?.chain ?? []) {
       const now = store.findEffect(before.uid);
       if (!now) continue;
       if (reallyMoved(now, 'mix', before.mix, now.mix)) out.push({ fx: now.uid, key: 'mix', to: now.mix });
@@ -92,23 +92,23 @@ export function mountGlitch(pane, band, ui) {
     }
   }
   function finish(keep) {
-    const capture = ui.glitchCapture;
+    const capture = ui.blinkCapture;
     if (!capture) return;
     const jumps = keep ? moved() : null;
-    ui.glitchCapture = null;
+    ui.blinkCapture = null;
     restore(capture.chain);
     if (jumps) set({ jumps });
     showBand();
     build();
     ui.markChanges?.();
     ui.markJumps?.();
-    if (keep) ui.setEditTab('glitch');
+    if (keep) ui.setEditTab('blink');
   }
   function start() {
-    if (ui.glitchCapture) return;
-    ui.glitchCapture = { chain: structuredClone(store.state.chain) };
-    // Start from the glitch as it stands, so it can be adjusted.
-    for (const j of glitch().jumps) {
+    if (ui.blinkCapture) return;
+    ui.blinkCapture = { chain: structuredClone(store.state.chain) };
+    // Start from the blink as it stands, so it can be adjusted.
+    for (const j of blink().jumps) {
       if (j.key === 'mix') store.patchItem('chain', j.fx, { mix: j.to });
       else store.setParam(j.fx, j.key, j.to);
     }
@@ -119,8 +119,8 @@ export function mountGlitch(pane, band, ui) {
     ui.setEditTab('params');
   }
 
-  const keep = el('button', { class: 'primary', id: 'glitch-keep', text: 'Save blink', onclick: () => finish(true) });
-  const cancel = el('button', { text: 'Cancel', id: 'glitch-cancel', onclick: () => finish(false) });
+  const keep = el('button', { class: 'primary', id: 'blink-keep', text: 'Save blink', onclick: () => finish(true) });
+  const cancel = el('button', { text: 'Cancel', id: 'blink-cancel', onclick: () => finish(false) });
   band.className = 'capture-band';
   band.append(
     el('b', { text: 'Blink settings' }),
@@ -128,21 +128,21 @@ export function mountGlitch(pane, band, ui) {
     el('div', { class: 'row' }, [keep, cancel]),
   );
   function showBand() {
-    band.hidden = !ui.glitchCapture;
+    band.hidden = !ui.blinkCapture;
     // (How many sliders it would keep, for whoever asks: the tests do.)
-    keep.dataset.jumps = ui.glitchCapture ? String(moved().length) : '';
+    keep.dataset.jumps = ui.blinkCapture ? String(moved().length) : '';
   }
 
   // -------------------------------------------------------------- the tab ---
-  const capture = el('button', { class: 'primary', id: 'glitch-capture', onclick: start });
-  const tryIt = el('button', { id: 'glitch-try', text: 'Try it · G', title: 'Fires Blink, as the G key and the Blink button do' });
-  pressGlitch(store, tryIt);
+  const capture = el('button', { class: 'primary', id: 'blink-capture', onclick: start });
+  const tryIt = el('button', { id: 'blink-try', text: 'Try it · B', title: 'Fires Blink, as the B key and the Blink button do' });
+  pressBlink(store, tryIt);
   const row = (key, label, field, tip) => el('div', { class: 'param', 'data-key': key, title: tip }, [el('label', { text: label }), field]);
   const attack = bar({ label: 'Attack', min: 0, max: 5, step: 0.01, value: 0, reset: 0, unit: ' s', scale: { toUnit: (v) => Math.sqrt(v / 5), fromUnit: (u) => u * u * 5 }, onInput: (v) => set({ attack: v }) });
   const release = bar({ label: 'Release', min: 0, max: 10, step: 0.01, value: 0.33, reset: 0.33, unit: ' s', scale: { toUnit: (v) => Math.sqrt(v / 10), fromUnit: (u) => u * u * 10 }, onInput: (v) => set({ release: v }) });
   const scatter = bar({ label: 'Scatter', min: 0, max: 1, step: 0.01, value: 0, reset: 0, onInput: (v) => set({ scatter: v }) });
   const hold = toggle({ text: 'Off', onText: 'On', label: 'Hold', onChange: (on) => set({ hold: on }) });
-  const list = el('div', { class: 'glitch-jumps' });
+  const list = el('div', { class: 'blink-jumps' });
   const note = el('div', { class: 'dim small' });
   pane.append(
     el('div', { class: 'row' }, [capture, tryIt]),
@@ -155,22 +155,22 @@ export function mountGlitch(pane, band, ui) {
   );
 
   function build() {
-    const g = glitch();
+    const g = blink();
     attack.set(g.attack);
     release.set(g.release);
     scatter.set(g.scatter);
     hold.set(g.hold);
     capture.textContent = g.jumps.length ? 'Recapture' : 'Capture a blink';
-    capture.disabled = !!ui.glitchCapture || !store.state.chain.length;
-    const chain = ui.glitchCapture?.chain ?? store.state.chain;
+    capture.disabled = !!ui.blinkCapture || !store.state.chain.length;
+    const chain = ui.blinkCapture?.chain ?? store.state.chain;
     list.replaceChildren(
       ...g.jumps.map((jump) => {
         const d = describe(chain, jump);
         if (!d) return null;
-        return el('div', { class: 'glitch-jump' }, [
+        return el('div', { class: 'blink-jump' }, [
           // (The figures are on the slider itself; here they are the tooltip.)
           el('button', { class: 'pin-name what', text: d.name, title: `${d.change}. Click to show this slider.`, onclick: () => ui.showParam?.(jump.fx, jump.key) }),
-          el('button', { class: 'icon', text: '✕', 'aria-label': `Remove the jump of ${d.name}`, disabled: !!ui.glitchCapture, onclick: () => set({ jumps: glitch().jumps.filter((j) => !(j.fx === jump.fx && j.key === jump.key)) }) }),
+          el('button', { class: 'icon', text: '✕', 'aria-label': `Remove the jump of ${d.name}`, disabled: !!ui.blinkCapture, onclick: () => set({ jumps: blink().jumps.filter((j) => !(j.fx === jump.fx && j.key === jump.key)) }) }),
         ]);
       }).filter(Boolean),
     );
@@ -182,20 +182,20 @@ export function mountGlitch(pane, band, ui) {
 
   // One jump moved or removed from its slider's bar (the pointer on the bar).
   ui.setJump = (fx, key, to) => {
-    const rest = glitch().jumps.filter((j) => !(j.fx === fx && j.key === key));
-    set({ jumps: to === null ? rest : glitch().jumps.map((j) => (j.fx === fx && j.key === key ? { ...j, to } : j)) });
+    const rest = blink().jumps.filter((j) => !(j.fx === fx && j.key === key));
+    set({ jumps: to === null ? rest : blink().jumps.map((j) => (j.fx === fx && j.key === key ? { ...j, to } : j)) });
   };
 
   store.subscribe((op) => {
     // Another preset, or the whole state replaced: the capture is void.
-    if (ui.glitchCapture && (op.op === 'replace' || (op.op === 'scene' && Number.isInteger(op.presetIndex)))) {
-      ui.glitchCapture = null;
+    if (ui.blinkCapture && (op.op === 'replace' || (op.op === 'scene' && Number.isInteger(op.presetIndex)))) {
+      ui.blinkCapture = null;
       showBand();
     }
-    if (op.op === 'scene' || op.op === 'replace' || (op.op === 'merge' && op.key === 'glitch')) build();
+    if (op.op === 'scene' || op.op === 'replace' || (op.op === 'merge' && op.key === 'blink')) build();
     else if (op.op === 'param' || (op.op === 'item' && op.list === 'chain')) {
-      if (ui.glitchCapture) showBand();
-      else if (glitch().jumps.length) build();
+      if (ui.blinkCapture) showBand();
+      else if (blink().jumps.length) build();
     }
   });
   // Leaving the edit screen ends a capture without keeping it.

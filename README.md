@@ -461,10 +461,10 @@ They work in both `/control` and `/output` (not while typing in a text field).
 
 | Key | Action |
 | --- | --- |
-| `B` | Blackout (panic). Press again to return |
+| `Delete` (the Mac's delete key, or forward-delete) | Blackout (panic). Press again to return |
 | `Space` | Freeze frame: holds the current input frame; effects keep running on it |
 | `X` | Bypass all effects |
-| `G` | Blink: throws the sliders the live preset has chosen and lets them come back; with none chosen, tears the picture for a moment |
+| `B` | Blink: throws the sliders the live preset has chosen and lets them come back; with none chosen, tears the picture for a moment |
 | `]` or `→` | Next step of the live show, with crossfade; next preset when the show has no steps |
 | `[` or `←` | Previous step, or previous preset |
 | `1` | Input: iPhone |
@@ -673,10 +673,10 @@ numbered bar) or every 2, 1, ½ or ¼ beats (a half, quarter, eighth or
 sixteenth note); each says what it is when the pointer rests on it. The rate
 only counts while the LFO runs free; locked to the tempo it is dimmed.
 
-**Blink.** `G`, the Blink button and any trigger bound to Blink do one
+**Blink.** `B`, the Blink button and any trigger bound to Blink do one
 thing, and each preset says what: a sudden move of sliders you choose, to
 places you choose, and back. It is set on the **Blink** tab of the Edit
-screen. (Called Glitch until 24 November 2026: presets, triggers and MIDI mappings made before then carry over.)
+screen. (Called Glitch until 24 November 2026, on the G key; Blackout was B. Presets, triggers and MIDI mappings made before then carry over.)
 
 - **Capture a blink.** Press it, then move any sliders, in any effect of
   the preset, until the picture is the blink you want; menus and switches
@@ -883,7 +883,7 @@ a passing state (a stall, a recovering graphics context) remove themselves.
 | Internet drops, then a page is reloaded | The page loads from the browser's stored copy. Pairing a phone again still needs the signaling server |
 | Local camera unplugged | Last frame held; reopened automatically when it returns |
 | Graphics context lost | Pipeline is rebuilt in place; the phone link stays up |
-| Everything is on fire | `B` |
+| Everything is on fire | `Delete` |
 
 ## Writing your own shader
 
@@ -1114,7 +1114,7 @@ npm test
 | `tests/reconnect.mjs` | Getting the phone back without closing its page: a Mac that stops answering, a Mac reload, scanning that stops when the link returns, the ordinary pairing code read inside the page, a changed room code, Reconnect by hand |
 | `tests/output-preview.mjs` | The phone's preview showing the Mac's finished picture: the setting, the picture following Blackout, Rotate not applied twice, the camera taking over while a code is read, a Mac reload, switching back; torch and white-balance lock dimmed on a camera without them |
 | `tests/edit-screen.mjs` | The edit screen's own controls: the bar slider (click, typed value, double-click reset), the app's menus by mouse and keyboard without the page's shortcuts firing, a menu whose button scrolls into view, the chain row (add, drag, remove, bypass), modulation boxes and their extra settings, LFOs, autosave, a narrow window |
-| `tests/glitch.mjs` | Blink (called Glitch until 24 November 2026; still `glitch` in the code): the tab, tearing when a preset has no jumps, capturing (Keep, Cancel, nothing saved meanwhile, a capture left open), the pointer on a slider's bar (shown, dragged, removed), firing it with attack and release, hold by key and by button, scatter |
+| `tests/blink.mjs` | Blink (called Glitch until 24 November 2026): the tab, tearing when a preset has no jumps, capturing (Keep, Cancel, nothing saved meanwhile, a capture left open), the pointer on a slider's bar (shown, dragged, removed), firing it with attack and release, hold by key and by button, scatter; Delete for Blackout and B for Blink; presets, a session and triggers saved under the old name coming back as Blink |
 | `tests/blocked.mjs` | A network that keeps devices apart: a phone whose links cannot open while the pairing server works; the Mac's alert, readout and starting-screen line, the phone's band, both naming the hotspot as the way out; pairing by itself once the links can open |
 | `tests/mix.mjs` | Input B and Mix B: the strip under the picture (uncropped small views, source icons that slide out, looking at a source without choosing it, tooltips and the mode grid opening upward), the bar adding Mix B on its first drag, the nine modes on both screens, A and B trading places, B off passing A through, the iPhone as B, B carrying on when the picture moves to `/control` |
 | `tests/two-phones.mjs` | A second iPhone: its tab and room code, pairing beside the first without disturbing it, the Phone B readout, iPhone B as input A or B with both live, its sensors as their own sources, its triggers and preset buttons, both phones following the picture to `/control`, one dropping alone, Stop using iPhone B |
@@ -1179,7 +1179,7 @@ else. Check these the first time you use them:
 - **A network that keeps devices apart** (24 November): the message on both
   screens has only been seen with a stand-in phone whose links were made
   unable to open. Try it once on a real venue or campus network.
-- **Glitch as a jump** (23 November): held by a phone trigger or a MIDI
+- **Blink as a jump** (called Glitch then; 23 November): held by a phone trigger or a MIDI
   pad (the owner has captured and fired one with the mouse and the G key;
   the tests do the same).
 - **The Motion sources, and Gravity's "down"** (22 November): Motion and

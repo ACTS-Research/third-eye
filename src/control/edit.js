@@ -10,7 +10,7 @@ import { MAX_FADE } from '../shared/presets.js';
 import { sceneOf } from '../shared/state.js';
 import { debounce, el } from '../shared/util.js';
 import { digitsFor } from './controls.js';
-import { mountGlitch } from './glitch-panel.js';
+import { mountBlink } from './blink-panel.js';
 import { attachPreview } from './preview.js';
 
 export function mountEdit(root, ui) {
@@ -45,16 +45,16 @@ export function mountEdit(root, ui) {
     ui.editPreset(index);
   } });
   const revert = el('button', { class: 'revert', text: 'Revert', title: 'Back to how this preset was when you opened it', onclick: () => {
-    if (!opened || opened.index !== presets.current || ui.glitchCapture) return;
+    if (!opened || opened.index !== presets.current || ui.blinkCapture) return;
     presets.update(opened.index, structuredClone(opened.preset));
     store.dispatch({ op: 'scene', scene: opened.preset.scene, fade: 0, presetIndex: opened.index });
     saved.textContent = 'Reverted.';
     ui.markChanges?.();
   } });
   // What Revert would go back to, for the marks on the Parameters tab.
-  // (While a glitch is being captured, the marks are against the chain as
+  // (While a blink is being captured, the marks are against the chain as
   // it was when the capture began.)
-  ui.openedScene = () => (ui.glitchCapture ? { chain: ui.glitchCapture.chain } : opened && opened.index === presets.current ? opened.preset.scene : null);
+  ui.openedScene = () => (ui.blinkCapture ? { chain: ui.blinkCapture.chain } : opened && opened.index === presets.current ? opened.preset.scene : null);
   // Revert says how many sliders it would put back, and is dim with nothing to undo.
   let changeCount = 0;
   function labelRevert() {
@@ -66,7 +66,7 @@ export function mountEdit(root, ui) {
   }
   ui.onChangeCount = (n) => {
     // (Not the capture's count: those sliders are on their way back.)
-    if (ui.glitchCapture) return;
+    if (ui.blinkCapture) return;
     changeCount = n;
     labelRevert();
   };
@@ -177,12 +177,12 @@ export function mountEdit(root, ui) {
     faders: el('div', { class: 'tab-pane', id: 'faders-panel' }, [pinList, pinNote]),
     mods: el('div', { class: 'tab-pane', id: 'tab-mods' }),
     lfos: el('div', { class: 'tab-pane', id: 'lfo-panel' }),
-    glitch: el('div', { class: 'tab-pane', id: 'glitch-panel' }),
+    blink: el('div', { class: 'tab-pane', id: 'blink-panel' }),
   };
-  const captureBand = el('div', { id: 'glitch-band', hidden: true });
+  const captureBand = el('div', { id: 'blink-band', hidden: true });
   const tabButtons = {};
   const tabBar = el('div', { class: 'tabs', role: 'group', 'aria-label': 'What to edit' });
-  for (const [id, text] of [['params', 'Parameters'], ['faders', 'Faders'], ['mods', 'Modulation'], ['lfos', 'LFOs'], ['glitch', 'Blink']]) {
+  for (const [id, text] of [['params', 'Parameters'], ['faders', 'Faders'], ['mods', 'Modulation'], ['lfos', 'LFOs'], ['blink', 'Blink']]) {
     tabButtons[id] = el('button', { 'data-tab': id, text, onclick: () => ui.setEditTab(id) });
     tabBar.append(tabButtons[id]);
   }
@@ -198,9 +198,9 @@ export function mountEdit(root, ui) {
     tabButtons.faders.textContent = `Faders · ${pins().length}`;
     tabButtons.mods.textContent = `Modulation · ${store.state.mappings.length}`;
   }
-  sideCol.append(tabBar, captureBand, panes.params, panes.faders, panes.mods, panes.lfos, panes.glitch);
+  sideCol.append(tabBar, captureBand, panes.params, panes.faders, panes.mods, panes.lfos, panes.blink);
   ui.setEditTab('params');
-  ui.glitchRoots = { pane: panes.glitch, band: captureBand };
+  ui.blinkRoots = { pane: panes.blink, band: captureBand };
 
   function buildSlots() {
     buildPins();
@@ -232,7 +232,7 @@ export function mountEdit(root, ui) {
 
   // Edits made on this screen go straight into the preset.
   const autosave = debounce(() => {
-    if (ui.view !== 'edit' || !presets.list[presets.current] || ui.glitchCapture) return;
+    if (ui.view !== 'edit' || !presets.list[presets.current] || ui.blinkCapture) return;
     presets.saveLiveInto(presets.current);
     saved.textContent = 'Saved.';
   }, 300);
@@ -241,9 +241,9 @@ export function mountEdit(root, ui) {
     if (op.op === 'scene' || op.op === 'replace') buildSlots();
     else if (op.op === 'param' || (op.op === 'item' && op.list === 'chain')) buildPreview();
     else if (op.op === 'item' && op.list === 'mappings') labelTabs();
-    const edit = op.op === 'param' || op.op === 'item' || (op.op === 'scene' && !Number.isInteger(op.presetIndex)) || (op.op === 'merge' && op.key === 'glitch');
-    // (Not while a glitch is being captured: the sliders are only visiting.)
-    if (edit && ui.view === 'edit' && presets.list[presets.current] && !ui.glitchCapture) {
+    const edit = op.op === 'param' || op.op === 'item' || (op.op === 'scene' && !Number.isInteger(op.presetIndex)) || (op.op === 'merge' && op.key === 'blink');
+    // (Not while a blink is being captured: the sliders are only visiting.)
+    if (edit && ui.view === 'edit' && presets.list[presets.current] && !ui.blinkCapture) {
       saved.textContent = 'Saving…';
       autosave();
     }

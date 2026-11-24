@@ -238,12 +238,23 @@ itself; two new factory presets.
   sandbox's links got slower as the session went on.
 
 **Glitch is called Blink (24 November, the owner's choice: it matches the
-app).** Everything on the screens, the phone's trigger labels, the key help
-and the docs say Blink. The code keeps `glitch` everywhere (`state.glitch`,
-the `glitch` / `glitchEnd` actions, `data-midi="glitch"`, `glitch-panel.js`,
-`engine/glitch.js`, `tests/glitch.mjs`), so saved presets, trigger
-bindings and MIDI mappings carry over untouched; do not rename those
-without a migration. The key is still G. Older notes below say Glitch.
+app), in the code too.** `state.blink`, the `blink` / `blinkEnd` actions,
+the `blink` / `blink-end` events, `data-midi="blink"`, `blink-panel.js`
+(`pressBlink`, `ui.blinkCapture`, `#blink-*` ids), `engine/blink.js`
+(`BlinkJump`), the tear `uBlink` / `BLINK_MS`, `tests/blink.mjs`. Saved
+data under the old name is read as Blink: `sanitizeScene` takes
+`scene.glitch` when there is no `scene.blink`, `sanitizeActions` turns
+action `glitch` into `blink` (MIDI pads are action bindings too). Keys,
+also the owner's choice: **B** is Blink, **Delete** (Backspace or
+forward-delete) is Blackout, Space stays Freeze. Older notes below say
+Glitch, `glitch-panel.js`, the G key.
+`tests/blink.mjs` now records the slider every frame inside the page to
+see the throw (`window.__seen`): in the sandbox a look from the test took
+up to 1.7 s, so with a 3 s release it often first looked when the sliders
+were already coming back (two runs in three failed so). Full run before
+the push: the usual sandbox failures (`keep-paired`, `midi-audio`,
+`modulation`, `offline`, `phone`, `edit-screen`'s drag, `standalone`),
+and `offline-pair-online` once (passed alone, as before the rename).
 
 **Shows (built 24 November, seventh session).** Mock-ups
 https://claude.ai/artifact/UqABtQiTWntLoBmj77HSkH (`design/shows/`); the
@@ -840,8 +851,8 @@ Three static pages built by Vite, no framework.
 
 | Path | What lives there |
 | --- | --- |
-| `src/engine/` | Everything live: the motion map and its modulation sources (`motion.js`), the WebGL2 pipeline (`pipeline.js`, with the stand-by picture and the small input views), inputs (`inputs.js`: input A, input B and two spare slots over one set of feeds), the host side of the phone link (`remote.js`), the small copy of the output sent back to the phone (`return-feed.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop. It runs in `/output` while an output window is open, otherwise in `/control`. Sixth session: `glitch.js` (Glitch as a jump of chosen sliders) |
-| `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js` (+ `strip.js`, the strip of presets and the running order), `edit.js` (+ `chain.js` the chain row and Parameters tab, `mod-panel.js` the Modulation tab, `controls.js` the app's own bar slider, menu, switch and row of picture buttons), and the Setup panels. `host.js` decides which window hosts the engine and owns the monitor canvas. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts; `check-panel.js` is Before the show and keeps the Mac awake; `phone-panel.js` the pairing pop-over with a tab for each phone; `record-panel.js` saves recordings to Downloads. Sixth session: `glitch-panel.js` (the Glitch tab and capture), `code-mark.js` (the starting screen's camera holding the pairing code, and its opening) |
+| `src/engine/` | Everything live: the motion map and its modulation sources (`motion.js`), the WebGL2 pipeline (`pipeline.js`, with the stand-by picture and the small input views), inputs (`inputs.js`: input A, input B and two spare slots over one set of feeds), the host side of the phone link (`remote.js`), the small copy of the output sent back to the phone (`return-feed.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop. It runs in `/output` while an output window is open, otherwise in `/control`. Sixth session: `blink.js` (Blink, once Glitch: a jump of chosen sliders) |
+| `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js` (+ `strip.js`, the strip of presets and the running order), `edit.js` (+ `chain.js` the chain row and Parameters tab, `mod-panel.js` the Modulation tab, `controls.js` the app's own bar slider, menu, switch and row of picture buttons), and the Setup panels. `host.js` decides which window hosts the engine and owns the monitor canvas. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts; `check-panel.js` is Before the show and keeps the Mac awake; `phone-panel.js` the pairing pop-over with a tab for each phone; `record-panel.js` saves recordings to Downloads. Sixth session: `blink-panel.js` (the Blink tab and capture), `code-mark.js` (the starting screen's camera holding the pairing code, and its opening) |
 | `src/phone/` | The iPhone page: `main.js`, `link.js` (reconnect watchdog, direct links), `sensors.js` (motion, the XY pad, triggers, presets), `camera-controls.js`, `orient.js` (page angle, the Rotate turn), `widgets.js` (the fader), `opening.js` (what START plays) |
 | `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js` (presets, each with a permanent id, and the running order: `loadOrder`, `orderView`, `applyStep`, `stepShow`), `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `direct.js` (pairing with no server), `qr.js`, `sources.js`, `mark.js` (the animated mark on the splash and the phone's start screen), `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; the engine forwards them to the phone), `camera-shape.js` (the camera of the mark and the squared noise both openings draw in it) |
 | `src/effects/` | One file per effect (`mixb.js` mixes input B in; `delay.js` is Time); `index.js` is the registry, `common.glsl.js` the shared GLSL, `drive.js` the "driven by" menu |
@@ -881,12 +892,12 @@ Three static pages built by Vite, no framework.
   two would fight over the room code. With the output open, `/control` only
   edits state and shows what the output reports, so it can be reloaded
   mid-show.
-- **Whatever fires Glitch must also say when it lets go.** A glitch set to
-  hold lasts until `glitch-end` (action `glitchEnd`): the G key sends it on
+- **Whatever fires Blink must also say when it lets go.** A blink set to
+  hold lasts until `blink-end` (action `blinkEnd`): the B key sends it on
   keyup and on window blur, a trigger when it falls, a button through
-  `pressGlitch()`. A new way to fire Glitch that sends only `glitch` leaves
-  a held glitch thrown for good.
-- **Glitch is changed with `store.merge('glitch', …)`,** never `setScene`:
+  `pressBlink()`. A new way to fire Blink that sends only `blink` leaves
+  a held blink thrown for good.
+- **Blink is changed with `store.merge('blink', …)`,** never `setScene`:
   a scene op rebuilds the panels under the bar being dragged.
 - **An effect's alpha is its own.** The footer in `common.glsl.js` writes
   `wet.a`; Motion keeps its memory there through `uPrev`. Do not put the

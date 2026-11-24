@@ -16,7 +16,7 @@ export const ACTIONS = {
   freeze: 'Freeze frame',
   bypassAll: 'Bypass all effects',
   inputNext: 'Next input',
-  glitch: 'Blink',
+  blink: 'Blink',
   tap: 'Tap tempo',
   record: 'Record on / off',
   // With a running order these walk its steps; without one, the presets.
@@ -84,14 +84,14 @@ export function runAction(store, name, arg) {
       store.merge('input', next === kindB ? { kind: next, kindB: kind } : { kind: next });
       break;
     }
-    case 'glitch':
-      store.emit('glitch');
+    case 'blink':
+      store.emit('blink');
       break;
-    // The button, key or pad that fired Glitch has come up: a glitch set to
-    // hold lets go. (Not an action anyone binds: whatever sends 'glitch'
+    // The button, key or pad that fired Blink has come up: a blink set to
+    // hold lets go. (Not an action anyone binds: whatever sends 'blink'
     // sends this after it.)
-    case 'glitchEnd':
-      store.emit('glitch-end');
+    case 'blinkEnd':
+      store.emit('blink-end');
       break;
     case 'record':
       store.emit('record');

@@ -593,7 +593,7 @@ export class Pipeline {
     return b.kind === 'pattern' || (!!b.kind && b.hasFrame);
   }
 
-  // ctx: { time, now, phone, maskTex, maskFit, glitch, master, bypassAll,
+  // ctx: { time, now, phone, maskTex, maskFit, blink, master, bypassAll,
   //        frozen, input, resolve, canvasWidth, canvasHeight, wantPreview,
   //        motion }
   render(ctx) {
@@ -653,7 +653,7 @@ export class Pipeline {
     const p = this.finalProgram.use();
     p.tex('uA', 0, outA).tex('uB', 1, outB);
     p.f('uFade', fadeT * fadeT * (3 - 2 * fadeT));
-    p.f('uGlitch', ctx.glitch).f('uMaster', ctx.master).f('uTime', ctx.time).f('uFlash', ctx.flash ?? 0);
+    p.f('uBlink', ctx.blink).f('uMaster', ctx.master).f('uTime', ctx.time).f('uFlash', ctx.flash ?? 0);
     p.v2('uResolution', this.width, this.height);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, ctx.canvasWidth, ctx.canvasHeight);

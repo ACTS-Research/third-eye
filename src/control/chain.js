@@ -330,13 +330,13 @@ export function mountChain(roots, ui) {
   }
   ui.markChanges = markChanges;
 
-  // Where Glitch throws a slider of the open effect: the pointer on its bar.
-  // Not while a glitch is being captured (the sliders are at their landing
+  // Where Blink throws a slider of the open effect: the pointer on its bar.
+  // Not while a blink is being captured (the sliders are at their landing
   // places then, and marked as changed).
   function markJumps() {
     const open = current();
     for (const [key, { control }] of bars) {
-      const jump = !ui.glitchCapture && open && store.state.glitch.jumps.find((j) => j.fx === open.uid && j.key === key);
+      const jump = !ui.blinkCapture && open && store.state.blink.jumps.find((j) => j.fx === open.uid && j.key === key);
       control.setJump?.(jump ? jump.to : undefined, (to) => ui.setJump?.(open.uid, key, to));
     }
   }
@@ -424,7 +424,7 @@ export function mountChain(roots, ui) {
       for (const [key, control] of controls) if (key.endsWith('$mod')) control.set();
       buildRow();
       applyRange();
-    } else if (op.op === 'merge' && op.key === 'glitch') {
+    } else if (op.op === 'merge' && op.key === 'blink') {
       markJumps();
     }
   });

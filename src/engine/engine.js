@@ -21,7 +21,7 @@ import { Recorder } from './recorder.js';
 import { ReturnFeed } from './return-feed.js';
 import { Modulation } from './modulation.js';
 import { PhoneSensors } from './phone-sensors.js';
-import { GlitchJump } from './glitch.js';
+import { BlinkJump } from './blink.js';
 import { MotionSources } from './motion.js';
 import { Pipeline } from './pipeline.js';
 import { PhoneLink } from './remote.js';
@@ -52,7 +52,7 @@ function pairedLately() {
 const PHONE_BANK = 6;
 
 const MAX_EDGE = 4096;
-const GLITCH_MS = 450;
+const BLINK_MS = 450;
 const STALL_MS = 1000;
 const PREVIEW_INTERVAL_MS = 100;
 const STATUS_INTERVAL_MS = 500;
@@ -77,7 +77,7 @@ export class Engine {
     this.raf = 0;
     this.inputs = new InputManager();
     this.t0 = performance.now();
-    this.glitchStart = -1e9;
+    this.blinkStart = -1e9;
     this.mod = new Modulation(store);
     this.motion = new MotionSources(this.mod);
     this.motionWanted = { A: false, B: false };
@@ -87,11 +87,11 @@ export class Engine {
     this.sensors = new PhoneSensors(this.mod);
     // The second iPhone's motion and touch pad: sources of their own.
     this.sensorsB = new PhoneSensors(this.mod, 'B');
-    // Glitch as a jump of chosen sliders, applied on top of modulation.
-    this.glitchJump = new GlitchJump();
+    // Blink as a jump of chosen sliders, applied on top of modulation.
+    this.blinkJump = new BlinkJump();
     this.resolve = (item, inst) => {
       this.mod.resolveInto(item, inst);
-      this.glitchJump.apply(item, inst);
+      this.blinkJump.apply(item, inst);
     };
     this.midi = new MidiInput(this.mod, (source) => this.bus.send('midi-learned', { source }));
     this.audio = new AudioInput(this.mod);
@@ -215,10 +215,10 @@ export class Engine {
     });
     store.onEvent((name, data) => {
       if (!this.running) return;
-      if (name === 'glitch') {
+      if (name === 'blink') {
         // The preset's own jump, or with none set the tearing of the picture.
-        if (!this.glitchJump.trigger(this.store.state.glitch)) this.glitchStart = performance.now();
-      } else if (name === 'glitch-end') this.glitchJump.release();
+        if (!this.blinkJump.trigger(this.store.state.blink)) this.blinkStart = performance.now();
+      } else if (name === 'blink-end') this.blinkJump.release();
       else if (name === 'tap') this.tempo.tap(data?.at ?? Date.now());
       else if (name === 'record') this.recorder.toggle(this.store.state.globals.recFormat);
       else if (name === 'latency-test') this.probe.start();
@@ -638,7 +638,7 @@ export class Engine {
     const wantMotion = this.wantMotion();
     this.motion.frame(dt, wantMotion);
     this.mod.frame(dt, this.tempo.frame(now));
-    this.glitchJump.frame(dt, this.store.state.glitch);
+    this.blinkJump.frame(dt, this.store.state.blink);
     const watched = now - this.controlSeenAt < CONTROL_TIMEOUT_MS;
     if (watched && now - this.lastSourcesAt >= SOURCES_INTERVAL_MS) {
       this.lastSourcesAt = now;
@@ -686,7 +686,7 @@ export class Engine {
           phone: this.sensors.angles,
           maskTex,
           maskFit: this.maskFit,
-          glitch: clamp(1 - (now - this.glitchStart) / GLITCH_MS, 0, 1),
+          blink: clamp(1 - (now - this.blinkStart) / BLINK_MS, 0, 1),
           master: g.blackout || flash === 'black' ? 0 : 1,
           flash: flash === 'white' ? 1 : 0,
           bypassAll: g.bypassAll,

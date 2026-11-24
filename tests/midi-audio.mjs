@@ -165,7 +165,7 @@ try {
   check('Esc leaves map mode', await control.evaluate(() => !document.body.classList.contains('midi-map')) && (await control.locator('#map-hint').isHidden()));
   await control.click('.big.blackout');
   check('controls work normally again', await settle(() => output.evaluate(() => window.thirdEye.store.state.globals.blackout === true), 'normal click'));
-  await control.keyboard.press('b');
+  await control.keyboard.press('Backspace');
 
   // A mapped knob that has not moved since loading must leave the value alone.
   await control.evaluate(() => {

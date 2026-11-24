@@ -1,4 +1,4 @@
-// Glitch as a jump: the sliders a preset has chosen (state.glitch.jumps) are
+// Blink as a jump: the sliders a preset has chosen (state.blink.jumps) are
 // thrown to their landing places and come back. One envelope for all of
 // them: up over `attack` seconds, held while the button is down when `hold`
 // is on, back over `release`. A preset with no jumps keeps the old tearing
@@ -8,7 +8,7 @@ import { paramUnit, paramValue } from '../effects/index.js';
 
 const MIX = { min: 0, max: 1 };
 
-export class GlitchJump {
+export class BlinkJump {
   constructor() {
     this.level = 0; // 0 = the sliders are their own, 1 = fully thrown
     this.phase = 'idle';
@@ -18,12 +18,12 @@ export class GlitchJump {
   }
 
   // A press. False when this preset has no jumps to make.
-  trigger(glitch) {
-    if (!glitch?.jumps?.length) return false;
+  trigger(blink) {
+    if (!blink?.jumps?.length) return false;
     this.phase = 'attack';
-    this.held = !!glitch.hold;
+    this.held = !!blink.hold;
     this.offsets.clear();
-    if (glitch.scatter > 0) for (const j of glitch.jumps) this.offsets.set(`${j.fx}:${j.key}`, (Math.random() * 2 - 1) * glitch.scatter);
+    if (blink.scatter > 0) for (const j of blink.jumps) this.offsets.set(`${j.fx}:${j.key}`, (Math.random() * 2 - 1) * blink.scatter);
     return true;
   }
 
@@ -32,21 +32,21 @@ export class GlitchJump {
     this.held = false;
   }
 
-  frame(dt, glitch) {
+  frame(dt, blink) {
     if (this.phase === 'idle') return;
     if (this.phase === 'attack') {
-      this.level = glitch.attack > 0 ? Math.min(1, this.level + dt / glitch.attack) : 1;
+      this.level = blink.attack > 0 ? Math.min(1, this.level + dt / blink.attack) : 1;
       if (this.level >= 1) this.phase = 'top';
     } else if (this.phase === 'top') {
       if (!this.held) this.phase = 'release';
     } else {
-      this.level = glitch.release > 0 ? Math.max(0, this.level - dt / glitch.release) : 0;
+      this.level = blink.release > 0 ? Math.max(0, this.level - dt / blink.release) : 0;
       if (this.level <= 0) this.phase = 'idle';
     }
     this.byFx = null;
     if (this.level > 0) {
       this.byFx = new Map();
-      for (const j of glitch.jumps) {
+      for (const j of blink.jumps) {
         if (!this.byFx.has(j.fx)) this.byFx.set(j.fx, []);
         this.byFx.get(j.fx).push(j);
       }

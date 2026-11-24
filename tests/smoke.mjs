@@ -97,9 +97,9 @@ try {
 
   console.log('keys');
   const settle = (pred, label) => waitFor(async () => pred(await outputStats(output)), { label, timeout: 4000 }).then(() => true, () => false);
-  await control.keyboard.press('b');
+  await control.keyboard.press('Backspace');
   check('blackout key blacks the output', await settle((st) => st.mean === 0, 'black'));
-  await control.keyboard.press('b');
+  await control.keyboard.press('Backspace');
   check('blackout releases', await settle((st) => st.mean > 10, 'picture back'));
 
   await control.keyboard.press('x');
@@ -112,10 +112,10 @@ try {
   await control.keyboard.press(' ');
   await control.keyboard.press('x');
 
-  await output.keyboard.press('b');
+  await output.keyboard.press('Backspace');
   await sleep(200);
   check('key in output reaches control', await control.evaluate(() => document.querySelector('.big.blackout').classList.contains('on')));
-  await output.keyboard.press('b');
+  await output.keyboard.press('Backspace');
 
   console.log('video file input');
   // Record a short clip in the page, then load it through the file picker.
