@@ -1004,9 +1004,12 @@ The browser-tab and Home Screen icon is a compact camera drawn in outline
 with a horizontal eye in the same line, in the app's red on its black.
 `scripts/make-icons.mjs` draws it and writes the files in `public/`
 (`icon.svg`, `icon-32.png`, `icon-180.png`, `icon-512.png`); change the
-drawing there and run it again. The mark on the Mac's splash and the phone's
-start screen is the same drawing in motion (`src/shared/mark.js`): light
-video noise inside the camera, and an eye that blinks now and then.
+drawing there and run it again. The mark on the phone's start screen is the
+same drawing in motion (`src/shared/mark.js`): light video noise inside the
+camera, and an eye that blinks now and then. The Mac's starting screen
+draws the same camera solid, with the pairing code in it
+(`src/control/code-mark.js`); the camera's outline for both is in
+`src/shared/camera-shape.js`. Change all three when the logo is redrawn.
 
 ```bash
 node scripts/make-icons.mjs
@@ -1116,22 +1119,36 @@ that they work well, and later that drawing a modulation's range on a
 slider and the number on an effect's button as its bypass switch work well
 too.
 
+On 23 and 24 November the owner used Motion and Gravity with the iPhone as
+input ("work well"), captured and fired a glitch on the Mac, used the new
+top bar and the reworked edit screen, and scanned test codes drawn like the
+starting screen's (dark squares on each of the six palette colours, at the
+dimmer's brightest and dimmest) with the iPhone's Camera app: every one
+read. One of those sessions was in Safari on the Mac, in a window under
+1000 pixels wide; the control page is built and tested for Chrome.
+
 **Only in headless Chromium**, with a fake camera and microphone: everything
 else. Check these the first time you use them:
 
+- **The Mac's starting screen and the phone's opening** (23 November): the
+  real pairing code inside the camera scanned by the iPhone (only test
+  codes drawn the same way have been); both openings at a true 60 frames a
+  second; on the phone, the camera picture shown inside the camera's shape
+  as the noise clears, in Safari.
+- **The top bar** (23 November): the frame rate appearing in the output
+  readout only when it is low (the test machine is never above 50), and
+  the second iPhone switching itself off after a look at its tab.
 - **A network that keeps devices apart** (24 November): the message on both
   screens has only been seen with a stand-in phone whose links were made
   unable to open. Try it once on a real venue or campus network.
-- **Glitch as a jump** (23 November): all of it on the real Mac, and a
-  phone trigger or a MIDI pad holding it. In the tests G and the mouse fire
-  it.
-- **The motion map, Motion, Gravity and the Motion sources** (22
-  November): all of it with a real camera. The tests use the moving test
-  pattern, which has no grain. To find out: whether camera grain or the
-  phone's video compression reads as movement at the default
-  **sensitivity**; whether Gravity's "down" is the room's down (if it
-  pours upward or sideways, set **angle**, and say so); how the Motion
-  sources read with a person in a lit room; the frame rate.
+- **Glitch as a jump** (23 November): held by a phone trigger or a MIDI
+  pad (the owner has captured and fired one with the mouse and the G key;
+  the tests do the same).
+- **The Motion sources, and Gravity's "down"** (22 November): Motion and
+  Gravity themselves have been used with a real camera. Still to find out:
+  how the Motion A / B sources read on a slider with a person in a lit
+  room; whether Gravity pours toward the room's floor when the phone is
+  rolled (if it pours upward or sideways, set **angle**, and say so).
 - **From 22 November:** the moving mark on the iPhone's start screen in
   Safari; the frame rate with Blur / Glow on a large output; a paired
   phone keeping its place through a reload while another phone waits on

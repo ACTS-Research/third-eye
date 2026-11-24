@@ -323,15 +323,23 @@ seconds to see `/control` say it is not drawing (it must not take the picture
 over).
 
 **Branch.** Work is on `main`, the default branch and the one that deploys.
-Nothing is waiting to be merged; everything is pushed. `main` is the only
-branch on GitHub (checked 21 November). A cloud session starts on a
-temporary local branch: switch to `main` (`git checkout -B main
-origin/main`) before committing, and push `main` only.
+Nothing is waiting to be merged; everything is pushed (checked 24 November:
+local `main` and `origin/main` are the same commit). GitHub also holds
+`claude/nifty-lamport-xffss6`, a branch the cloud session was given and
+never used: it points at an old commit of `main` and has nothing of its
+own. It cannot be deleted from a cloud session; delete it on GitHub if you
+want it gone. A cloud session starts on a temporary local branch: switch
+to `main` (`git checkout -B main origin/main`) before committing, and push
+`main` only.
 
 **Mock-ups and the plan.** All private to the owner on claude.ai; their
 sources are in `design/` (`design/README.md` says which option of each was
 built).
 
+- The starting screen, the two openings and the phone's start (sixth
+  session): https://claude.ai/artifact/7MxqJ1CZhbWHzKod3deScy
+- The top bar: https://claude.ai/artifact/AAaBFVwkb1QsSUDMoS2mLB
+- Glitch: https://claude.ai/artifact/NFZ8AUPkcXGMBQKWwnkCkR
 - The logo, round 4: https://claude.ai/artifact/E6D3gZSjwHWBqA6rbMSN6m
 - Tone's colour controls: https://claude.ai/artifact/LQquh24inx3yagJ4bcuwUi
 - Bypass, change marks and modulation on the edit screen:
@@ -346,7 +354,9 @@ built).
 - Icons: https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo
 
 **What is backed up, and what is not.** The code, tests, docs, screenshots,
-the plan and every mock-up's source are on GitHub in `main`. Your presets,
+the plan and every mock-up's source are on GitHub in `main` (the three
+canvases of the sixth session are in `design/glitch/`, `design/top-bar/`
+and `design/start2/`, each under `project/`). Your presets,
 running order and settings are not: they live in your browser on the Mac
 (Setup → Preset library → Export presets). Recordings now save to your
 Downloads folder as they stop; a copy also stays in the browser until
@@ -719,14 +729,14 @@ Three static pages built by Vite, no framework.
 
 | Path | What lives there |
 | --- | --- |
-| `src/engine/` | Everything live: the motion map and its modulation sources (`motion.js`), the WebGL2 pipeline (`pipeline.js`, with the stand-by picture and the small input views), inputs (`inputs.js`: input A, input B and two spare slots over one set of feeds), the host side of the phone link (`remote.js`), the small copy of the output sent back to the phone (`return-feed.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop. It runs in `/output` while an output window is open, otherwise in `/control` |
-| `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js` (+ `strip.js`, the strip of presets and the running order), `edit.js` (+ `chain.js` the chain row and Parameters tab, `mod-panel.js` the Modulation tab, `controls.js` the app's own bar slider, menu, switch and row of picture buttons), and the Setup panels. `host.js` decides which window hosts the engine and owns the monitor canvas. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts; `check-panel.js` is Before the show and keeps the Mac awake; `phone-panel.js` the pairing pop-over with a tab for each phone; `record-panel.js` saves recordings to Downloads |
-| `src/phone/` | The iPhone page: `main.js`, `link.js` (reconnect watchdog, direct links), `sensors.js` (motion, the XY pad, triggers, presets), `camera-controls.js`, `orient.js` (page angle, the Rotate turn), `widgets.js` (the fader) |
-| `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js` (presets, each with a permanent id, and the running order: `loadOrder`, `orderView`, `applyStep`, `stepShow`), `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `direct.js` (pairing with no server), `qr.js`, `sources.js`, `mark.js` (the animated mark on the splash and the phone's start screen), `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; the engine forwards them to the phone) |
+| `src/engine/` | Everything live: the motion map and its modulation sources (`motion.js`), the WebGL2 pipeline (`pipeline.js`, with the stand-by picture and the small input views), inputs (`inputs.js`: input A, input B and two spare slots over one set of feeds), the host side of the phone link (`remote.js`), the small copy of the output sent back to the phone (`return-feed.js`), modulation, MIDI, audio, tempo, vision worker, recorder, latency probe. `engine.js` ties them together and owns the frame loop. It runs in `/output` while an output window is open, otherwise in `/control`. Sixth session: `glitch.js` (Glitch as a jump of chosen sliders) |
+| `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js` (+ `strip.js`, the strip of presets and the running order), `edit.js` (+ `chain.js` the chain row and Parameters tab, `mod-panel.js` the Modulation tab, `controls.js` the app's own bar slider, menu, switch and row of picture buttons), and the Setup panels. `host.js` decides which window hosts the engine and owns the monitor canvas. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts; `check-panel.js` is Before the show and keeps the Mac awake; `phone-panel.js` the pairing pop-over with a tab for each phone; `record-panel.js` saves recordings to Downloads. Sixth session: `glitch-panel.js` (the Glitch tab and capture), `code-mark.js` (the starting screen's camera holding the pairing code, and its opening) |
+| `src/phone/` | The iPhone page: `main.js`, `link.js` (reconnect watchdog, direct links), `sensors.js` (motion, the XY pad, triggers, presets), `camera-controls.js`, `orient.js` (page angle, the Rotate turn), `widgets.js` (the fader), `opening.js` (what START plays) |
+| `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js` (presets, each with a permanent id, and the running order: `loadOrder`, `orderView`, `applyStep`, `stepShow`), `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `direct.js` (pairing with no server), `qr.js`, `sources.js`, `mark.js` (the animated mark on the splash and the phone's start screen), `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; the engine forwards them to the phone), `camera-shape.js` (the camera of the mark and the squared noise both openings draw in it) |
 | `src/effects/` | One file per effect (`mixb.js` mixes input B in); `index.js` is the registry, `common.glsl.js` the shared GLSL |
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon: the logo of 22 November, `design/logo/`) |
-| `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `logo/`, `tone/`, `edit-marks/`, `running-order/`, `edit-screen/`, `mix/`, `phone2/`. `design/README.md` says which option of each was built |
+| `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `logo/`, `tone/`, `edit-marks/`, `running-order/`, `edit-screen/`, `mix/`, `phone2/`. `design/README.md` says which option of each was built. Sixth session: `glitch/`, `top-bar/`, `start2/` |
 | `tests/` | Twenty-seven headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
@@ -755,6 +765,20 @@ Three static pages built by Vite, no framework.
   two would fight over the room code. With the output open, `/control` only
   edits state and shows what the output reports, so it can be reloaded
   mid-show.
+- **Whatever fires Glitch must also say when it lets go.** A glitch set to
+  hold lasts until `glitch-end` (action `glitchEnd`): the G key sends it on
+  keyup and on window blur, a trigger when it falls, a button through
+  `pressGlitch()`. A new way to fire Glitch that sends only `glitch` leaves
+  a held glitch thrown for good.
+- **Glitch is changed with `store.merge('glitch', …)`,** never `setScene`:
+  a scene op rebuilds the panels under the bar being dragged.
+- **An effect's alpha is its own.** The footer in `common.glsl.js` writes
+  `wet.a`; Motion keeps its memory there through `uPrev`. Do not put the
+  `1.0` back.
+- **The openings play once and never hold anything up.** The Mac's plays
+  once per tab session and only on the starting screen; the phone's lies
+  over screens that have already started underneath. Neither may gate the
+  picture, the link or a reload mid-show.
 - **Anything the engine listens for must work while it is stopped.** Guard
   new store, bus and window listeners in `engine.js` with `this.running`,
   and release new devices in `stop()`.
@@ -891,6 +915,16 @@ Three static pages built by Vite, no framework.
 
 ### Never run on real hardware (all unconfirmed)
 
+- **From the sixth session:** the Mac's starting screen with the real
+  pairing code in the camera (test codes drawn the same way scanned in
+  every palette), and its opening at full speed; the phone's opening, above
+  all the camera picture masked to the camera's shape in Safari; the
+  message on both screens when a network keeps the devices apart; the
+  Motion A / B sources on a slider; which way Gravity's "down" turns; Glitch
+  held by a phone trigger or a MIDI pad; the top bar's icons at the Mac's
+  real size and the frame rate appearing only when low; the narrow-window
+  layout in Chrome on the Mac; Bring back deleted factory presets.
+
 - **The phone's screen as it now stands:** the upright layout, the preview's
   band matching the Mac's, Freeze with quick taps, Rotate, the three camera
   icons, messages over the status line.
@@ -918,8 +952,12 @@ Three static pages built by Vite, no framework.
 Step 5 of the signal loss plan (quality stepping down and up by itself, an
 alert when the Mac changes network, a quiet "no internet" mark, alerts for
 the second phone); making the new link before breaking the old one (plan,
-scenario 4); a new logo; an image as a control signal (input B's
-brightness or motion as modulation sources); Pair without internet for the
+scenario 4); input B's brightness as a modulation source (its motion is
+done: Motion B); a network line in Before the show (a partial self-test
+of the Wi-Fi); typing a glitch's landing value; a glitch for some factory
+presets; a mark on the chain row for effects that take part in the glitch;
+the opening with the room code in squares (prototype F2); Pair without
+internet for the
 second phone; picture controls on the Mac that hold across presets; saving
 a Mix B added from the perform screen into the preset; a folder of the
 owner's choosing for recordings; several named running orders, and steps
@@ -1116,13 +1154,17 @@ How I work:
   will change for me, and wait for my go. A small change I have asked for
   outright can simply be done.
 - For anything that changes how a screen looks or works, show me mock-ups
-  first (two or three options on a design canvas) and let me choose.
+  first (two or three options on a design canvas) and let me choose. For
+  anything that moves, make the mock-up play.
+- When I ask you to "consider and advise", give me your recommendation and
+  wait; do not build.
 - Work on main and push to main. After each push, check that the "Build and
   deploy to GitHub Pages" run succeeded.
 - Run the test suites that cover what you change (one at a time, or in the
   background), and all of them before a push that touches engine.js,
   remote.js, host.js or the phone's link.js. Do not push until they pass,
   or until you have shown that a failure also happens on the commit before.
+  A hook will keep asking you to push uncommitted work: hold it until then.
 - Tell me plainly what you could not verify on real hardware. You cannot
   reach the deployed site, the public pairing server or my devices.
 - Write to me in plain language, short, with what I need to do or decide
