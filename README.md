@@ -563,7 +563,8 @@ to fold its card.
 | --- | --- |
 | Video Feedback | Zoom / rotate / shift / decay of its own previous output; four blend modes. Each runs from nothing at all to violent: zoom from half to double on every frame, rotate up to a quarter turn a frame, decay from none to never fading |
 | Trails | Lighten, smear, add or darken persistence |
-| Time Delay / Slit-scan | 64-frame ring buffer; whole-frame delay or per-pixel delay by row, column, radius or brightness |
+| Time | Each point of the picture looks some way into the past. **reach** is how far back the oldest picture is, from 1 to 8 seconds (256 past pictures, a little softer than the live one). **delay** is how far back every point looks at least, **spread** how much further back the driver sends it (to the left: the other way round). **driven by** chooses what decides (see below); with **Itself**, **shape** does: the whole frame at once, down, across, from the centre, or the picture's own brightness (slit-scan). (Called Time Delay / Slit-scan before 24 November 2026; presets that used it look as they did) |
+| Scan | The picture as scan lines, each lifted into relief by what drives it (to start with, its own brightness), like a landscape seen from the front: a nearer line that rises hides the ones behind. **lines** is how many, **lift** how high (to the left, pushed down), **thickness** of the gap between two lines; **between** fills the gaps with black, the picture dimmed, or the picture; **colour** is the picture's own or white; **direction** runs the lines across or down |
 | Kaleidoscope / Mirror | Segments, spin, or plain left/right, top/bottom and quad mirrors |
 | Rotate / Counter-rotate | Follows the phone's roll: `follow` 1 keeps the horizon level, -1 doubles the roll |
 | Pixel Displacement | Driven by noise, or by the picture's own brightness or colour |
@@ -577,6 +578,19 @@ to fold its card.
 | Motion | Shows only what moves, or only what is still (**show**). **sensitivity** is how little movement counts, **softness** the edge, **memory** how long a point that moved goes on counting. **rest** is what fills the remainder: black, the picture as it last was there (so movement paints the picture in, or, showing what is still, people who move never appear), or the picture dimmed. **movement of** chooses whose movement decides: input A's or input B's |
 | Gravity | The picture keeps what it showed and lets it fall. **pull** is how fast; "down" is real down when a phone is paired (roll the phone and it pours the other way; point it at the floor and it stops), turned by **angle**, and the foot of the picture when none is. **drag** lets movement in the picture carry it along, **hold** is how long what has fallen stays, **spread** widens it as it goes, and **blend** chooses what falls: everything (Pour), the bright parts, or the dark parts |
 | Mix B | Mixes input B in: nine modes (see [Inputs](#inputs)) |
+
+**Driven by.** Time and Scan have a **driven by** menu: what decides how
+much they do at each point. **Itself** is the effect's own choice (Time's
+shape, Scan's brightness). **Input B** is input B's brightness: where B is
+bright, Time looks further back and Scan's lines rise (with B off, nothing
+is driven). **Motion** is movement in input A: whatever moves runs late in
+Time and leaves a wake, and lifts Scan's lines. **The body** is the person:
+the segmentation mask, softened and eased so that a slow model does not
+make the picture step. Choosing it switches segmentation on by itself while
+the preset is live (Setup → Vision then reads "on for the body"), and off
+again about ten seconds after no live effect uses it; switched on in Setup,
+it stays on. The body needs a camera picture: on the test pattern there is
+nobody.
 
 Motion and Gravity read the **motion map**: a small picture of where the
 input is moving, made by comparing each frame with the one before. It is
@@ -718,7 +732,9 @@ stores a chain, its mappings, its LFO settings and its pinned faders, plus:
 factory presets is installed on first run. **Setup → Preset library** exports
 every preset to one JSON file, **Bring back deleted factory presets** adds
 any factory preset that is no longer in your list (as it was made; nothing
-of yours is changed), and **Import presets** imports such files (added at the end;
+of yours is changed; it is also how a browser that already had the app gets
+factory presets added later, such as **Time wake** and **Relief** of
+24 November 2026), and **Import presets** imports such files (added at the end;
 unknown effects are dropped and out-of-range values clamped). Presets live in
 the browser's local storage; export them to keep a copy.
 
@@ -1086,6 +1102,7 @@ npm test
 | `tests/link-down.mjs` | The phone when the Mac is not receiving: the band at the foot of the preview in both layouts (what is wrong, retrying with the time, a button only when needed and large enough), the grey preview and pulsing edge, the pad and the controls left alone, the phone returning by itself; the Resume screen and when it is not offered |
 | `tests/start.mjs` | A browser that has never opened the app: the Mac opening on the iPhone input with the splash where the picture will be (the opening playing once, the camera holding a code that reads as the pairing link, in another colour and dimmed too), the Before the show check and its flag, the phone's start screen and its check after START. the opening that START plays. (Every other suite starts from a saved session on the test pattern with the phone's check and opening off: `launch()` in `lib.mjs`) |
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, the motion map (built only when read, its modulation sources, the Motion and Gravity effects), triggers, presets, crossfade |
+| `tests/time-scan.mjs` | Time's reach (the frames in use cover 1, 4 and 8 seconds), Time and Scan with each choice of **driven by**, the motion map made only when Motion drives, the edit screen's rows and names, Scan's lift and direction, segmentation switching itself on for the body and off ten seconds after, and left alone when switched on in Setup |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |
 

@@ -185,6 +185,58 @@ the iPhone, only test codes drawn the same way.
 before the last push, `modulation` and `midi-audio` among them (both had
 failed in the sandbox the day before, on the commit before as well).
 
+**Stage 3: Time and Scan (built 24 November, seventh session).** The
+owner's choices: reach up to 8 s; the body switches segmentation on by
+itself; two new factory presets.
+
+- **Time** is the old `delay` effect, renamed (the id stays `delay`, so
+  saved presets keep it and get reach 1 s and "driven by: Itself", which is
+  how they looked). `uses.history` is now 256 frames at most 512 wide
+  (about 150 MB while Time is in a chain; twice that during a crossfade
+  between two presets that both use it). `History.push` in `pipeline.js`
+  stores a frame only as often as `reach / 256` needs, never more than
+  once a drawn frame, measures the real gap between stored frames, and
+  sets `span` (`uHistorySpan`): the layers, back from the newest, that
+  cover the reach. `past()` in `delay.js` reads over `span`, not the whole
+  ring. A new Time fills all 256 layers on its first frame.
+- **Scan** (`src/effects/scan.js`): for each point, the lines whose base is
+  close enough below to reach it are tried nearest first; the first that
+  covers the point is drawn, and a nearer line risen above the point hides
+  the ones behind (the horizon method). At most 96 lines are looked at per
+  point (`MAX_REACH`); 300 lines with full lift is the heavy case. Its own
+  brightness is read from `uTexMip` (uses.mips) at lod 1. Never run on a
+  real GPU.
+- **Driven by** (`src/effects/drive.js`, `driveAt()` in `common.glsl.js`):
+  an effect with `uses.drive` gets `uTexB` (black while B is off), the
+  motion map and `uBody`. Motion means input A's map, its wake (`g`). The
+  runner asks for the motion map when a live effect is driven by Motion
+  (`Runner.drivenBy`).
+- **The body**: `BodyMap` in `pipeline.js` keeps the mask softened (five
+  taps) and eased (`BODY_EASE_S`, 0.15 s), in the mask's own space,
+  only while something is driven by it; with no fresh mask it eases to
+  nobody. `Pipeline.wantsBody` → `Engine.followBody` → `visionSettings()`
+  adds `segment: true` without touching Setup's switch, and keeps it 10 s
+  after the last user (`BODY_LINGER_MS`) so stepping presets does not
+  reload the model. Status carries `vision.forBody`; Setup → Vision's badge
+  reads "on for the body", and the "Apply to … Segmentation is off" alert
+  is quiet meanwhile. Stage 4's soften and delay controls are still to
+  come; this easing is fixed.
+- **Factory presets** Time wake (Time driven by Motion, reach 3 s, pad X
+  on reach) and Relief (Scan with Blur / Glow, pad Y on lift), appended as
+  `fac9` and `fac10` so the others keep their ids. An existing browser gets
+  them from Bring back deleted factory presets.
+- **Tests:** `time-scan.mjs` is new (twenty-eight suites); `modulation`
+  counts seventeen effects, `control-ui` eleven factory presets.
+- **The full run before the push (24 November):** twenty-three of
+  twenty-eight passed, `time-scan` among them. `offline` (a crashed page),
+  `phone` (the room-code checks), `modulation` (its effects checks passed,
+  all seventeen; then the phone's sensor channel never opened),
+  `midi-audio` (audio analysis not starting) and `keep-paired` (the phone
+  stuck on "Connecting…") failed alone too, and failed the same way on the
+  commit before (9e7ab69), run the same hour. `keep-paired` passed once on
+  the commit before earlier in the session, then failed twice there: the
+  sandbox's links got slower as the session went on.
+
 **A network that keeps devices apart (built 24 November).** The owner's
 worry: on venue or campus Wi-Fi the code scans, START works, and then
 nothing happens on either screen. A page cannot test for this alone (it
@@ -733,11 +785,11 @@ Three static pages built by Vite, no framework.
 | `src/control/` | The operator's page. `main.js` mounts three screens: `perform.js` (+ `strip.js`, the strip of presets and the running order), `edit.js` (+ `chain.js` the chain row and Parameters tab, `mod-panel.js` the Modulation tab, `controls.js` the app's own bar slider, menu, switch and row of picture buttons), and the Setup panels. `host.js` decides which window hosts the engine and owns the monitor canvas. `midi-map.js` is map mode; `status.js` owns the top-bar readouts and alerts; `check-panel.js` is Before the show and keeps the Mac awake; `phone-panel.js` the pairing pop-over with a tab for each phone; `record-panel.js` saves recordings to Downloads. Sixth session: `glitch-panel.js` (the Glitch tab and capture), `code-mark.js` (the starting screen's camera holding the pairing code, and its opening) |
 | `src/phone/` | The iPhone page: `main.js`, `link.js` (reconnect watchdog, direct links), `sensors.js` (motion, the XY pad, triggers, presets), `camera-controls.js`, `orient.js` (page angle, the Rotate turn), `widgets.js` (the fader), `opening.js` (what START plays) |
 | `src/shared/` | State and protocol used by more than one page: `state.js` (the state document and its sanitisers), `store.js` (op-based sync over BroadcastChannel), `presets.js` (presets, each with a permanent id, and the running order: `loadOrder`, `orderView`, `applyStep`, `stepShow`), `actions.js`, `keys.js`, `macros.js`, `net.js`, `sdp.js`, `direct.js` (pairing with no server), `qr.js`, `sources.js`, `mark.js` (the animated mark on the splash and the phone's start screen), `palette.js` + `theme.css` + `look.js` (palette and dimmer, kept in this browser's storage; the engine forwards them to the phone), `camera-shape.js` (the camera of the mark and the squared noise both openings draw in it) |
-| `src/effects/` | One file per effect (`mixb.js` mixes input B in); `index.js` is the registry, `common.glsl.js` the shared GLSL |
+| `src/effects/` | One file per effect (`mixb.js` mixes input B in; `delay.js` is Time); `index.js` is the registry, `common.glsl.js` the shared GLSL, `drive.js` the "driven by" menu |
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon: the logo of 22 November, `design/logo/`) |
 | `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `logo/`, `tone/`, `edit-marks/`, `running-order/`, `edit-screen/`, `mix/`, `phone2/`. `design/README.md` says which option of each was built. Sixth session: `glitch/`, `top-bar/`, `start2/` |
-| `tests/` | Twenty-seven headless suites and `lib.mjs` |
+| `tests/` | Twenty-eight headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 
@@ -830,7 +882,7 @@ Three static pages built by Vite, no framework.
   first suite, or every suite fails at once on a missing `playwright`.
 - **To run every suite,** loop over them in one background command, each
   under `timeout` with `SKIP_BUILD=1` after one build, writing a log each
-  and a line per result; twenty-seven take about forty-five minutes. A suite
+  and a line per result; twenty-eight take about fifty minutes. A suite
   that fails in the full run and passes alone is not thereby innocent:
   read which check failed.
 - **Write commit messages to a file** and use `git commit -F`: one with

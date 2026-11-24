@@ -59,6 +59,9 @@ const STATUS_INTERVAL_MS = 500;
 const SOURCES_INTERVAL_MS = 66;
 // The small views of inputs A and B on the perform screen.
 const THUMBS_INTERVAL_MS = 200;
+// Segmentation stays on this long after the last effect driven by the body
+// goes, so that stepping through presets does not reload the model.
+const BODY_LINGER_MS = 10000;
 const CONTROL_TIMEOUT_MS = 3000;
 
 export class Engine {
@@ -78,6 +81,9 @@ export class Engine {
     this.mod = new Modulation(store);
     this.motion = new MotionSources(this.mod);
     this.motionWanted = { A: false, B: false };
+    // Segmentation switched on for an effect driven by the body.
+    this.forBody = false;
+    this.bodyWantedAt = -Infinity;
     this.sensors = new PhoneSensors(this.mod);
     // The second iPhone's motion and touch pad: sources of their own.
     this.sensorsB = new PhoneSensors(this.mod, 'B');
@@ -422,7 +428,24 @@ export class Engine {
     else if (this.midi.state !== 'off') this.midi.disable();
     if (audio.enabled) this.audio.enable(audio.deviceId);
     else if (this.audio.state !== 'off') this.audio.disable();
-    this.vision.configure(this.store.state.vision);
+    this.vision.configure(this.visionSettings());
+  }
+
+  // Setup → Vision, with segmentation on while an effect is driven by the
+  // body (Time, Scan: "driven by: The body").
+  visionSettings() {
+    const v = this.store.state.vision;
+    return this.forBody && !v.segment ? { ...v, segment: true } : v;
+  }
+
+  // Called each drawn frame: whether the pipeline drew anything driven by
+  // the body decides whether segmentation runs for it.
+  followBody(now) {
+    if (this.pipeline.wantsBody) this.bodyWantedAt = now;
+    const forBody = now - this.bodyWantedAt < BODY_LINGER_MS;
+    if (forBody === this.forBody) return;
+    this.forBody = forBody;
+    this.vision.configure(this.visionSettings());
   }
 
   // Everything a phone needs to draw its screen. Sent when its link opens,
@@ -594,6 +617,8 @@ export class Engine {
     this.midi.disable();
     if (this.audio.state !== 'off') this.audio.disable();
     this.vision.configure({});
+    this.forBody = false;
+    this.bodyWantedAt = -Infinity;
     this.camera.stop();
     this.inputs.feeds.phone.clear();
     this.inputs.feeds.phone2.clear();
@@ -683,6 +708,7 @@ export class Engine {
         this.renderErrorLogged = true;
       }
       this.renderFrames++;
+      this.followBody(now);
       this.returnFeed.frame(now);
     }
 
@@ -782,7 +808,7 @@ export class Engine {
       sensorsB: this.sensorsB.status(now),
       midi: this.midi.status(),
       audio: this.audio.status(),
-      vision: this.vision.status(),
+      vision: { ...this.vision.status(), forBody: this.forBody && !this.store.state.vision.segment },
       recording: this.recorder.status(),
       latencyTest: this.probe.status(),
       camera: this.camera.status(),

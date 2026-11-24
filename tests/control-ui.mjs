@@ -118,7 +118,7 @@ try {
   await control.keyboard.press('Escape');
 
   console.log('presets: load, fade, edit');
-  check('factory presets on the strip', (await names()).length === 9, (await names()).join(', '));
+  check('factory presets on the strip', (await names()).length === 11, (await names()).join(', '));
   await control.locator('.tile .edit').nth(1).click();
   check('Edit opens that preset and makes it live', (await control.evaluate(() => window.thirdEye.ui.view)) === 'edit' && (await settle(() => state(() => window.thirdEye.store.state.presetIndex === 1), 'preset live')));
   check('name and fade are shown', (await control.inputValue('.edit-head input[type=text]')) === 'Tunnel' && (await control.inputValue('#preset-fade')) === '2');
@@ -209,7 +209,7 @@ try {
   check('Duplicate adds a copy after the preset', await settle(async () => (await names())[5] === 'Vortex copy' && (await stored())[5].fade === 0.6, 'duplicated'), (await names()).join(', '));
   control.once('dialog', (d) => d.accept());
   await control.click('text=Delete');
-  check('Delete removes it and returns to perform', await settle(async () => (await names()).length === 9 && !(await names()).includes('Vortex copy') && (await control.evaluate(() => window.thirdEye.ui.view)) === 'perform', 'deleted'));
+  check('Delete removes it and returns to perform', await settle(async () => (await names()).length === 11 && !(await names()).includes('Vortex copy') && (await control.evaluate(() => window.thirdEye.ui.view)) === 'perform', 'deleted'));
 
   await view('setup');
   await control.locator('#actions-panel .binding .menu').nth(1).click();
@@ -221,11 +221,11 @@ try {
     const { presets } = window.thirdEye.ui;
     presets.remove(presets.list.findIndex((p) => p.name === 'Thermal trails'));
   });
-  check('a factory preset can be deleted', (await names()).length === 8 && !(await names()).includes('Thermal trails'), (await names()).join(', '));
+  check('a factory preset can be deleted', (await names()).length === 10 && !(await names()).includes('Thermal trails'), (await names()).join(', '));
   await control.click('text=Bring back deleted factory presets');
-  check('and brought back at the end, the others untouched', await settle(async () => (await names()).length === 9 && (await names())[8] === 'Thermal trails' && (await names()).includes('Vortex'), 'restored'), (await names()).join(', '));
+  check('and brought back at the end, the others untouched', await settle(async () => (await names()).length === 11 && (await names())[10] === 'Thermal trails' && (await names()).includes('Vortex'), 'restored'), (await names()).join(', '));
   await control.click('text=Bring back deleted factory presets');
-  check('asked again, it adds nothing', (await names()).length === 9 && (await control.locator('#library-panel').textContent()).includes('already in your list'));
+  check('asked again, it adds nothing', (await names()).length === 11 && (await control.locator('#library-panel').textContent()).includes('already in your list'));
 
   check('output never shows any interface', await output.evaluate(() => document.body.innerText.trim() === '' || document.getElementById('hint').classList.contains('hidden') || document.body.innerText.includes('fullscreen')));
   if (process.env.SHOTS) {

@@ -1,5 +1,7 @@
 // MediaPipe features. Each is off until switched on here; results show up
 // as sources under Modulation, and segmentation feeds "Apply to" on effects.
+// Segmentation also runs, without being switched on here, while a live
+// effect is driven by the body (its badge then reads "on for the body").
 
 import { el } from '../shared/util.js';
 import { menu } from './controls.js';
@@ -50,12 +52,16 @@ export function mountVisionPanel(root, ui) {
     const errors = [];
     for (const [key, label] of FEATURES) {
       const f = v?.features?.[key];
-      badges[key].textContent = wanted[key] ? ` ${STATE_TEXT[f?.state ?? 'loading'] ?? ''}` : '';
+      // Segmentation the engine switched on by itself, for an effect driven
+      // by the body.
+      const forBody = key === 'segment' && !wanted[key] && v?.forBody;
+      const text = STATE_TEXT[f?.state ?? 'loading'] ?? '';
+      badges[key].textContent = wanted[key] ? ` ${text}` : forBody ? ` ${text === 'on' ? 'on for the body' : text}` : '';
       if (wanted[key] && f?.state === 'error') errors.push(`${label}: ${f.error}`);
     }
     const usesMask = store.state.chain.some((it) => it.target !== 'all' && !it.bypass);
     const toVision = ui.alertTo?.panel('vision-panel', 'Go to Vision');
-    ui.setAlert('mask', status && usesMask && !wanted.segment ? 'An effect is set to person / background only, but Segmentation is off — it applies to the whole picture' : null, 'warn', toVision);
+    ui.setAlert('mask', status && usesMask && !wanted.segment && !v?.forBody ? 'An effect is set to person / background only, but Segmentation is off — it applies to the whole picture' : null, 'warn', toVision);
     ui.setAlert('vision', errors.length ? `Vision: ${errors.join(' · ')}` : null, 'warn', toVision);
     if (!v?.enabled) {
       note.textContent = 'All off. Each feature costs GPU and CPU time; switch on only what a preset uses.';

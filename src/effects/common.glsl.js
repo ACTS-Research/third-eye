@@ -12,11 +12,18 @@
 //   uHistory      sampler2DArray  ring buffer of past input frames   (uses.history)
 //   uHistoryHead  float           layer index of the newest frame
 //   uHistoryCount float           number of layers in the ring buffer
+//   uHistorySpan  float           how many of them, back from the newest,
+//                                 cover the effect's `reach` in seconds
 //   uMotion       sampler2D       the motion map of input A; read it with
 //   uMotionB      sampler2D       motionAt(). uMotionB is input B's  (uses.motion)
 //   uResolution   vec2            render size in pixels
 //   uTime         float           seconds since the engine was created
 //   uPhone        vec3            phone roll, pitch, yaw in radians
+//   uBody         sampler2D       the person mask, eased; read it with
+//                                 bodyAt()                           (uses.drive)
+//
+// An effect with uses.drive also gets uTexB (black while B is off) and the
+// motion map, and reads its "driven by" menu with driveAt() (drive.js).
 //
 // An effect body defines:  vec4 effect(vec2 uv)
 // uv is 0..1 with (0,0) at the bottom-left. Wet/dry mix and person/background
@@ -36,11 +43,13 @@ uniform sampler2D uTexMip;
 uniform sampler2DArray uHistory;
 uniform float uHistoryHead;
 uniform float uHistoryCount;
+uniform float uHistorySpan;
 uniform sampler2D uMotion;
 uniform sampler2D uMotionB;
 uniform sampler2D uMask;
 uniform int uMaskMode;      // 0 everything, 1 person only, 2 background only
 uniform vec4 uMaskFit;      // xy scale, z mirror, w mask available
+uniform sampler2D uBody;
 uniform float uMix;
 uniform vec2 uResolution;
 uniform float uTime;
@@ -100,6 +109,23 @@ float hash21(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
   p += dot(p, p + 45.32);
   return fract(p.x * p.y);
+}
+
+// The person at a point, 0..1: the segmentation mask, softened and eased
+// (Pipeline's BodyMap), lined up with the picture. 0 with no mask.
+float bodyAt(vec2 uv) {
+  vec2 muv = (uv - 0.5) * uMaskFit.xy + 0.5;
+  if (uMaskFit.z > 0.5) muv.x = 1.0 - muv.x;
+  return texture(uBody, muv).r * inFrame(muv);
+}
+
+// The "driven by" menu (effects/drive.js) at a point, 0..1; -1 for Itself,
+// where the effect decides.
+float driveAt(vec2 uv, float d) {
+  if (d < 0.5) return -1.0;
+  if (d < 1.5) return luma(texture(uTexB, uv).rgb);
+  if (d < 2.5) return smoothstep(0.0, 0.5, motionAt(uMotion, uv).y);
+  return bodyAt(uv);
 }
 
 float noise2(vec2 p) {

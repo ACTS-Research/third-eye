@@ -18,8 +18,9 @@ import blur from './blur.js';
 import noise from './noise.js';
 import motion from './motion.js';
 import gravity from './gravity.js';
+import scan from './scan.js';
 
-export const EFFECTS = [feedback, trails, delay, kaleido, orient, displace, rgbshift, edges, posterize, thermal, tone, blur, noise, motion, gravity, mixb];
+export const EFFECTS = [feedback, trails, delay, scan, kaleido, orient, displace, rgbshift, edges, posterize, thermal, tone, blur, noise, motion, gravity, mixb];
 
 export const EFFECT_BY_ID = Object.fromEntries(EFFECTS.map((e) => [e.id, e]));
 

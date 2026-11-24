@@ -5,6 +5,7 @@
 // and the final pass blends their outputs.
 
 import { EFFECT_BY_ID } from '../effects/index.js';
+import { DRIVE, driveOf } from '../effects/drive.js';
 import { FOOTER, HEADER } from '../effects/common.glsl.js';
 import { Program, Target, createTexture, drawFullscreen } from './gl.js';
 import { GREY_FRAG, MOTION_FRAG, MotionMap, STATS_FRAG } from './motion.js';
@@ -78,12 +79,21 @@ function effectSource(def) {
 }
 
 // Ring buffer of past frames in a 2D array texture (one layer per frame).
+// With a reach in seconds a frame is stored only as often as that reach
+// needs (never more than once a drawn frame), and `span` says how many
+// layers, back from the newest, cover it.
 class History {
   constructor(gl, spec, w, h) {
     this.gl = gl;
     this.frames = spec.frames ?? 60;
     this.maxWidth = spec.maxWidth ?? 960;
     this.head = 0;
+    this.span = this.frames;
+    // Seconds until the next frame is due, and the time between stored
+    // frames as it has really been.
+    this.due = 0;
+    this.gap = 1 / 60;
+    this.lastAt = 0;
     this.fbo = gl.createFramebuffer();
     this.tex = null;
     this.resize(w, h);
@@ -110,8 +120,26 @@ class History {
     this.filled = false;
   }
 
-  // Stores `tex` as the newest frame.
-  push(tex, copyProgram) {
+  // Stores `tex` as the newest frame, when one is due. `now` in ms.
+  push(tex, copyProgram, now, reach) {
+    if (reach > 0 && this.filled) {
+      const dt = this.lastAt ? Math.min(0.25, (now - this.lastAt) / 1000) : 0;
+      this.lastAt = now;
+      this.due -= dt;
+      if (this.due > 0) return;
+      const every = reach / this.frames;
+      this.due = Math.max(0, this.due + every);
+      if (this.pushedAt) this.gap += (Math.min(0.25, (now - this.pushedAt) / 1000) - this.gap) * 0.1;
+      this.pushedAt = now;
+      this.span = Math.max(2, Math.min(this.frames, Math.round(reach / Math.max(every, this.gap))));
+    } else if (reach > 0) {
+      this.lastAt = now;
+      this.pushedAt = now;
+    }
+    this.store(tex, copyProgram);
+  }
+
+  store(tex, copyProgram) {
     const gl = this.gl;
     copyProgram.use().tex('uTex', 0, tex);
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
@@ -129,6 +157,62 @@ class History {
   dispose() {
     this.gl.deleteFramebuffer(this.fbo);
     this.gl.deleteTexture(this.tex);
+  }
+}
+
+// The body for effects "driven by" it: the segmentation mask, softened and
+// eased, so a model that gives a new mask only a few times a second (or
+// skips one) does not make the picture step or flicker. Kept in the mask's
+// own space; bodyAt() in common.glsl.js lines it up with the picture.
+const BODY_SIZE = 256;
+// Seconds for the body to come most of the way to a new mask.
+const BODY_EASE_S = 0.15;
+const BODY_FRAG = /* glsl */ `#version 300 es
+precision highp float;
+in vec2 vUv;
+out vec4 outColor;
+uniform sampler2D uMask;
+uniform sampler2D uWas;
+uniform float uHave;   // 0 while there is no fresh mask: ease to nobody
+uniform float uK;
+void main() {
+  vec2 e = vec2(1.5 / ${BODY_SIZE}.0);
+  float m = texture(uMask, vUv).r * 0.4
+    + (texture(uMask, vUv + vec2(e.x, 0.0)).r + texture(uMask, vUv - vec2(e.x, 0.0)).r
+     + texture(uMask, vUv + vec2(0.0, e.y)).r + texture(uMask, vUv - vec2(0.0, e.y)).r) * 0.15;
+  float now = smoothstep(0.3, 0.7, m) * uHave;
+  outColor = vec4(vec3(mix(texture(uWas, vUv).r, now, uK)), 1.0);
+}
+`;
+
+class BodyMap {
+  constructor(gl) {
+    this.gl = gl;
+    this.program = new Program(gl, BODY_FRAG, 'body');
+    this.t = [new Target(gl, BODY_SIZE, BODY_SIZE), new Target(gl, BODY_SIZE, BODY_SIZE)];
+    this.cur = 0;
+    this.at = 0;
+  }
+
+  get tex() {
+    return this.t[this.cur].tex;
+  }
+
+  update(maskTex, now) {
+    if (!this.at) for (const t of this.t) t.clear();
+    const dt = this.at ? Math.min(0.25, (now - this.at) / 1000) : 0;
+    this.at = now;
+    const next = this.t[1 - this.cur];
+    next.bind();
+    this.program.use().tex('uMask', 0, maskTex ?? this.t[this.cur].tex).tex('uWas', 1, this.t[this.cur].tex)
+      .f('uHave', maskTex ? 1 : 0).f('uK', 1 - Math.exp(-dt / BODY_EASE_S));
+    drawFullscreen(this.gl);
+    this.cur = 1 - this.cur;
+  }
+
+  // Nobody reads it: the next reader starts from nobody.
+  idle() {
+    this.at = 0;
   }
 }
 
@@ -174,7 +258,7 @@ class EffectInstance {
   // texture holding the result.
   render(ctx, inTex, scratch, item) {
     const gl = this.pipe.gl;
-    if (this.history) this.history.push(inTex, this.pipe.copyProgram);
+    if (this.history) this.history.push(inTex, this.pipe.copyProgram, ctx.now, this.def.params.reach ? this.values.reach : 0);
     if (this.mips) {
       this.mips.bind();
       this.pipe.copyProgram.use().tex('uTex', 0, inTex);
@@ -186,7 +270,7 @@ class EffectInstance {
     if (this.mips) p.tex('uTexMip', 5, this.mips.tex);
     if (this.history) {
       p.tex('uHistory', 2, this.history.tex, gl.TEXTURE_2D_ARRAY);
-      p.f('uHistoryHead', this.history.head).f('uHistoryCount', this.history.frames);
+      p.f('uHistoryHead', this.history.head).f('uHistoryCount', this.history.frames).f('uHistorySpan', this.history.span);
     }
     let dst = scratch;
     if (this.own) {
@@ -196,8 +280,11 @@ class EffectInstance {
     }
     dst.bind();
     p.tex('uTex', 0, inTex);
+    const drive = this.def.uses?.drive;
     if (this.def.uses?.inputB) p.tex('uTexB', 4, ctx.texB);
-    if (this.def.uses?.motion) p.tex('uMotion', 6, ctx.motionTex).tex('uMotionB', 7, ctx.motionTexB);
+    else if (drive) p.tex('uTexB', 4, ctx.texB ?? this.pipe.black);
+    if (this.def.uses?.motion || drive) p.tex('uMotion', 6, ctx.motionTex).tex('uMotionB', 7, ctx.motionTexB);
+    if (drive) p.tex('uBody', 8, ctx.bodyTex);
     p.tex('uMask', 3, ctx.maskTex);
     p.i('uMaskMode', MASK_MODES[item.target] ?? 0);
     p.v4('uMaskFit', ctx.maskFit[0], ctx.maskFit[1], ctx.maskFit[2], ctx.maskFit[3]);
@@ -284,6 +371,15 @@ class Runner {
     for (const item of this.items) {
       if (!item.bypass && this.instances.get(item.uid)?.def.uses?.motion) return true;
     }
+    return this.drivenBy(DRIVE.MOTION);
+  }
+
+  // Whether an effect that will be drawn is "driven by" this (drive.js).
+  drivenBy(kind) {
+    for (const item of this.items) {
+      const inst = this.instances.get(item.uid);
+      if (!item.bypass && inst?.def.uses?.drive && driveOf(inst.values) === kind) return true;
+    }
     return false;
   }
 
@@ -335,6 +431,13 @@ export class Pipeline {
     this.motionA = new MotionMap(gl, motionPrograms, Readback);
     this.motionB = new MotionMap(gl, motionPrograms, Readback);
     this.noMotion = createTexture(gl, 1, 1);
+    // Input B for an effect driven by it while B is off, and the body with
+    // nobody in it.
+    this.black = createTexture(gl, 1, 1);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255]));
+    this.body = new BodyMap(gl);
+    this.wantsBody = false;
+    gl.bindTexture(gl.TEXTURE_2D, this.noMotion);
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 128, 128]));
 
     this.cur = new Runner(this);
@@ -517,6 +620,15 @@ export class Pipeline {
       ctx.motionTexB = this.motionB.tex;
       if (ctx.motion?.b) this.motionB.readStats();
     }
+
+    // The body, for effects driven by it: the engine reads wantsBody to
+    // switch segmentation on.
+    this.wantsBody = !ctx.bypassAll && (this.cur.drivenBy(DRIVE.BODY) || !!this.prev?.drivenBy(DRIVE.BODY));
+    ctx.bodyTex = this.black;
+    if (this.wantsBody) {
+      this.body.update(ctx.maskFit?.[3] > 0.5 ? ctx.maskTex : null, ctx.now);
+      ctx.bodyTex = this.body.tex;
+    } else this.body.idle();
 
     let fadeT = 1;
     if (this.fade) {

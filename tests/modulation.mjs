@@ -17,7 +17,7 @@ try {
 
   console.log('effects');
   const effects = await output.evaluate(() => [...window.thirdEye.engine.pipeline.programs.keys()]);
-  check('all 16 effects compiled', effects.length === 16, effects.join(', '));
+  check('all 17 effects compiled', effects.length === 17, effects.join(', '));
   await control.keyboard.press('4'); // test pattern
   // Each effect alone must change the picture compared with a clean chain.
   const setChain = (types) => control.evaluate(async (list) => {
@@ -45,16 +45,16 @@ try {
   }
   check('every effect alters the picture', dead.length === 0, dead.length ? `no change from: ${dead.join(', ')}` : '');
   await control.keyboard.press(' ');
-  // Sixteen effects at once is more than the sandbox's software graphics
+  // Seventeen effects at once is more than the sandbox's software graphics
   // can draw at full size without starving every page, so this check uses
   // the app's own 50% render resolution (Setup → Output).
   await control.evaluate(() => window.thirdEye.store.merge('globals', { renderScale: 0.5 }));
   await setChain(effects);
   await sleep(600);
-  check('all 16 chained render without error', (await outputStats(output)).mean >= 0 && !(await state(() => window.thirdEye.engine.renderErrorLogged)));
-  check('chain editor shows 16 cards', (await control.locator('.fx').count()) === 16);
+  check('all 17 chained render without error', (await outputStats(output)).mean >= 0 && !(await state(() => window.thirdEye.engine.renderErrorLogged)));
+  check('chain editor shows 17 cards', (await control.locator('.fx').count()) === 17);
   // What follows needs only the first effect (Video Feedback), and the phone
-  // cannot hold its link while sixteen are drawn in software.
+  // cannot hold its link while seventeen are drawn in software.
   await setChain(['feedback', 'rgbshift']);
   await control.evaluate(() => window.thirdEye.store.merge('globals', { renderScale: 1 }));
 

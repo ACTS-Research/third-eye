@@ -104,5 +104,25 @@ export function factoryPresets() {
       name: 'Horizon lock',
       scene: scene([['orient', { follow: 1, zoom: 1.5, edge: 0 }]]),
     },
+    // Added 24 November 2026, at the end so the others keep their ids.
+    {
+      // Whatever moves runs late: it leaves a wake through time.
+      name: 'Time wake',
+      scene: scene(
+        [['delay', { reach: 3, delay: 0, spread: 1, drive: 2 }]],
+        [['pad.x', 0, 'reach', { amount: 0.5, offset: -0.5 }]],
+      ),
+    },
+    {
+      // The picture as scan lines lifted by its brightness.
+      name: 'Relief',
+      scene: scene(
+        [
+          ['scan', { lines: 90, lift: 0.5, thickness: 0.3, between: 0, colour: 0 }],
+          ['blur', { size: 0.15, soften: 0, glow: 0.6, stretch: 0 }],
+        ],
+        [['pad.y', 0, 'lift', { amount: 0.6, offset: -0.5 }]],
+      ),
+    },
   ];
 }
