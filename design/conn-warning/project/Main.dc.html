@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A1 Solid strip</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#060303}
+@keyframes blink{50%{opacity:0}}
+.blinker{animation:blink 0.8s steps(2) infinite}
+</style>
+</helmet>
+<div style="width: 1440px; height: 420px; position: relative; overflow: hidden; background: #060303; color: #ff6b5e; font-family: 'JetBrains Mono', monospace; box-sizing: border-box">
+  <div style="height: 48px; display: flex; align-items: center; gap: 18px; padding: 0 16px; border-bottom: 1px solid #5b2622; box-sizing: border-box">
+    <span style="font: 800 24px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap">Third Eye Cam</span>
+    <div style="flex: 1; display: flex; gap: 16px; align-items: center; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase">
+      <span style="padding: 2px 8px">Output off</span>
+      <span class="blinker" style="padding: 2px 8px; background: #ff6b5e; color: #140302; font-weight: 700">Phone: use hotspot</span>
+    </div>
+    <span style="padding: 9px 18px; background: #ff6b5e; color: #140302; font-size: 14px; letter-spacing: 0.08em">PERFORM</span>
+    <span style="padding: 8px 17px; border: 1px solid #5b2622; font-size: 14px; letter-spacing: 0.08em">EDIT</span>
+    <span style="padding: 8px 17px; border: 1px solid #5b2622; font-size: 14px; letter-spacing: 0.08em">SETUP</span>
+    <span style="padding: 8px 40px 8px 14px; border: 1px solid #5b2622; font-size: 14px; letter-spacing: 0.08em">○ REC</span>
+  </div>
+  <div style="position: absolute; top: 48px; left: 0; right: 0; height: 40px; display: flex; align-items: stretch; background: #ff6b5e; color: #140302; font: 700 15px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.06em; text-transform: uppercase; z-index: 2">
+    <div style="width: 40px; display: flex; align-items: center; justify-content: center"><span class="blinker" style="width: 12px; height: 12px; background: #140302; display: block"></span></div>
+    <div style="flex: 1; display: flex; align-items: center; gap: 8px; font-size: 19px; white-space: nowrap">
+      <span>The phone can't reach this Mac.</span>
+      <span style="font-weight: 500">Use the iPhone's Personal Hotspot.</span>
+    </div>
+    <a href="#" style="display: flex; align-items: center; padding: 0 14px; color: #140302; text-decoration: none; font: 700 12px/1 'JetBrains Mono', monospace; letter-spacing: 0.08em"><span style="border: 1px solid #140302; padding: 5px 8px">HOW →</span></a>
+    <button aria-label="Close" style="width: 40px; border: 0; border-left: 1px solid rgba(20,3,2,0.35); background: transparent; color: #140302; font: 400 20px/1 'JetBrains Mono', monospace">×</button>
+  </div>
+  <div style="position: absolute; top: 49px; left: 0; width: 1100px; bottom: 0; background: #000; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px">
+    <div style="width: 230px; height: 200px; border-radius: 26px; background: #ff6b5e; display: flex; align-items: center; justify-content: center; margin-top: 30px">
+      <div style="width: 140px; height: 140px; background: repeating-conic-gradient(#140302 0 25%, #ff6b5e 0 50%) 0 0/20px 20px"></div>
+    </div>
+    <div style="font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase">Scan with the iPhone's camera</div>
+  </div>
+  <div style="position: absolute; top: 49px; left: 1100px; right: 0; bottom: 0; border-left: 1px solid #5b2622; padding: 56px 20px 0; box-sizing: border-box">
+    <div style="font: 700 14px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.1em">FADERS</div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 12px">
+      <div style="height: 200px; border: 1px solid #5b2622"></div>
+      <div style="height: 200px; border: 1px solid #5b2622; background: linear-gradient(to top, #ff6b5e 40%, transparent 40%)"></div>
+      <div style="height: 200px; border: 1px solid #5b2622; background: linear-gradient(to top, #ff6b5e 70%, transparent 70%)"></div>
+      <div style="height: 200px; border: 1px solid #5b2622; background: linear-gradient(to top, #ff6b5e 20%, transparent 20%)"></div>
+    </div>
+  </div>
+  <div style="position: absolute; left: 16px; bottom: 14px; font-size: 12px; color: #cd564c; letter-spacing: 0.04em">A1 · solid, one line; only the square blinks · HOW opens the pairing pop-over at its hotspot steps</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":420}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

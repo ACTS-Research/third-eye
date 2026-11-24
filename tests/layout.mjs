@@ -55,6 +55,9 @@ try {
         const found = [];
         const top = document.getElementById('top').getBoundingClientRect();
         if (Math.round(top.height) !== 48) found.push(`header is ${Math.round(top.height)}px tall`);
+        // The name in a wide window, the mark in a narrow one; never neither.
+        const shown = (sel) => document.querySelector(sel).getBoundingClientRect().width > 0;
+        if (shown('.wordmark') === shown('.topmark')) found.push(`the name and the mark are ${shown('.wordmark') ? 'both' : 'neither'} shown`);
         for (const n of document.querySelectorAll('#top > *')) {
           const r = n.getBoundingClientRect();
           if (r.width && (r.top < top.top - 1 || r.bottom > top.bottom + 1)) found.push(`${n.id || n.className} leaves the header`);

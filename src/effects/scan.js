@@ -8,7 +8,7 @@ export default {
   name: 'Scan',
   uses: { mips: true, drive: true },
   params: {
-    lines: { min: 10, max: 300, default: 80, step: 1, curve: 2 },
+    lines: { min: 1, max: 300, default: 80, step: 1, curve: 2 },
     // How high the brightest point lifts its line, as a share of the
     // picture; to the left it pushes the lines down instead.
     lift: { min: -1, max: 1, default: 0.4, step: 0.005, center: 0, curve: 1.5 },

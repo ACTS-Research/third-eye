@@ -91,6 +91,10 @@ try {
     const changed = await settle(async () => (await outputStats(control)).hash !== clean, `scan ${name}`);
     check(`Scan driven by ${name} draws lines over the picture`, changed && !(await errored()));
   }
+  for (const lines of [1, 4]) {
+    await setChain([['scan', { lines, lift: 0.6 }]]);
+    check(`Scan with ${lines} line${lines > 1 ? 's' : ''}`, await settle(async () => (await outputStats(control)).hash !== clean, `${lines} lines`) && !(await errored()));
+  }
   await setChain([['scan', { direction: 1, lift: -0.8, lines: 300 }]]);
   check('Scan down, pushed down, 300 lines', await settle(async () => (await outputStats(control)).hash !== clean, 'scan down') && !(await errored()));
   // Lift 0 is plain scan lines; with lift the lines move.

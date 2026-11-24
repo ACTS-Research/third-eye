@@ -1,0 +1,18 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-24T08:10:00Z" },
+  "title": "Third Eye: connection warning",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 420, "title": "A1 Solid strip, one line" },
+    "Card.dc.html": { "x": 0, "y": 540, "w": 1440, "h": 420, "title": "A2 A card under the phone readout" },
+    "InPlace.dc.html": { "x": 0, "y": 1080, "w": 1440, "h": 420, "title": "A3 Said where the code is" },
+    "Readout.dc.html": { "x": 0, "y": 1620, "w": 1440, "h": 400, "title": "The phone readout: four wordings" }
+  },
+  "order": ["Main.dc.html", "Card.dc.html", "InPlace.dc.html", "Readout.dc.html"],
+  "notes": {
+    "t": { "x": 0, "y": -260, "text": "Can't reach the Mac: the warning", "kind": "title1", "maxW": 1440 }
+  },
+  "designSystems": []
+}

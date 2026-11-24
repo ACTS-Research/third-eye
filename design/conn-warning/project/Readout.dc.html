@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The phone readout: four wordings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#060303}
+</style>
+</helmet>
+<div style="width: 1440px; height: 400px; box-sizing: border-box; padding: 28px 16px; background: #060303; color: #ff6b5e; font-family: 'JetBrains Mono', monospace; display: flex; flex-direction: column; gap: 18px">
+  <sc-for list="{{rows}}" as="row" hint-placeholder-count="4">
+    <div style="display: flex; align-items: center; gap: 24px">
+      <span style="width: 40px; font: 800 22px/1 'Big Shoulders Display', sans-serif">{{row.id}}</span>
+      <div style="width: 760px; height: 48px; display: flex; align-items: center; gap: 18px; padding: 0 16px; border: 1px solid #5b2622; box-sizing: border-box; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase">
+        <span style="font: 800 22px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.12em">Third Eye Cam</span>
+        <span style="padding: 2px 8px">Output off</span>
+        <span style="padding: 2px 8px; background: #ff6b5e; color: #140302; font-weight: 700; white-space: nowrap">{{row.text}}</span>
+      </div>
+      <span style="font-size: 13px; color: #cd564c; flex: 1">{{row.note}}</span>
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":400}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      rows: [
+        { id: 'R1', text: 'Phone: use hotspot', note: 'Says the way out. Recommended.' },
+        { id: 'R2', text: 'Phone: try hotspot', note: 'The same, less sure of itself.' },
+        { id: 'R3', text: 'Phone: blocked', note: 'Says what is wrong, not what to do.' },
+        { id: 'R4', text: 'Phone: not connected', note: 'Also true before any phone has tried: does not say this case.' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
