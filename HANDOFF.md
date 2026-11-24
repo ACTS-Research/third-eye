@@ -19,6 +19,8 @@ Then stage 3 of the effects plan (Time and Scan).
 - Try a Motion source on a slider (Mod → Motion A → Overall) and say
   whether it is lively enough or too jumpy. Say whether Gravity pours
   toward the room's floor when you roll the phone.
+- Next time you are on campus or venue Wi-Fi, try pairing there once and
+  say whether both screens tell you to use the hotspot.
 - On the iPhone, tap START and watch the opening: say whether the camera's
   picture shows inside the camera shape as the noise clears, and whether it
   is too long.
@@ -169,6 +171,26 @@ are in `src/shared/camera-shape.js`. Not seen on a real iPhone: the masked
 video in Safari, and how long the noise really lasts on a real link. Also
 not done: the real code on the Mac's new screen has not been scanned by
 the iPhone, only test codes drawn the same way.
+
+**A network that keeps devices apart (built 24 November).** The owner's
+worry: on venue or campus Wi-Fi the code scans, START works, and then
+nothing happens on either screen. A page cannot test for this alone (it
+takes the two devices trying each other), but the failed attempt is
+visible: the phone's request reaches the Mac through the pairing server
+before the direct link is tried. `PhoneLink.acceptData` (`remote.js`)
+notes each such knock; `status().blocked` is true once knocks have gone on
+for 8 s with no link open (`KNOCK_BLOCKED_MS`), and is forgotten 25 s after
+the last. On the phone `HostLink.unopened` counts attempts that never
+opened while the Mac is registered; `state.blocked` after the first (about
+nine seconds). Shown as: an alert on `/control`, `Phone: cannot get
+through` in the readout, a line on the starting screen; on the phone the
+band `CAN'T REACH THE MAC` and the check's link row. All name the iPhone's
+Personal Hotspot as the way out, and the phone keeps retrying. The
+starting screen also says it up front ("Venue or campus Wi-Fi? …"). Not
+built: a network line in Before the show (a self-test of the pairing
+server, outbound traffic and the kind of NAT; partial, and an OK would not
+promise devices can reach each other). Never seen on a real isolating
+network: `tests/blocked.mjs` forces the phone's links to relay-only.
 
 **A narrow window (23 November).** Under 1000 px wide the perform screen
 is one column. It used to put the four panic buttons first, each the full
@@ -692,7 +714,7 @@ Three static pages built by Vite, no framework.
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon: the logo of 22 November, `design/logo/`) |
 | `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `logo/`, `tone/`, `edit-marks/`, `running-order/`, `edit-screen/`, `mix/`, `phone2/`. `design/README.md` says which option of each was built |
-| `tests/` | Twenty-six headless suites and `lib.mjs` |
+| `tests/` | Twenty-seven headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 
@@ -771,7 +793,7 @@ Three static pages built by Vite, no framework.
   first suite, or every suite fails at once on a missing `playwright`.
 - **To run every suite,** loop over them in one background command, each
   under `timeout` with `SKIP_BUILD=1` after one build, writing a log each
-  and a line per result; twenty-six take about forty minutes. A suite
+  and a line per result; twenty-seven take about forty-five minutes. A suite
   that fails in the full run and passes alone is not thereby innocent:
   read which check failed.
 - **Write commit messages to a file** and use `git commit -F`: one with

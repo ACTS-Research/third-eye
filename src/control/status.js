@@ -177,6 +177,9 @@ export function mountStatus(root, ui) {
       } else if (link.phone === 'silent') {
         level = 'bad';
         text = 'not responding';
+      } else if (link.blocked) {
+        level = 'bad';
+        text = 'cannot get through';
       } else if (link.signal === 'error') {
         level = 'bad';
         text = 'room code in use elsewhere';
@@ -223,6 +226,14 @@ export function mountStatus(root, ui) {
       p.lostDirect && p.phone !== 'connected' ? 'The link to the phone was lost, and it was paired without the pairing server. Pair again: the phone must scan a new code.' : null,
       'bad',
       { label: 'Pair without internet', run: () => ui.pairOffline?.() },
+    );
+    // A phone is trying and cannot get through: the one failure nobody could
+    // see before. Say what it is and the way out.
+    ui.setAlert(
+      'blocked',
+      p.blocked || status.phoneB?.blocked ? 'An iPhone is trying to join and cannot get through: this network is keeping it and the Mac apart. On the iPhone, turn on Personal Hotspot; join it from this Mac\'s Wi-Fi menu. The phone then connects by itself.' : null,
+      'bad',
+      ui.alertTo.pairing,
     );
     ui.setAlert('relay', p.route === 'relayed' ? 'Phone video is being relayed, not direct — expect extra latency' : null);
   }

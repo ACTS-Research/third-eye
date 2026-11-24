@@ -36,6 +36,12 @@ const ROOM_TAKEN_MS = 75000;
 // as it connects; the paired phone itself may redial at any time.)
 const HOLD_PLACE_MS = 30000;
 
+// A phone whose request keeps arriving through the pairing server while no
+// link to it opens: after this long it is taken for a network that keeps
+// devices apart, and forgotten this long after the last request.
+const KNOCK_BLOCKED_MS = 8000;
+const KNOCK_FORGET_MS = 25000;
+
 export class PhoneLink {
   constructor(feed, getNet, onMessage) {
     this.feed = feed;
@@ -406,6 +412,14 @@ export class PhoneLink {
       conn.on('error', () => {});
       return;
     }
+    // A phone knocking: its request has come through the pairing server.
+    // If the link then never opens, the network is keeping the two apart
+    // (status() says so after a few seconds of it).
+    if (!conn.direct) {
+      const now = performance.now();
+      if (!this.knockSince || now - this.knockAt > KNOCK_FORGET_MS) this.knockSince = now;
+      this.knockAt = now;
+    }
     const old = this.conn;
     this.conn = conn;
     // (A direct link is made at the Mac, by the operator: it always may.)
@@ -418,6 +432,7 @@ export class PhoneLink {
     conn.on('open', () => {
       if (conn !== this.conn) return;
       this.hold = false;
+      this.knockSince = 0;
       this.lastHeardAt = performance.now();
       this.onOpenData?.(conn);
     });
@@ -557,6 +572,8 @@ export class PhoneLink {
       error: this.error,
       notice: this.notice ?? '',
       phone: alive ? 'connected' : dataOpen ? 'silent' : 'none',
+      // A phone has been trying for a while and cannot get through.
+      blocked: !dataOpen && !!this.knockSince && now - this.knockSince > KNOCK_BLOCKED_MS && now - this.knockAt < KNOCK_FORGET_MS,
       turnedAway: this.turnedAway,
       direct: this.direct,
       lostDirect: this.lostDirect,

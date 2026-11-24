@@ -216,7 +216,7 @@ function checkRows() {
   const state = app.link?.state;
   if (state?.data === 'open' && !state.silent) add('OK', `Linked to the Mac · room ${app.room}`);
   else if (performance.now() - checkSince < CHECK_LINK_WAIT_MS && !state?.notFound && !state?.busy) add('··', `Looking for the Mac under room ${app.room}…`);
-  else add('CHECK', 'Not linked to the Mac yet.', state?.busy ? 'Another iPhone is paired with it.' : state?.notFound ? `Nothing under room ${app.room}. Is its control page open?` : 'The live screen keeps trying and says what it is doing.');
+  else add('CHECK', 'Not linked to the Mac yet.', state?.busy ? 'Another iPhone is paired with it.' : state?.blocked ? 'This network is keeping the phone and the Mac apart. Turn on Personal Hotspot here and join it from the Mac.' : state?.notFound ? `Nothing under room ${app.room}. Is its control page open?` : 'The live screen keeps trying and says what it is doing.');
   if (app.wakeLockOk) add('OK', 'The screen will stay awake');
   else add('CHECK', 'The screen may lock.', 'iOS would not promise to keep it awake, which usually means Low Power Mode is on. Turn it off in Control Centre, or set Auto-Lock to Never.');
   if (prefs.youDay !== today()) {
@@ -702,6 +702,9 @@ function downInfo(state) {
   else if (state.data !== 'open') {
     if (wantsScan(state)) info = { title: app.byCode ? 'Link lost' : 'Mac not found', line: app.byCode ? 'It was paired by code. Go to the Mac and scan its code.' : `Nothing under room ${app.room}. If its control page is open, go to the Mac and scan its code.`, button: 'Scan code' };
     else if (state.signal === 'lost') info = { title: 'No network', line: 'Cannot reach the pairing server.', retrying: true };
+    // The Mac is there, and no link to it will open: a venue or campus
+    // network keeping devices apart. The way out is the phone's own hotspot.
+    else if (state.blocked) info = { title: 'Can\'t reach the Mac', line: 'This network is keeping the phone and the Mac apart. Turn on Personal Hotspot here and join it from the Mac.', retrying: true };
     else info = { title: app.everLinked ? 'Reconnecting' : 'Connecting', retrying: true };
   } else if (!videoOk && now - videoBadSince > VIDEO_GRACE_MS) info = { title: 'No video link', line: 'Linked, but the picture is not getting through.', retrying: true };
   if (state.data === 'open') app.everLinked = true;

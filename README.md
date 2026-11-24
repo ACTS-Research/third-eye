@@ -436,7 +436,8 @@ also works and is immune to the room's radio traffic, but it tethers the
 phone; keep it for testing at a desk.
 
 **Avoid venue Wi-Fi.** Guest networks usually isolate clients from each other
-(pairing then cannot work at all), sit behind captive portals, and get
+(pairing then cannot work at all; both screens say so when it happens, and
+the starting screen says it up front), sit behind captive portals, and get
 congested the moment the audience arrives.
 
 After one visit online, both Mac pages and the phone page reload with no
@@ -830,6 +831,7 @@ a passing state (a stall, a recovering graphics context) remove themselves.
 | Phone stream stalls or drops | The picture holds the last frame. `/control` shows a red alert. Phone and Mac each retry on their own until the stream is back |
 | Phone camera flips or restarts | Last frame is held; no black flash |
 | Safari goes to the background | `/control` alert while hidden; red warning on the phone when it returns; stream resumes |
+| The network keeps the phone and the Mac apart (many venue, campus and guest networks do) | Both reach the pairing server, so the code scans and START works, but no link between them will open. After about ten seconds each screen says so: the Mac shows an alert, `Phone: cannot get through` in the top bar and a line on the starting screen; the phone's band reads `CAN'T REACH THE MAC` with what to do. The way out is the iPhone's Personal Hotspot: turn it on, join it from the Mac's Wi-Fi menu. The phone keeps retrying and connects by itself once it can. (The page cannot test this before a phone tries: one device alone cannot tell.) |
 | Pairing server unreachable | A paired phone keeps streaming. Both sides keep retrying; the top bar says so. To pair anyway, use [Pair without internet](#pairing-without-internet) |
 | A phone paired without internet drops off completely | `/control` says the link was lost, with **Pair without internet** on the strip. Scan both ways again |
 | Room code reads as taken | Usually the Mac's own registration left behind by a reload or a dropped network; the pairing server clears it within a minute and the phone then reconnects by itself. The Mac keeps trying for 75 seconds. Only if the code is still taken then (another computer has it) does it move to a new code; `/control` says to scan again, and the phone's **Scan code** button reads the new one |
@@ -1073,6 +1075,7 @@ npm test
 | `tests/output-preview.mjs` | The phone's preview showing the Mac's finished picture: the setting, the picture following Blackout, Rotate not applied twice, the camera taking over while a code is read, a Mac reload, switching back; torch and white-balance lock dimmed on a camera without them |
 | `tests/edit-screen.mjs` | The edit screen's own controls: the bar slider (click, typed value, double-click reset), the app's menus by mouse and keyboard without the page's shortcuts firing, a menu whose button scrolls into view, the chain row (add, drag, remove, bypass), modulation boxes and their extra settings, LFOs, autosave, a narrow window |
 | `tests/glitch.mjs` | Glitch: the tab, tearing when a preset has no jumps, capturing (Keep, Cancel, nothing saved meanwhile, a capture left open), the pointer on a slider's bar (shown, dragged, removed), firing it with attack and release, hold by key and by button, scatter |
+| `tests/blocked.mjs` | A network that keeps devices apart: a phone whose links cannot open while the pairing server works; the Mac's alert, readout and starting-screen line, the phone's band, both naming the hotspot as the way out; pairing by itself once the links can open |
 | `tests/mix.mjs` | Input B and Mix B: the strip under the picture (uncropped small views, source icons that slide out, looking at a source without choosing it, tooltips and the mode grid opening upward), the bar adding Mix B on its first drag, the nine modes on both screens, A and B trading places, B off passing A through, the iPhone as B, B carrying on when the picture moves to `/control` |
 | `tests/two-phones.mjs` | A second iPhone: its tab and room code, pairing beside the first without disturbing it, the Phone B readout, iPhone B as input A or B with both live, its sensors as their own sources, its triggers and preset buttons, both phones following the picture to `/control`, one dropping alone, Stop using iPhone B |
 | `tests/keep-paired.mjs` | Keeping what is paired: a second phone on the same code is turned away and told why while the paired one carries on; the paired phone redials and reloads freely; a phone with no pairing server holds a silent link and carries on when the Mac answers; a taken room code is kept under a paired phone |
@@ -1116,6 +1119,9 @@ too.
 **Only in headless Chromium**, with a fake camera and microphone: everything
 else. Check these the first time you use them:
 
+- **A network that keeps devices apart** (24 November): the message on both
+  screens has only been seen with a stand-in phone whose links were made
+  unable to open. Try it once on a real venue or campus network.
 - **Glitch as a jump** (23 November): all of it on the real Mac, and a
   phone trigger or a MIDI pad holding it. In the tests G and the mouse fire
   it.

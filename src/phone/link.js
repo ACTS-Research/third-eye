@@ -74,6 +74,10 @@ export class HostLink {
     this.silent = false; // the link is open but the Mac has stopped answering
     this.notFound = false; // nothing is registered under this room code
     this.misses = 0; // data connections in a row that never opened
+    // The same count, kept across a restart of signaling: the Mac is there
+    // (the pairing server knows it) and yet no link to it will open, which
+    // is what a network that keeps devices apart looks like.
+    this.unopened = 0;
     this.timer = 0;
   }
 
@@ -133,6 +137,7 @@ export class HostLink {
       if (err.type === 'peer-unavailable') {
         this.error = 'Mac not found. Is the control page open on the Mac, and is the room code right?';
         this.notFound = true;
+        this.unopened = 0;
         // That attempt will never open: let the next one start on time
         // instead of waiting for this one to time out.
         if (this.conn && !this.conn.open && !this.conn.direct) this.dropConn();
@@ -313,6 +318,7 @@ export class HostLink {
       this.error = '';
       this.notFound = false;
       this.misses = 0;
+      this.unopened = 0;
       this.heardAt = performance.now();
       this.silent = false;
       this.onDataOpen?.(conn);
@@ -433,6 +439,7 @@ export class HostLink {
     this.callBadSince = 0;
     this.error = '';
     this.notFound = false;
+    this.unopened = 0;
     this.misses = 0;
     this.heardAt = performance.now();
     this.silent = false;
@@ -532,6 +539,7 @@ export class HostLink {
       // An attempt that hung without ever opening: after two in a row the
       // signaling side is suspect too (a socket that died quietly while the
       // phone slept still reads as open), so start that over as well.
+      if (!this.conn.open && !this.conn.direct && !this.notFound) this.unopened++;
       if (!this.conn.open && !this.conn.direct && !this.notFound && ++this.misses >= 2) {
         this.misses = 0;
         this.makePeer();
@@ -575,7 +583,7 @@ export class HostLink {
   get state() {
     const data = this.conn?.open ? 'open' : this.conn ? 'connecting' : 'closed';
     const media = this.call ? pcState(this.call) : 'idle';
-    return { signal: this.signal, data, media, error: this.error, rttMs: this.rttMs, direct: this.direct, silent: this.silent, notFound: this.notFound, busy: this.busy };
+    return { signal: this.signal, data, media, error: this.error, rttMs: this.rttMs, direct: this.direct, silent: this.silent, notFound: this.notFound, busy: this.busy, blocked: this.unopened >= 1 && !this.notFound && !this.conn?.open };
   }
 
   changed() {

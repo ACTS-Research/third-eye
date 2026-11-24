@@ -87,6 +87,7 @@ export function mountPerform(root, ui) {
     splashRoom,
     splashState,
     el('div', { class: 'splash-other' }, [other('Use the Mac camera', 'camera'), other('Test pattern', 'pattern'), other('Video file…', 'file')]),
+    el('div', { class: 'dim small', text: 'Venue or campus Wi-Fi? Put this Mac on the iPhone\'s Personal Hotspot first.' }),
     el('div', { class: 'dim small', text: 'A second iPhone? Click Phone, above.' }),
   ]);
   const splash = el('div', { class: 'splash', id: 'splash', hidden: true }, [splashCode.node, splashText]);
@@ -124,7 +125,7 @@ export function mountPerform(root, ui) {
     // How far pairing has got. (The Mac hears nothing from a phone between
     // its scan and its START, so there is no "scanned" to report.)
     const signal = st.phone.signal;
-    splashState.textContent = signal === 'open' ? 'Ready. The picture appears here when the phone taps START.' : signal === 'connecting' ? 'Reaching the pairing server…' : signal === 'error' ? 'This room code is in use elsewhere. Click Phone, above.' : 'The pairing server cannot be reached. Click Phone, above, for Pair without internet.';
+    splashState.textContent = st.phone.blocked ? 'A phone is trying to join and cannot get through: this network keeps devices apart. Put this Mac on the iPhone\'s Personal Hotspot.' : signal === 'open' ? 'Ready. The picture appears here when the phone taps START.' : signal === 'connecting' ? 'Reaching the pairing server…' : signal === 'error' ? 'This room code is in use elsewhere. Click Phone, above.' : 'The pairing server cannot be reached. Click Phone, above, for Pair without internet.';
   }
   const monitor = el('div', { class: 'monitor' }, [canvas, note, splash]);
   ui.monitors.perform = monitor;
