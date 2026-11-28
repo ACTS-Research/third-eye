@@ -37,6 +37,9 @@ if (!prefs.device) {
   writeJSON(PREFS_KEY, prefs);
 }
 if (!QUALITY[prefs.quality]) prefs.quality = DEFAULT_QUALITY;
+// "Send sound": this phone's microphone goes to the Mac with the picture,
+// for the Mac to listen to (it is not played there). Off until switched on.
+if (typeof prefs.sound !== 'boolean') prefs.sound = false;
 if (prefs.preview !== 'output') prefs.preview = 'camera';
 setTurn(Number(prefs.turn) || 0);
 
@@ -502,6 +505,66 @@ function setPanel(open) {
 $('panel-toggle').addEventListener('click', () => setPanel($('panel').hidden));
 $('panel-close').addEventListener('click', () => setPanel(false));
 
+// The microphone, while Send sound is on. It is opened once and kept across
+// camera restarts (a flip, another quality), so the sound the Mac hears does
+// not break when the picture does. Asked for raw: the processing a phone
+// call gets (echo cancelling, noise gating, levelling) would flatten it.
+async function openMic() {
+  if (app.mic?.readyState === 'live') return true;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 } });
+    const [track] = stream.getAudioTracks();
+    app.mic = track;
+    track.addEventListener('ended', () => {
+      if (app.mic === track) app.mic = null;
+      syncTools();
+      sendInfo();
+    });
+    return true;
+  } catch {
+    app.mic = null;
+    return false;
+  }
+}
+
+function closeMic() {
+  const track = app.mic;
+  app.mic = null;
+  track?.stop();
+}
+
+// A call either carries sound or it does not, so switching it places the
+// call again (the picture pauses for a moment on the Mac).
+async function setSound(on) {
+  if (app.soundBusy) return;
+  app.soundBusy = true;
+  try {
+    let note = on ? 'Sound on: the Mac can listen to this phone' : 'Sound off';
+    if (on && !(await openMic())) {
+      on = false;
+      note = 'The microphone was not allowed: sound stays off';
+    }
+    prefs.sound = on;
+    savePrefs();
+    if (app.stream) {
+      for (const track of app.stream.getAudioTracks()) app.stream.removeTrack(track);
+      if (on && app.mic) app.stream.addTrack(app.mic);
+      if (app.link?.direct) {
+        if (on) note = 'Sound is not sent on a link made without the pairing server';
+      } else if (app.link && !app.controllerOnly) {
+        app.link.setStream(null);
+        app.link.setStream(app.stream, QUALITY[prefs.quality]);
+      }
+    }
+    if (!on) closeMic();
+    setNote(note);
+  } finally {
+    app.soundBusy = false;
+    syncTools();
+    sendInfo();
+  }
+}
+
 async function startCamera() {
   const q = QUALITY[prefs.quality];
   stopCamera();
@@ -516,6 +579,14 @@ async function startCamera() {
   });
   const track = stream.getVideoTracks()[0];
   track.contentHint = 'motion';
+  // The microphone rides in the same stream, so a call takes both.
+  if (prefs.sound) {
+    if (await openMic()) stream.addTrack(app.mic);
+    else {
+      prefs.sound = false;
+      savePrefs();
+    }
+  }
   app.stream = stream;
   app.track = track;
   app.cameraError = '';
@@ -532,7 +603,8 @@ async function startCamera() {
 }
 
 function stopCamera() {
-  for (const track of app.stream?.getTracks() ?? []) track.stop();
+  // (Not the microphone: it outlives the camera, see openMic.)
+  for (const track of app.stream?.getVideoTracks() ?? []) track.stop();
   app.stream = null;
   app.track = null;
   if (!$('stage').classList.contains('output')) $('self').srcObject = null;
@@ -626,7 +698,8 @@ function buildTools() {
     syncTools();
   } });
   tools.preview = el('button', { id: 'preview-kind', text: 'Preview: camera', onclick: () => setPreview(prefs.preview === 'output' ? 'camera' : 'output') });
-  $('tools').replaceChildren(tools.quality, tools.camera, tools.preview, tools.check);
+  tools.sound = el('button', { id: 'sound-pref', text: 'Send sound: off', onclick: () => setSound(!prefs.sound) });
+  $('tools').replaceChildren(tools.quality, tools.camera, tools.preview, tools.sound, tools.check);
 }
 
 function syncTools() {
@@ -638,6 +711,9 @@ function syncTools() {
   tools.check.classList.toggle('on', prefs.check !== false);
   tools.check.textContent = prefs.check !== false ? 'Check before the show: on' : 'Check before the show: off';
   tools.camera.textContent = camOn ? 'Camera on' : 'Camera off';
+  tools.sound.disabled = !camOn;
+  tools.sound.classList.toggle('on', prefs.sound);
+  tools.sound.textContent = prefs.sound ? 'Send sound: on' : 'Send sound: off';
   $('quick-flip').disabled = !camOn;
   // A switch this camera does not have is dimmed, not removed: the row
   // keeps its shape when the camera is flipped.
@@ -668,6 +744,7 @@ function sendInfo() {
     t: 'info',
     info: {
       controllerOnly: app.controllerOnly,
+      sound: prefs.sound && app.mic?.readyState === 'live',
       hidden: document.hidden,
       facing: prefs.facing,
       quality: prefs.quality,

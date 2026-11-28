@@ -1,8 +1,14 @@
 // Microphone / line-in analysis: overall level, three bands and a beat pulse,
 // published as modulation sources. Nothing is ever played back.
+//
+// The input is one of the Mac's own, or (`PHONE_AUDIO`) the microphone of
+// the paired iPhone, which arrives as a track of the phone's call when its
+// "Send sound" is on. That track is the link's: it is listened to here and
+// never stopped. With none arriving the state is 'waiting'.
 
 import { clamp } from '../shared/util.js';
 
+export const PHONE_AUDIO = 'phone';
 const FFT_SIZE = 2048;
 const BANDS = [
   ['audio.bass', 30, 180],
@@ -39,8 +45,52 @@ export class AudioInput {
     window.addEventListener('keydown', wake);
   }
 
-  async enable(deviceId) {
+  // Starts listening to `stream` (`own`: it was opened here, and is stopped
+  // here when done).
+  listen(stream, deviceId, label, own) {
+    this.stream = stream;
+    this.own = own;
+    this.deviceId = deviceId;
+    this.label = label;
+    this.ctx = new AudioContext({ latencyHint: 'interactive' });
+    this.analyser = this.ctx.createAnalyser();
+    this.analyser.fftSize = FFT_SIZE;
+    this.analyser.smoothingTimeConstant = 0;
+    this.ctx.createMediaStreamSource(stream).connect(this.analyser);
+    this.freq = new Uint8Array(this.analyser.frequencyBinCount);
+    this.prev = new Float32Array(this.analyser.frequencyBinCount);
+    this.wave = new Float32Array(FFT_SIZE);
+    this.flux = [];
+    this.state = 'live';
+    this.error = '';
+    this.ctx.resume().catch(() => {});
+  }
+
+  // The iPhone's microphone: `track` is the audio track of the phone's
+  // call, or null while the phone sends none.
+  usePhone(track) {
+    const live = track?.readyState === 'live' ? track : null;
+    if (this.deviceId === PHONE_AUDIO && this.phoneTrack === live && this.state === (live ? 'live' : 'waiting')) return;
+    this.disable();
+    this.deviceId = PHONE_AUDIO;
+    this.phoneTrack = live;
+    this.label = 'iPhone';
+    if (!live) {
+      this.state = 'waiting';
+      return;
+    }
+    try {
+      this.listen(new MediaStream([live]), PHONE_AUDIO, 'iPhone', false);
+      this.phoneTrack = live;
+    } catch (err) {
+      this.state = 'error';
+      this.error = `${err.name}: ${err.message}`;
+    }
+  }
+
+  async enable(deviceId, phoneTrack = null) {
     if (this.starting) return;
+    if (deviceId === PHONE_AUDIO) return this.usePhone(phoneTrack);
     if (this.stream && this.deviceId === deviceId && this.stream.getAudioTracks()[0]?.readyState === 'live') return;
     this.starting = true;
     this.disable();
@@ -55,24 +105,10 @@ export class AudioInput {
           autoGainControl: false,
         },
       });
-      this.stream = stream;
-      this.deviceId = deviceId;
-      this.label = stream.getAudioTracks()[0].label;
       stream.getAudioTracks()[0].addEventListener('ended', () => {
         if (this.stream === stream) this.state = 'lost';
       });
-      this.ctx = new AudioContext({ latencyHint: 'interactive' });
-      this.analyser = this.ctx.createAnalyser();
-      this.analyser.fftSize = FFT_SIZE;
-      this.analyser.smoothingTimeConstant = 0;
-      this.ctx.createMediaStreamSource(stream).connect(this.analyser);
-      this.freq = new Uint8Array(this.analyser.frequencyBinCount);
-      this.prev = new Float32Array(this.analyser.frequencyBinCount);
-      this.wave = new Float32Array(FFT_SIZE);
-      this.flux = [];
-      this.state = 'live';
-      this.error = '';
-      this.ctx.resume().catch(() => {});
+      this.listen(stream, deviceId, stream.getAudioTracks()[0].label, true);
     } catch (err) {
       this.state = 'error';
       this.error = err.name === 'NotAllowedError' ? 'Microphone permission needed — enable audio on the control page' : `${err.name}: ${err.message}`;
@@ -82,9 +118,13 @@ export class AudioInput {
   }
 
   disable() {
-    for (const track of this.stream?.getTracks() ?? []) track.stop();
+    // (The phone's track belongs to its call, and goes on arriving.)
+    if (this.own !== false) for (const track of this.stream?.getTracks() ?? []) track.stop();
     this.ctx?.close().catch(() => {});
     this.stream = null;
+    this.own = true;
+    this.phoneTrack = null;
+    this.deviceId = null;
     this.ctx = null;
     this.analyser = null;
     this.state = 'off';

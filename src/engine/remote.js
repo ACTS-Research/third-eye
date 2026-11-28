@@ -528,11 +528,14 @@ export class PhoneLink {
       return;
     }
     let inbound = null;
+    // The phone's sound, when it sends any (its "Send sound").
+    let heard = null;
     let pair = null;
     const byId = new Map();
     report.forEach((s) => {
       byId.set(s.id, s);
       if (s.type === 'inbound-rtp' && s.kind === 'video') inbound = s;
+      if (s.type === 'inbound-rtp' && s.kind === 'audio') heard = s;
       if (s.type === 'candidate-pair' && s.nominated && s.state === 'succeeded') pair = s;
     });
     const stats = {};
@@ -553,6 +556,18 @@ export class PhoneLink {
       stats.decoder = inbound.decoderImplementation ?? '';
       stats.hardware = inbound.powerEfficientDecoder;
     }
+    if (heard) {
+      const prev = this.prevHeard;
+      const codec = byId.get(heard.codecId);
+      const sound = { codec: codec?.mimeType?.replace('audio/', '') ?? '', channels: codec?.channels ?? 0, level: heard.audioLevel ?? 0 };
+      if (prev && prev.id === heard.id && heard.timestamp > prev.timestamp) {
+        sound.kbps = ((heard.bytesReceived - prev.bytesReceived) * 8) / ((heard.timestamp - prev.timestamp) / 1000) / 1000;
+        const emitted = heard.jitterBufferEmittedCount - prev.jitterBufferEmittedCount;
+        if (emitted > 0) sound.heldMs = ((heard.jitterBufferDelay - prev.jitterBufferDelay) / emitted) * 1000;
+      }
+      this.prevHeard = heard;
+      stats.sound = sound;
+    } else this.prevHeard = null;
     if (pair) {
       stats.rttMs = (pair.currentRoundTripTime ?? 0) * 1000;
       const local = byId.get(pair.localCandidateId);

@@ -180,6 +180,39 @@ drawn, Start / Stop on the perform screen.
   an offset for the sent clock; a tap moving the downbeat while following;
   Song Position sent.
 
+**The phone's sound as a control signal (a test, built 28 November).** The
+owner asked for a test of this alone; playing the sound and processing it
+are sidelined (see "Ideas raised and not started").
+
+- **Phone** (`phone/main.js`): `prefs.sound`, the button `#sound-pref` in
+  the settings panel, `setSound()`. The microphone (`app.mic`, `openMic`)
+  is opened once, asked for raw (no echo cancelling, noise gate or
+  levelling, as far as Safari gives that), and kept across camera
+  restarts: its track is added to each new camera stream, and
+  `stopCamera` stops only the picture's tracks. Switching it places the
+  call again (`setStream(null)` then `setStream(stream)`), because a call
+  carries sound or does not; `link.js` was not changed. Not on a direct
+  link (Pair without internet): its codes carry a picture only.
+- **Mac:** the phone's stream sits in the phone feed's muted `<video>`
+  (which is also what lets Chrome hand a far-end sound track to Web Audio).
+  `audio.deviceId === 'phone'` (`PHONE_AUDIO`) makes `AudioInput.usePhone`
+  listen to that stream's audio track; the engine passes the track in at
+  every `housekeeping()`. State `waiting` while there is none. The track is
+  the call's: `disable()` does not stop it (`own`). `remote.js` adds
+  `sound` to the link's figures (codec, kb/s, `heldMs` from the jitter
+  buffer); the line in Setup adds half the round trip and 30 ms to that
+  for "about N ms behind", which is an estimate, not a measurement.
+- **The recorder** takes `audio.stream`, so a recording made while the
+  iPhone is the input carries its sound.
+- **Tests:** `phone-sound.mjs` (thirty-two suites), with Chromium's
+  stand-in microphone on the phone page.
+- **Not known until tried on the iPhone:** whether Safari keeps the
+  microphone open when the camera is asked for again (a flip); whether it
+  honours "raw"; the real delay and quality; whether sound costs the
+  picture anything; what iOS does to the phone's own speaker while the
+  microphone is open.
+- **What the owner is to try** is in the README ("The iPhone's sound").
+
 **The narrow top bar (28 November).** Under 1000 px: the CHECK flag never
 shrinks (`#check-flag`), the view buttons and REC are slimmer (REC still
 fits a recording's time), the output readout gives way before the phone's.
@@ -1060,7 +1093,7 @@ Three static pages built by Vite, no framework.
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon: the logo of 22 November, `design/logo/`) |
 | `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `logo/`, `tone/`, `edit-marks/`, `running-order/`, `edit-screen/`, `mix/`, `phone2/`. `design/README.md` says which option of each was built. Sixth session: `glitch/`, `top-bar/`, `start2/` |
-| `tests/` | Thirty-one suites (thirty in a browser) and `lib.mjs` |
+| `tests/` | Thirty-two suites (thirty-one in a browser) and `lib.mjs` |
 
 ### Rules that are easy to break
 
@@ -1158,7 +1191,7 @@ Three static pages built by Vite, no framework.
   first suite, or every suite fails at once on a missing `playwright`.
 - **To run every suite,** loop over them in one background command, each
   under `timeout` with `SKIP_BUILD=1` after one build, writing a log each
-  and a line per result; thirty-one take about an hour. A suite
+  and a line per result; thirty-two take about an hour. A suite
   that fails in the full run and passes alone is not thereby innocent:
   read which check failed.
 - **Write commit messages to a file** and use `git commit -F`: one with

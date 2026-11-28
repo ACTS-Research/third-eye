@@ -912,6 +912,21 @@ what is sent is the live show's tempo. Keep the window that makes the
 picture visible while sending, as for the picture itself: a hidden window
 cannot keep time.
 
+**The iPhone's sound (a test, 28 November 2026).** The phone can send its
+microphone with its picture, for the Mac to listen to: level, bass, mid,
+high and the beat then come from the phone, and can move any slider like
+any other source. Nothing is played on the Mac, so there is nothing to feed
+back. On the phone, open its settings and switch **Send sound** on (iOS asks
+for the microphone the first time; the picture pauses for a moment while
+the call is placed again). On the Mac, under **Setup → MIDI and audio**,
+choose **iPhone (its microphone)** as the audio input and **Enable audio**.
+The line under it says what is arriving and roughly how far behind the
+phone it is heard (`Listening: iPhone · opus 32 kb/s · about 120 ms
+behind`), or what to do on the phone when nothing is. A recording made
+meanwhile carries the phone's sound, as it carries any audio input. Flipping
+the camera or changing its quality does not interrupt the sound. First
+phone only, and not on a link made without the pairing server.
+
 **Audio.** Under **Setup**, **Enable audio**, choose the input, and set **Input gain** so the
 level meter moves without sitting at maximum. **Beat threshold** is how far
 above the recent average a hit must rise to count. If `/control` says audio
@@ -1209,6 +1224,7 @@ npm test
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
 | `tests/clock.mjs` | MIDI clock, the arithmetic alone (no browser, a few seconds): the speed and the beat read from incoming pulses with wobble, a change of speed, Start, Stop, Continue, a Song Position and a clock that stops arriving; the pulses handed over when sending (even, on the app's beats, never twice, Start on a beat, Stop, a change of tempo, a tap, a page that could not run) |
 | `tests/midi-clock.mjs` | MIDI clock in the app, `/control` making the picture, stand-in devices: Setup's Clock row, following (the speed read, EXT on the perform screen, Tap off, Start, Stop, no clock arriving, a named device), sending (pulses at the show's tempo, Start on a beat from the button and `K`, Stop, a typed tempo, switching off, a device not connected) |
+| `tests/phone-sound.mjs` | The phone's sound as a control signal: Send sound on the phone, iPhone as the Mac's audio input, the level and a band following the phone's (stand-in) microphone, the line saying what arrives, nothing played, the sound surviving a camera flip, switching it off, going back to the Mac's own input |
 | `tests/midi-show.mjs` | A show's own MIDI controls on the screen, with `/control` making the picture and a stand-in controller: the alert when one is connected and nothing is mapped, the strip of MIDI map naming the show, **Set up** (the standard layout by two gestures with its mistakes, skips and Cancel; a copy of another show's; Clear all), the pads and knobs then working, the Show menu's way in, Setup's two lists |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |
 

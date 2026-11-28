@@ -6,6 +6,9 @@ import { CLOCK_OFFSET_MS } from '../shared/state.js';
 import { el } from '../shared/util.js';
 import { bar, choice, menu } from './controls.js';
 
+// The audio input that is the paired iPhone's microphone (engine/audio.js).
+const PHONE = 'phone';
+
 export function mountIoPanel(root, ui) {
   const { store, bus } = ui;
 
@@ -126,8 +129,10 @@ export function mountIoPanel(root, ui) {
   const device = menu({
     label: 'Audio input',
     cls: 'grow',
-    options: () => [{ value: '', label: 'Default input' }, ...devices.map((d) => ({ value: d.deviceId, label: d.label }))],
-    value: '',
+    // (The iPhone: its microphone, sent with its picture while "Send sound"
+    // is on in the phone's settings. Listened to, never played.)
+    options: () => [{ value: '', label: 'Default input' }, { value: PHONE, label: 'iPhone (its microphone)' }, ...devices.map((d) => ({ value: d.deviceId, label: d.label }))],
+    value: store.state.audio.deviceId === PHONE ? PHONE : '',
     onChange: (v) => store.merge('audio', { deviceId: v }),
   });
   const gain = bar({ label: 'Input gain', min: 0.2, max: 8, step: 0.1, value: store.state.audio.gain, reset: 1, onInput: (v) => store.merge('audio', { gain: v }) });
@@ -139,7 +144,7 @@ export function mountIoPanel(root, ui) {
       const inputs = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audioinput' && d.label);
       devices = inputs;
       const wanted = store.state.audio.deviceId;
-      device.set(inputs.some((d) => d.deviceId === wanted) ? wanted : '');
+      device.set(wanted === PHONE || inputs.some((d) => d.deviceId === wanted) ? wanted : '');
     } catch {
       /* no device access yet */
     }
@@ -148,6 +153,11 @@ export function mountIoPanel(root, ui) {
   async function toggleAudio() {
     if (store.state.audio.enabled) {
       store.merge('audio', { enabled: false });
+      return;
+    }
+    // (The iPhone's sound needs none of the Mac's microphones.)
+    if (store.state.audio.deviceId === PHONE) {
+      store.merge('audio', { enabled: true });
       return;
     }
     try {
@@ -161,6 +171,19 @@ export function mountIoPanel(root, ui) {
   }
   navigator.mediaDevices?.addEventListener?.('devicechange', listDevices);
 
+  // What is known of the phone's sound as it arrives: how it is coded, and
+  // roughly how far behind the phone it is heard here (half the link's round
+  // trip, the time it is held to even out the network, and about 30 ms for
+  // the phone to take it and pack it).
+  function soundLine(stats) {
+    // (`stats`: the phone's status, which carries its link's figures.)
+    const sound = stats?.sound;
+    if (!sound) return '';
+    const behind = sound.heldMs === undefined ? '' : ` · about ${Math.round((stats.rttMs ?? 0) / 2 + sound.heldMs + 30)} ms behind`;
+    // (Not mono or stereo: the link names two channels whatever it carries.)
+    return ` · ${sound.codec || 'sound'}${sound.kbps ? ` ${Math.round(sound.kbps)} kb/s` : ''}${behind}`;
+  }
+
   // -------------------------------------------------------------- status --
   const sync = () => {
     const { midi, audio } = store.state;
@@ -171,7 +194,7 @@ export function mountIoPanel(root, ui) {
     audioToggle.textContent = audio.enabled ? 'Audio on' : 'Enable audio';
     gain.set(audio.gain);
     sens.set(audio.sensitivity);
-    if (devices.some((d) => d.deviceId === audio.deviceId)) device.set(audio.deviceId);
+    if (audio.deviceId === PHONE || devices.some((d) => d.deviceId === audio.deviceId)) device.set(audio.deviceId);
   };
   store.subscribe((op) => {
     if (op.op === 'replace' || (op.op === 'merge' && (op.key === 'midi' || op.key === 'audio'))) sync();
@@ -192,6 +215,8 @@ export function mountIoPanel(root, ui) {
     }
     const a = status.audio;
     if (!store.state.audio.enabled) audioNote.textContent = '';
+    else if (a.state === 'waiting') audioNote.textContent = status.phone?.phone === 'connected' ? 'The iPhone is not sending sound. On the phone: the settings button, then Send sound.' : 'Waiting for the iPhone: its sound comes with its picture, once Send sound is on in its settings.';
+    else if (a.state === 'live' && store.state.audio.deviceId === PHONE) audioNote.textContent = `Listening: iPhone${soundLine(status.phone)}`;
     else if (a.state === 'live') audioNote.textContent = `Listening: ${a.label}`;
     else if (a.state === 'error') audioNote.textContent = a.error;
     else if (a.state === 'lost') audioNote.textContent = 'Audio device disconnected.';

@@ -427,7 +427,9 @@ export class Engine {
     const { midi, audio } = this.store.state;
     if (midi.enabled) this.midi.enable();
     else if (this.midi.state !== 'off') this.midi.disable();
-    if (audio.enabled) this.audio.enable(audio.deviceId);
+    // (The iPhone's microphone, when that is the input chosen: the audio
+    // track of the first phone's call, there while its Send sound is on.)
+    if (audio.enabled) this.audio.enable(audio.deviceId, this.inputs.feeds.phone.video.srcObject?.getAudioTracks?.()[0] ?? null);
     else if (this.audio.state !== 'off') this.audio.disable();
     this.vision.configure(this.visionSettings());
   }
