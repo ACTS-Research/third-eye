@@ -2,26 +2,70 @@
 // one, then move a knob or press a pad. Works for the panic buttons, inputs,
 // preset tiles, prev / next, the perform faders, and any effect parameter
 // (touch its slider on the edit screen).
+//
+// The pads and knobs mapped here (to anything but an effect parameter) are
+// the live show's own (preset-model.js keeps them with the show). The strip
+// across the top says which show that is, and its Set up menu fills the
+// show's MIDI in one go: the standard layout, a copy of another show's, or
+// nothing at all (mock-up M3, design/midi-per-show/).
 
 import { describeAction } from '../shared/actions.js';
 import { describeSource } from '../shared/sources.js';
 import { makeActionBinding } from '../shared/state.js';
+import { el } from '../shared/util.js';
+import { menu } from './controls.js';
 
 const isMidi = (source) => source.startsWith('midi.');
 const short = (source) => describeSource(source).label;
+const controls = (n) => (n === 1 ? '1 control' : `${n} controls`);
+
+// The standard layout: the first eight knobs or faders are the eight perform
+// faders, and the pads, counted up from the first, do these. (Record is left
+// off the pads on purpose, and an eighth pad is left free.)
+export const STANDARD_FADERS = 8;
+export const STANDARD_PADS = ['blink', 'freeze', 'blackout', 'tap', 'presetPrev', 'presetNext', 'bypassAll'];
+// "midi.cc.1.21" → { kind: 'cc', channel: 1, number: 21 }
+const parse = (source) => {
+  const [, kind, channel, number] = source.split('.');
+  return { kind, channel: Number(channel), number: Number(number) };
+};
+// The bindings of the standard layout, counted up from the first knob and
+// the first pad (either may be missing: a controller with no knobs, or none
+// of the other).
+export function standardLayout(knob, pad) {
+  const out = [];
+  if (knob) {
+    const { channel, number } = parse(knob);
+    for (let i = 0; i < STANDARD_FADERS && number + i <= 127; i++) out.push(makeActionBinding(`midi.cc.${channel}.${number + i}`, `macro:${i}`));
+  }
+  if (pad) {
+    const { channel, number } = parse(pad);
+    STANDARD_PADS.forEach((action, i) => {
+      if (number + i <= 127) out.push(makeActionBinding(`midi.note.${channel}.${number + i}`, action));
+    });
+  }
+  return out;
+}
 
 export function installMidiMap(ui) {
-  const { store, bus } = ui;
+  const { store, bus, presets } = ui;
   const toggle = document.getElementById('midi-map-toggle');
   const hint = document.getElementById('map-hint');
   let active = false;
   let armed = null; // an action string, or 'param'
   let armedEl = null;
+  // The standard layout being set: { step: 'knob' | 'pad', knob, pad }.
+  let flow = null;
 
-  const say = (text) => {
-    hint.textContent = text;
+  const idle = 'Click an outlined control, then move a knob or press a pad. Delete clears a control. Esc to finish.';
+  const tag = el('span', { class: 'map-show' });
+  const text = el('span', { class: 'map-text', role: 'status' });
+  const say = (line) => {
+    text.textContent = line;
+    text.title = line;
   };
-  const idle = 'MIDI map: click an outlined control, then move a knob or press a pad. Delete clears a control. Esc to finish.';
+  const learn = (on) => bus.send('midi', { cmd: 'learn', on });
+  const setActions = (list) => store.dispatch({ op: 'set', key: 'actions', value: list });
 
   function refresh() {
     const actions = store.state.actions;
@@ -30,13 +74,14 @@ export function installMidiMap(ui) {
       if (bound.length) node.dataset.midiLabel = bound.join(', ');
       else delete node.dataset.midiLabel;
     }
+    tag.textContent = `MIDI map · ${presets.live.name}`;
   }
 
   function disarm() {
     armedEl?.classList.remove('armed');
     armed = null;
     armedEl = null;
-    bus.send('midi', { cmd: 'learn', on: false });
+    learn(false);
   }
 
   function arm(target, node, label) {
@@ -44,9 +89,110 @@ export function installMidiMap(ui) {
     armed = target;
     armedEl = node;
     node?.classList.add('armed');
-    bus.send('midi', { cmd: 'learn', on: true });
+    learn(true);
     say(`${label}: now move a knob or press a pad. Delete clears it.`);
   }
+
+  // ------------------------------------------------- the standard layout ---
+  // Two gestures fit it to any controller: its first knob (or fader), then
+  // its first pad. The rest are counted up from those.
+  const skip = el('button', { class: 'map-skip', hidden: true, onclick: () => step(null) });
+  const cancel = el('button', { class: 'map-cancel', text: 'Cancel', hidden: true, onclick: () => endFlow('Standard layout cancelled: nothing was changed.') });
+
+  function ask(prefix = '') {
+    const knob = flow.step === 'knob';
+    say(`${prefix}Standard layout, ${knob ? '1' : '2'} of 2: ${knob ? 'move your first knob or fader, the one for Fader 1.' : 'press your first pad, the one for Blink.'}`);
+    skip.textContent = knob ? 'No knobs: skip' : 'No pads: skip';
+    learn(true);
+  }
+
+  function startFlow() {
+    disarm();
+    flow = { step: 'knob', knob: null, pad: null };
+    skip.hidden = cancel.hidden = false;
+    setup.node.hidden = true;
+    ask();
+  }
+
+  function endFlow(line) {
+    flow = null;
+    skip.hidden = cancel.hidden = true;
+    setup.node.hidden = false;
+    learn(false);
+    say(`${line} ${idle}`);
+  }
+
+  // One gesture answered (`source`), or skipped (null).
+  function step(source) {
+    if (!flow) return;
+    if (flow.step === 'knob') {
+      flow.knob = source;
+      flow.step = 'pad';
+      ask();
+      return;
+    }
+    flow.pad = source;
+    const layout = standardLayout(flow.knob, flow.pad);
+    if (!layout.length) return endFlow('Standard layout: nothing was set.');
+    // What the layout sets replaces what was on those knobs and pads, and
+    // what else fired those actions; every other control stays.
+    const sources = new Set(layout.map((b) => b.source));
+    const targets = new Set(layout.map((b) => b.action));
+    setActions([...store.state.actions.filter((b) => !sources.has(b.source) && !(isMidi(b.source) && targets.has(b.action))), ...layout]);
+    const faders = layout.filter((b) => b.action.startsWith('macro:')).length;
+    const pads = layout.length - faders;
+    // Where the faders and the buttons are, each now showing its control.
+    ui.setView('perform');
+    endFlow(`Standard layout set: ${[faders && `${faders} faders`, pads && `${pads} pads`].filter(Boolean).join(', ')}.`);
+    refresh();
+  }
+
+  function learnedInFlow(source) {
+    const knob = source.startsWith('midi.cc.');
+    if (flow.step === 'knob') {
+      if (knob) step(source);
+      else ask('That was a pad. ');
+    } else if (!knob) step(source);
+    // (The first knob, still turning, is not a mistake.)
+    else ask(source === flow.knob ? '' : 'That was a knob. ');
+  }
+
+  // ------------------------------------------------------ the Set up menu ---
+  const setup = menu({
+    action: true,
+    id: 'map-setup',
+    label: "This show's MIDI controls",
+    text: 'Set up',
+    options: () => [
+      { value: 'standard', label: 'Standard layout…', group: 'Start from' },
+      ...presets.shows
+        .filter((x) => x !== presets.live)
+        .map((x) => ({ value: `copy:${x.id}`, label: `${x.name} · ${x.midi.length ? controls(x.midi.length) : 'nothing mapped'}`, group: 'Copy from another show', disabled: !x.midi.length })),
+      { value: 'clear', label: 'Clear all…', group: `${presets.live.name} has ${controls(presets.live.midi.length)}`, disabled: !presets.live.midi.length },
+    ],
+    onChange: (v) => {
+      const show = presets.live;
+      const mine = show.midi.length;
+      if (v === 'standard') startFlow();
+      else if (v === 'clear') {
+        if (!confirm(`Clear the ${controls(mine)} of ${show.name}? Phone triggers, and knobs set on effect sliders, are not touched.`)) return;
+        disarm();
+        setActions(store.state.actions.filter((b) => !isMidi(b.source)));
+        say(`${show.name} has no MIDI controls now. ${idle}`);
+        refresh();
+      } else if (v.startsWith('copy:')) {
+        const from = presets.shows.find((x) => x.id === v.slice(5));
+        if (!from) return;
+        if (mine && !confirm(`Replace the ${controls(mine)} of ${show.name} with the ${controls(from.midi.length)} of ${from.name}? Phone triggers are not touched.`)) return;
+        disarm();
+        const count = presets.importMidi(from.id);
+        if (count < 0) return;
+        say(`${controls(count)} copied from ${from.name}. Click an outlined control to change one. Esc to finish.`);
+        refresh();
+      }
+    },
+  });
+  hint.replaceChildren(tag, text, skip, cancel, setup.node);
 
   function setActive(on) {
     active = on;
@@ -56,6 +202,7 @@ export function installMidiMap(ui) {
     if (on) {
       say(idle);
       refresh();
+      ui.setAlert?.('midi-empty', null);
       // Switch MIDI on if it is not already; the mode itself never waits.
       if (!store.state.midi.enabled) {
         Promise.resolve(ui.enableMidi?.()).then((ok) => {
@@ -63,6 +210,7 @@ export function installMidiMap(ui) {
         });
       }
     } else {
+      if (flow) endFlow('');
       disarm();
     }
   }
@@ -79,7 +227,7 @@ export function installMidiMap(ui) {
         if (!node) return;
         e.preventDefault();
         e.stopPropagation();
-        if (type === 'click') arm(node.dataset.midi, node, describeAction(node.dataset.midi));
+        if (type === 'click' && !flow) arm(node.dataset.midi, node, describeAction(node.dataset.midi));
       },
       true,
     );
@@ -87,18 +235,20 @@ export function installMidiMap(ui) {
 
   // Effect parameters: touching one on the edit screen arms it.
   ui.onParamTouched = (label) => {
-    if (active) arm('param', null, label);
+    if (active && !flow) arm('param', null, label);
   };
 
   bus.on('midi-learned', (m) => {
-    if (!active || !armed) return;
+    if (!active) return;
+    if (flow) return learnedInFlow(m.source);
+    if (!armed) return;
     if (armed === 'param') {
       const mapping = ui.addMapping?.(m.source, { mode: 'set', amount: 1, smooth: 0.03 });
       say(mapping ? `${short(m.source)} now controls that parameter. Pick another control, or Esc to finish.` : 'Add an effect first.');
     } else {
       // One MIDI control per target; mapping again replaces it.
       const rest = store.state.actions.filter((b) => !(b.action === armed && isMidi(b.source)));
-      store.dispatch({ op: 'set', key: 'actions', value: [...rest, makeActionBinding(m.source, armed)] });
+      setActions([...rest, makeActionBinding(m.source, armed)]);
       say(`${short(m.source)} → ${describeAction(armed)}. Pick another control, or Esc to finish.`);
     }
     armedEl?.classList.remove('armed');
@@ -111,15 +261,18 @@ export function installMidiMap(ui) {
     'keydown',
     (e) => {
       if (!active) return;
+      // (An open menu takes its own keys: Esc there closes the menu.)
+      if (e.target.closest?.('.menu-list')) return;
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
-        setActive(false);
+        if (flow) endFlow('Standard layout cancelled: nothing was changed.');
+        else setActive(false);
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && armed && armed !== 'param') {
         e.preventDefault();
         e.stopPropagation();
         const target = armed;
-        store.dispatch({ op: 'set', key: 'actions', value: store.state.actions.filter((b) => !(b.action === target && isMidi(b.source))) });
+        setActions(store.state.actions.filter((b) => !(b.action === target && isMidi(b.source))));
         say(`${describeAction(target)}: MIDI cleared. ${idle}`);
         disarm();
         refresh();
@@ -131,12 +284,25 @@ export function installMidiMap(ui) {
   store.subscribe((op) => {
     if (op.op === 'replace' || (op.op === 'set' && op.key === 'actions')) refresh();
   });
+  // Another show going live brings its own controls and its own name.
+  presets.onChange(refresh);
+
+  // A controller is plugged in and this show has nothing on it: say so once,
+  // with the way in. (Not while the map is open: that is the way in.)
+  ui.onStatus((status) => {
+    if (active) return;
+    const midi = status?.midi;
+    const idleDevice = store.state.midi.enabled && midi?.state === 'ready' && midi.inputs.length > 0 && !store.state.actions.some((b) => isMidi(b.source));
+    ui.setAlert?.('midi-empty', idleDevice ? `${midi.inputs[0]} is connected, and nothing in ${presets.live.name} is mapped to it` : null, 'warn', { label: 'Open MIDI map', run: () => setActive(true) });
+  });
 
   ui.midiMap = {
     refresh,
     toggle: () => setActive(!active),
+    open: () => setActive(true),
     get active() {
       return active;
     },
   };
+  refresh();
 }

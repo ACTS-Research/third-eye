@@ -1,0 +1,194 @@
+// A show's own MIDI controls, as the operator meets them: the alert when a
+// controller is plugged in and nothing is mapped, the strip of MIDI map
+// naming the show, its Set up menu (the standard layout by two gestures, a
+// copy of another show's, Clear all), the pads and knobs then working, the
+// Show menu's way in, and Setup's two lists. /control makes the picture
+// here, so the stand-in controller's messages are seen at once.
+// (The data underneath is covered in running-order.mjs.)
+//   node tests/midi-show.mjs
+
+import { benignError, check, failureCount, launch, startPeerServer, startSite, stopPeerServer, waitFor, watch } from './lib.mjs';
+
+const site = await startSite();
+const peerServer = await startPeerServer();
+const browser = await launch();
+const errors = [];
+const settle = (fn, label, timeout = 10000) => waitFor(fn, { label, timeout }).then(() => true, () => false);
+
+try {
+  const context = await browser.newContext({ viewport: { width: 1400, height: 1000 } });
+  await context.grantPermissions(['camera', 'microphone', 'midi']);
+  // Headless Chromium has no MIDI backend; stand in a fake device.
+  await context.addInitScript(() => {
+    const input = { name: 'Fake Controller', onmidimessage: null };
+    window.__midiInput = input;
+    navigator.requestMIDIAccess = async () => ({ inputs: new Map([['1', input]]), onstatechange: null });
+  });
+  const control = await context.newPage();
+  watch(control, 'control', errors);
+  await control.goto(`${site.url}/control/`);
+  await control.evaluate((sig) => window.thirdEye.store.merge('net', { signal: sig }), peerServer.signalUrl);
+  await waitFor(() => control.evaluate(() => window.thirdEye.ui.status?.renderFps > 0), { label: 'local engine', timeout: 20000 });
+
+  const mac = (fn, arg) => control.evaluate(fn, arg);
+  const midi = (bytes) => mac((b) => window.__midiInput.onmidimessage({ data: new Uint8Array(b) }), bytes);
+  const frames = () => mac(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const listening = () => waitFor(() => mac(() => window.thirdEye.engine.midi.learning), { label: 'listening for a control' });
+  const bound = () => mac(() => window.thirdEye.store.state.actions.filter((b) => b.source.startsWith('midi.')).map((b) => `${b.source}>${b.action}`).join());
+  const count = async () => ((await bound()) ? (await bound()).split(',').length : 0);
+  const stored = (name) => mac((n) => (JSON.parse(localStorage.getItem('thirdeye.shows.v1')).shows.find((x) => x.name === n)?.midi ?? []).map((b) => `${b.source}>${b.action}`).join(), name);
+  const mapOn = () => mac(() => document.body.classList.contains('midi-map'));
+  const tag = () => control.locator('#map-hint .map-show').textContent();
+  const hint = () => control.locator('#map-hint .map-text').textContent();
+  const says = (text, label) => settle(async () => (await hint()).includes(text), label);
+  const setUp = async (text) => {
+    await control.click('#map-setup');
+    await control.locator('.menu-list .menu-item', { hasText: text }).first().click();
+  };
+  const label = (selector) => control.locator(selector).first().getAttribute('data-midi-label');
+  const alertText = () => mac(() => document.querySelector('#alerts [data-key="midi-empty"]')?.textContent ?? '');
+  const STANDARD = [
+    ...[0, 1, 2, 3, 4, 5, 6, 7].map((i) => `midi.cc.1.${21 + i}>macro:${i}`),
+    ...['blink', 'freeze', 'blackout', 'tap', 'presetPrev', 'presetNext', 'bypassAll'].map((a, i) => `midi.note.10.${36 + i}>${a}`),
+  ].join();
+
+  console.log('a controller with nothing mapped');
+  await mac(() => window.thirdEye.ui.setView('setup'));
+  check('with MIDI off nothing is said', (await alertText()) === '');
+  await control.click('text=Enable MIDI');
+  check('once it is on, an alert names the controller and the show', await settle(async () => (await alertText()).includes('Fake Controller is connected') && (await alertText()).includes('My show'), 'alert'), await alertText());
+  await control.locator('#alerts [data-key="midi-empty"] .go').click();
+  check('its button opens MIDI map, and the alert goes', (await mapOn()) && (await settle(async () => (await alertText()) === '', 'alert gone')));
+  check('the strip names the show whose controls these are', (await tag()) === 'MIDI map · My show', await tag());
+
+  console.log('the standard layout, by two gestures');
+  await setUp('Standard layout');
+  check('it asks for the first knob, and offers to skip or cancel', (await says('1 of 2', 'first')) && (await control.locator('#map-hint .map-skip').isVisible()) && (await control.locator('#map-hint .map-cancel').isVisible()) && (await control.locator('#map-setup').isHidden()), await hint());
+  await listening();
+  await midi([0x99, 36, 100]);
+  check('a pad pressed instead is named as a mistake, and it asks again', await says('That was a pad. Standard layout, 1 of 2', 'pad first'), await hint());
+  await midi([0x89, 36, 0]);
+  await listening();
+  await midi([0xb0, 21, 10]);
+  check('a knob moved: it asks for the first pad', await says('2 of 2', 'second'), await hint());
+  await listening();
+  await midi([0xb0, 21, 20]);
+  await listening();
+  check('the same knob still turning is not a mistake', !(await hint()).includes('That was'), await hint());
+  await midi([0xb0, 30, 5]);
+  check('another knob is', await says('That was a knob. Standard layout, 2 of 2', 'knob second'), await hint());
+  await listening();
+  check('nothing is mapped until both are answered', (await bound()) === '');
+  await midi([0x99, 36, 100]);
+  check('a pad pressed: eight faders and seven pads, counted up from the two', await settle(async () => (await bound()) === STANDARD, 'layout'), await bound());
+  await midi([0x89, 36, 0]);
+  check('it says what it set, on the perform screen', (await says('Standard layout set: 8 faders, 7 pads.', 'set')) && (await mac(() => window.thirdEye.ui.view === 'perform')) && (await control.locator('#map-setup').isVisible()), await hint());
+  check('each button and fader shows its control', (await label('.big.blackout')) === 'Ch 10 note 38' && (await label('[data-midi="blink"]')) === 'Ch 10 note 36' && (await label('[data-midi="macro:0"]')) === 'Ch 1 CC 21' && (await label('[data-midi="presetNext"]')) === 'Ch 10 note 41', `${await label('.big.blackout')} | ${await label('[data-midi="macro:0"]')}`);
+  check('and the layout is stored in the show', (await stored('My show')) === STANDARD);
+
+  console.log('the pads and knobs work');
+  await control.keyboard.press('Escape');
+  check('Esc leaves MIDI map', !(await mapOn()) && (await control.locator('#map-hint').isHidden()));
+  await frames();
+  await midi([0x99, 38, 127]);
+  check('the third pad is Blackout', await settle(() => mac(() => window.thirdEye.store.state.globals.blackout === true), 'blackout on'));
+  await midi([0x89, 38, 0]);
+  await frames();
+  await midi([0x99, 38, 127]);
+  check('pressed again it lifts', await settle(() => mac(() => window.thirdEye.store.state.globals.blackout === false), 'blackout off'));
+  await midi([0x89, 38, 0]);
+  const before = await mac(() => JSON.stringify(window.thirdEye.store.state.chain));
+  await midi([0xb0, 21, 0]);
+  await frames();
+  await midi([0xb0, 21, 127]);
+  check('the first knob moves the first fader', await settle(() => mac((was) => JSON.stringify(window.thirdEye.store.state.chain) !== was, before), 'fader moved'));
+  const at = await mac(() => window.thirdEye.store.state.presetIndex);
+  await midi([0x99, 41, 127]);
+  check('the sixth pad is Next', await settle(() => mac((was) => window.thirdEye.store.state.presetIndex !== was, at), 'next'));
+  await midi([0x89, 41, 0]);
+
+  console.log('another show');
+  await mac(() => window.thirdEye.ui.presets.newShow('Second'));
+  await control.click('#show-menu');
+  await control.locator('.menu-list .menu-item', { hasText: 'MIDI controls' }).first().click();
+  check('the Show menu has a way in, and the strip names the new show', (await mapOn()) && (await tag()) === 'MIDI map · Second', await tag());
+  check('a new show starts with the same controls', (await bound()) === STANDARD);
+  let asked = '';
+  control.once('dialog', (d) => {
+    asked = d.message();
+    d.accept();
+  });
+  await setUp('Clear all');
+  check('Clear all asks, then clears this show only', (await settle(async () => (await bound()) === '', 'cleared')) && asked.includes('Clear the 15 controls of Second') && (await stored('My show')) === STANDARD && (await stored('Second')) === '', asked);
+  check('and the buttons lose their labels', (await label('.big.blackout')) === null);
+  await control.click('#map-setup');
+  check('the menu lists the other show with what it has', (await control.locator('.menu-list .menu-item', { hasText: 'My show · 15 controls' }).count()) === 1 && (await control.locator('.menu-list .menu-item.disabled', { hasText: 'Clear all' }).count()) === 1, await control.locator('.menu-list').textContent());
+  await control.keyboard.press('Escape');
+  check('Esc with the menu open closes the menu, not MIDI map', (await control.locator('.menu-list').count()) === 0 && (await mapOn()));
+  await setUp('My show');
+  check('copying into a show with none asks nothing', (await settle(async () => (await bound()) === STANDARD, 'copied')) && (await says('15 controls copied from My show.', 'copied line')), await hint());
+  // One control mapped by hand, as before: click it, press a pad.
+  await control.click('.big.blackout');
+  await listening();
+  await midi([0x90, 50, 127]);
+  check('a control mapped by hand replaces the one that button had', await settle(async () => (await bound()).includes('midi.note.1.50>blackout') && !(await bound()).includes('midi.note.10.38') && (await count()) === 15, 'by hand'), await bound());
+  await midi([0x80, 50, 0]);
+  check('that is this show\'s alone', (await stored('My show')) === STANDARD && (await stored('Second')).includes('midi.note.1.50>blackout'));
+  asked = '';
+  control.once('dialog', (d) => {
+    asked = d.message();
+    d.accept();
+  });
+  await setUp('My show');
+  check('copying over controls asks first, saying what goes', (await settle(async () => (await bound()) === STANDARD, 'copied again')) && asked.includes('Replace the 15 controls of Second with the 15 controls of My show'), asked);
+  await setUp('Standard layout');
+  await says('1 of 2', 'again');
+  await control.keyboard.press('Escape');
+  check('Esc cancels the standard layout and stays in MIDI map', (await says('cancelled: nothing was changed', 'cancelled')) && (await mapOn()) && (await bound()) === STANDARD && (await control.locator('#map-setup').isVisible()), await hint());
+  await setUp('Standard layout');
+  await says('1 of 2', 'once more');
+  await control.click('#map-hint .map-skip');
+  await says('2 of 2', 'skipped');
+  await listening();
+  await midi([0x90, 60, 100]);
+  check('with the knobs skipped only the pads are set anew; the faders stay', await settle(async () => {
+    const now = await bound();
+    return now.includes('midi.cc.1.21>macro:0') && now.includes('midi.note.1.60>blink') && now.includes('midi.note.1.66>bypassAll') && !now.includes('midi.note.10.') && (await count()) === 15;
+  }, 'pads only'), await bound());
+  await midi([0x80, 60, 0]);
+  check('and it says so', await says('Standard layout set: 7 pads.', 'pads line'), await hint());
+  await control.keyboard.press('Escape');
+
+  console.log('Setup: two lists');
+  await mac(() => window.thirdEye.ui.setView('setup'));
+  const rows = (id) => control.locator(`#${id} .binding`).count();
+  check('the triggers in one, this show\'s MIDI controls in the other, under its name', (await rows('trigger-list')) === 4 && (await rows('midi-list')) === 15 && (await control.locator('#midi-list-show').textContent()) === 'Second', `${await rows('trigger-list')} and ${await rows('midi-list')}`);
+  await mac(() => {
+    const { presets } = window.thirdEye.ui;
+    presets.makeLive(presets.shows.find((x) => x.name === 'My show').id);
+  });
+  check('another show going live swaps the second list and its name', await settle(async () => (await control.locator('#midi-list-show').textContent()) === 'My show' && (await bound()) === STANDARD && (await rows('midi-list')) === 15 && (await rows('trigger-list')) === 4, 'swapped'));
+  await mac(() => window.thirdEye.ui.presets.newShow('Bare'));
+  await mac(() => {
+    const { store } = window.thirdEye;
+    store.dispatch({ op: 'set', key: 'actions', value: store.state.actions.filter((b) => !b.source.startsWith('midi.')) });
+  });
+  check('a show with none says so', await settle(async () => (await rows('midi-list')) === 0 && (await control.locator('#midi-list-note').textContent()).startsWith('None in this show.'), 'none'), await control.locator('#midi-list-note').textContent());
+  check('and the alert is back, naming it', await settle(async () => (await alertText()).includes('nothing in Bare is mapped'), 'alert back'), await alertText());
+  await control.locator('#alerts [data-key="midi-empty"] .close').click();
+  await frames();
+  check('closed, it stays closed', (await alertText()) === '');
+
+  const real = errors.filter((e) => !benignError(e));
+  check('no errors in the window', real.length === 0, real.slice(0, 3).join(' | '));
+} catch (err) {
+  console.log(`  FAIL ${err.message}`);
+  process.exitCode = 1;
+} finally {
+  await browser.close();
+  await stopPeerServer(peerServer);
+  await site.close();
+}
+
+console.log(failureCount() ? `\n${failureCount()} check(s) failed` : '\nall checks passed');
+process.exit(failureCount() || process.exitCode ? 1 : 0);

@@ -226,15 +226,24 @@ export function mountModPanel(roots, ui) {
   }
 
   // ------------------------------------------------------------- actions --
-  const actionList = el('div');
+  // Two lists (mock-up W1, design/midi-per-show/): the triggers, the same in
+  // every show, and the MIDI controls, which are the live show's own.
+  const actionList = el('div', { id: 'trigger-list' });
+  const midiList = el('div', { id: 'midi-list' });
+  const midiShow = el('span', { class: 'of-show', id: 'midi-list-show' });
+  const midiNote = el('div', { class: 'dim small', id: 'midi-list-note' });
+  const isMidi = (b) => b.source.startsWith('midi.');
 
   const setActions = (list) => store.dispatch({ op: 'set', key: 'actions', value: list });
 
   function buildActions() {
     actionList.replaceChildren();
+    midiList.replaceChildren();
     for (const b of store.state.actions) {
       const update = (patch) => setActions(store.state.actions.map((x) => (x.id === b.id ? { ...x, ...patch } : x)));
-      const src = menu({ label: 'What fires it', options: () => sourceChoices(b), value: b.source, onChange: (v) => update({ source: v }) });
+      // (In the MIDI list a control is named without "MIDI ·" before it, so
+      // that its number is never cut off.)
+      const src = menu({ label: 'What fires it', options: () => sourceChoices(b).map((o) => (isMidi(b) && o.group === 'MIDI' ? { ...o, label: o.item } : o)), value: b.source, onChange: (v) => update({ source: v }) });
       const act = menu({
         label: 'What it does',
         options: () => {
@@ -252,7 +261,7 @@ export function mountModPanel(roots, ui) {
       holdLabel.classList.add('hold');
       holdLabel.title = 'On only while the trigger is held';
       holdLabel.style.visibility = TOGGLE_ACTIONS[b.action] ? 'visible' : 'hidden';
-      actionList.append(
+      (isMidi(b) ? midiList : actionList).append(
         el('div', { class: 'binding' }, [
           src.node,
           act.node,
@@ -261,7 +270,10 @@ export function mountModPanel(roots, ui) {
         ]),
       );
     }
-    if (!store.state.actions.length) actionList.append(el('div', { class: 'dim small', text: 'No triggers. Any source rising past half fires its action.' }));
+    if (!actionList.children.length) actionList.append(el('div', { class: 'dim small', text: 'No triggers. Any source rising past half fires its action.' }));
+    const count = midiList.children.length;
+    midiShow.textContent = ui.presets?.live.name ?? '';
+    midiNote.textContent = `${count ? 'Choosing another show swaps this list.' : 'None in this show.'} MIDI map, top right, is the quickest way to add one; its Set up menu gives the standard layout or a copy of another show's.`;
   }
 
   // ---------------------------------------------------------------- LFOs --
@@ -386,9 +398,12 @@ export function mountModPanel(roots, ui) {
   roots.setup.append(
     el('div', { class: 'panel', id: 'actions-panel' }, [
       el('h2', { text: 'Triggers and MIDI controls' }),
+      el('div', { class: 'bind-head' }, [el('b', { text: 'Triggers' }), el('span', { class: 'dim', text: 'the same in every show: phone buttons, gestures, beats' })]),
       actionList,
       el('div', { class: 'row' }, [el('button', { text: 'Add trigger', onclick: () => setActions([...store.state.actions, makeActionBinding('phone.shake', 'blink')]) })]),
-      el('div', { class: 'dim small', text: 'Phone buttons, gestures, beats and MIDI controls all live here. The quickest way to add a MIDI control is MIDI map, top right.' }),
+      el('div', { class: 'bind-head midi' }, [el('b', { text: 'MIDI controls' }), midiShow, el('span', { class: 'dim', text: "this show's own" })]),
+      midiList,
+      midiNote,
     ]),
     el('div', { class: 'panel', id: 'sources-panel' }, [el('h2', { text: 'Sources' }), meters]),
   );

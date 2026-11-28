@@ -52,18 +52,70 @@ MIDI mappings per show, as decided (see "MIDI per show" further down).
   second phone; MP4 once in Setup → Recordings; restyling the phone's
   Quality menu; when to try depth.
 
-**MIDI per show (decided 28 November, not built).** MIDI mappings belong to
-a show. A new show inherits the mappings of the show that was live; a show
-can import the mappings of another show. Today the MIDI buttons (pads and
-keys mapped to actions such as Blink, Next, a preset) are global action
-bindings in `state.actions` with `midi.*` sources; MIDI on a slider is a
-modulation mapping inside the preset's scene, so it already moves with the
-preset. The build: keep the `midi.*` action bindings in the show
-(`presets.js` shows data), swap them in and out of `state.actions` when a
-show goes live (the engine reads `state.actions`, so it needs no change),
-inherit on New show, and an "Import MIDI from…" choice in the Show menu.
-Phone triggers and other non-MIDI bindings stay global. Needs a mock-up of
-the menu choice first.
+**MIDI per show (built 28 November, eighth session).** Mock-ups
+https://claude.ai/artifact/HzDdBvGrSYd7b456Q8gUid (`design/midi-per-show/`);
+the owner chose M3 (in MIDI map, on its strip) and W1 (two lists in Setup),
+and asked for a standard layout that is easy to set with a controller
+attached.
+
+- **Data.** A show has `midi`: the action bindings whose source starts
+  `midi.` (pads and knobs on Blink, Next, a preset or step, a perform
+  fader). `null` means none of its own yet (a show saved before, or a file
+  without them); `adopt()` in `preset-model.js` then gives it what is in
+  use. Phone triggers and every other binding are not part of a show. MIDI
+  on an effect slider is a mapping in the preset's scene, as before.
+- **The engine reads only `state.actions`,** and was not changed. In
+  `preset-model.js`: `useMidi()` puts the live show's MIDI into the state
+  (when a show goes live, when the page starts, and when another window's
+  whole state replaces this one's); `keepMidi()` puts the state's MIDI into
+  the live show when a `set actions` op is made in this window. An op that
+  arrives from another window is NOT written into a show: that window stores
+  it, and this one may not yet know which show is live there. Keep that, or
+  two `/control` tabs can write one show's MIDI into another.
+- **Inheriting and copying.** `newShow` and `addShow` (a file with none)
+  take the MIDI in use; `duplicateShow` copies the show's; `importMidi(id)`
+  replaces the live show's with a copy of another's.
+- **Files.** `exportShow`, the library file and so the backup folder carry
+  `midi` as `{ source, action, hold }` without ids. A pad on a preset tile is
+  `preset:3`, the tile's place: in another browser it is whatever preset
+  sits there (the owner accepted this).
+- **MIDI map** (`midi-map.js`): `#map-hint` is now a strip of fixed height
+  (34 px; the alerts hang under it) holding the show's name (`.map-show`),
+  the line of text (`.map-text`) and the Set up menu (`#map-setup`):
+  Standard layout…, the other shows to copy from, Clear all…. Copy and
+  Clear ask with `confirm()`. The Show menu's "MIDI controls…" opens MIDI
+  map (`ui.midiMap.open()`).
+- **The standard layout** (`standardLayout`, `STANDARD_PADS` in
+  `midi-map.js`): two gestures, the first knob or fader and the first pad,
+  learned through the engine's ordinary learn; the rest are counted up from
+  them. Knobs 1 to 8 are `macro:0` to `macro:7`; pads 1 to 7 are Blink,
+  Freeze, Blackout, Tap, Prev, Next, Bypass all. It replaces what was on
+  those sources and whatever else fired those actions, and leaves the rest.
+  Skip buttons set one kind only; Cancel and Esc change nothing. There is
+  no built-in map of controller numbers, on purpose: makers differ.
+- **The alert** `midi-empty`: MIDI on, a device present, no MIDI binding in
+  the state, MIDI map closed. Its button opens MIDI map.
+- **Setup → Triggers and MIDI controls** (`mod-panel.js`): `#trigger-list`
+  and `#midi-list`, the second under the live show's name
+  (`#midi-list-show`). A row whose source is changed to or from MIDI moves
+  to the other list.
+- **Tests.** `running-order.mjs` has the data (swap, inherit, copy, files,
+  the backup, a change from another window, shows from before);
+  `midi-show.mjs` is new (twenty-nine suites) and has the screens, with
+  `/control` making the picture so the stand-in controller is heard.
+  `midi-audio.mjs` cannot reach its MIDI checks in this sandbox: its audio
+  part fails first, and with that part cut out it stalls after "MIDI opens",
+  on the commit before as well (the output page, in the background, gets no
+  frames).
+- **Not done, not asked for:** a show's own phone triggers; a built-in map
+  for a named controller; MIDI on a slider moving with the show instead of
+  the preset.
+- **Suspected from reading the code, not reproduced, not fixed:** with two
+  `/control` tabs open, a show made live in one sets the tempo, and the
+  other tab can then write that tempo into the show
+  it still thinks is live and save its old idea of which show is live (the
+  tempo handler in `preset-model.js` does not tell a change made elsewhere
+  from its own). Not seen in use; one tab is the normal case.
 
 **The narrow top bar (28 November).** Under 1000 px: the CHECK flag never
 shrinks (`#check-flag`), the view buttons and REC are slimmer (REC still
@@ -945,7 +997,7 @@ Three static pages built by Vite, no framework.
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon: the logo of 22 November, `design/logo/`) |
 | `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `logo/`, `tone/`, `edit-marks/`, `running-order/`, `edit-screen/`, `mix/`, `phone2/`. `design/README.md` says which option of each was built. Sixth session: `glitch/`, `top-bar/`, `start2/` |
-| `tests/` | Twenty-eight headless suites and `lib.mjs` |
+| `tests/` | Twenty-nine headless suites and `lib.mjs` |
 
 ### Rules that are easy to break
 
@@ -1043,7 +1095,7 @@ Three static pages built by Vite, no framework.
   first suite, or every suite fails at once on a missing `playwright`.
 - **To run every suite,** loop over them in one background command, each
   under `timeout` with `SKIP_BUILD=1` after one build, writing a log each
-  and a line per result; twenty-eight take about fifty minutes. A suite
+  and a line per result; twenty-nine take about fifty minutes. A suite
   that fails in the full run and passes alone is not thereby innocent:
   read which check failed.
 - **Write commit messages to a file** and use `git commit -F`: one with

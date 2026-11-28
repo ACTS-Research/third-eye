@@ -203,7 +203,9 @@ export function mountStrip(ui, onBuilt) {
         const take = differ.length > 0 && confirm(`${differ.length === 1 ? 'A preset' : `${differ.length} presets`} in this show (${differ.map((p) => p.name).join(', ')}) ${differ.length === 1 ? 'is' : 'are'} also in your list, changed. OK takes the file's; Cancel keeps yours.`);
         presets.mergePresets(incoming.presets, take);
         const show = presets.addShow(incoming);
-        say(`Opened ${show.name}: ${show.steps.length} step${show.steps.length === 1 ? '' : 's'}${fresh.length ? `, ${fresh.length} new preset${fresh.length === 1 ? '' : 's'} at the end of the list` : ''}.`);
+        // (A file with no MIDI controls in it has taken on the live show's.)
+        const midi = incoming.midi ? `, ${incoming.midi.length ? `its own MIDI controls (${incoming.midi.length})` : 'no MIDI controls'}` : '';
+        say(`Opened ${show.name}: ${show.steps.length} step${show.steps.length === 1 ? '' : 's'}${fresh.length ? `, ${fresh.length} new preset${fresh.length === 1 ? '' : 's'} at the end of the list` : ''}${midi}.`);
       } catch (err) {
         say(`Could not open it: ${err.message}`);
       }
@@ -221,6 +223,8 @@ export function mountStrip(ui, onBuilt) {
       { value: 'rename', label: 'Rename…', group: 'This show' },
       { value: 'duplicate', label: 'Duplicate', group: 'This show' },
       { value: 'delete', label: presets.shows.length > 1 ? 'Delete…' : 'Empty it…', group: 'This show' },
+      // Its MIDI controls are set, copied and cleared in MIDI map.
+      { value: 'midi', label: 'MIDI controls…', group: 'This show' },
       { value: 'save', label: 'Save show to a file…', group: 'Files' },
       { value: 'open', label: 'Open a show file…', group: 'Files' },
     ],
@@ -237,7 +241,8 @@ export function mountStrip(ui, onBuilt) {
       else if (v === 'delete') {
         const last = presets.shows.length === 1;
         if (confirm(last ? `Take every step out of ${show.name}? (It is your only show.) The presets are kept.` : `Delete the show ${show.name}? The presets are kept.`)) presets.deleteShow(show.id);
-      } else if (v === 'save') saveShowFile();
+      } else if (v === 'midi') ui.midiMap?.open();
+      else if (v === 'save') saveShowFile();
       else if (v === 'open') showPicker.click();
     },
   });

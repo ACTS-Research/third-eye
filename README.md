@@ -752,7 +752,8 @@ strip, and Next and Prev walk the presets.
 - **Choose a show.** Under the tiles, **Show: name** opens the Show menu
   (upward): your shows, the live one marked; **+ New show** (empty, with the
   tempo as it is), **Rename…**, **Duplicate**, **Delete…** (it asks; the
-  presets are kept; your only show is emptied instead), **Save show to a
+  presets are kept; your only show is emptied instead), **MIDI controls…**
+  (opens MIDI map, where a show's pads and knobs are set), **Save show to a
   file…** and **Open a show file…**. Choosing a show makes it live from its
   first step and sets its tempo.
 - **Build it.** On a preset tile, **+** adds that preset to the end of the
@@ -778,7 +779,9 @@ strip, and Next and Prev walk the presets.
   gestures and beats are the same in every show, and a knob set on one
   effect slider stays with its preset. (Before 28 November 2026 MIDI
   controls were the same for every show: each show you had then starts with
-  a copy of them.)
+  a copy of them.) To fill a show's MIDI in one go, use **Set up** in MIDI
+  map: the standard layout, a copy of another show's, or **Clear all** (see
+  [MIDI](#midi-audio-and-vision)).
 - **Show files.** **Save show to a file…** downloads one file holding the
   show, its MIDI controls and only the presets it uses, named after the
   show. **Open a show file…** adds the show, live, and any of its presets
@@ -839,8 +842,31 @@ that can be mapped is outlined:
 
 Click one, then move a knob or press a pad. The control shows what is mapped
 to it. Click a control and press `Delete` to clear it; `Esc` leaves map mode.
+
+The strip across the top names the show these controls belong to (`MIDI map
+· My show`), says what to do next, and has **Set up** at its right:
+
+- **Standard layout…** fits a usual layout to whatever controller you have,
+  with two gestures. Move your first knob or fader, then press your first
+  pad; the rest are counted up from those. Knobs or faders 1 to 8 become the
+  eight perform faders. Pads 1 to 7 become Blink, Freeze, Blackout, Tap
+  tempo, Previous, Next and Bypass all; an eighth is left free, and Record
+  is left off the pads on purpose. **No knobs: skip** and **No pads: skip**
+  set only the other kind; **Cancel** or `Esc` changes nothing. It replaces
+  what those knobs and pads did, and whatever else fired those actions;
+  your other controls (a pad on a step, say) stay.
+- **Copy from another show** lists your other shows with how many controls
+  each has; choosing one replaces this show's with a copy (it asks first
+  when this show has any).
+- **Clear all…** removes this show's MIDI controls (it asks). Phone
+  triggers, and knobs set on effect sliders, are not touched.
+
+With MIDI on, a controller connected and nothing mapped in the live show, an
+alert says so and its button opens MIDI map.
 Everything mapped this way is also listed under **Setup → Triggers and MIDI
-controls**, where a pad can be given any other action. Pads and knobs
+controls**, where a pad can be given any other action. That panel has two
+lists: **Triggers**, the same in every show, and **MIDI controls**, under
+the live show's name. Pads and knobs
 mapped to anything but an effect parameter belong to the live show (see
 [Shows](#modulation-triggers-and-presets)); one mapped to an effect
 parameter belongs to that preset.
@@ -1143,6 +1169,7 @@ npm test
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, the motion map (built only when read, its modulation sources, the Motion and Gravity effects), triggers, presets, crossfade |
 | `tests/time-scan.mjs` | Time's reach (the frames in use cover 1, 4 and 8 seconds), Time and Scan with each choice of **driven by**, the motion map made only when Motion drives, the edit screen's rows and names, Scan's lift and direction, segmentation switching itself on for the body and off ten seconds after, and left alone when switched on in Setup |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
+| `tests/midi-show.mjs` | A show's own MIDI controls on the screen, with `/control` making the picture and a stand-in controller: the alert when one is connected and nothing is mapped, the strip of MIDI map naming the show, **Set up** (the standard layout by two gestures with its mistakes, skips and Cancel; a copy of another show's; Clear all), the pads and knobs then working, the Show menu's way in, Setup's two lists |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |
 
 ## What has and has not been verified
