@@ -846,6 +846,9 @@ that can be mapped is outlined:
   such a pad loads the preset in that place)
 - the eight perform faders (the knob moves the parameter itself, so the
   on-screen fader follows the hardware, whatever preset is live)
+- the mix bar under the picture: a knob then sets how much of input B is
+  mixed in, in any preset (in one with no Mix B it adds the effect, as
+  dragging the bar does)
 - any effect parameter: on the Edit screen, touch its slider
 
 Click one, then move a knob or press a pad. The control shows what is mapped

@@ -2,7 +2,7 @@
 // them (phone sensors, LFOs, later MIDI / audio / vision). Each frame the
 // mappings in the scene turn those numbers into parameter offsets.
 
-import { TOGGLE_ACTIONS, runAction } from '../shared/actions.js';
+import { KNOB_ACTIONS, TOGGLE_ACTIONS, runAction, setMixB } from '../shared/actions.js';
 import { paramRange, paramUnit, paramValue } from '../effects/index.js';
 import { macroValue, resolveMacros } from '../shared/macros.js';
 import { SOURCES, describeSource } from '../shared/sources.js';
@@ -138,7 +138,7 @@ export class Modulation {
     // Triggers: a source rising through 0.5 fires its action.
     let macros = null;
     for (const b of state.actions) {
-      if (b.action.startsWith('macro:')) {
+      if (b.action.startsWith('macro:') || KNOB_ACTIONS[b.action]) {
         // Continuous: a knob or fader sets the pinned parameter's own value,
         // so the on-screen fader follows the hardware.
         const has = this.values.has(b.source);
@@ -151,6 +151,11 @@ export class Modulation {
         }
         if (v === undefined || v === this.faderSeen.get(b.id)) continue;
         this.faderSeen.set(b.id, v);
+        if (b.action === 'mix') {
+          // The bar under the picture: how much of input B is mixed in.
+          setMixB(this.store, this.bipolar.get(b.source) ? v * 0.5 + 0.5 : v);
+          continue;
+        }
         macros ??= resolveMacros(state);
         const macro = macros[Number(b.action.slice(6))];
         if (!macro) continue;

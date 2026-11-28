@@ -6,10 +6,10 @@ import { codeMark } from './code-mark.js';
 import { pressBlink } from './blink-panel.js';
 import { EFFECT_BY_ID } from '../effects/index.js';
 import { THUMB_H, THUMB_W } from '../engine/pipeline.js';
-import { MIX_MODES, mixItem, runAction } from '../shared/actions.js';
+import { MIX_MODES, mixItem, runAction, setMixB } from '../shared/actions.js';
 import { macroUnit, macroValue, resolveMacros } from '../shared/macros.js';
 import { describeSource } from '../shared/sources.js';
-import { INPUT_KINDS, INPUT_LABELS, makeEffect, sceneOf } from '../shared/state.js';
+import { INPUT_KINDS, INPUT_LABELS } from '../shared/state.js';
 import { el } from '../shared/util.js';
 import { attachPreview } from './preview.js';
 import { mountStrip } from './strip.js';
@@ -339,20 +339,13 @@ export function mountPerform(root, ui) {
   // ---- the bar
   const mixFill = el('div', { class: 'fill' });
   const mixText = el('span', { class: 'mixbar-text' });
-  const mixBar = el('div', { class: 'mixbar', id: 'mixbar', role: 'slider', tabindex: '0', 'aria-label': 'Mix of input B', 'aria-valuemin': '0', 'aria-valuemax': '1' }, [mixFill, mixText]);
+  // (`data-midi`: in MIDI map a knob can be put on the bar.)
+  const mixBar = el('div', { class: 'mixbar', id: 'mixbar', role: 'slider', tabindex: '0', 'data-midi': 'mix', 'aria-label': 'Mix of input B', 'aria-valuemin': '0', 'aria-valuemax': '1' }, [mixFill, mixText]);
+  // With no Mix B in the preset the bar adds one (`setMixB`).
   const setMix = (value) => {
-    const mix = Math.round(Math.min(1, Math.max(0, value)) * 100) / 100;
-    const item = mixItem(store.state);
-    if (item) {
-      ui.lastTouched = { uid: item.uid, key: 'mix' };
-      store.patchItem('chain', item.uid, { mix });
-      return;
-    }
-    // No Mix B in this preset: the bar adds one, a plain fade in front of
-    // every other effect, so the chain treats the mixed picture.
-    const scene = sceneOf(store.state);
-    scene.chain.unshift(makeEffect('mixb', { mix }));
-    store.setScene(scene);
+    const had = mixItem(store.state);
+    const item = setMixB(store, value);
+    if (had && item) ui.lastTouched = { uid: item.uid, key: 'mix' };
   };
   const dragMix = (e) => {
     const r = mixBar.getBoundingClientRect();

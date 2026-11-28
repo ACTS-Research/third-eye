@@ -198,6 +198,28 @@ try {
   await frames();
   check('closed, it stays closed', (await alertText()) === '');
 
+  console.log('a knob on the mix of A and B');
+  const mixOf = () => mac(() => window.thirdEye.store.state.chain.find((it) => it.type === 'mixb')?.mix ?? null);
+  await mac(() => window.thirdEye.ui.setView('perform'));
+  await control.keyboard.press('m');
+  check('in MIDI map the mix bar under the picture is one of the controls', (await mapOn()) && (await control.locator('#mixbar').getAttribute('data-midi')) === 'mix');
+  await control.click('#mixbar');
+  check('clicked, it waits for a knob, by name', await says('Mix A / B: now move a knob', 'armed'), await hint());
+  await listening();
+  await midi([0xb0, 30, 64]);
+  check('a knob turned is put on it', await settle(async () => (await bound()) === 'midi.cc.1.30>mix', 'mix bound'), await bound());
+  check('and the bar shows which', (await label('#mixbar')) === 'Ch 1 CC 30');
+  await control.keyboard.press('Escape');
+  check('mapping it did not touch the preset', (await mixOf()) === null);
+  await frames();
+  await midi([0xb0, 30, 127]);
+  check('turned in a preset with no Mix B, the knob adds one, as the bar does, and sets it', await settle(async () => (await mixOf()) === 1, 'mix added'), String(await mixOf()));
+  await midi([0xb0, 30, 32]);
+  check('and from then on it moves the mix', await settle(async () => Math.abs((await mixOf()) - 0.25) < 0.01, 'mix moved'), String(await mixOf()));
+  check('the bar on the screen follows the knob', await settle(async () => Math.abs(Number(await control.locator('#mixbar').getAttribute('aria-valuenow')) - 0.25) < 0.01, 'bar follows'), await control.locator('#mixbar').getAttribute('aria-valuenow'));
+  await midi([0xb0, 30, 0]);
+  check('all the way down is input A alone', await settle(async () => (await mixOf()) === 0, 'mix zero'));
+
   const real = errors.filter((e) => !benignError(e));
   check('no errors in the window', real.length === 0, real.slice(0, 3).join(' | '));
 } catch (err) {

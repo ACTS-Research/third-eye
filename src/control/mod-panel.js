@@ -2,7 +2,7 @@
 // (a source moving a slider); on its LFOs tab, the four LFOs. On the setup screen: the
 // triggers (source -> action) and a meter for every source.
 
-import { ACTIONS, TOGGLE_ACTIONS, describeAction } from '../shared/actions.js';
+import { ACTIONS, KNOB_ACTIONS, TOGGLE_ACTIONS, describeAction } from '../shared/actions.js';
 import { MACRO_COUNT } from '../shared/macros.js';
 import { EFFECT_BY_ID } from '../effects/index.js';
 import { LFO_SHAPES, LFO_SYNC, SOURCES, describeSource, sourceLabel } from '../shared/sources.js';
@@ -71,6 +71,7 @@ export function mountModPanel(roots, ui) {
       out[`step:${i}`] = `Step ${i + 1}: ${step.name}`;
     });
     for (let i = 0; i < MACRO_COUNT; i++) out[`macro:${i}`] = `Fader ${i + 1} (continuous)`;
+    for (const [action, label] of Object.entries(KNOB_ACTIONS)) out[action] = `${label} (continuous)`;
     return out;
   }
 

@@ -3,13 +3,36 @@
 
 import { applyPreset, applyScene, stepShow } from './presets.js';
 import { EFFECT_BY_ID } from '../effects/index.js';
-import { INPUT_KINDS, INPUT_LABELS } from './state.js';
+import { INPUT_KINDS, INPUT_LABELS, makeEffect, sceneOf } from './state.js';
 
 // The modes of the Mix B effect, as [name, value] pairs in their order.
 export const MIX_MODES = Object.entries(EFFECT_BY_ID.mixb.params.mode.options);
 // The Mix B effect the perform screen's bar and mode buttons work on: the
 // first in the chain that is not bypassed, else the first.
 export const mixItem = (state) => state.chain.find((it) => it.type === 'mixb' && !it.bypass) ?? state.chain.find((it) => it.type === 'mixb') ?? null;
+
+// Sets how much of input B is mixed in (0 to 1): the mix of the Mix B effect
+// the perform screen's bar works on. With none in the preset, one is added,
+// a plain fade in front of every other effect, so the chain treats the
+// mixed picture. (The bar under the picture and a knob mapped to it both
+// come here. An effect added this way is not saved into the preset: only
+// the edit screen saves.) Returns the effect.
+export function setMixB(store, value) {
+  const mix = Math.round(Math.min(1, Math.max(0, value)) * 100) / 100;
+  const item = mixItem(store.state);
+  if (item) {
+    if (item.mix !== mix) store.patchItem('chain', item.uid, { mix });
+    return item;
+  }
+  const scene = sceneOf(store.state);
+  scene.chain.unshift(makeEffect('mixb', { mix }));
+  store.setScene(scene);
+  return mixItem(store.state);
+}
+
+// Actions a knob or fader sets continuously (the engine applies them every
+// frame, as it does "macro:n"): they are bound, never run.
+export const KNOB_ACTIONS = { mix: 'Mix A / B' };
 
 export const ACTIONS = {
   blackout: 'Blackout',
@@ -34,6 +57,7 @@ export const TOGGLE_ACTIONS = { blackout: 'blackout', freeze: 'freeze', bypassAl
 // continuously) drives the third perform fader.
 export function describeAction(action) {
   if (ACTIONS[action]) return ACTIONS[action];
+  if (KNOB_ACTIONS[action]) return KNOB_ACTIONS[action];
   const [kind, arg] = String(action).split(':');
   if (kind === 'preset') return `Preset ${Number(arg) + 1}`;
   if (kind === 'step') return `Step ${Number(arg) + 1}`;
@@ -112,6 +136,7 @@ export function runAction(store, name, arg) {
       applyScene(store, Number(arg) || 0);
       break;
     case 'macro':
+    case 'mix':
       break; // continuous; the engine applies it every frame
     case 'presetNext':
       stepShow(store, 1);

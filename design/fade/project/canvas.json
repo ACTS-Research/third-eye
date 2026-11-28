@@ -1,0 +1,53 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-28T19:00:00Z"
+  },
+  "title": "Third Eye: fade to black",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 620,
+      "h": 460,
+      "title": "F1 The Blackout tile is the fader: drag to fade, click to cut",
+      "is_interactive": true
+    },
+    "Bar.dc.html": {
+      "x": 700,
+      "y": 0,
+      "w": 620,
+      "h": 460,
+      "title": "F2 A fade bar under the Blackout tile",
+      "is_interactive": true
+    },
+    "Strip.dc.html": {
+      "x": 1400,
+      "y": 0,
+      "w": 620,
+      "h": 460,
+      "title": "F3 A fade strip down the side of the tile",
+      "is_interactive": true
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Bar.dc.html",
+    "Strip.dc.html"
+  ],
+  "notes": {
+    "t": {
+      "x": 0,
+      "y": -260,
+      "text": "Fade to black: on the screen, and on a knob",
+      "kind": "title1",
+      "maxW": 2020
+    }
+  },
+  "designSystems": []
+}

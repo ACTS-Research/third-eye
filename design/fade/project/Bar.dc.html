@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>F2 A fade bar under the Blackout tile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#060303}
+button{font-family:'JetBrains Mono',monospace;cursor:pointer}
+@keyframes cut{0%{opacity:1}50%{opacity:0.35}100%{opacity:1}}
+.cut{animation:cut 0.7s steps(2) infinite}
+@media (prefers-reduced-motion: reduce){.cut{animation:none}}
+</style>
+</helmet>
+<div style="width: 620px; height: 460px; position: relative; overflow: hidden; background: #060303; color: #ff6b5e; font-family: 'JetBrains Mono', monospace; font-size: 13px; box-sizing: border-box; display: flex">
+  <div style="width: 232px; flex-shrink: 0; border-right: 1px solid #5b2622; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px">
+    <button class="{{tileClass}}" onClick="{{toggleCut}}" aria-pressed="{{cut}}" style="height: 94px; padding: 8px 10px; border: 2px solid #ff6b5e; background: #ff6b5e; color: #140302; display: flex; flex-direction: column; justify-content: space-between; text-align: left">
+      <span>⌫</span><b style="font: 800 44px/0.9 'Big Shoulders Display', sans-serif">BLACKOUT</b>
+    </button>
+    <button onPointerDown="{{down}}" onPointerMove="{{move}}" onPointerUp="{{up}}" aria-label="Fade: drag" style="position: relative; height: 30px; padding: 0; border: 1px solid #ff6b5e; background: transparent; color: #ff6b5e; touch-action: none; overflow: hidden; cursor: ew-resize">
+      <span style="position: absolute; inset: 0; display: flex; justify-content: space-between; align-items: center; padding: 0 8px; letter-spacing: 0.08em"><span>FADE</span><span>{{pct}}</span></span>
+      <span aria-hidden="true" style="{{fillStyle}}"><span>FADE</span><span>{{pct}}</span></span>
+    </button>
+    <div style="border: 2px solid #ff6b5e; padding: 8px 10px; height: 74px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between"><span>SPACE</span><b style="font: 700 30px/1 'Big Shoulders Display', sans-serif">FREEZE</b></div>
+    <div style="color: #cd564c; font-size: 12px; line-height: 1.5">The tile is as it is now: click to cut. The bar under it fades, like the mix bar under the picture.</div>
+  </div>
+  <div style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0">
+    <div style="flex-grow: 1; background: #000; position: relative">
+      <div style="{{pictureStyle}}"></div>
+      <span style="position: absolute; left: 10px; bottom: 8px; color: #cd564c; font-size: 12px; letter-spacing: 0.08em">THE PICTURE · {{effPct}}</span>
+    </div>
+    <div style="border-top: 1px solid #5b2622; padding: 12px; display: flex; flex-direction: column; gap: 6px">
+      <label for="knob2" style="font-size: 12px; color: #cd564c">A knob on the controller, mapped to the bar (turn it)</label>
+      <input id="knob2" type="range" min="0" max="100" value="{{knobVal}}" onChange="{{knob}}" style="width: 100%; accent-color: #ff6b5e">
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":620,"height":460}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { level: 1, cut: false }; this.press = false; }
+  renderVals() {
+    const { level, cut } = this.state;
+    const eff = cut ? 0 : level;
+    const clamp = (v) => Math.min(1, Math.max(0, v));
+    const set = (e) => {
+      const r = e.currentTarget.getBoundingClientRect();
+      this.setState({ level: clamp((e.clientX - r.left) / r.width) });
+    };
+    return {
+      cut,
+      pct: Math.round(level * 100) + '%',
+      effPct: Math.round(eff * 100) + '%',
+      tileClass: cut ? 'cut' : '',
+      toggleCut: () => this.setState({ cut: !cut }),
+      knobVal: Math.round(level * 100),
+      knob: (e) => this.setState({ level: clamp(Number(e.target.value) / 100) }),
+      fillStyle: 'position: absolute; inset: 0; display: flex; justify-content: space-between; align-items: center; padding: 0 8px; letter-spacing: 0.08em; background: #ff6b5e; color: #140302; font-weight: 700; clip-path: inset(0 ' + ((1 - level) * 100).toFixed(1) + '% 0 0)',
+      pictureStyle: 'position: absolute; inset: 0; opacity: ' + eff.toFixed(3) + '; background: linear-gradient(90deg, #d8d8d8 0 14.3%, #d8d820 14.3% 28.6%, #20d8d8 28.6% 42.9%, #20d820 42.9% 57.2%, #d820d8 57.2% 71.5%, #d82020 71.5% 85.8%, #2020d8 85.8% 100%)',
+      down: (e) => {
+        if (e.currentTarget.setPointerCapture) e.currentTarget.setPointerCapture(e.pointerId);
+        this.press = true;
+        set(e);
+      },
+      move: (e) => {
+        if (this.press) set(e);
+      },
+      up: () => {
+        this.press = false;
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>
