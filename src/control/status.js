@@ -183,10 +183,10 @@ export function mountStatus(root, ui) {
         text = 'use hotspot';
       } else if (link.signal === 'error') {
         level = 'bad';
-        text = 'room code in use elsewhere';
+        text = 'code in use elsewhere';
       } else if (link.signal !== 'open') {
         level = link.signal === 'connecting' ? 'warn' : 'bad';
-        text = link.signal === 'connecting' ? 'connecting…' : 'pairing server unreachable';
+        text = link.signal === 'connecting' ? 'connecting…' : 'no pairing server';
       }
       return [text, level];
     };

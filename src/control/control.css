@@ -456,6 +456,8 @@ body.midi-map [data-midi][data-midi-label]::after {
 #views { margin-left: 0; flex-shrink: 0; }
 #rec, #rec.on { flex: 0 0 104px; width: 104px; text-align: left; overflow: hidden; }
 #midi-map-toggle { flex-shrink: 0; }
+/* The CHECK flag is never cut: its number is the point. */
+#check-flag { flex-shrink: 0; }
 
 main { position: relative; }
 #alerts, #map-hint { position: fixed; top: 48px; left: 0; right: 0; z-index: 15; }
@@ -582,4 +584,14 @@ input[type='number']::-webkit-inner-spin-button, input[type='number']::-webkit-o
   .panic .big, .panic .big.blackout { flex: 1 1 150px; min-height: 68px; }
   .panic .big.blackout b { font-size: 30px; }
   .panic .tempo { flex: 1 1 100%; }
+}
+
+/* A narrow window: slimmer buttons and REC, and the output readout gives
+   way before the phone's (it shows the frame rate only when it is low). */
+@media (max-width: 1000px) {
+  .pill:first-child { flex: 0 1 176px; min-width: 96px; }
+  #views { gap: 4px; }
+  #views button { padding-left: 7px; padding-right: 7px; }
+  #rec, #rec.on { flex-basis: 84px; width: 84px; padding-left: 8px; padding-right: 6px; }
+  #pills { gap: 10px; }
 }

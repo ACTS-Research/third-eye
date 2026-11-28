@@ -46,7 +46,7 @@ try {
   console.log('pairing details from the top bar');
   // The sandbox cannot reach the public pairing server: the same situation
   // as a network that blocks it.
-  check('an unreachable pairing server is reported as such', await settle(async () => (await control.locator('#phone-pill').textContent()).includes('unreachable'), 'unreachable', 25000), await control.locator('#phone-pill').textContent());
+  check('an unreachable pairing server is reported as such', await settle(async () => (await control.locator('#phone-pill').textContent()).includes('no pairing server'), 'unreachable', 25000), await control.locator('#phone-pill').textContent());
   await control.locator('#phone-pill').click();
   check('clicking the phone status opens the QR code and room code below it', await control.locator('#pairing-pop').isVisible() && (await control.locator('.pop-code').textContent()).length === 5 && (await control.evaluate(() => {
     const c = document.querySelector('#pairing-pop canvas');

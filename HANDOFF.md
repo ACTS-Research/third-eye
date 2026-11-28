@@ -1,5 +1,84 @@
 # Handoff
 
+## 2026-11-28 (end of the seventh session, 24 to 28 November)
+
+**Where things stand.** Everything is live on GitHub Pages from `main`:
+stage 3 of the effects plan (Time with up to 8 s of memory, Scan, the
+"driven by" menu, segmentation switching itself on for the body, the
+presets Time wake and Relief), named shows with a tempo each and a backup
+to a folder, the network warning on the starting screen, Glitch renamed
+Blink with new keys (B Blink, Delete Blackout, Space Freeze), the logo mark
+in a narrow window and a narrow top bar that keeps the CHECK number. The
+owner has seen Time and Scan on the real Mac ("they work and look good");
+nothing else from this session has been tried on real devices.
+
+**Next step.** On the real iPhone and Mac, the checklist below; then build
+MIDI mappings per show, as decided (see "MIDI per show" further down).
+
+**Decisions only you can make.**
+
+- Use Chrome for the Mac's control page.
+- On the real devices: does the code in the starting screen's camera scan,
+  and are the two openings (Mac and phone) timed right? Try pairing once on
+  campus or venue Wi-Fi: does the starting screen say the phone can't reach
+  the Mac, and the top bar `PHONE: USE HOTSPOT`?
+- Try a Motion source on a slider (Mod → Motion A → Overall): lively enough
+  or too jumpy? Does Gravity pour toward the room's floor when you roll the
+  phone?
+- Scan at 300 lines with a high lift is the heaviest setting: say whether
+  it stays smooth on your Mac. Say whether Time's reach of 8 s makes a hitch
+  when you change preset.
+- Setup → Preset library → Bring back deleted factory presets: brings back
+  Thermal trails and adds Time wake and Relief.
+- Setup → Preset library → Show backup → Choose a backup folder… once. Say
+  whether Chrome asks again in each new session.
+- Try the new keys (B Blink, Delete Blackout, Space Freeze); they can still
+  change.
+- Read the side session's report on a desktop macOS version with free and
+  paid tiers ("Third Eye: history and a desktop macOS version", in your
+  session list) and say which way to go.
+- Blink: is 1% of a slider's travel the right cut-off for a move too small
+  to keep, and should any factory preset come with a blink of its own?
+- Say whether the Kaleido factory preset should get its slow colour cycling
+  back (an LFO on Tone's hue).
+- Say go for step 5 of the signal loss plan (quality stepping down by
+  itself, an alert when the Mac changes network, full alerts for the second
+  phone), or change its order.
+- Choose what the picture does when a phone drops: Setup → Input → If a
+  source drops (it holds the last frame until you choose).
+- Smaller, still open from before: a network line in Before the show; the
+  Parameters bars' width; two phones on the hotspot again; a Mix B added by
+  dragging the bar saved into the preset; Pair without internet for the
+  second phone; MP4 once in Setup → Recordings; restyling the phone's
+  Quality menu; when to try depth.
+
+**MIDI per show (decided 28 November, not built).** MIDI mappings belong to
+a show. A new show inherits the mappings of the show that was live; a show
+can import the mappings of another show. Today the MIDI buttons (pads and
+keys mapped to actions such as Blink, Next, a preset) are global action
+bindings in `state.actions` with `midi.*` sources; MIDI on a slider is a
+modulation mapping inside the preset's scene, so it already moves with the
+preset. The build: keep the `midi.*` action bindings in the show
+(`presets.js` shows data), swap them in and out of `state.actions` when a
+show goes live (the engine reads `state.actions`, so it needs no change),
+inherit on New show, and an "Import MIDI from…" choice in the Show menu.
+Phone triggers and other non-MIDI bindings stay global. Needs a mock-up of
+the menu choice first.
+
+**The narrow top bar (28 November).** Under 1000 px: the CHECK flag never
+shrinks (`#check-flag`), the view buttons and REC are slimmer (REC still
+fits a recording's time), the output readout gives way before the phone's.
+The two longest phone readings are shorter: `no pairing server`, `code in
+use elsewhere`. Rules at the end of `control.css`.
+
+**Seventh session, in short** (details in the sections below):
+Time and Scan with "driven by" (stage 3); the Scan lines slider from 1; the
+mark in place of the name in a narrow window; the network warning (A3 on
+the starting screen, A1 strip elsewhere, R1 wording, no alert strip fading
+whole any more); named shows (S1b) with tempo and a folder backup; Glitch
+renamed Blink in the screens and the code, with a migration for saved data;
+new keys. Mock-ups: `design/conn-warning/`, `design/shows/`.
+
 ## 2026-11-24 (end of the sixth session, 22 to 24 November)
 
 **Where things stand.** Everything is live on GitHub Pages from `main`:
@@ -445,12 +524,9 @@ seconds to see `/control` say it is not drawing (it must not take the picture
 over).
 
 **Branch.** Work is on `main`, the default branch and the one that deploys.
-Nothing is waiting to be merged; everything is pushed (checked 24 November:
-local `main` and `origin/main` are the same commit). GitHub also holds
-`claude/nifty-lamport-xffss6`, a branch the cloud session was given and
-never used: it points at an old commit of `main` and has nothing of its
-own. It cannot be deleted from a cloud session; delete it on GitHub if you
-want it gone. A cloud session starts on a temporary local branch: switch
+Nothing is waiting to be merged; everything is pushed (checked 28 November:
+`main` is the only branch on GitHub, and local `main` and `origin/main` are
+the same commit). A cloud session starts on a temporary local branch: switch
 to `main` (`git checkout -B main origin/main`) before committing, and push
 `main` only.
 
@@ -1301,11 +1377,11 @@ How I work:
 Start by telling me, in a few lines, where things stand and what is waiting
 on me (from the top of HANDOFF.md). Then:
 
-This session: stage 3 of the effects plan in HANDOFF.md (Time and Scan,
-with the "driven by" menu). Tell me your approach first and wait for
-my go.
-<Add what you found on the real iPhone and Mac: whether the code in the
-camera on the starting screen scans; the two openings (Mac and phone);
-pairing on campus or venue Wi-Fi; a Motion source on a slider; which way
-Gravity pours when the phone is rolled.>
+This session: MIDI mappings per show, as decided in HANDOFF.md ("MIDI
+per show"). Tell me your approach first and wait for my go.
+<Add what you found on the real iPhone and Mac: the code in the starting
+screen's camera and the two openings; pairing on campus or venue Wi-Fi;
+a Motion source on a slider; which way Gravity pours; Scan at 300 lines;
+shows and the backup folder; the new keys. And what you decided after the
+side session's report on a desktop macOS version.>
 ```
