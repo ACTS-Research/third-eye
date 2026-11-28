@@ -116,6 +116,17 @@ npm run preview
    fullscreen. Without the permission, drag the window to the projector
    yourself and press `F`.
 
+**Blackout and the fade to black.** The Blackout tile at the top left is
+two controls. **Click** it (or press `Delete`) to cut to black at once;
+click again and the picture is back. **Drag** up or down on it to fade: the
+solid part of the tile is how much of the picture is let through, with the
+figure at its top right, and at the bottom it reads **Black**. A cut from a
+fade comes back to the fade, not to full; a drag lifts a cut. With the tile
+focused the up and down arrows fade a step at a time. A knob can be mapped
+to the fade (see [MIDI](#midi-audio-and-vision)). The fade is on the
+output and in recordings, like Blackout, and is kept through a reload: if
+the picture is black when you open the app, look at this tile.
+
 **Open the output window before the show, not during it.** Opening or closing
 it moves the picture between the two windows: the phone reconnects by itself
 in a few seconds (it needs the pairing server for that), and a recording in
@@ -461,7 +472,7 @@ They work in both `/control` and `/output` (not while typing in a text field).
 
 | Key | Action |
 | --- | --- |
-| `Delete` (the Mac's delete key, or forward-delete) | Blackout (panic). Press again to return |
+| `Delete` (the Mac's delete key, or forward-delete) | Blackout (panic): cuts to black at once, whatever the fade is at. Press again to return |
 | `Space` | Freeze frame: holds the current input frame; effects keep running on it |
 | `X` | Bypass all effects |
 | `B` | Blink: throws the sliders the live preset has chosen and lets them come back; with none chosen, tears the picture for a moment |
@@ -846,6 +857,9 @@ that can be mapped is outlined:
   such a pad loads the preset in that place)
 - the eight perform faders (the knob moves the parameter itself, so the
   on-screen fader follows the hardware, whatever preset is live)
+- the Blackout tile, which is two things: a pad put on it is the cut, a knob
+  put on it is the fade to black (fully up is the whole picture, fully down
+  is black)
 - the mix bar under the picture: a knob then sets how much of input B is
   mixed in, in any preset (in one with no Mix B it adds the effect, as
   dragging the bar does)

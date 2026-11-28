@@ -6,7 +6,7 @@ import { codeMark } from './code-mark.js';
 import { pressBlink } from './blink-panel.js';
 import { EFFECT_BY_ID } from '../effects/index.js';
 import { THUMB_H, THUMB_W } from '../engine/pipeline.js';
-import { MIX_MODES, mixItem, runAction, setMixB } from '../shared/actions.js';
+import { MIX_MODES, mixItem, runAction, setFade, setMixB } from '../shared/actions.js';
 import { macroUnit, macroValue, resolveMacros } from '../shared/macros.js';
 import { describeSource } from '../shared/sources.js';
 import { INPUT_KINDS, INPUT_LABELS } from '../shared/state.js';
@@ -28,7 +28,52 @@ export function mountPerform(root, ui) {
   // ------------------------------------------------------- panic stack ---
   const big = (cls, action, key, label) =>
     el('button', { class: `big ${cls}`, 'data-midi': action, onclick: () => runAction(store, action) }, [el('span', { text: key }), el('b', { text: label })]);
-  const blackout = big('blackout', 'blackout', '⌫', 'Blackout');
+  // Blackout is two things in one tile (mock-up F1, design/fade/, made
+  // vertical as the owner asked): a click cuts to black and back, and a drag
+  // up or down fades, the solid part of the tile being how much of the
+  // picture is let through. In MIDI map a pad put on it is the cut and a
+  // knob put on it is the fade.
+  const blackWord = [el('b', { text: 'Blackout' }), el('b', { text: 'Blackout' })];
+  const blackPct = [el('span', { class: 'pct' }), el('span', { class: 'pct' })];
+  const blackLayer = (i) => el('span', { class: `lay${i ? ' solid' : ''}`, 'aria-hidden': i ? 'true' : null }, [el('span', { class: 'top' }, [el('span', { text: '⌫' }), blackPct[i]]), blackWord[i]]);
+  const blackout = el('button', { class: 'big blackout', 'data-midi': 'blackout', title: 'Click: cut to black, and back. Drag up or down: fade. Arrow up and down fade too.' }, [blackLayer(0), blackLayer(1)]);
+  {
+    const DRAG_PX = 4; // less than this and it was a click
+    let press = null;
+    blackout.addEventListener('pointerdown', (e) => {
+      if (e.button) return;
+      blackout.setPointerCapture(e.pointerId);
+      // The fade starts from where it is, not from where the tile was caught.
+      press = { y: e.clientY, from: store.state.globals.level, dragged: false };
+    });
+    blackout.addEventListener('pointermove', (e) => {
+      if (!press || !blackout.hasPointerCapture(e.pointerId)) return;
+      if (Math.abs(e.clientY - press.y) > DRAG_PX) press.dragged = true;
+      if (!press.dragged) return;
+      const r = blackout.getBoundingClientRect();
+      // (A drag lifts a cut: the hand is on the fade now.)
+      setFade(store, press.from - (e.clientY - press.y) / r.height, store.state.globals.blackout ? { blackout: false } : {});
+    });
+    const up = (e) => {
+      const was = press;
+      press = null;
+      if (was && !was.dragged && e.type === 'pointerup') runAction(store, 'blackout');
+    };
+    blackout.addEventListener('pointerup', up);
+    blackout.addEventListener('pointercancel', up);
+    // From the keyboard: Enter or Space cuts (a click with no pointer), the
+    // up and down arrows fade.
+    blackout.addEventListener('click', (e) => {
+      if (e.detail === 0) runAction(store, 'blackout');
+    });
+    blackout.addEventListener('keydown', (e) => {
+      const step = { ArrowUp: 0.05, ArrowDown: -0.05 }[e.key];
+      if (!step) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setFade(store, store.state.globals.level + step);
+    });
+  }
   const freeze = big('', 'freeze', 'Space', 'Freeze');
   const bypass = big('', 'bypassAll', 'X', 'Bypass');
   // Blink fires as the button goes down and is told when it comes up, so a
@@ -576,6 +621,12 @@ export function mountPerform(root, ui) {
   function syncState() {
     const { globals } = store.state;
     blackout.classList.toggle('on', globals.blackout);
+    const level = globals.level ?? 1;
+    blackout.style.setProperty('--level', String(level));
+    blackout.classList.toggle('faded', level < 1);
+    for (const b of blackWord) b.textContent = globals.blackout || level === 0 ? 'Black' : 'Blackout';
+    for (const p of blackPct) p.textContent = level < 1 ? `${Math.round(level * 100)}%` : '';
+    blackout.setAttribute('aria-label', `Blackout${globals.blackout ? ', on' : ''}. Fade: ${Math.round(level * 100)}% of the picture`);
     freeze.classList.toggle('on', globals.freeze);
     bypass.classList.toggle('on', globals.bypassAll);
     syncInputs();

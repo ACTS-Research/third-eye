@@ -692,7 +692,8 @@ export class Engine {
           maskTex,
           maskFit: this.maskFit,
           blink: clamp(1 - (now - this.blinkStart) / BLINK_MS, 0, 1),
-          master: g.blackout || flash === 'black' ? 0 : 1,
+          // (Blackout is the cut; `level` is the fade.)
+          master: g.blackout || flash === 'black' ? 0 : (g.level ?? 1),
           flash: flash === 'white' ? 1 : 0,
           bypassAll: g.bypassAll,
           frozen: g.freeze,

@@ -32,7 +32,13 @@ export function setMixB(store, value) {
 
 // Actions a knob or fader sets continuously (the engine applies them every
 // frame, as it does "macro:n"): they are bound, never run.
-export const KNOB_ACTIONS = { mix: 'Mix A / B' };
+export const KNOB_ACTIONS = { mix: 'Mix A / B', fade: 'Fade to black' };
+
+// Sets the fade: how much of the picture is let through, 1 to 0.
+export function setFade(store, value, patch = {}) {
+  const level = Math.round(Math.min(1, Math.max(0, value)) * 100) / 100;
+  if (level !== store.state.globals.level || Object.keys(patch).length) store.merge('globals', { level, ...patch });
+}
 
 export const ACTIONS = {
   blackout: 'Blackout',
@@ -137,6 +143,7 @@ export function runAction(store, name, arg) {
       break;
     case 'macro':
     case 'mix':
+    case 'fade':
       break; // continuous; the engine applies it every frame
     case 'presetNext':
       stepShow(store, 1);

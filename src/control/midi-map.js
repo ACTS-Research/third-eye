@@ -18,6 +18,9 @@ import { menu } from './controls.js';
 const isMidi = (source) => source.startsWith('midi.');
 const short = (source) => describeSource(source).label;
 const controls = (n) => (n === 1 ? '1 control' : `${n} controls`);
+// A control on the screen that is two things: a pad put on it does the one,
+// a knob put on it the other. (The Blackout tile: the cut, and the fade.)
+const KNOB_OF = { blackout: 'fade' };
 
 // The standard layout, as the owner chose it for an eight-pad, eight-knob
 // controller (an AKAI LPD8; 28 November 2026): the eight pads, counted up
@@ -78,7 +81,8 @@ export function installMidiMap(ui) {
     const noSteps = !presets.order.steps.length;
     for (const node of document.querySelectorAll('[data-midi]')) {
       const also = noSteps && node.dataset.midi.startsWith('preset:') ? node.dataset.midi.replace('preset:', 'step:') : '';
-      const bound = actions.filter((b) => (b.action === node.dataset.midi || b.action === also) && isMidi(b.source)).map((b) => short(b.source));
+      const knob = KNOB_OF[node.dataset.midi];
+      const bound = actions.filter((b) => (b.action === node.dataset.midi || b.action === also || (knob && b.action === knob)) && isMidi(b.source)).map((b) => short(b.source));
       if (bound.length) node.dataset.midiLabel = bound.join(', ');
       else delete node.dataset.midiLabel;
     }
@@ -98,7 +102,7 @@ export function installMidiMap(ui) {
     armedEl = node;
     node?.classList.add('armed');
     learn(true);
-    say(`${label}: now move a knob or press a pad. Delete clears it.`);
+    say(KNOB_OF[target] ? `${label}: now press a pad (for ${label}) or turn a knob (for ${describeAction(KNOB_OF[target])}). Delete clears it.` : `${label}: now move a knob or press a pad. Delete clears it.`);
   }
 
   // ------------------------------------------------- the standard layout ---
@@ -255,10 +259,12 @@ export function installMidiMap(ui) {
       const mapping = ui.addMapping?.(m.source, { mode: 'set', amount: 1, smooth: 0.03 });
       say(mapping ? `${short(m.source)} now controls that parameter. Pick another control, or Esc to finish.` : 'Add an effect first.');
     } else {
-      // One MIDI control per target; mapping again replaces it.
-      const rest = store.state.actions.filter((b) => !(b.action === armed && isMidi(b.source)));
-      setActions([...rest, makeActionBinding(m.source, armed)]);
-      say(`${short(m.source)} → ${describeAction(armed)}. Pick another control, or Esc to finish.`);
+      // One MIDI control per target; mapping again replaces it. (On a tile
+      // that is two things, a knob is for its second.)
+      const target = KNOB_OF[armed] && m.source.startsWith('midi.cc.') ? KNOB_OF[armed] : armed;
+      const rest = store.state.actions.filter((b) => !(b.action === target && isMidi(b.source)));
+      setActions([...rest, makeActionBinding(m.source, target)]);
+      say(`${short(m.source)} → ${describeAction(target)}. Pick another control, or Esc to finish.`);
     }
     armedEl?.classList.remove('armed');
     armed = null;
@@ -281,7 +287,7 @@ export function installMidiMap(ui) {
         e.preventDefault();
         e.stopPropagation();
         const target = armed;
-        setActions(store.state.actions.filter((b) => !(b.action === target && isMidi(b.source))));
+        setActions(store.state.actions.filter((b) => !((b.action === target || b.action === KNOB_OF[target]) && isMidi(b.source))));
         say(`${describeAction(target)}: MIDI cleared. ${idle}`);
         disarm();
         refresh();

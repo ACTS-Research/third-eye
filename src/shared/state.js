@@ -118,6 +118,10 @@ export function defaultState() {
     vision: { face: false, hands: false, gesture: false, pose: false, segment: false, delegate: 'GPU' },
     globals: {
       blackout: false,
+      // How much of the picture is let through: 1 the whole of it, 0 black.
+      // The fade (the Blackout tile dragged, or a knob on it). Blackout is
+      // the cut, and wins: black whatever this is.
+      level: 1,
       freeze: false,
       bypassAll: false,
       renderScale: 1,
@@ -276,6 +280,7 @@ export function sanitizeState(raw) {
   if (!Number.isInteger(state.order.cue) || state.order.cue < -1) state.order.cue = -1;
   if (!INPUT_KINDS.includes(state.input.kind)) state.input.kind = 'pattern';
   if (!INPUT_KINDS.includes(state.input.kindB) || state.input.kindB === state.input.kind) state.input.kindB = '';
+  state.globals.level = Number.isFinite(state.globals.level) ? clamp(state.globals.level, 0, 1) : 1;
   if (!['hold', 'black', 'b', ...INPUT_KINDS].includes(state.input.dropA)) state.input.dropA = 'hold';
   if (!['hold', 'out'].includes(state.input.dropB)) state.input.dropB = 'hold';
   state.input.dropAfter = clamp(Number(state.input.dropAfter) || 0, 0.5, 30);

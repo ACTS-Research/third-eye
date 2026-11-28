@@ -243,6 +243,41 @@ are sidelined (see "Ideas raised and not started").
   microphone is open.
 - **What the owner is to try** is in the README ("The iPhone's sound").
 
+**Fade to black, and a knob on the mix (built 28 November, the owner asked
+for both after trying the LPD8).** Mock-ups for the fade
+https://claude.ai/artifact/NZismouSJAfb4T3ewgYTVB (`design/fade/`); F1
+chosen, dragged vertically, no timed fade.
+
+- **The fade** is `globals.level` (1 the whole picture, 0 black), kept
+  through a reload like Blackout. The engine's master level is
+  `blackout ? 0 : level`: Blackout is the cut and wins. `setFade` in
+  `actions.js`.
+- **The Blackout tile** (`perform.js`): two layers of its face, the solid
+  one clipped from the top by `--level`. Pointer down, then more than 4 px
+  of vertical movement, is a drag (it fades from where the fade was, and
+  lifts a cut); less is a click (the cut). A keyboard click cuts; the up
+  and down arrows fade. It reads Black when cut or at 0, and shows the
+  figure while below full.
+- **Knobs** (`KNOB_ACTIONS` in `actions.js`: `mix`, `fade`): continuous
+  bindings, applied in `modulation.js` beside `macro:n`, first reading
+  adopted without being applied. `mix` goes through `setMixB`, which the
+  bar under the picture uses too (it adds a Mix B when the preset has
+  none). `#mixbar` has `data-midi="mix"`.
+- **One tile, two controls in MIDI map** (`KNOB_OF` in `midi-map.js`): on
+  the Blackout tile a learned pad is bound to `blackout` and a learned knob
+  to `fade`; the tile's label shows both, and Delete clears both.
+- **Tests:** in `midi-show.mjs` (the mix knob; the tile clicked, dragged,
+  by arrows, with the picture's brightness read; the knob and the pad).
+- **Not done:** a fade over a set time on a click (the owner: not needed);
+  the fade on the phone's screen; a place for these two knobs in the
+  standard layout (knobs 5 to 8 are free: the owner maps them by hand).
+- **The standard layout did not work on the owner's LPD8 mk2** (28
+  November: "the mapping did not work from your end but I was able to do
+  it on the interface"); mapping each control by hand did, and the owner
+  is content with that. Where the two gestures stopped is not known. The
+  mk2 may not count its pads or knobs upward from the first, or its pads
+  may not have been sending notes. Worth asking before relying on it.
+
 **The narrow top bar (28 November).** Under 1000 px: the CHECK flag never
 shrinks (`#check-flag`), the view buttons and REC are slimmer (REC still
 fits a recording's time), the output readout gives way before the phone's.

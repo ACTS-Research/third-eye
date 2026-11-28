@@ -7,7 +7,7 @@
 // (The data underneath is covered in running-order.mjs.)
 //   node tests/midi-show.mjs
 
-import { benignError, check, failureCount, launch, startPeerServer, startSite, stopPeerServer, waitFor, watch } from './lib.mjs';
+import { benignError, check, failureCount, launch, outputStats, startPeerServer, startSite, stopPeerServer, waitFor, watch } from './lib.mjs';
 
 const site = await startSite();
 const peerServer = await startPeerServer();
@@ -219,6 +219,88 @@ try {
   check('the bar on the screen follows the knob', await settle(async () => Math.abs(Number(await control.locator('#mixbar').getAttribute('aria-valuenow')) - 0.25) < 0.01, 'bar follows'), await control.locator('#mixbar').getAttribute('aria-valuenow'));
   await midi([0xb0, 30, 0]);
   check('all the way down is input A alone', await settle(async () => (await mixOf()) === 0, 'mix zero'));
+
+  console.log('fade to black: the Blackout tile');
+  // (The picture is read from the small copy an engine keeps for a control
+  // page in another window: pretend one is watching.)
+  await mac(() => {
+    window.thirdEye.engine.remoteControlSeenAt = Infinity;
+  });
+  const level = () => mac(() => window.thirdEye.store.state.globals.level);
+  const cut = () => mac(() => window.thirdEye.store.state.globals.blackout);
+  const mean = async () => (await outputStats(control)).mean;
+  const tile = control.locator('.big.blackout');
+  const face = () => tile.locator('.lay').first().textContent();
+  // Drags on the tile from `from` to `to`, each a share of its height down from the top.
+  const drag = async (from, to) => {
+    const box = await tile.boundingBox();
+    const x = box.x + box.width / 2;
+    await control.mouse.move(x, box.y + box.height * from);
+    await control.mouse.down();
+    await control.mouse.move(x, box.y + box.height * to, { steps: 6 });
+    await control.mouse.up();
+  };
+  await settle(async () => (await mean()) > 10, 'a picture');
+  const full = await mean();
+  check('to begin with the whole picture is let through, and the tile is solid', (await level()) === 1 && full > 10 && (await face()) === '⌫Blackout', `${await level()} ${full.toFixed(1)} ${await face()}`);
+  await tile.click();
+  check('a click cuts to black, and leaves the fade where it was', (await settle(async () => (await cut()) === true && (await mean()) === 0, 'cut')) && (await level()) === 1 && (await face()) === '⌫Black', await face());
+  await tile.click();
+  check('a second click brings the picture back', await settle(async () => (await cut()) === false && (await mean()) > full * 0.6, 'back'));
+  await drag(0.1, 0.6);
+  check('a drag down half the tile fades to half, and is not a click', (await settle(async () => Math.abs((await level()) - 0.5) < 0.04, 'half')) && (await cut()) === false, String(await level()));
+  check('the tile shows how much, and the picture is that much darker', (await face()).includes('50%') && (await settle(async () => (await mean()) > full * 0.25 && (await mean()) < full * 0.75, 'dimmer')), `${await face()} ${(await mean()).toFixed(1)} of ${full.toFixed(1)}`);
+  await tile.click();
+  check('a cut from a fade is black', await settle(async () => (await cut()) === true && (await mean()) === 0, 'cut from fade'));
+  await tile.click();
+  check('and comes back to the fade, not to full', (await settle(async () => (await cut()) === false, 'uncut')) && Math.abs((await level()) - 0.5) < 0.04, String(await level()));
+  await drag(0.3, 1.4);
+  check('dragged to the bottom it is black, and says so', (await settle(async () => (await level()) === 0 && (await mean()) === 0, 'black')) && (await face()) === '⌫0%Black', await face());
+  await tile.focus();
+  await control.keyboard.press('ArrowUp');
+  await control.keyboard.press('ArrowUp');
+  check('the up arrow fades up a step at a time', await settle(async () => Math.abs((await level()) - 0.1) < 0.001, 'arrows'), String(await level()));
+  await tile.click();
+  await settle(async () => (await cut()) === true, 'cut again');
+  await drag(0.8, 0.2);
+  check('a drag lifts a cut', (await cut()) === false && (await level()) > 0.5, `${await cut()} ${await level()}`);
+  await drag(0.9, -0.6);
+  check('dragged to the top the whole picture is back, and the figure goes', (await settle(async () => (await level()) === 1, 'full')) && (await face()) === '⌫Blackout', await face());
+
+  console.log('a knob for the fade, a pad for the cut');
+  await control.keyboard.press('m');
+  await tile.click();
+  check('in MIDI map the tile asks for either', (await says('Blackout: now press a pad (for Blackout) or turn a knob (for Fade to black)', 'either')) && (await cut()) === false, await hint());
+  await listening();
+  await midi([0xb0, 31, 127]);
+  check('a knob turned is the fade', await settle(async () => (await bound()).includes('midi.cc.1.31>fade'), 'fade bound'), await bound());
+  await tile.click();
+  await listening();
+  await midi([0x90, 44, 100]);
+  check('a pad pressed is the cut', await settle(async () => (await bound()).includes('midi.note.1.44>blackout') && (await bound()).includes('midi.cc.1.31>fade'), 'cut bound'), await bound());
+  await midi([0x80, 44, 0]);
+  check('the tile shows both', (await label('.big.blackout')) === 'Ch 1 CC 31, Ch 1 note 44' || (await label('.big.blackout')) === 'Ch 1 note 44, Ch 1 CC 31', await label('.big.blackout'));
+  await control.keyboard.press('Escape');
+  await frames();
+  await midi([0xb0, 31, 0]);
+  check('the knob all the way down is black', await settle(async () => (await level()) === 0 && (await mean()) === 0, 'knob down'), String(await level()));
+  await midi([0xb0, 31, 64]);
+  check('half way is half', await settle(async () => Math.abs((await level()) - 0.5) < 0.02, 'knob half'), String(await level()));
+  await midi([0xb0, 31, 127]);
+  check('all the way up is the whole picture', await settle(async () => (await level()) === 1 && (await mean()) > full * 0.6, 'knob up'));
+  await frames();
+  await midi([0x90, 44, 100]);
+  check('the pad cuts', await settle(async () => (await cut()) === true, 'pad cut'));
+  await midi([0x80, 44, 0]);
+  await frames();
+  await midi([0x90, 44, 100]);
+  check('and cuts back', await settle(async () => (await cut()) === false, 'pad back'));
+  await midi([0x80, 44, 0]);
+  await control.keyboard.press('m');
+  await tile.click();
+  await control.keyboard.press('Delete');
+  check('Delete on the tile clears both', await settle(async () => !(await bound()).includes('fade') && !(await bound()).includes('blackout'), 'both cleared'), await bound());
+  await control.keyboard.press('Escape');
 
   const real = errors.filter((e) => !benignError(e));
   check('no errors in the window', real.length === 0, real.slice(0, 3).join(' | '));

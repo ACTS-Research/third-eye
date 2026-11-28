@@ -2,7 +2,7 @@
 // them (phone sensors, LFOs, later MIDI / audio / vision). Each frame the
 // mappings in the scene turn those numbers into parameter offsets.
 
-import { KNOB_ACTIONS, TOGGLE_ACTIONS, runAction, setMixB } from '../shared/actions.js';
+import { KNOB_ACTIONS, TOGGLE_ACTIONS, runAction, setFade, setMixB } from '../shared/actions.js';
 import { paramRange, paramUnit, paramValue } from '../effects/index.js';
 import { macroValue, resolveMacros } from '../shared/macros.js';
 import { SOURCES, describeSource } from '../shared/sources.js';
@@ -154,6 +154,11 @@ export class Modulation {
         if (b.action === 'mix') {
           // The bar under the picture: how much of input B is mixed in.
           setMixB(this.store, this.bipolar.get(b.source) ? v * 0.5 + 0.5 : v);
+          continue;
+        }
+        if (b.action === 'fade') {
+          // Up is the whole picture, down is black.
+          setFade(this.store, this.bipolar.get(b.source) ? v * 0.5 + 0.5 : v);
           continue;
         }
         macros ??= resolveMacros(state);

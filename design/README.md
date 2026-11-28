@@ -28,7 +28,7 @@ of the site; nothing here is deployed or tested.
 
 | `midi-clock/project/` | MIDI clock, following and sending (28 November, eighth session). Where it is set: `Main` K1 in Setup, one choice of Off, Follow or Send; `Two` K2 in Setup, two switches that can both be on; `Perform` K3 a menu under the tempo on the perform screen. `Tempo` what the tempo on the perform screen shows in each state (its own, following with a clock, following with none, sending), blinking on the beat. K1 was built, with `Tempo` as drawn and Start / Stop on the perform screen | https://claude.ai/artifact/373CKUdrJqmKxwSRC8zpxR |
 
-| `fade/project/` | Fade to black, on the screen and on a knob (28 November, eighth session): `Main` F1 the Blackout tile is the fader (drag to fade, click to cut), `Bar` F2 a fade bar under the tile, `Strip` F3 a fade strip down the side of the tile. Each has a stand-in knob to turn. Not yet chosen | https://claude.ai/artifact/NZismouSJAfb4T3ewgYTVB |
+| `fade/project/` | Fade to black, on the screen and on a knob (28 November, eighth session): `Main` F1 the Blackout tile is the fader (drag to fade, click to cut), `Bar` F2 a fade bar under the tile, `Strip` F3 a fade strip down the side of the tile. Each has a stand-in knob to turn. F1 was built, made vertical as the owner asked (drag up and down), with no timed fade | https://claude.ai/artifact/NZismouSJAfb4T3ewgYTVB |
 
 The `.dc.html` files are artboards for a claude.ai design canvas, with
 `canvas.json` saying where each sits. They do not render by themselves in a
