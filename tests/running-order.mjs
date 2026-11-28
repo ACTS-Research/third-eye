@@ -305,6 +305,93 @@ try {
   check('when Chrome wants an OK again the panel asks for it', await settle(async () => (await control.locator('#backup-allow').isVisible()) && (await control.locator('#backup-state').textContent()).includes('needs your OK'), 'ask'), await control.locator('#backup-state').textContent());
   await control.click('#backup-allow');
   check('and one click lets the waiting change through', await settle(() => mac(() => (window.__files['From elsewhere.thirdeye-show.json'] ?? '').includes('waiting for a click')), 'allowed'));
+
+  console.log('MIDI controls belong to the show');
+  const names = (list) => list.map((b) => `${b.source}>${b.action}`).join();
+  const midiNow = () => mac(() => window.thirdEye.store.state.actions.filter((b) => b.source.startsWith('midi.')).map((b) => `${b.source}>${b.action}`).join());
+  const restNow = () => mac(() => window.thirdEye.store.state.actions.filter((b) => !b.source.startsWith('midi.')).map((b) => `${b.source}>${b.action}`).join());
+  const stored = async (name) => {
+    const data = JSON.parse(await mac(() => localStorage.getItem('thirdeye.shows.v1')));
+    const show = data.shows.find((x) => x.name === name);
+    return show && Array.isArray(show.midi) ? names(show.midi) : null;
+  };
+  // What MIDI map does when a pad is learned: one more binding among the actions.
+  const map = (source, action) => mac(([s, a]) => {
+    const { store } = window.thirdEye;
+    store.dispatch({ op: 'set', key: 'actions', value: [...store.state.actions, { id: `t${Math.random().toString(36).slice(2, 8)}`, source: s, action: a, hold: false }] });
+  }, [source, action]);
+  const goLive = (name) => mac((n) => {
+    const { presets } = window.thirdEye.ui;
+    presets.makeLive(presets.shows.find((x) => x.name === n).id);
+  }, name);
+  const triggers = await restNow();
+  check('to begin with nothing is mapped, and every show keeps a list of its own', (await midiNow()) === '' && (await mac(() => JSON.parse(localStorage.getItem('thirdeye.shows.v1')).shows.every((x) => Array.isArray(x.midi)))));
+  await map('midi.note.1.40', 'blackout');
+  check('a pad mapped while a show is live is stored in that show, and in no other', (await stored('From elsewhere')) === 'midi.note.1.40>blackout' && (await stored('Dream machine')) === '', `${await stored('From elsewhere')} | ${await stored('Dream machine')}`);
+  await goLive('Dream machine');
+  check('another show going live takes it away, and leaves the phone triggers alone', (await midiNow()) === '' && (await restNow()) === triggers && triggers.includes('trig.1'), `${await midiNow()} | ${await restNow()}`);
+  await map('midi.cc.1.22', 'macro:0');
+  await goLive('From elsewhere');
+  check('each show brings its own back', (await midiNow()) === 'midi.note.1.40>blackout', await midiNow());
+  await goLive('Dream machine');
+  check('both ways', (await midiNow()) === 'midi.cc.1.22>macro:0' && (await stored('From elsewhere')) === 'midi.note.1.40>blackout', await midiNow());
+  check('the window that makes the picture follows', await settle(() => output.evaluate(() => window.thirdEye.store.state.actions.filter((b) => b.source.startsWith('midi.')).map((b) => `${b.source}>${b.action}`).join() === 'midi.cc.1.22>macro:0'), 'output follows'));
+  await mac(() => window.thirdEye.ui.presets.newShow('Third'));
+  check('a new show starts with the MIDI of the show that was live', (await liveName()) === 'Third' && (await midiNow()) === 'midi.cc.1.22>macro:0' && (await stored('Third')) === 'midi.cc.1.22>macro:0', `${await midiNow()} | ${await stored('Third')}`);
+  await map('midi.note.1.41', 'blink');
+  check('and what is mapped in it from then on is its own', (await stored('Third')) === 'midi.cc.1.22>macro:0,midi.note.1.41>blink' && (await stored('Dream machine')) === 'midi.cc.1.22>macro:0', `${await stored('Third')} | ${await stored('Dream machine')}`);
+  await mac(() => {
+    const { presets } = window.thirdEye.ui;
+    presets.duplicateShow(presets.live.id);
+  });
+  check('a duplicate carries its MIDI', (await liveName()) === 'Third copy' && (await stored('Third copy')) === (await stored('Third')) && (await midiNow()) === (await stored('Third')), await stored('Third copy'));
+  await mac(() => {
+    const { presets, store } = window.thirdEye.ui;
+    store.dispatch({ op: 'set', key: 'actions', value: store.state.actions.filter((b) => b.source !== 'midi.cc.1.22') });
+    presets.deleteShow(presets.live.id);
+  });
+  check('deleting the live show brings in the MIDI of the one that takes over', (await midiNow()) === (await stored(await liveName())) && (await liveName()) !== 'Third copy' && (await stored('Third')) === 'midi.cc.1.22>macro:0,midi.note.1.41>blink', `${await liveName()}: ${await midiNow()}`);
+  await goLive('From elsewhere');
+  const brought = await mac(() => {
+    const { presets } = window.thirdEye.ui;
+    return presets.importMidi(presets.shows.find((x) => x.name === 'Third').id);
+  });
+  check('importing replaces this show\'s MIDI with a copy of the other show\'s', brought === 2 && (await midiNow()) === 'midi.cc.1.22>macro:0,midi.note.1.41>blink' && (await stored('From elsewhere')) === (await stored('Third')), `${brought}: ${await midiNow()}`);
+  await map('midi.note.1.42', 'freeze');
+  check('a copy: a change here does not reach the show it came from', (await stored('Third')) === 'midi.cc.1.22>macro:0,midi.note.1.41>blink' && (await stored('From elsewhere')).endsWith('midi.note.1.42>freeze'));
+  check('through all of it the phone triggers are as they were', (await restNow()) === triggers, await restNow());
+  check('the backup file is rewritten with the show\'s MIDI', await settle(() => mac(() => (JSON.parse(window.__files['From elsewhere.thirdeye-show.json'] ?? '{}').midi ?? []).some((b) => b.source === 'midi.note.1.42' && b.action === 'freeze' && !('id' in b))), 'backup midi'));
+  const withMidiFile = JSON.parse(await mac(() => window.__files['From elsewhere.thirdeye-show.json']));
+  await control.setInputFiles('#show-file', { name: 'a.thirdeye-show.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ ...withMidiFile, name: 'Came with MIDI', midi: [{ source: 'midi.note.2.60', action: 'blink', hold: false }, { source: 'trig.1', action: 'blackout', hold: false }] })) });
+  check('a show file brings its own MIDI, and nothing that is not MIDI', await settle(async () => (await liveName()) === 'Came with MIDI' && (await midiNow()) === 'midi.note.2.60>blink' && (await restNow()) === triggers, 'file midi'), `${await liveName()}: ${await midiNow()} | ${await restNow()}`);
+  const bare = { ...withMidiFile, name: 'No MIDI in file' };
+  delete bare.midi;
+  await control.setInputFiles('#show-file', { name: 'b.thirdeye-show.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(bare)) });
+  check('a show file without any takes on the live show\'s', await settle(async () => (await liveName()) === 'No MIDI in file' && (await midiNow()) === 'midi.note.2.60>blink' && (await stored('No MIDI in file')) === 'midi.note.2.60>blink', 'file without'), `${await liveName()}: ${await midiNow()}`);
+  // A change that reaches this window from another one is that window's to
+  // store; and when this page starts, the live show's MIDI is what holds.
+  await output.evaluate(() => {
+    const { store } = window.thirdEye;
+    store.dispatch({ op: 'set', key: 'actions', value: store.state.actions.filter((b) => !b.source.startsWith('midi.')) });
+  });
+  check('a change arriving from another window is not written into the show', (await settle(async () => (await midiNow()) === '', 'arrived')) && (await stored('No MIDI in file')) === 'midi.note.2.60>blink', await stored('No MIDI in file'));
+  await control.reload();
+  await waitFor(() => control.evaluate(() => !!window.thirdEye?.ui?.presets), { label: 'control back' });
+  check('after a reload the live show and its MIDI are in force again', await settle(async () => (await liveName()) === 'No MIDI in file' && (await midiNow()) === 'midi.note.2.60>blink', 'show wins'), `${await liveName()}: ${await midiNow()}`);
+  check('and in the window that makes the picture', await settle(() => output.evaluate(() => window.thirdEye.store.state.actions.some((b) => b.source === 'midi.note.2.60' && b.action === 'blink')), 'output again'));
+  // Shows saved before they kept their MIDI.
+  await mac(() => {
+    const data = JSON.parse(localStorage.getItem('thirdeye.shows.v1'));
+    for (const x of data.shows) delete x.midi;
+    localStorage.setItem('thirdeye.shows.v1', JSON.stringify(data));
+  });
+  await control.reload();
+  await waitFor(() => control.evaluate(() => !!window.thirdEye?.ui?.presets), { label: 'control back again' });
+  check('shows from before each start with what is mapped today', await settle(() => mac(() => {
+    const data = JSON.parse(localStorage.getItem('thirdeye.shows.v1'));
+    return data.shows.length > 3 && data.shows.every((x) => Array.isArray(x.midi) && x.midi.length === 1 && x.midi[0].source === 'midi.note.2.60' && x.midi[0].action === 'blink');
+  }), 'adopted'), await mac(() => localStorage.getItem('thirdeye.shows.v1').slice(0, 300)));
+  check('and nothing changes for the live one', (await midiNow()) === 'midi.note.2.60>blink' && (await restNow()) === triggers);
   await context.close();
 
   console.log('with no output window (/control makes the picture)');

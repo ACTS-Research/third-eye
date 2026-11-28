@@ -1,0 +1,69 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-28T16:00:00Z"
+  },
+  "title": "Third Eye: MIDI per show",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 600,
+      "title": "M1 The other shows are in the Show menu",
+      "is_interactive": true
+    },
+    "Dialog.dc.html": {
+      "x": 0,
+      "y": 720,
+      "w": 1440,
+      "h": 600,
+      "title": "M2 One line in the Show menu, then a panel",
+      "is_interactive": true
+    },
+    "MapMode.dc.html": {
+      "x": 0,
+      "y": 1440,
+      "w": 1440,
+      "h": 600,
+      "title": "M3 In MIDI map mode, on the hint strip",
+      "is_interactive": true
+    },
+    "SetupSplit.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 720,
+      "h": 600,
+      "title": "W1 Setup: two lists"
+    },
+    "SetupLine.dc.html": {
+      "x": 1520,
+      "y": 720,
+      "w": 720,
+      "h": 600,
+      "title": "W2 Setup: one list and a line"
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Dialog.dc.html",
+    "MapMode.dc.html",
+    "SetupSplit.dc.html",
+    "SetupLine.dc.html"
+  ],
+  "notes": {
+    "t": {
+      "x": 0,
+      "y": -260,
+      "text": "MIDI per show: copying another show's MIDI, and where it says whose it is",
+      "kind": "title1",
+      "maxW": 2240
+    }
+  },
+  "designSystems": []
+}

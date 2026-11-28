@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>W1 Setup: two lists</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#060303}
+button{font-family:'JetBrains Mono',monospace;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 720px; height: 600px; position: relative; overflow: hidden; background: #060303; color: #ff6b5e; font-family: 'JetBrains Mono', monospace; font-size: 13px; box-sizing: border-box; padding: 20px">
+  <div style="border: 1px solid #5b2622; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box">
+    <div style="font: 700 22px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.06em; text-transform: uppercase">Triggers and MIDI controls</div>
+    <div style="display: flex; align-items: baseline; gap: 10px; margin-top: 6px">
+      <span style="font-weight: 700; letter-spacing: 0.08em; font-size: 12px">TRIGGERS</span>
+      <span style="color: #cd564c; font-size: 12px">the same in every show</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <sc-for list="{{triggers}}" as="r" hint-placeholder-count="4">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 64px 30px; gap: 4px; align-items: center">
+          <button style="display: flex; justify-content: space-between; background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 8px; text-align: left"><span>{{r.source}}</span><span>▾</span></button>
+          <button style="display: flex; justify-content: space-between; background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 8px; text-align: left"><span>{{r.action}}</span><span>▾</span></button>
+          <span style="{{r.holdStyle}}">HOLD</span>
+          <button aria-label="Remove" style="background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 0">✕</button>
+        </div>
+      </sc-for>
+    </div>
+    <div><button style="background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 10px">Add trigger</button></div>
+    <div style="display: flex; align-items: baseline; gap: 10px; margin-top: 10px; border-top: 1px solid #5b2622; padding-top: 12px">
+      <span style="font-weight: 700; letter-spacing: 0.08em; font-size: 12px">MIDI CONTROLS</span>
+      <span style="background: #ff6b5e; color: #140302; padding: 1px 8px; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em">Dream machine</span>
+      <span style="color: #cd564c; font-size: 12px">this show's own</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <sc-for list="{{midi}}" as="r" hint-placeholder-count="4">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 64px 30px; gap: 4px; align-items: center">
+          <button style="display: flex; justify-content: space-between; background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 8px; text-align: left"><span>{{r.source}}</span><span>▾</span></button>
+          <button style="display: flex; justify-content: space-between; background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 8px; text-align: left"><span>{{r.action}}</span><span>▾</span></button>
+          <span style="{{r.holdStyle}}">HOLD</span>
+          <button aria-label="Remove" style="background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 0">✕</button>
+        </div>
+      </sc-for>
+    </div>
+    <div style="color: #cd564c; font-size: 12px; line-height: 1.5">10 more. Choosing another show swaps this list. The quickest way to add a MIDI control is MIDI map, top right; Show → Import MIDI from… copies another show's.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":720,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const hold = (show, on) => 'font-size: 10px; text-align: center; padding: 4px 0; border: 1px solid ' + (on ? '#ff6b5e' : '#5b2622') + '; color: #cd564c; visibility: ' + (show ? 'visible' : 'hidden');
+    return {
+      triggers: [
+        { source: 'Touch · Trigger 1', action: 'Blink', holdStyle: hold(false) },
+        { source: 'Touch · Trigger 2', action: 'Freeze frame', holdStyle: hold(true) },
+        { source: 'Touch · Trigger 3', action: 'Previous preset', holdStyle: hold(false) },
+        { source: 'Touch · Trigger 4', action: 'Next preset', holdStyle: hold(false) },
+      ],
+      midi: [
+        { source: 'MIDI · Note 10.40', action: 'Blackout', holdStyle: hold(true) },
+        { source: 'MIDI · Note 10.41', action: 'Blink', holdStyle: hold(false) },
+        { source: 'MIDI · CC 1.22', action: 'Fader 1', holdStyle: hold(false) },
+        { source: 'MIDI · Note 1.36', action: 'Step 1', holdStyle: hold(false) },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

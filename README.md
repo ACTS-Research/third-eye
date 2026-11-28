@@ -711,7 +711,9 @@ trigger is held. (Hold settings saved before 13 November 2026 are no longer
 read: every trigger is a switch until you tick hold for it again.) Defaults: phone buttons 1–4 are blink, freeze (a switch,
 as on the control page: tap on, tap off, and the phone's button stays lit),
 previous preset, next preset. Triggers are global; they do not change with
-presets, so "next preset" keeps working whatever preset you land on.
+presets, so "next preset" keeps working whatever preset you land on. The one
+exception is a trigger fired by a MIDI pad or knob: those go with the show
+(see **Shows**, below).
 
 **Presets** are the tiles along the bottom of the perform screen. Each one
 stores a chain, its mappings, its LFO settings and its pinned faders, plus:
@@ -769,15 +771,28 @@ strip, and Next and Prev walk the presets.
   left is marked **Return**, and Next or Prev goes back to it.
 - **Its tempo.** A show remembers the tempo: tap or type one while it is
   live and it is that show's.
+- **Its MIDI controls.** The pads and knobs you assign in **MIDI map** (to
+  Blink, Next, a preset or step, a perform fader) belong to the show that is
+  live. Choose another show and its own take over. A new show, and a
+  duplicate, start with those of the show that was live. Phone buttons,
+  gestures and beats are the same in every show, and a knob set on one
+  effect slider stays with its preset. (Before 28 November 2026 MIDI
+  controls were the same for every show: each show you had then starts with
+  a copy of them.)
 - **Show files.** **Save show to a file…** downloads one file holding the
-  show and only the presets it uses, named after the show. **Open a show
-  file…** adds the show, live, and any of its presets you do not have. A
+  show, its MIDI controls and only the presets it uses, named after the
+  show. **Open a show file…** adds the show, live, and any of its presets
+  you do not have; a file with no MIDI controls in it (any saved before
+  28 November 2026) takes on those of the show that was live. A pad on a
+  preset tile is kept as the tile's place in the strip, so on another Mac it
+  loads whatever preset sits there; pads on the show's steps are not
+  affected. A
   preset you have that the file has changed is asked about once: keep yours
   or take the file's.
 - **Backup.** **Setup → Preset library → Choose a backup folder…**: choose a
   folder once (Chrome). The live show is then kept there as one file per
   show, named after it, rewritten about half a minute after it last changed
-  (its steps, its tempo, or a preset it uses). In a new session Chrome may
+  (its steps, its tempo, its MIDI controls, or a preset it uses). In a new session Chrome may
   want your OK before the page writes there again: **Allow** in that panel,
   or in Before the show. Before the show says whether shows are backed up.
   **Export presets** still writes every preset and every show to one file.
@@ -825,7 +840,10 @@ that can be mapped is outlined:
 Click one, then move a knob or press a pad. The control shows what is mapped
 to it. Click a control and press `Delete` to clear it; `Esc` leaves map mode.
 Everything mapped this way is also listed under **Setup → Triggers and MIDI
-controls**, where a pad can be given any other action.
+controls**, where a pad can be given any other action. Pads and knobs
+mapped to anything but an effect parameter belong to the live show (see
+[Shows](#modulation-triggers-and-presets)); one mapped to an effect
+parameter belongs to that preset.
 
 Devices plugged in later are picked up automatically. A mapped knob that has
 not been touched since the page loaded leaves its parameter alone.
@@ -1110,7 +1128,7 @@ npm test
 | `tests/phone.mjs` | Real WebRTC against a local PeerServer: pairing, live video, palette and dimmer following live, the room-code strip clearing once the phone pairs, hold on stall, every reconnect path, a second output window, a taken room code, Restart output, local camera |
 | `tests/record-latency.mjs` | Recording to WebM and MP4, saving and deleting; the latency measurement, including a stray late flash; switching codec |
 | `tests/phone-screen.mjs` | The phone's live screen in both layouts: the horizontal preview that is also the XY pad, triggers, six presets numbered across then down, the camera icons, the bare zoom bar, Freeze as a switch (including two quick taps and a session saved with the old hold setting), Rotate, upright frames staying upright on the Mac, messages that leave the preview alone, Reconnect, the remembered room, scanning the Mac's code inside the page |
-| `tests/running-order.mjs` | Shows: building one with +, Next and Prev, the same preset twice, going off the list and returning, notes and fades, dragging and removing steps, deleting a preset that steps use, the phone's six buttons following it, the export file, stepping with `/control` closed and with no output window; several shows from the Show menu (new, rename, duplicate, delete), each with its tempo, show files in and out, and the backup to a folder (a stand-in folder) |
+| `tests/running-order.mjs` | Shows: building one with +, Next and Prev, the same preset twice, going off the list and returning, notes and fades, dragging and removing steps, deleting a preset that steps use, the phone's six buttons following it, the export file, stepping with `/control` closed and with no output window; several shows from the Show menu (new, rename, duplicate, delete), each with its tempo, show files in and out, and the backup to a folder (a stand-in folder); each show's own MIDI controls (swapped in when it goes live, inherited by a new show, copied from another, carried by show files and the backup, shows from before starting with a copy) |
 | `tests/reconnect.mjs` | Getting the phone back without closing its page: a Mac that stops answering, a Mac reload, scanning that stops when the link returns, the ordinary pairing code read inside the page, a changed room code, Reconnect by hand |
 | `tests/output-preview.mjs` | The phone's preview showing the Mac's finished picture: the setting, the picture following Blackout, Rotate not applied twice, the camera taking over while a code is read, a Mac reload, switching back; torch and white-balance lock dimmed on a camera without them |
 | `tests/edit-screen.mjs` | The edit screen's own controls: the bar slider (click, typed value, double-click reset), the app's menus by mouse and keyboard without the page's shortcuts firing, a menu whose button scrolls into view, the chain row (add, drag, remove, bypass), modulation boxes and their extra settings, LFOs, autosave, a narrow window |

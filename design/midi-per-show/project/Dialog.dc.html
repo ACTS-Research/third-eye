@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>M2 One line in the Show menu, then a panel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#060303}
+button{font-family:'JetBrains Mono',monospace;cursor:pointer}
+button:disabled{cursor:default}
+.mi:hover:not(:disabled){background:#1c0c0b}
+</style>
+</helmet>
+<div style="width: 1440px; height: 600px; position: relative; overflow: hidden; background: #060303; color: #ff6b5e; font-family: 'JetBrains Mono', monospace; font-size: 13px; box-sizing: border-box">
+  <div style="position: absolute; left: 0; top: 0; right: 0; height: 240px; background: #000; display: flex; align-items: center; justify-content: center; color: #cd564c; font-size: 12px; letter-spacing: 0.1em">THE PICTURE</div>
+  <div style="position: absolute; left: 0; right: 0; top: 240px; bottom: 0; border-top: 1px solid #5b2622; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box">
+    <div style="display: flex; align-items: center; gap: 8px">
+      <button style="background: #ff6b5e; color: #140302; border: 1px solid #ff6b5e; padding: 5px 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase">Dream machine</button>
+      <button style="background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 5px 10px; letter-spacing: 0.06em; text-transform: uppercase">All presets</button>
+      <button style="background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 5px 10px">[ PREV</button>
+      <button style="background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 5px 10px">NEXT ]</button>
+      <span style="margin-left: auto; color: #cd564c; font-size: 12px">Next: 3 Relief</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 8px">
+      <sc-for list="{{tiles}}" as="t" hint-placeholder-count="6">
+        <div style="{{t.style}}">
+          <span style="font: 800 40px/0.9 'Big Shoulders Display', sans-serif">{{t.num}}</span>
+          <span style="display: flex; flex-direction: column; gap: 2px">
+            <sc-if value="{{t.tag}}" hint-placeholder-val="{{false}}"><span style="font-size: 10px; font-weight: 700">{{t.tag}}</span></sc-if>
+            <span style="text-transform: uppercase; letter-spacing: 0.06em">{{t.name}}</span>
+          </span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="margin-top: auto; display: flex; align-items: center; gap: 12px; border-top: 1px solid #5b2622; padding-top: 10px">
+      <button onClick="{{toggle}}" aria-expanded="{{open}}" style="background: transparent; color: #ff6b5e; border: 1px solid #ff6b5e; padding: 5px 10px; letter-spacing: 0.08em; text-transform: uppercase">Show: Dream machine ▴</button>
+      <button style="background: transparent; color: #cd564c; border: 0; padding: 5px 4px; font-size: 12px">Save show to a file…</button>
+      <span role="status" style="font-size: 12px; color: #cd564c">{{note}}</span>
+    </div>
+  </div>
+  <sc-if value="{{open}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; left: 12px; bottom: 56px; width: 330px; background: #060303; border: 1px solid #ff6b5e; padding: 6px; display: flex; flex-direction: column; z-index: 3; box-sizing: border-box">
+      <div style="font-size: 10px; color: #cd564c; padding: 4px 8px 2px; letter-spacing: 0.08em">SHOWS</div>
+      <button class="mi" style="text-align: left; background: transparent; color: #ff6b5e; border: 0; padding: 6px 8px; font-size: 13px">● Dream machine</button>
+      <button class="mi" style="text-align: left; background: transparent; color: #ff6b5e; border: 0; padding: 6px 8px; font-size: 13px">○ Tunnel piece</button>
+      <button class="mi" style="text-align: left; background: transparent; color: #ff6b5e; border: 0; padding: 6px 8px; font-size: 13px">○ Studio test</button>
+      <div style="font-size: 10px; color: #cd564c; padding: 8px 8px 2px; letter-spacing: 0.08em; border-top: 1px solid #5b2622; margin-top: 4px">THIS SHOW</div>
+      <button class="mi" style="text-align: left; background: transparent; color: #ff6b5e; border: 0; padding: 6px 8px; font-size: 13px">+ New show</button>
+      <button class="mi" style="text-align: left; background: transparent; color: #ff6b5e; border: 0; padding: 6px 8px; font-size: 13px">Rename…</button>
+      <button class="mi" style="text-align: left; background: transparent; color: #ff6b5e; border: 0; padding: 6px 8px; font-size: 13px">Duplicate</button>
+      <button class="mi" style="text-align: left; background: transparent; color: #ff6b5e; border: 0; padding: 6px 8px; font-size: 13px">Delete…</button>
+      <button class="mi" onClick="{{openPanel}}" style="text-align: left; background: transparent; color: #ff6b5e; border: 0; padding: 6px 8px; font-size: 13px; font-weight: 700">Import MIDI from…</button>
+      <div style="font-size: 10px; color: #cd564c; padding: 8px 8px 2px; letter-spacing: 0.08em; border-top: 1px solid #5b2622; margin-top: 4px">FILES</div>
+      <button class="mi" style="text-align: left; background: transparent; color: #ff6b5e; border: 0; padding: 6px 8px; font-size: 13px">Save show to a file…</button>
+      <button class="mi" style="text-align: left; background: transparent; color: #ff6b5e; border: 0; padding: 6px 8px; font-size: 13px">Open a show file…</button>
+    </div>
+  </sc-if>
+  <sc-if value="{{panel}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.6); z-index: 4"></div>
+    <div role="dialog" aria-label="Import MIDI into Dream machine" style="position: absolute; left: 50%; top: 70px; width: 620px; margin-left: -310px; background: #060303; border: 1px solid #ff6b5e; padding: 18px 20px; box-sizing: border-box; z-index: 5; display: flex; flex-direction: column; gap: 12px">
+      <div style="font: 700 24px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.05em; text-transform: uppercase">Import MIDI into Dream machine</div>
+      <div style="color: #cd564c; font-size: 12px">Choose the show to copy from.</div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <sc-for list="{{others}}" as="m" hint-placeholder-count="2">
+          <button class="mi" onClick="{{m.pick}}" disabled="{{m.none}}" aria-pressed="{{m.on}}" style="{{m.style}}">
+            <span style="display: flex; justify-content: space-between; gap: 12px"><span style="text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700">{{m.mark}} {{m.name}}</span><span>{{m.count}}</span></span>
+            <span style="font-size: 12px">{{m.what}}</span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="font-size: 12px; line-height: 1.5; min-height: 36px">{{effect}}</div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px">
+        <button onClick="{{cancel}}" style="background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 7px 14px">Cancel</button>
+        <button onClick="{{replace}}" disabled="{{cannot}}" style="{{replaceStyle}}">Replace</button>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":600}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { open: false, panel: true, pick: -1, mine: 14, note: '' }; }
+  renderVals() {
+    const STEPS = ['Clean', 'Time wake', 'Relief', 'Tunnel', 'Relief', 'Clean'];
+    const OTHERS = [
+      { name: 'Tunnel piece', n: 9, what: 'Blink, Blackout, Next, Prev, Tap tempo, Faders 1 to 4' },
+      { name: 'Studio test', n: 0, what: 'Nothing mapped' },
+    ];
+    const base = 'position: relative; min-height: 92px; border: 1px solid #ff6b5e; display: flex; flex-direction: column; justify-content: space-between; padding: 8px 10px; box-sizing: border-box;';
+    const on = base + ' background: #ff6b5e; color: #140302;';
+    const next = base + ' border: 2px dashed #ff6b5e; padding: 7px 9px;';
+    const row = 'display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 9px 10px; font-size: 13px;';
+    const picked = OTHERS[this.state.pick];
+    const plural = (n) => (n === 1 ? '1 control' : n + ' controls');
+    return {
+      open: this.state.open,
+      panel: this.state.panel,
+      note: this.state.note,
+      tiles: STEPS.map((name, i) => ({ num: String(i + 1), name, tag: i === 2 ? 'Next' : '', style: i === 1 ? on : i === 2 ? next : base })),
+      toggle: () => this.setState({ open: !this.state.open, panel: false }),
+      openPanel: () => this.setState({ open: false, panel: true, pick: -1 }),
+      others: OTHERS.map((o, i) => {
+        const sel = i === this.state.pick;
+        return {
+          name: o.name,
+          count: o.n ? plural(o.n) : '',
+          what: o.what,
+          none: !o.n,
+          on: sel,
+          mark: sel ? '●' : '○',
+          style: row + (sel ? ' background: #ff6b5e; color: #140302; border: 1px solid #ff6b5e;' : o.n ? ' background: transparent; color: #ff6b5e; border: 1px solid #5b2622;' : ' background: transparent; color: #cd564c; border: 1px dashed #5b2622;'),
+          pick: () => this.setState({ pick: i }),
+        };
+      }),
+      effect: picked
+        ? 'Dream machine has ' + plural(this.state.mine) + ' now. They will be replaced by the ' + plural(picked.n) + ' of ' + picked.name + '. Phone triggers are not touched.'
+        : 'Dream machine has ' + plural(this.state.mine) + ' now.',
+      cannot: !picked,
+      replaceStyle: picked ? 'background: #ff6b5e; color: #140302; border: 1px solid #ff6b5e; padding: 7px 14px; font-weight: 700' : 'background: transparent; color: #cd564c; border: 1px dashed #5b2622; padding: 7px 14px',
+      cancel: () => this.setState({ panel: false }),
+      replace: () => this.setState({ panel: false, mine: picked.n, note: 'MIDI copied from ' + picked.name + ': ' + plural(picked.n) + '.' }),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -3,10 +3,22 @@
 // The shows (each a name, a tempo and steps that point at presets) are kept
 // here too: the live show's steps are `steps`, with "which step it is at"
 // looked after the same way.
+//
+// A show's MIDI controls (`show.midi`) are kept here as well. The engine
+// reads only the state's `actions`, so:
+//   - when a show goes live, and when this page starts, the state takes the
+//     live show's MIDI (`useMidi`);
+//   - when a control is mapped, cleared or changed in this window, the live
+//     show takes the state's (`keepMidi`).
+// A change made in another window is left to that window to store (it
+// arrives here as a storage event): this one may not yet know which show is
+// live there.
 
-import { PRESETS_KEY, SHOWS_KEY, cleanShowName, liveShow, loadPresets, loadShows, orderView, saveShows, savePresets, snapshotPreset } from '../shared/presets.js';
+import { PRESETS_KEY, SHOWS_KEY, cleanShowName, liveShow, loadPresets, loadShows, midiOf, orderView, saveShows, savePresets, snapshotPreset, withMidi } from '../shared/presets.js';
 import { sceneOf } from '../shared/state.js';
 import { uid } from '../shared/util.js';
+
+const sameMidi = (a, b) => a.length === b.length && a.every((x, i) => x.source === b[i].source && x.action === b[i].action && x.hold === b[i].hold);
 
 export function createPresetModel(ui) {
   const { store } = ui;
@@ -33,11 +45,43 @@ export function createPresetModel(ui) {
     if (cue !== undefined && (cue !== now.cue || off !== now.off)) store.merge('order', { cue, off });
     else changed();
   };
+  // ------------------------------------------------- a show's own MIDI ---
+  const liveMidi = () => midiOf(store.state.actions);
+  // A show with none of its own yet takes on the MIDI in use. True when any did.
+  const adopt = () => {
+    let any = false;
+    for (const show of shows.shows) {
+      if (show.midi) continue;
+      show.midi = liveMidi();
+      any = true;
+    }
+    return any;
+  };
+  // The state takes the live show's MIDI; every other binding stays.
+  const useMidi = () => {
+    const { midi } = liveShow(shows);
+    if (!sameMidi(midi, liveMidi())) store.dispatch({ op: 'set', key: 'actions', value: withMidi(store.state.actions, midi) });
+  };
+  // The live show takes the state's MIDI.
+  const keepMidi = () => {
+    const show = liveShow(shows);
+    const now = liveMidi();
+    if (sameMidi(show.midi, now)) return;
+    show.midi = now;
+    saveAllShows();
+    changed();
+  };
+
   const reread = () => {
     list = loadPresets();
     shows = loadShows(list);
     steps = liveShow(shows).steps;
+    adopt();
   };
+  // Shows from before they kept their MIDI each start with what is mapped
+  // today, so nothing changes until a control is mapped.
+  if (adopt()) saveShows(shows);
+  useMidi();
   // A name no other show has.
   const freeName = (name, except = '') => {
     const taken = (n) => shows.shows.some((x) => x.id !== except && x.name.toLowerCase() === n.toLowerCase());
@@ -60,8 +104,12 @@ export function createPresetModel(ui) {
     reread();
     changed();
   });
-  store.subscribe((op) => {
+  store.subscribe((op, _state, remote) => {
     if (op.op === 'scene' || op.op === 'replace' || op.op === 'presetIndex' || (op.op === 'merge' && op.key === 'order')) changed();
+    if (op.op === 'set' && op.key === 'actions' && !remote) keepMidi();
+    // Another window's whole state has just replaced this one's (it answers
+    // every window that opens): the live show's MIDI still holds.
+    if (op.op === 'replace' && remote) useMidi();
     // A tempo set while a show is live is that show's tempo.
     if (op.op === 'merge' && op.key === 'tempo' && 'bpm' in op.patch) {
       const show = liveShow(shows);
@@ -192,22 +240,25 @@ export function createPresetModel(ui) {
     get live() {
       return liveShow(shows);
     },
-    // Makes a show live: its steps are what Next walks, from the start, and
-    // its tempo (when it has one) is the tempo.
+    // Makes a show live: its steps are what Next walks, from the start, its
+    // tempo (when it has one) is the tempo, and its MIDI controls are the
+    // ones that work.
     makeLive(id) {
       const show = shows.shows.find((x) => x.id === id);
       if (!show) return;
       shows.live = id;
       steps = show.steps;
       saveShows(shows);
+      useMidi();
       if (show.bpm !== null && show.bpm !== store.state.tempo.bpm) store.merge('tempo', { bpm: show.bpm });
       const now = store.state.order;
       if (now.cue !== -1 || now.off) store.merge('order', { cue: -1, off: false });
       else changed();
     },
-    // A new show, empty, with the tempo as it is now; it goes live.
+    // A new show, empty, with the tempo as it is now and the MIDI controls
+    // of the show that was live; it goes live.
     newShow(name = 'New show') {
-      const show = { id: newId(), name: freeName(cleanShowName(name)), bpm: store.state.tempo.bpm, steps: [] };
+      const show = { id: newId(), name: freeName(cleanShowName(name)), bpm: store.state.tempo.bpm, steps: [], midi: liveMidi() };
       shows.shows.push(show);
       this.makeLive(show.id);
       return show;
@@ -222,7 +273,7 @@ export function createPresetModel(ui) {
     duplicateShow(id) {
       const show = shows.shows.find((x) => x.id === id);
       if (!show) return null;
-      const copy = { id: newId(), name: freeName(`${show.name.slice(0, 34)} copy`), bpm: show.bpm, steps: show.steps.map((s) => ({ ...s })) };
+      const copy = { id: newId(), name: freeName(`${show.name.slice(0, 34)} copy`), bpm: show.bpm, steps: show.steps.map((s) => ({ ...s })), midi: show.midi.map((b) => ({ ...b })) };
       shows.shows.splice(shows.shows.indexOf(show) + 1, 0, copy);
       this.makeLive(copy.id);
       return copy;
@@ -245,9 +296,10 @@ export function createPresetModel(ui) {
         changed();
       }
     },
-    // Adds a show (from a file), names it apart from the others, makes it live.
-    addShow({ name, bpm, steps: incoming }, live = true) {
-      const show = { id: newId(), name: freeName(cleanShowName(name)), bpm, steps: incoming.filter((s) => list.some((p) => p.id === s.preset)) };
+    // Adds a show (from a file), names it apart from the others, makes it
+    // live. One that brings no MIDI controls takes on the live show's.
+    addShow({ name, bpm, steps: incoming, midi = null }, live = true) {
+      const show = { id: newId(), name: freeName(cleanShowName(name)), bpm, steps: incoming.filter((s) => list.some((p) => p.id === s.preset)), midi: midi ? midi.map((b) => ({ ...b })) : liveMidi() };
       shows.shows.push(show);
       if (live) this.makeLive(show.id);
       else {
@@ -255,6 +307,18 @@ export function createPresetModel(ui) {
         changed();
       }
       return show;
+    },
+    // Replaces the live show's MIDI controls with a copy of another show's.
+    // Returns how many it now has, or -1 when there is no such other show.
+    importMidi(fromId) {
+      const from = shows.shows.find((x) => x.id === fromId);
+      const show = liveShow(shows);
+      if (!from || from === show) return -1;
+      show.midi = from.midi.map((b) => ({ ...b }));
+      saveAllShows();
+      useMidi();
+      changed();
+      return show.midi.length;
     },
     // Presets a show file brings: added when new here; one with the same id
     // replaces ours only when `take` says so.

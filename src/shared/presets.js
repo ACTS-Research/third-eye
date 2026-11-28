@@ -6,9 +6,15 @@
 // times in a show and in several shows. One show is live; its steps are what
 // Next and Prev walk ("the running order" before shows existed). With no
 // steps in the live show the app behaves as if there were none.
+//
+// A show also keeps its own MIDI controls (28 November 2026): the action
+// bindings whose source is a MIDI pad or knob. The engine only ever reads
+// the state's `actions`; /control swaps a show's MIDI in there when the show
+// goes live (preset-model.js). Phone triggers and every other binding are
+// not part of a show.
 
 import { factoryPresets } from './factory-presets.js';
-import { sanitizeScene, sceneOf } from './state.js';
+import { sanitizeActions, sanitizeScene, sceneOf } from './state.js';
 import { readJSON, uid, writeJSON } from './util.js';
 
 export const PRESETS_KEY = 'thirdeye.presets.v1';
@@ -119,16 +125,29 @@ const cleanBpm = (value) => {
   return value !== null && value !== undefined && value !== '' && Number.isFinite(bpm) ? Math.min(300, Math.max(30, bpm)) : null;
 };
 
+// A show's MIDI controls. `null`: it has none of its own yet (a show saved
+// before shows kept them, or a file without them) and takes on the ones in
+// use when /control first sees it.
+export const isMidiBinding = (b) => typeof b?.source === 'string' && b.source.startsWith('midi.');
+// The MIDI bindings among the state's actions, copied.
+export const midiOf = (actions) => actions.filter(isMidiBinding).map((b) => ({ ...b }));
+// The actions with their MIDI bindings replaced by `midi`; the rest stay.
+export const withMidi = (actions, midi) => [...actions.filter((b) => !isMidiBinding(b)), ...midi.map((b) => ({ ...b }))];
+const cleanMidi = (list) => (Array.isArray(list) ? sanitizeActions(list, []).filter(isMidiBinding) : null);
+// For a file: no ids (they only tell rows apart in one browser).
+const midiOut = (midi) => (Array.isArray(midi) ? { midi: midi.map(({ source, action, hold }) => ({ source, action, hold })) } : {});
+
 export const cleanShowName = (name, fallback = 'Untitled show') => String(name ?? '').trim().slice(0, MAX_SHOW_NAME) || fallback;
 
 // The shows a browser starts with: one, holding the running order it had.
 // The id is fixed so every window agrees on it before anything is saved.
 function firstShows(steps) {
-  return { live: 'show1', shows: [{ id: 'show1', name: 'My show', bpm: null, steps }] };
+  return { live: 'show1', shows: [{ id: 'show1', name: 'My show', bpm: null, steps, midi: null }] };
 }
 
 // { live (a show's id), shows: [{ id, name, bpm (null: leave the tempo
-// alone), steps }] }. There is always at least one show.
+// alone), steps, midi (its MIDI controls; null: none of its own yet) }] }.
+// There is always at least one show.
 export function loadShows(presets = loadPresets()) {
   let data = readJSON(SHOWS_KEY, null);
   if (!data || !Array.isArray(data.shows) || !data.shows.some((x) => x && typeof x === 'object')) {
@@ -148,7 +167,7 @@ export function loadShows(presets = loadPresets()) {
         minted = true;
       }
       seen.add(id);
-      return { id, name: cleanShowName(x.name), bpm: cleanBpm(x.bpm), steps: cleanSteps(x.steps, known) };
+      return { id, name: cleanShowName(x.name), bpm: cleanBpm(x.bpm), steps: cleanSteps(x.steps, known), midi: cleanMidi(x.midi) };
     });
   const live = shows.some((x) => x.id === data.live) ? data.live : shows[0].id;
   const out = { live, shows };
@@ -229,7 +248,7 @@ export function exportPresets(list, shows = null) {
   const presets = list.map(({ name, fade, scene }) => ({ name, fade, scene }));
   const live = shows ? liveShow(shows) : null;
   const order = live ? stepsOut(live.steps, list) : [];
-  const showsOut = shows ? shows.shows.map((x) => ({ name: x.name, bpm: x.bpm, steps: stepsOut(x.steps, list) })) : [];
+  const showsOut = shows ? shows.shows.map((x) => ({ name: x.name, bpm: x.bpm, steps: stepsOut(x.steps, list), ...midiOut(x.midi) })) : [];
   return JSON.stringify({ format: FILE_TAG, version: 2, presets, ...(order.length ? { order } : {}), ...(showsOut.length ? { shows: showsOut } : {}) }, null, 2);
 }
 
@@ -247,29 +266,32 @@ export function parsePresetFile(text) {
   if (!presets.length) throw new Error('No usable presets in this file.');
   let shows = (Array.isArray(data?.shows) ? data.shows : [])
     .filter((x) => x && typeof x === 'object')
-    .map((x) => ({ name: cleanShowName(x.name), bpm: cleanBpm(x.bpm), steps: stepsIn(x.steps, list, usable, presets) }));
+    .map((x) => ({ name: cleanShowName(x.name), bpm: cleanBpm(x.bpm), steps: stepsIn(x.steps, list, usable, presets), midi: cleanMidi(x.midi) }));
   if (!shows.length && Array.isArray(data?.order) && data.order.length) {
-    shows = [{ name: 'Imported show', bpm: null, steps: stepsIn(data.order, list, usable, presets) }];
+    shows = [{ name: 'Imported show', bpm: null, steps: stepsIn(data.order, list, usable, presets), midi: null }];
   }
   return { presets, shows: shows.filter((x) => x.steps.length) };
 }
 
-// A show file: one show and the presets it uses, with their ids, so that
-// opening it where those presets already are finds them.
+// A show file: one show, its MIDI controls and the presets it uses, with
+// their ids, so that opening it where those presets already are finds them.
+// (A pad on a preset tile is kept as the tile's place, "preset:3": in
+// another browser it is whatever preset sits there.)
 export function exportShow(show, list) {
   const used = [...new Set(show.steps.map((s) => s.preset))].map((id) => list.find((p) => p.id === id)).filter(Boolean);
-  return JSON.stringify({ format: SHOW_TAG, version: 1, name: show.name, bpm: show.bpm, steps: stepsOut(show.steps, used), presets: used.map(({ id, name, fade, scene }) => ({ id, name, fade, scene })) }, null, 2);
+  return JSON.stringify({ format: SHOW_TAG, version: 1, name: show.name, bpm: show.bpm, steps: stepsOut(show.steps, used), ...midiOut(show.midi), presets: used.map(({ id, name, fade, scene }) => ({ id, name, fade, scene })) }, null, 2);
 }
 
-// { name, bpm, steps (pointing at the presets' ids), presets (keeping the
-// ids the file gives, where it gives one) }. Throws on anything else.
+// { name, bpm, steps (pointing at the presets' ids), midi (null when the
+// file has none), presets (keeping the ids the file gives, where it gives
+// one) }. Throws on anything else.
 export function parseShowFile(text) {
   const data = JSON.parse(text);
   if (data?.format !== SHOW_TAG) throw new Error(data?.format === FILE_TAG ? 'This is a preset library file: import it under Setup → Preset library.' : 'This is not a show file.');
   const list = Array.isArray(data.presets) ? data.presets : [];
   const usable = list.filter((p) => p && typeof p === 'object' && p.scene);
   const { presets } = clean(usable);
-  return { name: cleanShowName(data.name), bpm: cleanBpm(data.bpm), steps: stepsIn(data.steps, list, usable, presets), presets };
+  return { name: cleanShowName(data.name), bpm: cleanBpm(data.bpm), steps: stepsIn(data.steps, list, usable, presets), midi: cleanMidi(data.midi), presets };
 }
 
 // The name a show's file is saved under.

@@ -24,6 +24,8 @@ of the site; nothing here is deployed or tested.
 
 | `shows/project/` | Named shows, one preset library and several running orders (24 November): `Main` S1 a show menu at the head of the strip, opening upward; `Tabs` S2 a tab for each show and one for all presets; `Library` S3 shows made and kept in Setup, the strip naming the live one; `Below` S1b, S1 with the Show menu in a row under the tiles. S1b was built, without the step count after the name | https://claude.ai/artifact/UqABtQiTWntLoBmj77HSkH |
 
+| `midi-per-show/project/` | MIDI controls kept by each show (28 November, eighth session). Copying another show's: `Main` M1 the other shows listed in the Show menu, `Dialog` M2 one line in the Show menu and then a panel, `MapMode` M3 a menu on the hint strip of MIDI map. Where Setup says whose they are: `SetupSplit` W1 two lists, `SetupLine` W2 one list and a line. Not yet chosen | https://claude.ai/artifact/HzDdBvGrSYd7b456Q8gUid |
+
 The `.dc.html` files are artboards for a claude.ai design canvas, with
 `canvas.json` saying where each sits. They do not render by themselves in a
 browser: they are kept here as the source, so the mock-ups do not live only
