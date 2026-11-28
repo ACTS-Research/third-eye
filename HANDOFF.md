@@ -92,11 +92,22 @@ attached.
 - **The standard layout** (`standardLayout`, `STANDARD_PADS` in
   `midi-map.js`): two gestures, the first knob or fader and the first pad,
   learned through the engine's ordinary learn; the rest are counted up from
-  them. Knobs 1 to 8 are `macro:0` to `macro:7`; pads 1 to 7 are Blink,
-  Freeze, Blackout, Tap, Prev, Next, Bypass all. It replaces what was on
-  those sources and whatever else fired those actions, and leaves the rest.
-  Skip buttons set one kind only; Cancel and Esc change nothing. There is
-  no built-in map of controller numbers, on purpose: makers differ.
+  them. As the owner chose it for an AKAI LPD8 (28 November, second
+  version): pads 1 to 8 are `step:0` to `step:7`, knobs 1 to 4 are
+  `macro:0` to `macro:3`, knobs 5 to 8 are left alone. (The first version
+  put Blink, Freeze, Blackout, Tap, Prev, Next and Bypass all on the pads
+  and all eight knobs on faders.) A `step:n` action now loads preset n
+  while the live show has no steps (`applyScene` in `presets.js`), and
+  MIDI map then shows such a pad on that preset's tile. It replaces what
+  was on those sources and whatever else fired those actions, and leaves
+  the rest. Skip buttons set one kind only; Cancel and Esc change nothing.
+  There is no built-in map of controller numbers, on purpose: makers
+  differ, and so do an LPD8's own programs. Pads must send notes (PAD mode
+  on an LPD8): a pad sending control changes is taken for a knob, and the
+  strip says so.
+- **A MIDI pad fires at any force** (`modulation.js`): a trigger whose
+  source is `midi.note.*` is on above zero, not above half. Every other
+  source still fires rising through half.
 - **The alert** `midi-empty`: MIDI on, a device present, no MIDI binding in
   the state, MIDI map closed. Its button opens MIDI map.
 - **Setup → Triggers and MIDI controls** (`mod-panel.js`): `#trigger-list`
@@ -165,6 +176,12 @@ drawn, Start / Stop on the perform screen.
   `release()` (from `Engine.stop`) sends Stop if started and clears the
   timer. Status: `clock: { mode, alive, running, bpm, port, out, started,
   starting }`.
+- **A slow page must not take the clock for gone.** `Tempo.following`
+  judges "arriving" as of one frame ago (`frameGap`): after a stall the
+  pulses that came meanwhile are still waiting to be heard. Without it the
+  perform screen flickered to "No clock" on a busy machine, which is how
+  `midi-clock.mjs` found it (it failed two different checks in a loaded
+  sandbox, and passes since).
 - **Screens:** `io-panel.js` (the Clock row, `#clock-follow`, `#clock-send`,
   `#clock-note`), `perform.js` (`syncClock`: `.tap.ext`, `#bpm.ext`
   read-only, `#tempo-clock` with `#clock-run` and `#clock-say`).
@@ -179,6 +196,19 @@ drawn, Start / Stop on the perform screen.
 - **Not done:** passing a followed clock on to another device (mock-up K2);
   an offset for the sent clock; a tap moving the downbeat while following;
   Song Position sent.
+- **Next for the clock, held until the controller has been tried (the
+  owner, 28 November):** receiving clock from Ableton Live. Follow is built
+  for it in principle and nothing in the app is known to be missing; what
+  is needed is the route and a try. From memory, to be checked on the Mac:
+  switch on the IAC Driver (Audio MIDI Setup → MIDI Studio → IAC Driver →
+  "Device is online"); in Live's settings, under Link, Tempo and MIDI, turn
+  **Sync** on for the IAC Driver as an **output**; in the app choose Follow
+  and the IAC bus under From. Live sends Start when it plays (the beat goes
+  to one) and has its own clock sync delay setting, which with the app's
+  Offset is how the picture is lined up with the sound. To think about
+  then: whether bars matter (a clock carries beats only; Live's Song
+  Position could give the bar), and whether Ableton Link, which a web page
+  cannot join, is missed.
 
 **The phone's sound as a control signal (a test, built 28 November).** The
 owner asked for a test of this alone; playing the sound and processing it

@@ -160,7 +160,10 @@ export class Modulation {
         else this.store.setParam(macro.fx, macro.key, value);
         continue;
       }
-      const on = (this.values.get(b.source) ?? 0) > 0.5;
+      // A source rising through half fires. A MIDI pad fires however
+      // lightly it is struck: its value is how hard, and a soft touch on a
+      // pad is still a press.
+      const on = (this.values.get(b.source) ?? 0) > (b.source.startsWith('midi.note.') ? 0 : 0.5);
       const was = this.gates.get(b.id);
       this.gates.set(b.id, on);
       if (was === undefined || on === was) continue;

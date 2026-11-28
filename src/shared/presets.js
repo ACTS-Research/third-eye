@@ -223,6 +223,15 @@ export function applyStep(store, index) {
   store.dispatch({ op: 'scene', scene: preset.scene, fade: step.fade ?? preset.fade ?? store.state.globals.fadeTime, presetIndex: step.index, cue: index });
 }
 
+// "Scene n", as a pad asks for it: step n of the live show, or, while the
+// show has no steps, preset n of the strip. (So a row of pads set up once
+// follows whichever show is live, and still does something before a show
+// has been built.)
+export function applyScene(store, index) {
+  if (loadOrder().length) applyStep(store, index);
+  else if (index < loadPresets().length) applyPreset(store, index);
+}
+
 // Next / Prev. With a running order they walk it and stop at either end;
 // without one they walk the presets, round and round, as they always did.
 export function stepShow(store, direction) {

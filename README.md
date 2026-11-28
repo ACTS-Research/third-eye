@@ -705,7 +705,8 @@ screen. (Called Glitch until 24 November 2026, on the G key; Blackout was B. Pre
 - A preset with no jumps keeps the old Blink: the picture tears into
   shifted bands for under half a second.
 
-**Triggers.** Any source rising through its halfway point can fire an action:
+**Triggers.** Any source rising through its halfway point can fire an action
+(a MIDI pad fires however lightly it is struck):
 blackout, freeze, bypass, next / previous preset, next input, blink.
 With **hold** ticked, blackout / freeze / bypass stay on only while the
 trigger is held. (Hold settings saved before 13 November 2026 are no longer
@@ -841,7 +842,8 @@ that can be mapped is outlined:
 - the panic buttons, the source icons of inputs A and B and the nine mix
   modes (all shown while map mode is on, or open), previous / next preset
 - every preset tile (a pad per preset; the pad stays with the slot) and every
-  step of the live show (a pad per step number)
+  step of the live show (a pad per step number; while the show has no steps
+  such a pad loads the preset in that place)
 - the eight perform faders (the knob moves the parameter itself, so the
   on-screen fader follows the hardware, whatever preset is live)
 - any effect parameter: on the Edit screen, touch its slider
@@ -852,15 +854,19 @@ to it. Click a control and press `Delete` to clear it; `Esc` leaves map mode.
 The strip across the top names the show these controls belong to (`MIDI map
 · My show`), says what to do next, and has **Set up** at its right:
 
-- **Standard layout…** fits a usual layout to whatever controller you have,
-  with two gestures. Move your first knob or fader, then press your first
-  pad; the rest are counted up from those. Knobs or faders 1 to 8 become the
-  eight perform faders. Pads 1 to 7 become Blink, Freeze, Blackout, Tap
-  tempo, Previous, Next and Bypass all; an eighth is left free, and Record
-  is left off the pads on purpose. **No knobs: skip** and **No pads: skip**
-  set only the other kind; **Cancel** or `Esc` changes nothing. It replaces
-  what those knobs and pads did, and whatever else fired those actions;
-  your other controls (a pad on a step, say) stay.
+- **Standard layout…** sets up an eight-pad, eight-knob controller (it was
+  chosen for an AKAI LPD8) with two gestures, whatever numbers the
+  controller sends. Move your first knob or fader, then press your first
+  pad; the rest are counted up from those. **Pads 1 to 8 load steps 1 to 8
+  of the live show**, so the same pads follow whichever show is live; while
+  a show has no steps they load presets 1 to 8 of the strip instead.
+  **Knobs 1 to 4 are perform faders 1 to 4**; knobs 5 to 8 are left free
+  for you to map by hand. Blink, Freeze, Blackout and the others are not in
+  it: they have keys, and any can be put on a pad by hand. **No knobs:
+  skip** and **No pads: skip** set only the other kind; **Cancel** or `Esc`
+  changes nothing. It replaces what those knobs and pads did, and whatever
+  else fired those actions; your other controls stay. The pads must send
+  notes: on an LPD8 that is **PAD** mode (not CC or PROG CHNG).
 - **Copy from another show** lists your other shows with how many controls
   each has; choosing one replaces this show's with a copy (it asks first
   when this show has any).

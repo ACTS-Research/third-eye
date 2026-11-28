@@ -1,7 +1,7 @@
 // Things a key, a button or (from Phase 3) a trigger can fire. They run in
 // whichever window initiated them and reach the other one through the store.
 
-import { applyPreset, applyStep, stepShow } from './presets.js';
+import { applyPreset, applyScene, stepShow } from './presets.js';
 import { EFFECT_BY_ID } from '../effects/index.js';
 import { INPUT_KINDS, INPUT_LABELS } from './state.js';
 
@@ -107,8 +107,9 @@ export function runAction(store, name, arg) {
     case 'preset':
       applyPreset(store, Number(arg) || 0);
       break;
+    // (With no steps in the live show: the preset in that place.)
     case 'step':
-      applyStep(store, Number(arg) || 0);
+      applyScene(store, Number(arg) || 0);
       break;
     case 'macro':
       break; // continuous; the engine applies it every frame

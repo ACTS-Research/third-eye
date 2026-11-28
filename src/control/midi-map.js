@@ -19,11 +19,15 @@ const isMidi = (source) => source.startsWith('midi.');
 const short = (source) => describeSource(source).label;
 const controls = (n) => (n === 1 ? '1 control' : `${n} controls`);
 
-// The standard layout: the first eight knobs or faders are the eight perform
-// faders, and the pads, counted up from the first, do these. (Record is left
-// off the pads on purpose, and an eighth pad is left free.)
-export const STANDARD_FADERS = 8;
-export const STANDARD_PADS = ['blink', 'freeze', 'blackout', 'tap', 'presetPrev', 'presetNext', 'bypassAll'];
+// The standard layout, as the owner chose it for an eight-pad, eight-knob
+// controller (an AKAI LPD8; 28 November 2026): the eight pads, counted up
+// from the first, load steps 1 to 8 of the live show (presets 1 to 8 while
+// the show has no steps: `applyScene`), and the first four knobs or faders
+// are perform faders 1 to 4. The other knobs are left free, to be mapped by
+// hand. Blink, Freeze, Blackout and the rest are not in it: they have keys,
+// and any of them can be put on a pad by hand.
+export const STANDARD_FADERS = 4;
+export const STANDARD_PADS = Array.from({ length: 8 }, (_, i) => `step:${i}`);
 // "midi.cc.1.21" → { kind: 'cc', channel: 1, number: 21 }
 const parse = (source) => {
   const [, kind, channel, number] = source.split('.');
@@ -69,8 +73,12 @@ export function installMidiMap(ui) {
 
   function refresh() {
     const actions = store.state.actions;
+    // While the live show has no steps a "step" pad loads the preset in that
+    // place, so its label goes on that preset's tile.
+    const noSteps = !presets.order.steps.length;
     for (const node of document.querySelectorAll('[data-midi]')) {
-      const bound = actions.filter((b) => b.action === node.dataset.midi && isMidi(b.source)).map((b) => short(b.source));
+      const also = noSteps && node.dataset.midi.startsWith('preset:') ? node.dataset.midi.replace('preset:', 'step:') : '';
+      const bound = actions.filter((b) => (b.action === node.dataset.midi || b.action === also) && isMidi(b.source)).map((b) => short(b.source));
       if (bound.length) node.dataset.midiLabel = bound.join(', ');
       else delete node.dataset.midiLabel;
     }
@@ -101,7 +109,7 @@ export function installMidiMap(ui) {
 
   function ask(prefix = '') {
     const knob = flow.step === 'knob';
-    say(`${prefix}Standard layout, ${knob ? '1' : '2'} of 2: ${knob ? 'move your first knob or fader, the one for Fader 1.' : 'press your first pad, the one for Blink.'}`);
+    say(`${prefix}Standard layout, ${knob ? '1' : '2'} of 2: ${knob ? 'move your first knob or fader, the one for Fader 1.' : 'press your first pad, the one for step 1.'}`);
     skip.textContent = knob ? 'No knobs: skip' : 'No pads: skip';
     learn(true);
   }
@@ -154,7 +162,8 @@ export function installMidiMap(ui) {
       else ask('That was a pad. ');
     } else if (!knob) step(source);
     // (The first knob, still turning, is not a mistake.)
-    else ask(source === flow.knob ? '' : 'That was a knob. ');
+    // (A pad set to send control changes looks like a knob from here.)
+    else ask(source === flow.knob ? '' : 'That was a knob, or a pad not sending notes (on an LPD8: press PAD). ');
   }
 
   // ------------------------------------------------------ the Set up menu ---

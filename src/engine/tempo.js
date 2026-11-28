@@ -32,6 +32,8 @@ export class Tempo {
     this.clockOut = new ClockOut();
     this.wasFollowing = false;
     this.timer = 0;
+    this.frameAt = 0; // when the last frame was drawn, and how long after the one before
+    this.frameGap = 0;
     this.sendClock = (bytes, at) => this.midi?.send(this.store.state.midi.clockOut, bytes, at) ?? false;
     if (midi) {
       midi.onClock = (status, data, at, port) => {
@@ -45,9 +47,12 @@ export class Tempo {
     return this.store.state.midi.enabled ? this.store.state.midi.clock : 'off';
   }
 
-  // A clock is being followed and is arriving.
+  // A clock is being followed and is arriving. (Judged as of a frame ago:
+  // when this page has been kept from running for a moment, the pulses that
+  // came meanwhile are still waiting to be heard, and the clock must not be
+  // taken for gone because the page was slow.)
   following(now) {
-    return this.mode === 'follow' && this.clockIn.alive(now);
+    return this.mode === 'follow' && this.clockIn.alive(now - this.frameGap);
   }
 
   get bpm() {
@@ -85,6 +90,8 @@ export class Tempo {
   }
 
   frame(now) {
+    this.frameGap = this.frameAt ? Math.min(5000, Math.max(0, now - this.frameAt)) : 0;
+    this.frameAt = now;
     const following = this.following(now);
     if (this.wasFollowing && !following) {
       // The clock has stopped arriving: the show's own tempo carries on
@@ -148,7 +155,7 @@ export class Tempo {
 
   clockStatus(now) {
     const mode = this.mode;
-    const alive = mode === 'follow' && this.clockIn.alive(now);
+    const alive = this.following(now);
     return {
       mode,
       alive,
