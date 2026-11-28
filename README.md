@@ -1165,9 +1165,22 @@ dimmer's brightest and dimmest) with the iPhone's Camera app: every one
 read. One of those sessions was in Safari on the Mac, in a window under
 1000 pixels wide; the control page is built and tested for Chrome.
 
+Between 24 and 28 November the owner tried **Time** and **Scan** on the Mac
+("they work and look good"). Nothing else built in those days has been seen
+on real devices yet (see below).
+
 **Only in headless Chromium**, with a fake camera and microphone: everything
 else. Check these the first time you use them:
 
+- **From 24 to 28 November:** Scan at 300 lines with a high lift and
+  Time's 8 seconds of memory at 60 fps on the Mac's real graphics, and
+  Time's memory at a preset change; **driven by: The body** with a real
+  person and segmentation switching itself on (the tests have no person);
+  the network warning on the starting screen and the strip on a real
+  isolating network; **shows**, the **backup folder** (Chrome's folder
+  dialog and its permission prompt in a new session; the tests use a
+  stand-in folder) and show files between two browsers; the new keys
+  (B Blink, Delete Blackout); the narrow top bar in Chrome on the Mac.
 - **The Mac's starting screen and the phone's opening** (23 November): the
   real pairing code inside the camera scanned by the iPhone (only test
   codes drawn the same way have been); both openings at a true 60 frames a
@@ -1180,8 +1193,8 @@ else. Check these the first time you use them:
   screens has only been seen with a stand-in phone whose links were made
   unable to open. Try it once on a real venue or campus network.
 - **Blink as a jump** (called Glitch then; 23 November): held by a phone trigger or a MIDI
-  pad (the owner has captured and fired one with the mouse and the G key;
-  the tests do the same).
+  pad (the owner has captured and fired one with the mouse and the G key,
+  as it then was; the tests do the same with B).
 - **The Motion sources, and Gravity's "down"** (22 November): Motion and
   Gravity themselves have been used with a real camera. Still to find out:
   how the Motion A / B sources read on a slider with a person in a lit
@@ -1214,8 +1227,9 @@ else. Check these the first time you use them:
   orientation lock was the cause is not known), Freeze as a switch, Rotate,
   the camera icons dimmed on the front camera, **Preview: Mac output** and
   how far it lags, and **Scan code** reading the Mac's ordinary QR code.
-- **The running order**: building and stepping it on the Mac, and the
-  phone's six buttons following a show of more than six steps.
+- **A show's steps** (the running order before shows): building and
+  stepping them on the Mac, and the phone's six buttons following a show of
+  more than six steps.
 - **The edit screen's LFOs tab** (shape pictures, note-value tempo sync),
   dragging effects to reorder, and **the Setup screen's menus and bars**.
 - **Running with no output window, and moving the picture** by opening and

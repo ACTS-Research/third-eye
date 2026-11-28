@@ -534,6 +534,10 @@ to `main` (`git checkout -B main origin/main`) before committing, and push
 sources are in `design/` (`design/README.md` says which option of each was
 built).
 
+- Named shows (seventh session; S1b built):
+  https://claude.ai/artifact/UqABtQiTWntLoBmj77HSkH
+- The network warning (seventh session; A3 with A1, R1 built):
+  https://claude.ai/artifact/VZcGVCjo9WrBA3X3avZ1w7
 - The starting screen, the two openings and the phone's start (sixth
   session): https://claude.ai/artifact/7MxqJ1CZhbWHzKod3deScy
 - The top bar: https://claude.ai/artifact/AAaBFVwkb1QsSUDMoS2mLB
@@ -552,13 +556,19 @@ built).
 - Icons: https://claude.ai/artifact/PTAr6DCd26vjPQTYy43Nmo
 
 **What is backed up, and what is not.** The code, tests, docs, screenshots,
-the plan and every mock-up's source are on GitHub in `main` (the three
-canvases of the sixth session are in `design/glitch/`, `design/top-bar/`
-and `design/start2/`, each under `project/`). Your presets,
-running order and settings are not: they live in your browser on the Mac
-(Setup → Preset library → Export presets). Recordings now save to your
-Downloads folder as they stop; a copy also stays in the browser until
-deleted under Setup → Recordings.
+the plan and every mock-up's source are on GitHub in `main` (the canvases
+of the sixth session are in `design/glitch/`, `design/top-bar/` and
+`design/start2/`, those of the seventh in `design/conn-warning/` and
+`design/shows/`, each under `project/`). Your presets, shows and settings
+are not: they live in your browser on the Mac. Back them up with Setup →
+Preset library → Export presets (every preset and every show in one file),
+and choose a show backup folder there once so the live show is kept as a
+file by itself. Recordings save to your Downloads folder as they stop; a
+copy also stays in the browser until deleted under Setup → Recordings. The
+side session's report on a desktop macOS version lives in that session's
+chat ("Third Eye: history and a desktop macOS version"); it changed nothing
+in the repository. A one-off reminder (9:30 AM Central, 25 November) has
+fired and switched itself off.
 
 ### Seen on the real iPhone and Mac in the fourth session
 
@@ -1072,6 +1082,20 @@ Three static pages built by Vite, no framework.
   and bring them back (`git stash pop`, build again). On 22 November
   `midi-audio` crashed in its audio part and `phone` failed two room-code
   checks on the previous commit too, then passed later the same day.
+- **Suites that fail in this sandbox whatever the change (24 to 28
+  November):** `keep-paired` (the phone stuck on "Connecting…"),
+  `midi-audio` (audio analysis never starts), `modulation` (its effects
+  checks pass, then the phone's sensor channel never opens), `offline` (a
+  crashed page), `phone` (two room-code checks), `edit-screen` (a drag
+  times out) and `standalone` ("the output opened them instead"). Each
+  failed the same way on the commit before. `offline-pair-online` and
+  `vision` fail now and then and pass alone. Before blaming a change, run
+  the suite alone and on the commit before (`git stash -u`, build, run,
+  `git stash pop`, build).
+- **A test that looks at something brief** (a blink's throw, a flash)
+  should have the page record it every frame and then ask, as
+  `tests/blink.mjs` does (`window.__seen`): one look from a test can take
+  over a second here.
 - **A scratch test file** (`tests/_look.mjs` and the like) is the quick way
   to look at an effect: open `/output` at 640×360, set a chain straight
   into the store with full default params, screenshot the page. Delete it
@@ -1117,6 +1141,13 @@ Three static pages built by Vite, no framework.
   it should only appear for a window that is really hidden.
 
 ### Never run on real hardware (all unconfirmed)
+
+- **From the seventh session:** Scan at 300 lines and Time's 8 s memory at
+  60 fps on the Mac; driven by the body with a real person; the network
+  warning on a real isolating network; shows, the backup folder (Chrome's
+  folder dialog and its permission in a new session) and show files moved
+  between browsers; the keys B (Blink) and Delete (Blackout); the narrow top
+  bar in Chrome. Time and Scan themselves have been seen working.
 
 - **From the sixth session:** the Mac's starting screen with the real
   pairing code in the camera (test codes drawn the same way scanned in
