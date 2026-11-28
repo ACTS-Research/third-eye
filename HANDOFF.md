@@ -134,6 +134,52 @@ attached.
   `thirdeye.shows.v1` or `thirdeye.presets.v1`. Two `/control` tabs are two
   writers and carry the same risk in principle; one tab is the normal case.
 
+**MIDI clock, following and sending (built 28 November, eighth session).**
+The owner asked for both; mock-ups
+https://claude.ai/artifact/373CKUdrJqmKxwSRC8zpxR (`design/midi-clock/`),
+K1 chosen (Setup, one choice of Off / Follow / Send), the tempo states as
+drawn, Start / Stop on the perform screen.
+
+- **State:** `midi.clock` ('off' | 'follow' | 'send'), `midi.clockIn` (a
+  device's name; '' any), `midi.clockOut` (a name), `midi.clockOffset` (ms,
+  ±150). The rig's, not a show's.
+- **The arithmetic** is `engine/clock.js`, with no port, page or state in
+  it: `ClockIn` is fed messages with time stamps (speed over the last two
+  beats of pulses, given after half a beat; a new speed taken up after three
+  pulses off the same way; not `alive` after 400 ms without a pulse; Start,
+  Continue, Stop, Song Position), `ClockOut.pump` hands pulses to a `send`
+  with the time each is to leave, on the grid `anchor + n × spacing`, never
+  twice, skipping what was missed, and puts Start 1 ms ahead of a pulse
+  that is a beat.
+- **`midi.js`** hands system messages to `onClock` (with `e.timeStamp` and
+  the input's name) before its "at least two bytes" test, and has `outputs()`
+  and `send(name, bytes, at)`. Status carries `outputs`.
+- **`tempo.js`** owns both clocks. Following and alive: `bpm` and `beats()`
+  are the clock's, `tap()` does nothing, and `state.tempo.bpm` is NOT
+  written (so the show's tempo is kept; do not merge the followed tempo into
+  the state, or it becomes the show's and is sent to its file). When the
+  clock stops arriving the anchor is moved so the show's tempo carries on
+  from the beat reached. Sending: `pumpOut` from every frame and from a
+  100 ms timer, 250 ms ahead. `toggleRun()` is Start / Stop (event
+  `clock-run`, action `clockRun`, key K, `data-midi="clockRun"`).
+  `release()` (from `Engine.stop`) sends Stop if started and clears the
+  timer. Status: `clock: { mode, alive, running, bpm, port, out, started,
+  starting }`.
+- **Screens:** `io-panel.js` (the Clock row, `#clock-follow`, `#clock-send`,
+  `#clock-note`), `perform.js` (`syncClock`: `.tap.ext`, `#bpm.ext`
+  read-only, `#tempo-clock` with `#clock-run` and `#clock-say`).
+- **Tests:** `clock.mjs` (no browser) and `midi-clock.mjs` (stand-in input
+  and output; a clock whose pulses carry the exact time they were due).
+  Thirty-one suites.
+- **Never on real hardware, any of it.** Above all: whether Chrome hands
+  clock pulses to the page without the System Exclusive permission (the
+  standard says it should; nothing found tests it); how steady the sent
+  clock is on a real device; the IAC Driver both ways; whether 250 ms ahead
+  is the right trade between steadiness and how soon a tap is heard.
+- **Not done:** passing a followed clock on to another device (mock-up K2);
+  an offset for the sent clock; a tap moving the downbeat while following;
+  Song Position sent.
+
 **The narrow top bar (28 November).** Under 1000 px: the CHECK flag never
 shrinks (`#check-flag`), the view buttons and REC are slimmer (REC still
 fits a recording's time), the output readout gives way before the phone's.
@@ -1014,7 +1060,7 @@ Three static pages built by Vite, no framework.
 | `src/sw.js` | Service worker template; `vite.config.js` fills in the file list |
 | `scripts/` | `fetch-models.mjs` (MediaPipe models, run before dev and build), `session-screenshot.mjs` (the board screenshot), `make-icons.mjs` (the tab and Home Screen icon: the logo of 22 November, `design/logo/`) |
 | `design/` | Mock-ups shown to the owner, not part of the site: `third-eye-icons.html`, `logo/`, `tone/`, `edit-marks/`, `running-order/`, `edit-screen/`, `mix/`, `phone2/`. `design/README.md` says which option of each was built. Sixth session: `glitch/`, `top-bar/`, `start2/` |
-| `tests/` | Twenty-nine headless suites and `lib.mjs` |
+| `tests/` | Thirty-one suites (thirty in a browser) and `lib.mjs` |
 
 ### Rules that are easy to break
 
@@ -1112,13 +1158,23 @@ Three static pages built by Vite, no framework.
   first suite, or every suite fails at once on a missing `playwright`.
 - **To run every suite,** loop over them in one background command, each
   under `timeout` with `SKIP_BUILD=1` after one build, writing a log each
-  and a line per result; twenty-nine take about fifty minutes. A suite
+  and a line per result; thirty-one take about an hour. A suite
   that fails in the full run and passes alone is not thereby innocent:
   read which check failed.
 - **Write commit messages to a file** and use `git commit -F`: one with
   quotation marks in it broke the shell.
 - **Push straight to `main`** (the owner's instruction). Every push deploys;
   check the "Build and deploy to GitHub Pages" run afterwards.
+- **Unfinished work is parked on a side branch** (the owner said yes, 28
+  November): the session's own branch (`claude/…`, named in the session's
+  instructions). Commit and push work in progress there as often as you
+  like: it builds but does not deploy (only the default branch does, see
+  `pages.yml`), and it keeps the work out of the container alone. When a
+  piece is tested, put it on `main` as one clean commit
+  (`git checkout main && git merge --squash <branch>`, commit, push), then
+  start the side branch again from `main`. It also quiets the stop hook,
+  which is the cloud session's own (not in this repository) and only asks
+  that nothing be left uncommitted.
 - **The deployed site and the public PeerJS server cannot be reached from the
   sandbox.** Pairing is tested against a local PeerServer (`tests/lib.mjs`).
 - **Run suites one at a time with a timeout under two minutes**, or in the
@@ -1251,6 +1307,22 @@ Three static pages built by Vite, no framework.
   either way.
 
 ### Ideas raised and not started
+
+**Sound from the phone (28 November; the owner: a test of the first, the
+rest sidelined).** The phone can send its microphone with its camera over
+the same link. Three levels were set out: (1) the phone's sound as a control
+signal only (level, bass, mid, high, beat, as the Mac's input gives now;
+nothing played), which is to be tried first; (2) the sound through to the
+Mac's output and into recordings, with a level, a mute and a delay to keep
+it in step with the picture; (3) the sound processed, a small chain of sound
+effects beside the picture's (filter, echo, reverb, pitch or grain), moved
+by the same sources and saved in the preset. Known before starting: about
+150 to 250 ms from phone to speakers; a phone microphone in the room with
+the speakers feeds back once echo cancelling is off (2 and 3 need a
+limiter); the link is tuned for speech and how far Safari gives music
+quality is not known; Pair without internet would need its codes changed to
+carry sound; a microphone at the Mac avoids all of it and levels 2 and 3
+would take that input too.
 
 Step 5 of the signal loss plan (quality stepping down and up by itself, an
 alert when the Mac changes network, a quiet "no internet" mark, alerts for

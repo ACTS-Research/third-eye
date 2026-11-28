@@ -46,11 +46,55 @@ export function mountPerform(root, ui) {
     'aria-label': 'Tempo in beats per minute',
     onchange: () => {
       const v = Number(bpm.value);
+      if (bpm.readOnly) return;
       if (Number.isFinite(v)) store.merge('tempo', { bpm: Math.min(300, Math.max(30, v)) });
     },
   });
-  const tap = el('button', { class: 'tap', 'data-midi': 'tap', title: 'Tap in time, at least twice. One tap alone moves the downbeat.', onclick: () => runAction(store, 'tap') }, [el('span', { text: 'T' }), el('b', { text: 'Tap' })]);
-  const tempo = el('div', { class: 'tempo' }, [tap, bpm, el('label', { for: 'bpm', text: 'BPM' })]);
+  const TAP_TITLE = 'Tap in time, at least twice. One tap alone moves the downbeat.';
+  const tapKey = el('span', { text: 'T' });
+  const tapWord = el('b', { text: 'Tap' });
+  const tap = el('button', { class: 'tap', 'data-midi': 'tap', title: TAP_TITLE, onclick: () => runAction(store, 'tap') }, [tapKey, tapWord]);
+  // The MIDI clock (Setup → MIDI and audio), as it shows here (mock-up
+  // "Tempo", design/midi-clock/). Following a clock that is arriving: the
+  // tile reads EXT and cannot be tapped, the figure is the incoming tempo
+  // and cannot be typed over. Following with none arriving: NO CLOCK, and
+  // all is as usual. Sending: Start / Stop.
+  const clockRun = el('button', { id: 'clock-run', 'data-midi': 'clockRun', text: 'Start clock', title: 'Start tells a sequencer at the other end to begin, on the next beat; Stop tells it to stop (K)', onclick: () => runAction(store, 'clockRun') });
+  const clockSay = el('span', { class: 'small', id: 'clock-say', role: 'status' });
+  const clockRow = el('div', { class: 'tempo-clock', id: 'tempo-clock', hidden: true }, [clockRun, clockSay]);
+  let following = false;
+  const showBpm = () => {
+    if (following) bpm.value = (ui.status?.clock?.bpm ?? 0).toFixed(1);
+    else if (document.activeElement !== bpm) bpm.value = String(store.state.tempo.bpm);
+  };
+  function syncClock(status) {
+    const mode = store.state.midi.clock;
+    const clock = status?.clock;
+    const was = following;
+    following = mode === 'follow' && !!clock?.alive;
+    tap.classList.toggle('ext', following);
+    tap.disabled = following;
+    tap.title = following ? 'The tempo comes from the MIDI clock being followed (Setup → MIDI and audio)' : TAP_TITLE;
+    tapKey.textContent = following ? '' : 'T';
+    tapWord.textContent = following ? 'Ext' : 'Tap';
+    bpm.readOnly = following;
+    bpm.classList.toggle('ext', following);
+    if (following && document.activeElement === bpm) bpm.blur();
+    if (following || was) showBpm();
+    clockRow.hidden = mode === 'off';
+    clockRun.hidden = mode !== 'send';
+    const going = !!(clock?.started || clock?.starting);
+    clockRun.textContent = going ? 'Stop clock' : 'Start clock';
+    clockRun.classList.toggle('on', going);
+    clockSay.classList.toggle('dim', mode === 'send' || following);
+    if (mode === 'follow') clockSay.textContent = following ? `Ext clock${clock.port ? ` · ${clock.port}` : ''}${clock.running ? '' : ' · stopped'}` : "No clock · the show's own tempo";
+    else if (mode === 'send') clockSay.textContent = !store.state.midi.enabled ? 'MIDI is off' : clock?.out === 'ok' ? `to ${store.state.midi.clockOut}${clock.starting ? ' · on the next beat' : ''}` : 'no device to send to: see Setup';
+    else clockSay.textContent = '';
+    // (The column is narrow: the whole line is there on a rollover.)
+    clockSay.title = clockSay.textContent;
+  }
+  ui.onStatus(syncClock);
+  const tempo = el('div', { class: 'tempo' }, [tap, bpm, el('label', { for: 'bpm', text: 'BPM' }), clockRow]);
   bus.on('sources', (m) => tap.classList.toggle('beat', (m.values['tempo.beat'] ?? 0) > 0.4));
 
   const panic = el('aside', { class: 'panic', 'aria-label': 'Panic controls' }, [blackout, freeze, bypass, blink, tempo]);
@@ -542,7 +586,7 @@ export function mountPerform(root, ui) {
     freeze.classList.toggle('on', globals.freeze);
     bypass.classList.toggle('on', globals.bypassAll);
     syncInputs();
-    if (document.activeElement !== bpm) bpm.value = String(store.state.tempo.bpm);
+    showBpm();
     syncMonitor();
   }
 

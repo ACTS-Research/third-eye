@@ -56,6 +56,9 @@ export function defaultLfos() {
 // was stored as `momentary`, and Freeze had it on by default, so a tap on the
 // phone's Freeze button did nothing lasting. The old name is ignored on
 // purpose: every trigger is a switch again until hold is ticked for it.)
+export const CLOCK_MODES = ['off', 'follow', 'send'];
+export const CLOCK_OFFSET_MS = 150;
+
 export function makeActionBinding(source, action, hold = false) {
   return { id: uid(), source, action, hold };
 }
@@ -104,7 +107,12 @@ export function defaultState() {
     // operator asks for it, so a one-phone show registers one code only.
     net: { room: randomRoom(), signal: '', codec: DEFAULT_CODEC, second: false },
     tempo: { bpm: 120 },
-    midi: { enabled: false },
+    // `clock`: 'off' (the tempo is the show's own), 'follow' (a MIDI clock
+    // from another device sets it) or 'send' (this app's tempo goes out as
+    // one). `clockIn` / `clockOut`: the device's name ('' for clockIn: any).
+    // `clockOffset`: milliseconds a followed beat is moved, earlier (-) or
+    // later (+). These belong to the rig, not to a show.
+    midi: { enabled: false, clock: 'off', clockIn: '', clockOut: '', clockOffset: 0 },
     audio: { enabled: false, deviceId: '', gain: 1, sensitivity: 1.6 },
     // MediaPipe features, all off by default: each costs GPU and CPU time.
     vision: { face: false, hands: false, gesture: false, pose: false, segment: false, delegate: 'GPU' },
@@ -272,6 +280,8 @@ export function sanitizeState(raw) {
   if (!['hold', 'out'].includes(state.input.dropB)) state.input.dropB = 'hold';
   state.input.dropAfter = clamp(Number(state.input.dropAfter) || 0, 0.5, 30);
   state.input.dropFade = clamp(Number(state.input.dropFade) || 0, 0, 10);
+  if (!CLOCK_MODES.includes(state.midi.clock)) state.midi.clock = 'off';
+  state.midi.clockOffset = clamp(Math.round(Number(state.midi.clockOffset) || 0), -CLOCK_OFFSET_MS, CLOCK_OFFSET_MS);
   if (!CODECS[state.net.codec]) state.net.codec = DEFAULT_CODEC;
   state.tempo.bpm = clamp(Number(state.tempo.bpm) || 120, 30, 300);
   state.net.room = normalizeRoom(state.net.room);

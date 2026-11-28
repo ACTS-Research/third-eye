@@ -475,6 +475,7 @@ They work in both `/control` and `/output` (not while typing in a text field).
 | `Shift` + `1`–`5` | The same five sources, for input B |
 | `R` | Record the output on / off |
 | `T` | Tap tempo |
+| `K` | MIDI clock: Start, on the next beat, or Stop (while the clock is being sent) |
 | `I` | Cycle to the next input |
 | `E` | Edit screen on / off (in the control window) |
 | `M` | MIDI map mode on / off (in the control window); `Esc` also leaves it |
@@ -809,8 +810,9 @@ time, at least twice; the last eight taps are averaged, and the button blinks
 on the beat. A single tap just moves the downbeat. The BPM can also be typed
 next to the button. Each LFO has a **tempo sync** setting on the Edit screen
 (from a quarter of a beat to four bars); the Tempo sources can be mapped like
-any other, and the beat pulse works as a trigger. The tempo is global, not
-per preset.
+any other, and the beat pulse works as a trigger. The tempo belongs to the show, not
+to a preset. It can also follow a MIDI clock, or be sent as one: see
+**MIDI clock** under [MIDI, audio and vision](#midi-audio-and-vision).
 
 **Faders.** The perform screen shows up to eight faders for the live preset.
 By default they are picked automatically: the eight places are shared out
@@ -877,6 +879,38 @@ parameter belongs to that preset.
 
 Devices plugged in later are picked up automatically. A mapped knob that has
 not been touched since the page loaded leaves its parameter alone.
+
+**MIDI clock.** Under **Setup → MIDI and audio**, **Clock** is one choice of
+three (it switches MIDI on if it was off):
+
+- **Off.** The tempo is the show's own, tapped or typed.
+- **Follow.** A clock from another device sets the tempo and where the beats
+  fall, so LFOs locked to the tempo and the beat pulse sit on that device's
+  music. **From** is the device to listen to (**Any input** to begin with).
+  **Offset** moves the beat up to 150 ms earlier or later. On the perform
+  screen the Tap tile reads **EXT** (it cannot be tapped, and still blinks
+  on the beat), the figure is the incoming tempo and cannot be typed over,
+  and a line under it names the clock. The show's own tempo is not changed:
+  when no clock is arriving the line reads **No clock**, the show's tempo
+  carries on from the beat the clock had reached, and Tap works. **Start**
+  from the other device puts the beat on one. **Stop** there is shown, and
+  the pulses are followed for as long as they keep coming.
+- **Send.** The app's tempo goes out as a clock to the device chosen under
+  **To** (the first output found, until you choose), 24 pulses to the beat,
+  on the app's own beats, so a tap moves the other device's beat too.
+  **Start** (in Setup, **Start clock** under the tempo on the perform screen,
+  the `K` key, or a MIDI pad mapped to it) tells a sequencer at the other
+  end to begin: it goes out on the app's next beat. Pressed again it sends
+  Stop; the pulses carry on. Switching Clock off, or moving the picture to
+  another window, sends Stop first if a sequencer was started.
+
+A clock says how fast and where the beats are, not where a bar begins: only
+Start does that. For software on the same Mac (Ableton Live, say) switch on
+the **IAC Driver** in the Mac's **Audio MIDI Setup**: it then appears here as
+an input and an output. Clock settings belong to this Mac, not to a show;
+what is sent is the live show's tempo. Keep the window that makes the
+picture visible while sending, as for the picture itself: a hidden window
+cannot keep time.
 
 **Audio.** Under **Setup**, **Enable audio**, choose the input, and set **Input gain** so the
 level meter moves without sitting at maximum. **Beat threshold** is how far
@@ -1173,6 +1207,8 @@ npm test
 | `tests/modulation.mjs` | All effects, sensor channel, simulated motion, touch, mappings, the motion map (built only when read, its modulation sources, the Motion and Gravity effects), triggers, presets, crossfade |
 | `tests/time-scan.mjs` | Time's reach (the frames in use cover 1, 4 and 8 seconds), Time and Scan with each choice of **driven by**, the motion map made only when Motion drives, the edit screen's rows and names, Scan's lift and direction, segmentation switching itself on for the body and off ten seconds after, and left alone when switched on in Setup |
 | `tests/midi-audio.mjs` | Audio analysis on Chromium's fake microphone; MIDI through a stand-in device, MIDI map mode for buttons, presets, faders and parameters |
+| `tests/clock.mjs` | MIDI clock, the arithmetic alone (no browser, a few seconds): the speed and the beat read from incoming pulses with wobble, a change of speed, Start, Stop, Continue, a Song Position and a clock that stops arriving; the pulses handed over when sending (even, on the app's beats, never twice, Start on a beat, Stop, a change of tempo, a tap, a page that could not run) |
+| `tests/midi-clock.mjs` | MIDI clock in the app, `/control` making the picture, stand-in devices: Setup's Clock row, following (the speed read, EXT on the perform screen, Tap off, Start, Stop, no clock arriving, a named device), sending (pulses at the show's tempo, Start on a beat from the button and `K`, Stop, a typed tempo, switching off, a device not connected) |
 | `tests/midi-show.mjs` | A show's own MIDI controls on the screen, with `/control` making the picture and a stand-in controller: the alert when one is connected and nothing is mapped, the strip of MIDI map naming the show, **Set up** (the standard layout by two gestures with its mistakes, skips and Cancel; a copy of another show's; Clear all), the pads and knobs then working, the Show menu's way in, Setup's two lists |
 | `tests/vision.mjs` | Each MediaPipe feature on sample photos; person / background masking |
 

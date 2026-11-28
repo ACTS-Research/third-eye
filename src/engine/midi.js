@@ -3,6 +3,13 @@
 //   midi.cc.<channel>.<controller>   0..1
 //   midi.note.<channel>.<note>       velocity while held, else 0
 // Learn mode reports the next control that moves so /control can map it.
+//
+// The messages of a MIDI clock (pulses, Start, Stop, Continue, Song
+// Position) are handed to `onClock` with their time stamp and the name of
+// the device they came from; `send` puts bytes out on a named output at a
+// given time. What is made of either is in clock.js and tempo.js.
+
+import { isClockMessage } from './clock.js';
 
 export class MidiInput {
   constructor(mod, onLearn) {
@@ -15,7 +22,27 @@ export class MidiInput {
     this.last = '';
     this.lastAt = 0;
     this.messages = 0;
-    this.handler = (e) => this.handle(e.data);
+    this.onClock = null;
+    this.handler = (e) => this.handle(e.data, e.timeStamp, e.target?.name);
+  }
+
+  // The devices clock can be sent to. (A stand-in device in the tests has none.)
+  outputs() {
+    return this.access?.outputs ? [...this.access.outputs.values()] : [];
+  }
+
+  // Sends `bytes` on the output called `name`, to leave at `at` (the page's
+  // clock, ms). Returns false when there is no such output.
+  send(name, bytes, at) {
+    const out = name && this.outputs().find((o) => o.name === name);
+    if (!out) return false;
+    try {
+      out.send(bytes, at);
+      return true;
+    } catch (err) {
+      this.error = err.message || err.name;
+      return false;
+    }
   }
 
   async enable() {
@@ -53,8 +80,14 @@ export class MidiInput {
     for (const input of this.access.inputs.values()) input.onmidimessage = this.handler;
   }
 
-  handle(data) {
-    if (!data || data.length < 2) return;
+  handle(data, at, port) {
+    if (!data || !data.length) return;
+    // System messages: the clock's are one byte long and carry no channel.
+    if (data[0] >= 0xf0) {
+      if (isClockMessage(data[0])) this.onClock?.(data[0], data, Number.isFinite(at) && at > 0 ? at : performance.now(), port ?? '');
+      return;
+    }
+    if (data.length < 2) return;
     const type = data[0] & 0xf0;
     const channel = (data[0] & 0x0f) + 1;
     let id = null;
@@ -85,6 +118,7 @@ export class MidiInput {
       state: this.state,
       error: this.error,
       inputs: this.access ? [...this.access.inputs.values()].map((i) => i.name) : [],
+      outputs: this.outputs().map((o) => o.name),
       learning: this.learning,
       last: this.last,
       active: performance.now() - this.lastAt < 300,

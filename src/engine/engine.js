@@ -96,7 +96,7 @@ export class Engine {
     this.midi = new MidiInput(this.mod, (source) => this.bus.send('midi-learned', { source }));
     this.audio = new AudioInput(this.mod);
     this.vision = new Vision(this.mod);
-    this.tempo = new Tempo(this.mod, store);
+    this.tempo = new Tempo(this.mod, store, this.midi);
     this.recorder = new Recorder(canvas, () => this.audio.stream);
     this.probe = new LatencyProbe(() => (this.lost ? null : this.pipeline.inputBrightness()));
     this.lastSourcesAt = 0;
@@ -220,6 +220,7 @@ export class Engine {
         if (!this.blinkJump.trigger(this.store.state.blink)) this.blinkStart = performance.now();
       } else if (name === 'blink-end') this.blinkJump.release();
       else if (name === 'tap') this.tempo.tap(data?.at ?? Date.now());
+      else if (name === 'clock-run') this.tempo.toggleRun();
       else if (name === 'record') this.recorder.toggle(this.store.state.globals.recFormat);
       else if (name === 'latency-test') this.probe.start();
     });
@@ -614,6 +615,8 @@ export class Engine {
     for (const link of this.links) link.shutdown();
     this.recorder.stop();
     this.probe.cancel();
+    // (Before MIDI goes: a sequencer that was started is told to stop.)
+    this.tempo.release();
     this.midi.disable();
     if (this.audio.state !== 'off') this.audio.disable();
     this.vision.configure({});
@@ -807,6 +810,7 @@ export class Engine {
       phoneB: this.store.state.net.second ? this.linkB.status(now) : null,
       sensorsB: this.sensorsB.status(now),
       midi: this.midi.status(),
+      clock: this.tempo.clockStatus(now),
       audio: this.audio.status(),
       vision: { ...this.vision.status(), forBody: this.forBody && !this.store.state.vision.segment },
       recording: this.recorder.status(),

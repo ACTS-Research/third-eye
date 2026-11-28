@@ -13,6 +13,7 @@ export const KEYMAP = [
   { keys: ['[', 'ArrowLeft'], label: '[ or ←', action: 'presetPrev', help: 'Previous step, or previous preset' },
   { keys: ['r'], label: 'R', action: 'record', help: 'Record the output on / off' },
   { keys: ['t'], label: 'T', action: 'tap', help: 'Tap tempo' },
+  { keys: ['k'], label: 'K', action: 'clockRun', help: 'MIDI clock: Start / Stop, while it is being sent' },
   { keys: ['i'], label: 'I', action: 'inputNext', help: 'Next input' },
   ...INPUT_KINDS.map((kind, i) => ({
     keys: [String(i + 1)],

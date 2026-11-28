@@ -18,6 +18,8 @@ export const ACTIONS = {
   inputNext: 'Next input',
   blink: 'Blink',
   tap: 'Tap tempo',
+  // While the MIDI clock is being sent (Setup → MIDI and audio).
+  clockRun: 'Clock start / stop',
   record: 'Record on / off',
   // With a running order these walk its steps; without one, the presets.
   presetNext: 'Next preset',
@@ -98,6 +100,9 @@ export function runAction(store, name, arg) {
       break;
     case 'tap':
       store.emit('tap', { at: Date.now() });
+      break;
+    case 'clockRun':
+      store.emit('clock-run');
       break;
     case 'preset':
       applyPreset(store, Number(arg) || 0);

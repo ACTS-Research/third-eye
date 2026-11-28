@@ -142,6 +142,25 @@ main { flex: 1; min-height: 0; }
 .tap b { font: 700 24px/1 var(--display); }
 .tap.beat { background: var(--ink); color: var(--on-ink); }
 .tempo input { padding: 6px 4px; text-align: right; }
+/* Following a MIDI clock: the tile is no button (EXT, dashed), the figure
+   is the clock's own, solid. Under them, what the clock is doing, or Start. */
+.tap.ext { border-style: dashed; cursor: default; justify-content: flex-end; }
+.tap.ext:disabled { opacity: 1; color: var(--ink); }
+.tap.ext.beat:disabled { color: var(--on-ink); }
+.tempo input.ext { background: var(--ink); border-color: var(--ink); color: var(--on-ink); font-weight: 700; }
+.tempo-clock { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; min-height: 28px; min-width: 0; }
+.tempo-clock[hidden], .tempo-clock [hidden] { display: none; }
+.tempo-clock button { flex-shrink: 0; padding: 4px 9px; border-color: var(--ink); }
+.tempo-clock button.on, #clock-run-setup.on { background: var(--ink); color: var(--on-ink); font-weight: 700; }
+#clock-say { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Setup → MIDI and audio: the clock. */
+.clock-head { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.clock-label { width: 56px; flex-shrink: 0; }
+b.clock-label { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+.choice.clock-mode { grid-auto-columns: minmax(0, 76px); }
+.choice.clock-mode button { font-size: 12px; }
+.clock-rows[hidden] { display: none; }
+#clock-run-setup { flex-shrink: 0; border-color: var(--ink); }
 /* The picture, and under it the inputs and the mix. */
 .center { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
 .center .monitor { flex: 1; }
