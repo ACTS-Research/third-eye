@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>K3 On the perform screen, beside the tempo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#060303}
+button{font-family:'JetBrains Mono',monospace;cursor:pointer}
+.mi:hover{background:#1c0c0b}
+</style>
+</helmet>
+<div style="width: 720px; height: 480px; position: relative; overflow: hidden; background: #060303; color: #ff6b5e; font-family: 'JetBrains Mono', monospace; font-size: 13px; box-sizing: border-box; display: flex">
+  <div style="width: 220px; flex-shrink: 0; border-right: 1px solid #5b2622; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px">
+    <div style="border: 2px solid #ff6b5e; padding: 8px 10px; height: 74px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between"><span>X</span><b style="font: 700 24px/1 'Big Shoulders Display', sans-serif">BYPASS</b></div>
+    <div style="border: 2px solid #ff6b5e; padding: 8px 10px; height: 74px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between"><span>B</span><b style="font: 700 24px/1 'Big Shoulders Display', sans-serif">BLINK</b></div>
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) 64px auto; gap: 6px; align-items: center">
+      <button style="display: flex; justify-content: space-between; align-items: baseline; padding: 8px 10px; border: 2px solid #ff6b5e; background: transparent; color: #ff6b5e"><span>T</span><b style="font: 700 24px/1 'Big Shoulders Display', sans-serif">TAP</b></button>
+      <span style="border: 1px solid #5b2622; padding: 6px 4px; text-align: right">{{bpm}}</span>
+      <span>BPM</span>
+    </div>
+    <button onClick="{{toggle}}" aria-expanded="{{open}}" style="display: flex; justify-content: space-between; background: transparent; color: #ff6b5e; border: 1px solid #ff6b5e; padding: 6px 8px; text-align: left; text-transform: uppercase; letter-spacing: 0.06em"><span>{{label}}</span><span>▾</span></button>
+    <span style="color: #cd564c; font-size: 12px; line-height: 1.5">{{line}}</span>
+  </div>
+  <div style="flex-grow: 1; background: #000; display: flex; align-items: center; justify-content: center; color: #cd564c; font-size: 12px; letter-spacing: 0.1em">THE PICTURE</div>
+  <sc-if value="{{open}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; left: 12px; top: 250px; width: 280px; background: #060303; border: 1px solid #ff6b5e; padding: 6px; display: flex; flex-direction: column; z-index: 3; box-sizing: border-box">
+      <sc-for list="{{items}}" as="m" hint-placeholder-count="5">
+        <sc-if value="{{m.head}}" hint-placeholder-val="{{false}}"><div style="font-size: 10px; color: #cd564c; padding: 6px 8px 2px; letter-spacing: 0.08em">{{m.head}}</div></sc-if>
+        <button class="mi" onClick="{{m.pick}}" style="{{m.style}}">{{m.mark}} {{m.name}}</button>
+      </sc-for>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":720,"height":480}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { open: true, pick: 0 }; }
+  renderVals() {
+    const ITEMS = [
+      { head: 'TEMPO FROM', name: 'This show (tap or type)', label: 'Clock: own', bpm: '120', line: '' },
+      { head: 'FOLLOW A CLOCK', name: 'Any input', label: 'Following: any', bpm: '126.4', line: 'IAC Driver Bus 1 · running' },
+      { head: '', name: 'IAC Driver Bus 1', label: 'Following: IAC', bpm: '126.4', line: 'running' },
+      { head: 'SEND THE CLOCK', name: 'To IAC Driver Bus 1', label: 'Sending: IAC', bpm: '120', line: 'not started' },
+      { head: '', name: 'To Volca Beats', label: 'Sending: Volca', bpm: '120', line: 'not started' },
+    ];
+    const now = ITEMS[this.state.pick];
+    const row = 'text-align: left; background: transparent; color: #ff6b5e; border: 0; padding: 6px 8px; font-size: 13px;';
+    return {
+      open: this.state.open,
+      toggle: () => this.setState({ open: !this.state.open }),
+      label: now.label,
+      bpm: now.bpm,
+      line: now.line,
+      items: ITEMS.map((it, i) => ({ head: it.head, name: it.name, mark: i === this.state.pick ? '●' : '○', style: row, pick: () => this.setState({ pick: i, open: false }) })),
+    };
+  }
+}
+</script>
+</body>
+</html>

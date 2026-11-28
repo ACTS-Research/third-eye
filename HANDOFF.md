@@ -62,7 +62,11 @@ attached.
   `midi.` (pads and knobs on Blink, Next, a preset or step, a perform
   fader). `null` means none of its own yet (a show saved before, or a file
   without them); `adopt()` in `preset-model.js` then gives it what is in
-  use. Phone triggers and every other binding are not part of a show. MIDI
+  use, but only once `settle()` has run: when this page's state is known to
+  be the live one (the window that makes the picture has sent its whole
+  state, or this page makes the picture itself, or the operator has acted
+  here). The state a page starts with is read from storage, where a slow
+  window can leave a copy seconds old: a test met exactly that. Phone triggers and every other binding are not part of a show. MIDI
   on an effect slider is a mapping in the preset's scene, as before.
 - **The engine reads only `state.actions`,** and was not changed. In
   `preset-model.js`: `useMidi()` puts the live show's MIDI into the state
@@ -110,12 +114,25 @@ attached.
 - **Not done, not asked for:** a show's own phone triggers; a built-in map
   for a named controller; MIDI on a slider moving with the show instead of
   the preset.
-- **Suspected from reading the code, not reproduced, not fixed:** with two
-  `/control` tabs open, a show made live in one sets the tempo, and the
-  other tab can then write that tempo into the show
-  it still thinks is live and save its old idea of which show is live (the
-  tempo handler in `preset-model.js` does not tell a change made elsewhere
-  from its own). Not seen in use; one tab is the normal case.
+- **Tempo per show, tightened (28 November, the owner asked):** every show
+  has a number for `bpm` (`adopt()`, after `settle()`, gives a show with
+  `null` the tempo in use; `addShow` likewise), and making a show live always sets the tempo to
+  its own. `keepTempo()` in `preset-model.js` writes the state's tempo into
+  the live show for: a tempo set in that window; a tempo the engine worked
+  out, in whichever window (a tap: `tempo.js` dispatches its merge with
+  `by: 'engine'`); and the whole state arriving from another window (so a
+  tempo tapped while `/control` was closed is taken up when it opens). A
+  tempo set by hand in another `/control` is left to that window: before
+  this, the receiving tab wrote it into whichever show it thought was live
+  (suspected from reading the code, never reproduced).
+- **Only `/control` writes the shows.** A first version had the output
+  window store a tapped tempo itself (read the shows, change one number,
+  write). Its test caught it wiping a show made seconds before: a busy
+  page's copy of `localStorage` can lag another window's writes by seconds,
+  and it wrote the whole list back from a stale copy. Never pushed. Do not
+  give the output window, or the engine, a reason to write
+  `thirdeye.shows.v1` or `thirdeye.presets.v1`. Two `/control` tabs are two
+  writers and carry the same risk in principle; one tab is the normal case.
 
 **The narrow top bar (28 November).** Under 1000 px: the CHECK flag never
 shrinks (`#check-flag`), the view buttons and REC are slimmer (REC still

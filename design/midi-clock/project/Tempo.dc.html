@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The tempo on the perform screen in each state</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#060303}
+button{font-family:'JetBrains Mono',monospace;cursor:pointer}
+@keyframes beat{0%{background:#ff6b5e;color:#140302}40%{background:transparent;color:#ff6b5e}100%{background:transparent;color:#ff6b5e}}
+.b120{animation:beat 0.5s steps(1) infinite}
+.b126{animation:beat 0.4747s steps(1) infinite}
+@media (prefers-reduced-motion: reduce){.b120,.b126{animation:none}}
+</style>
+</helmet>
+<div style="width: 1520px; height: 300px; position: relative; overflow: hidden; background: #060303; color: #ff6b5e; font-family: 'JetBrains Mono', monospace; font-size: 13px; box-sizing: border-box; padding: 20px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px">
+  <div style="border: 1px solid #5b2622; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+    <div style="font-size: 11px; letter-spacing: 0.08em; color: #cd564c">CLOCK OFF: THE SHOW'S OWN TEMPO</div>
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) 72px auto; gap: 6px; align-items: center">
+      <button class="b120" style="display: flex; justify-content: space-between; align-items: baseline; padding: 8px 10px; border: 2px solid #ff6b5e; background: transparent; color: #ff6b5e"><span>T</span><b style="font: 700 24px/1 'Big Shoulders Display', sans-serif">TAP</b></button>
+      <span style="border: 1px solid #5b2622; padding: 6px 4px; text-align: right">120</span>
+      <span>BPM</span>
+    </div>
+    <div style="font-size: 12px; line-height: 1.5; color: #cd564c">As now. Tap or type; it is this show's tempo.</div>
+  </div>
+  <div style="border: 1px solid #5b2622; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+    <div style="font-size: 11px; letter-spacing: 0.08em; color: #cd564c">FOLLOWING, CLOCK RUNNING</div>
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) 72px auto; gap: 6px; align-items: center">
+      <button class="b126" disabled="{{yes}}" style="display: flex; justify-content: space-between; align-items: baseline; padding: 8px 10px; border: 2px dashed #ff6b5e; background: transparent; color: #ff6b5e; cursor: default"><span></span><b style="font: 700 24px/1 'Big Shoulders Display', sans-serif">EXT</b></button>
+      <span style="border: 1px solid #ff6b5e; background: #ff6b5e; color: #140302; font-weight: 700; padding: 6px 4px; text-align: right">126.4</span>
+      <span>BPM</span>
+    </div>
+    <div style="font-size: 12px; line-height: 1.5; color: #cd564c">The tile reads EXT and cannot be tapped; it still blinks on the beat. The figure is the incoming tempo and cannot be typed over.</div>
+  </div>
+  <div style="border: 1px solid #5b2622; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+    <div style="font-size: 11px; letter-spacing: 0.08em; color: #cd564c">FOLLOWING, NO CLOCK ARRIVING</div>
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) 72px auto; gap: 6px; align-items: center">
+      <button class="b120" style="display: flex; justify-content: space-between; align-items: baseline; padding: 8px 10px; border: 2px solid #ff6b5e; background: transparent; color: #ff6b5e"><span>T</span><b style="font: 700 24px/1 'Big Shoulders Display', sans-serif">TAP</b></button>
+      <span style="border: 1px solid #5b2622; padding: 6px 4px; text-align: right">120</span>
+      <span>BPM</span>
+    </div>
+    <div style="font-size: 12px; line-height: 1.5"><b>NO CLOCK</b> <span style="color: #cd564c">· the show's own tempo carries on, and Tap works, until pulses arrive.</span></div>
+  </div>
+  <div style="border: 1px solid #5b2622; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+    <div style="font-size: 11px; letter-spacing: 0.08em; color: #cd564c">SENDING</div>
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) 72px auto; gap: 6px; align-items: center">
+      <button class="b120" style="display: flex; justify-content: space-between; align-items: baseline; padding: 8px 10px; border: 2px solid #ff6b5e; background: transparent; color: #ff6b5e"><span>T</span><b style="font: 700 24px/1 'Big Shoulders Display', sans-serif">TAP</b></button>
+      <span style="border: 1px solid #5b2622; padding: 6px 4px; text-align: right">120</span>
+      <span>BPM</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px">
+      <button onClick="{{toggleRun}}" aria-pressed="{{running}}" style="{{runStyle}}">{{runLabel}}</button>
+      <span style="font-size: 12px; color: #cd564c">{{runLine}}</span>
+    </div>
+    <div style="font-size: 12px; line-height: 1.5; color: #cd564c">Tap and type as now; the others follow. Start can go on a key or a MIDI pad.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1520,"height":300}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { running: false }; }
+  renderVals() {
+    const { running } = this.state;
+    return {
+      yes: true,
+      running,
+      toggleRun: () => this.setState({ running: !running }),
+      runLabel: running ? 'Stop clock' : 'Start clock',
+      runLine: running ? 'the other device is running' : 'pulses are going out; the other device waits for Start',
+      runStyle: 'padding: 6px 12px; text-transform: uppercase; letter-spacing: 0.06em; flex-shrink: 0; ' + (running ? 'background: #ff6b5e; color: #140302; border: 1px solid #ff6b5e; font-weight: 700' : 'background: transparent; color: #ff6b5e; border: 1px solid #ff6b5e'),
+    };
+  }
+}
+</script>
+</body>
+</html>

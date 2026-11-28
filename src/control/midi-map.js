@@ -167,12 +167,12 @@ export function installMidiMap(ui) {
       { value: 'standard', label: 'Standard layout…', group: 'Start from' },
       ...presets.shows
         .filter((x) => x !== presets.live)
-        .map((x) => ({ value: `copy:${x.id}`, label: `${x.name} · ${x.midi.length ? controls(x.midi.length) : 'nothing mapped'}`, group: 'Copy from another show', disabled: !x.midi.length })),
-      { value: 'clear', label: 'Clear all…', group: `${presets.live.name} has ${controls(presets.live.midi.length)}`, disabled: !presets.live.midi.length },
+        .map((x) => ({ value: `copy:${x.id}`, label: `${x.name} · ${presets.midiCount(x) ? controls(presets.midiCount(x)) : 'nothing mapped'}`, group: 'Copy from another show', disabled: !presets.midiCount(x) })),
+      { value: 'clear', label: 'Clear all…', group: `${presets.live.name} has ${controls(presets.midiCount(presets.live))}`, disabled: !presets.midiCount(presets.live) },
     ],
     onChange: (v) => {
       const show = presets.live;
-      const mine = show.midi.length;
+      const mine = presets.midiCount(show);
       if (v === 'standard') startFlow();
       else if (v === 'clear') {
         if (!confirm(`Clear the ${controls(mine)} of ${show.name}? Phone triggers, and knobs set on effect sliders, are not touched.`)) return;
@@ -183,7 +183,7 @@ export function installMidiMap(ui) {
       } else if (v.startsWith('copy:')) {
         const from = presets.shows.find((x) => x.id === v.slice(5));
         if (!from) return;
-        if (mine && !confirm(`Replace the ${controls(mine)} of ${show.name} with the ${controls(from.midi.length)} of ${from.name}? Phone triggers are not touched.`)) return;
+        if (mine && !confirm(`Replace the ${controls(mine)} of ${show.name} with the ${controls(presets.midiCount(from))} of ${from.name}? Phone triggers are not touched.`)) return;
         disarm();
         const count = presets.importMidi(from.id);
         if (count < 0) return;

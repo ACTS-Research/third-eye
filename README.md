@@ -770,8 +770,12 @@ strip, and Next and Prev walk the presets.
 - **Leave it and come back.** Load any preset by hand (from All presets, a
   MIDI pad, or the Edit screen) and the show keeps its place: the step you
   left is marked **Return**, and Next or Prev goes back to it.
-- **Its tempo.** A show remembers the tempo: tap or type one while it is
-  live and it is that show's.
+- **Its tempo.** Every show has a tempo of its own: tap or type one while
+  it is live and it is that show's, and choosing a show sets the tempo to
+  its own. A new show starts with the tempo as it is; so does a show that
+  had none yet (one from an older file, say). A tapped tempo is stored
+  whichever window makes the picture; one tapped while `/control` was
+  closed is taken up by the live show when `/control` next opens.
 - **Its MIDI controls.** The pads and knobs you assign in **MIDI map** (to
   Blink, Next, a preset or step, a perform fader) belong to the show that is
   live. Choose another show and its own take over. A new show, and a

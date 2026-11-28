@@ -47,27 +47,58 @@ export function createPresetModel(ui) {
   };
   // ------------------------------------------------- a show's own MIDI ---
   const liveMidi = () => midiOf(store.state.actions);
-  // A show with none of its own yet takes on the MIDI in use. True when any did.
+  // A show with no MIDI of its own yet, or no tempo, takes on the one in
+  // use. True when any did.
   const adopt = () => {
     let any = false;
     for (const show of shows.shows) {
-      if (show.midi) continue;
-      show.midi = liveMidi();
-      any = true;
+      if (!show.midi) {
+        show.midi = liveMidi();
+        any = true;
+      }
+      if (show.bpm === null) {
+        show.bpm = store.state.tempo.bpm;
+        any = true;
+      }
     }
     return any;
+  };
+  // "In use" must be the truth before a show is given it. The state this
+  // page starts with is read from storage, where a slow window can have
+  // left a copy seconds old; it is known to be the live one once the window
+  // that makes the picture has sent its own (a remote `replace`), or once
+  // this page is making the picture itself, or once the operator acts here.
+  // Until then a show with none of its own keeps `null`.
+  let settled = false;
+  const settle = () => {
+    if (settled) return;
+    settled = true;
+    if (adopt()) {
+      saveShows(shows);
+      changed();
+    }
   };
   // The state takes the live show's MIDI; every other binding stays.
   const useMidi = () => {
     const { midi } = liveShow(shows);
-    if (!sameMidi(midi, liveMidi())) store.dispatch({ op: 'set', key: 'actions', value: withMidi(store.state.actions, midi) });
+    if (midi && !sameMidi(midi, liveMidi())) store.dispatch({ op: 'set', key: 'actions', value: withMidi(store.state.actions, midi) });
   };
   // The live show takes the state's MIDI.
   const keepMidi = () => {
     const show = liveShow(shows);
     const now = liveMidi();
-    if (sameMidi(show.midi, now)) return;
+    if (show.midi && sameMidi(show.midi, now)) return;
     show.midi = now;
+    saveAllShows();
+    changed();
+  };
+
+  // The live show takes the state's tempo.
+  const keepTempo = () => {
+    const show = liveShow(shows);
+    const bpm = store.state.tempo.bpm;
+    if (show.bpm === bpm) return;
+    show.bpm = bpm;
     saveAllShows();
     changed();
   };
@@ -76,12 +107,15 @@ export function createPresetModel(ui) {
     list = loadPresets();
     shows = loadShows(list);
     steps = liveShow(shows).steps;
-    adopt();
+    if (settled) adopt();
   };
-  // Shows from before they kept their MIDI each start with what is mapped
-  // today, so nothing changes until a control is mapped.
-  if (adopt()) saveShows(shows);
+  // A show from before shows kept their MIDI and tempo starts with what is
+  // in use, so nothing changes until a control is mapped (`settle`, once
+  // that is known). A live show that has its own puts it in force now.
   useMidi();
+  ui.onStatus(() => {
+    if (!settled && ui.host?.state === 'local') settle();
+  });
   // A name no other show has.
   const freeName = (name, except = '') => {
     const taken = (n) => shows.shows.some((x) => x.id !== except && x.name.toLowerCase() === n.toLowerCase());
@@ -106,20 +140,26 @@ export function createPresetModel(ui) {
   });
   store.subscribe((op, _state, remote) => {
     if (op.op === 'scene' || op.op === 'replace' || op.op === 'presetIndex' || (op.op === 'merge' && op.key === 'order')) changed();
-    if (op.op === 'set' && op.key === 'actions' && !remote) keepMidi();
+    if (op.op === 'set' && op.key === 'actions' && !remote) {
+      settle();
+      keepMidi();
+    }
     // Another window's whole state has just replaced this one's (it answers
     // every window that opens): the live show's MIDI still holds.
-    if (op.op === 'replace' && remote) useMidi();
-    // A tempo set while a show is live is that show's tempo.
-    if (op.op === 'merge' && op.key === 'tempo' && 'bpm' in op.patch) {
-      const show = liveShow(shows);
-      const bpm = store.state.tempo.bpm;
-      if (show.bpm !== bpm) {
-        show.bpm = bpm;
-        saveAllShows();
-        changed();
-      }
+    if (op.op === 'replace' && remote) {
+      settle();
+      useMidi();
     }
+    // A tempo set while a show is live is that show's tempo: one set in
+    // this window, and one the engine worked out (a tap: `by: 'engine'`),
+    // in whichever window the engine runs. One set by hand in another
+    // /control is that window's to store, and reaches this list as a
+    // storage event; written from here it could land in the show this
+    // window still thinks is live.
+    if (op.op === 'merge' && op.key === 'tempo' && 'bpm' in op.patch && (!remote || op.by === 'engine')) keepTempo();
+    // The whole state has come from the window that makes the picture: its
+    // tempo is the live one (tapped, perhaps, while this page was closed).
+    if (op.op === 'replace' && remote) keepTempo();
   });
 
   return {
@@ -246,11 +286,12 @@ export function createPresetModel(ui) {
     makeLive(id) {
       const show = shows.shows.find((x) => x.id === id);
       if (!show) return;
+      settle();
       shows.live = id;
       steps = show.steps;
       saveShows(shows);
       useMidi();
-      if (show.bpm !== null && show.bpm !== store.state.tempo.bpm) store.merge('tempo', { bpm: show.bpm });
+      if (show.bpm !== store.state.tempo.bpm) store.merge('tempo', { bpm: show.bpm });
       const now = store.state.order;
       if (now.cue !== -1 || now.off) store.merge('order', { cue: -1, off: false });
       else changed();
@@ -258,6 +299,7 @@ export function createPresetModel(ui) {
     // A new show, empty, with the tempo as it is now and the MIDI controls
     // of the show that was live; it goes live.
     newShow(name = 'New show') {
+      settle();
       const show = { id: newId(), name: freeName(cleanShowName(name)), bpm: store.state.tempo.bpm, steps: [], midi: liveMidi() };
       shows.shows.push(show);
       this.makeLive(show.id);
@@ -273,6 +315,7 @@ export function createPresetModel(ui) {
     duplicateShow(id) {
       const show = shows.shows.find((x) => x.id === id);
       if (!show) return null;
+      settle();
       const copy = { id: newId(), name: freeName(`${show.name.slice(0, 34)} copy`), bpm: show.bpm, steps: show.steps.map((s) => ({ ...s })), midi: show.midi.map((b) => ({ ...b })) };
       shows.shows.splice(shows.shows.indexOf(show) + 1, 0, copy);
       this.makeLive(copy.id);
@@ -297,9 +340,11 @@ export function createPresetModel(ui) {
       }
     },
     // Adds a show (from a file), names it apart from the others, makes it
-    // live. One that brings no MIDI controls takes on the live show's.
+    // live. One that brings no MIDI controls, or no tempo, takes on those in
+    // use.
     addShow({ name, bpm, steps: incoming, midi = null }, live = true) {
-      const show = { id: newId(), name: freeName(cleanShowName(name)), bpm, steps: incoming.filter((s) => list.some((p) => p.id === s.preset)), midi: midi ? midi.map((b) => ({ ...b })) : liveMidi() };
+      settle();
+      const show = { id: newId(), name: freeName(cleanShowName(name)), bpm: bpm ?? store.state.tempo.bpm, steps: incoming.filter((s) => list.some((p) => p.id === s.preset)), midi: midi ? midi.map((b) => ({ ...b })) : liveMidi() };
       shows.shows.push(show);
       if (live) this.makeLive(show.id);
       else {
@@ -314,6 +359,7 @@ export function createPresetModel(ui) {
       const from = shows.shows.find((x) => x.id === fromId);
       const show = liveShow(shows);
       if (!from || from === show) return -1;
+      settle();
       show.midi = from.midi.map((b) => ({ ...b }));
       saveAllShows();
       useMidi();
@@ -329,6 +375,11 @@ export function createPresetModel(ui) {
         else if (take) list[at] = { ...p };
       }
       savePresets(list);
+    },
+    // How many MIDI controls a show has (one with none of its own yet has
+    // the ones in use).
+    midiCount(show) {
+      return (show.midi ?? liveMidi()).length;
     },
     // The live show's data with the library (for files and the backup).
     get showData() {

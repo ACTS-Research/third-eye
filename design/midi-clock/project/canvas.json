@@ -1,0 +1,62 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-28T18:00:00Z"
+  },
+  "title": "Third Eye: MIDI clock",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 720,
+      "h": 480,
+      "title": "K1 Setup: Off, Follow or Send",
+      "is_interactive": true
+    },
+    "Two.dc.html": {
+      "x": 800,
+      "y": 0,
+      "w": 720,
+      "h": 480,
+      "title": "K2 Setup: two switches, both can be on",
+      "is_interactive": true
+    },
+    "Perform.dc.html": {
+      "x": 1600,
+      "y": 0,
+      "w": 720,
+      "h": 480,
+      "title": "K3 On the perform screen, beside the tempo",
+      "is_interactive": true
+    },
+    "Tempo.dc.html": {
+      "x": 0,
+      "y": 600,
+      "w": 1520,
+      "h": 300,
+      "title": "The tempo on the perform screen in each state",
+      "is_interactive": true
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Two.dc.html",
+    "Perform.dc.html",
+    "Tempo.dc.html"
+  ],
+  "notes": {
+    "t": {
+      "x": 0,
+      "y": -260,
+      "text": "MIDI clock: where it is set, and what the tempo shows",
+      "kind": "title1",
+      "maxW": 2320
+    }
+  },
+  "designSystems": []
+}

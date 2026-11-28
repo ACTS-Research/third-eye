@@ -145,9 +145,15 @@ function firstShows(steps) {
   return { live: 'show1', shows: [{ id: 'show1', name: 'My show', bpm: null, steps, midi: null }] };
 }
 
-// { live (a show's id), shows: [{ id, name, bpm (null: leave the tempo
-// alone), steps, midi (its MIDI controls; null: none of its own yet) }] }.
+// { live (a show's id), shows: [{ id, name, bpm (its tempo), steps, midi
+// (its MIDI controls) }] }. `bpm` or `midi` null: none of its own yet (older
+// data, or a file without it); /control then gives it the one in use.
 // There is always at least one show.
+//
+// Only /control writes the shows. The output window must not, even to keep
+// one number: its copy of this storage can be seconds out of date (a busy
+// page hears of another window's writes late), and writing the whole list
+// back from it once wiped a show made in the meantime (28 November 2026).
 export function loadShows(presets = loadPresets()) {
   let data = readJSON(SHOWS_KEY, null);
   if (!data || !Array.isArray(data.shows) || !data.shows.some((x) => x && typeof x === 'object')) {

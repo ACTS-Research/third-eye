@@ -219,6 +219,18 @@ try {
   check('its steps are its own', (await stepNames()).join() === [all[3], all[4]].join(), (await stepNames()).join());
   await mac(() => window.thirdEye.store.merge('tempo', { bpm: 140 }));
   check('a tempo set while it is live is its tempo', await settle(() => mac(() => window.thirdEye.ui.presets.live.bpm === 140), 'show bpm'));
+  // Tapped, the tempo is worked out in the window that makes the picture,
+  // which says so (`by`); only /control writes the shows.
+  await output.evaluate(() => window.thirdEye.store.dispatch({ op: 'merge', key: 'tempo', patch: { bpm: 133 }, by: 'engine' }));
+  check('one tapped in the output window is stored in the live show by this page', await settle(() => mac(() => {
+    const data = JSON.parse(localStorage.getItem('thirdeye.shows.v1'));
+    return data.shows.find((x) => x.id === data.live).bpm === 133 && data.shows.find((x) => x.id === data.live).name === 'Dream machine' && window.thirdEye.ui.presets.live.bpm === 133 && window.thirdEye.store.state.tempo.bpm === 133;
+  }), 'output tempo'), await mac(() => JSON.stringify(JSON.parse(localStorage.getItem('thirdeye.shows.v1')).shows.map((x) => [x.name, x.bpm]))));
+  check('and no other show takes it, and none is lost', await mac(() => window.thirdEye.ui.presets.shows.filter((x) => x.bpm === 133).length === 1 && window.thirdEye.ui.presets.shows.length === 3), await showNames());
+  // Set by hand in another /control, it is that window's to store.
+  await output.evaluate(() => window.thirdEye.store.merge('tempo', { bpm: 99 }));
+  check('one set by hand in another window is not written into a show from here', (await settle(async () => (await bpm()) === 99, 'arrived')) && (await mac(() => window.thirdEye.ui.presets.live.bpm === 133)));
+  await mac(() => window.thirdEye.store.merge('tempo', { bpm: 140 }));
   await pickShowItem('Imported show');
   await mac(() => window.thirdEye.store.merge('tempo', { bpm: 100 }));
   await pickShowItem('Dream machine');
@@ -382,7 +394,10 @@ try {
   // Shows saved before they kept their MIDI.
   await mac(() => {
     const data = JSON.parse(localStorage.getItem('thirdeye.shows.v1'));
-    for (const x of data.shows) delete x.midi;
+    for (const x of data.shows) {
+      delete x.midi;
+      x.bpm = null;
+    }
     localStorage.setItem('thirdeye.shows.v1', JSON.stringify(data));
   });
   await control.reload();
@@ -392,6 +407,10 @@ try {
     return data.shows.length > 3 && data.shows.every((x) => Array.isArray(x.midi) && x.midi.length === 1 && x.midi[0].source === 'midi.note.2.60' && x.midi[0].action === 'blink');
   }), 'adopted'), await mac(() => localStorage.getItem('thirdeye.shows.v1').slice(0, 300)));
   check('and nothing changes for the live one', (await midiNow()) === 'midi.note.2.60>blink' && (await restNow()) === triggers);
+  check('a show with no tempo of its own starts with the tempo in use, and every show has one', await mac(() => {
+    const now = window.thirdEye.store.state.tempo.bpm;
+    return JSON.parse(localStorage.getItem('thirdeye.shows.v1')).shows.every((x) => x.bpm === now);
+  }));
   await context.close();
 
   console.log('with no output window (/control makes the picture)');

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>K2 Setup: two switches, both can be on</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#060303}
+button{font-family:'JetBrains Mono',monospace;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 720px; height: 480px; position: relative; overflow: hidden; background: #060303; color: #ff6b5e; font-family: 'JetBrains Mono', monospace; font-size: 13px; box-sizing: border-box; padding: 20px">
+  <div style="border: 1px solid #5b2622; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-sizing: border-box">
+    <div style="font: 700 22px/1 'Big Shoulders Display', sans-serif; letter-spacing: 0.06em; text-transform: uppercase">MIDI and audio</div>
+    <div style="display: flex; align-items: center; gap: 10px">
+      <button style="background: #ff6b5e; color: #140302; border: 1px solid #ff6b5e; padding: 6px 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em">MIDI on</button>
+      <span style="color: #cd564c; font-size: 12px">LPD8, IAC Driver Bus 1</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; border-top: 1px solid #5b2622; padding-top: 12px">
+      <button onClick="{{toggleFollow}}" aria-pressed="{{follow}}" style="{{followStyle}}">Follow clock</button>
+      <span style="color: #cd564c; font-size: 12px">from</span>
+      <button style="display: flex; justify-content: space-between; gap: 16px; flex-grow: 1; background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 8px; text-align: left"><span>Any input</span><span>▾</span></button>
+    </div>
+    <div style="font-size: 12px; line-height: 1.5; color: #cd564c; min-height: 18px">{{followLine}}</div>
+    <div style="display: flex; align-items: center; gap: 10px">
+      <button onClick="{{toggleSend}}" aria-pressed="{{send}}" style="{{sendStyle}}">Send clock</button>
+      <span style="color: #cd564c; font-size: 12px">to</span>
+      <button style="display: flex; justify-content: space-between; gap: 16px; flex-grow: 1; background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 8px; text-align: left"><span>Volca Beats</span><span>▾</span></button>
+      <button style="background: transparent; color: #ff6b5e; border: 1px solid #ff6b5e; padding: 6px 12px; text-transform: uppercase; letter-spacing: 0.06em">Start</button>
+    </div>
+    <div style="font-size: 12px; line-height: 1.5; color: #cd564c; min-height: 36px">{{sendLine}}</div>
+    <div style="display: flex; align-items: center; gap: 10px; border-top: 1px solid #5b2622; padding-top: 12px">
+      <button style="background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 10px; text-transform: uppercase; letter-spacing: 0.06em">Enable audio</button>
+      <button style="display: flex; justify-content: space-between; gap: 16px; flex-grow: 1; background: transparent; color: #ff6b5e; border: 1px solid #5b2622; padding: 6px 8px; text-align: left"><span>Default input</span><span>▾</span></button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":720,"height":480}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { follow: true, send: true }; }
+  renderVals() {
+    const { follow, send } = this.state;
+    const sw = (on) => 'width: 150px; text-align: left; padding: 6px 10px; text-transform: uppercase; letter-spacing: 0.06em; ' + (on ? 'background: #ff6b5e; color: #140302; border: 1px solid #ff6b5e; font-weight: 700' : 'background: transparent; color: #ff6b5e; border: 1px solid #5b2622');
+    return {
+      follow,
+      send,
+      followStyle: sw(follow),
+      sendStyle: sw(send),
+      toggleFollow: () => this.setState({ follow: !follow }),
+      toggleSend: () => this.setState({ send: !send }),
+      followLine: follow ? 'Following IAC Driver Bus 1 · 126.4 BPM · running' : 'Off: the tempo is the show’s own.',
+      sendLine: !send ? 'Off.' : follow ? 'Passing the followed clock on: 126.4 BPM. (Sending to the port it is following is refused: the two would chase each other.)' : 'Sending 120 BPM, the show’s tempo · not started.',
+    };
+  }
+}
+</script>
+</body>
+</html>

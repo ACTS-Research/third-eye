@@ -26,6 +26,8 @@ of the site; nothing here is deployed or tested.
 
 | `midi-per-show/project/` | MIDI controls kept by each show (28 November, eighth session). Copying another show's: `Main` M1 the other shows listed in the Show menu, `Dialog` M2 one line in the Show menu and then a panel, `MapMode` M3 a menu on the hint strip of MIDI map. Where Setup says whose they are: `SetupSplit` W1 two lists, `SetupLine` W2 one list and a line. M3 and W1 were built, M3 with one line in the Show menu that opens MIDI map, and its menu grown into Set up (the standard layout by two gestures, a copy of another show's, Clear all), which was agreed in words and not drawn | https://claude.ai/artifact/HzDdBvGrSYd7b456Q8gUid |
 
+| `midi-clock/project/` | MIDI clock, following and sending (28 November, eighth session). Where it is set: `Main` K1 in Setup, one choice of Off, Follow or Send; `Two` K2 in Setup, two switches that can both be on; `Perform` K3 a menu under the tempo on the perform screen. `Tempo` what the tempo on the perform screen shows in each state (its own, following with a clock, following with none, sending), blinking on the beat. Not yet chosen | https://claude.ai/artifact/373CKUdrJqmKxwSRC8zpxR |
+
 The `.dc.html` files are artboards for a claude.ai design canvas, with
 `canvas.json` saying where each sits. They do not render by themselves in a
 browser: they are kept here as the source, so the mock-ups do not live only

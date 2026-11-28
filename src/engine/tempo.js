@@ -29,7 +29,10 @@ export class Tempo {
     if (this.taps.length >= 2) {
       const interval = (this.taps.at(-1) - this.taps[0]) / (this.taps.length - 1);
       const bpm = Math.min(300, Math.max(30, 60000 / interval));
-      this.store.merge('tempo', { bpm: Math.round(bpm * 10) / 10 });
+      // (`by`: this tempo was worked out by the engine, which keeps no list
+      // of shows. /control stores it in the live show, whichever window the
+      // engine is in.)
+      this.store.dispatch({ op: 'merge', key: 'tempo', patch: { bpm: Math.round(bpm * 10) / 10 }, by: 'engine' });
     }
   }
 
